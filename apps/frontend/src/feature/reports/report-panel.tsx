@@ -149,10 +149,9 @@ function SaveToChart({
 	});
 	const save = useMutation({
 		mutationFn: () => reportApi.saveToChart({ chatId, toolCallId }),
-		onSuccess: (document) => {
+		onSuccess: () => {
 			setConfirming(false);
 			void queryClient.invalidateQueries({ queryKey: reportApi.savedDocument.queryKey(toolCallId) });
-			void queryClient.invalidateQueries({ queryKey: reportApi.patientDocuments.queryKey(document.patientId) });
 		},
 	});
 	useEffect(() => setConfirming(false), [toolCallId]);

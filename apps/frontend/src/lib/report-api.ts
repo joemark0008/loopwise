@@ -1,8 +1,6 @@
 import {
-	ClinicalDocumentDocument,
 	ExportReportPdfDocument,
 	ExportWiseReportPdfDocument,
-	PatientDocumentsDocument,
 	SavedReportDocumentDocument,
 	SaveReportToChartDocument,
 } from '@/graphql/generated/graphql';
@@ -49,16 +47,6 @@ export const reportApi = {
 		queryKey: (toolCallId: string) => ['report', 'savedDocument', toolCallId] as const,
 		fetch: async (toolCallId: string) =>
 			(await runQuery(SavedReportDocumentDocument, { toolCallId })).savedReportDocument,
-	},
-
-	patientDocuments: {
-		queryKey: (patientId: string) => ['report', 'patientDocuments', patientId] as const,
-		fetch: async (patientId: string) => (await runQuery(PatientDocumentsDocument, { patientId })).patientDocuments,
-	},
-
-	document: {
-		queryKey: (id: string) => ['report', 'document', id] as const,
-		fetch: async (id: string) => (await runQuery(ClinicalDocumentDocument, { id })).clinicalDocument,
 	},
 };
 

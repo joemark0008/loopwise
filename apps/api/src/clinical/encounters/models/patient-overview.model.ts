@@ -4,7 +4,7 @@ import { BillStatus } from '../../../generated/prisma/enums.js';
 import { ClinicalOrder } from '../../orders/models/order.model.js';
 import { Prescription } from '../../prescriptions/models/prescription.model.js';
 import { Encounter } from './encounter.model.js';
-import { EncounterDiagnosis, VitalSigns } from './encounter-record.model.js';
+import { EncounterDiagnosis } from './encounter-record.model.js';
 
 @ObjectType({ description: 'One visit as the chart lists it: the encounter and what came of it.' })
 export class PatientVisit {
@@ -25,21 +25,9 @@ export class PatientVisit {
 }
 
 @ObjectType({
-	description: "The patient chart's overview, read as the user (row-level security): recent visits and summaries.",
+	description: "The patient chart's overview, read as the user (row-level security): the recent visits.",
 })
 export class PatientOverview {
 	@Field(() => [PatientVisit], { description: 'Newest first (the latest 20).' })
 	visits: PatientVisit[];
-
-	@Field(() => [VitalSigns], { description: 'The latest sets across visits, newest first (up to 6), for trends.' })
-	recentVitals: VitalSigns[];
-
-	@Field(() => [EncounterDiagnosis], { description: 'Recent diagnoses, one per ICD-10 code, newest first.' })
-	problems: EncounterDiagnosis[];
-
-	@Field(() => [Prescription], { description: 'The latest prescriptions that are not voided (up to 3).' })
-	medicines: Prescription[];
-
-	@Field(() => [ClinicalOrder], { description: 'Orders with results, newest first (up to 6).' })
-	results: ClinicalOrder[];
 }

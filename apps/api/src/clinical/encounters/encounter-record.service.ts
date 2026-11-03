@@ -379,9 +379,8 @@ export class EncounterRecordService {
 	}
 
 	/**
-	 * The chart's overview (DESIGN.md §9): the latest visits with their diagnoses, prescriptions, orders and bill, and
-	 * the summaries drawn from them (recent vitals for trends, problems, medicines, results). Read as the user, so it is
-	 * empty for a patient not in your care; audited as one view of the patient's record.
+	 * The chart's overview (DESIGN.md §9): the latest visits with their diagnoses, prescriptions, orders and bill. Read
+	 * as the user, so it is empty for a patient not in your care; audited as one view of the patient's record.
 	 */
 	async getPatientOverview(userId: string, patientId: string): Promise<PatientOverview> {
 		return this.db.asUser(userId, async (tx) => {
@@ -396,15 +395,6 @@ export class EncounterRecordService {
 					resourceId: patientId,
 				});
 			}
-			const problems = new Map<string, EncounterDiagnosis>();
-			for (const row of rows) {
-				for (const diagnosis of row.diagnoses) {
-					if (!problems.has(diagnosis.icd10Code)) {
-						problems.set(diagnosis.icd10Code, toDiagnosis(diagnosis));
-					}
-				}
-			}
-			const orders = rows.flatMap((row) => row.orders);
 			return {
 				visits: rows.map((row) => ({
 					encounter: toEncounter(row),
@@ -413,20 +403,6 @@ export class EncounterRecordService {
 					orders: row.orders.map(toClinicalOrder),
 					billStatus: row.bills[0]?.status ?? null,
 				})),
-				recentVitals: rows
-					.flatMap((row) => row.vitalSigns)
-					.sort((a, b) => b.recordedAt.getTime() - a.recordedAt.getTime())
-					.slice(0, 6)
-					.map(toVitalSigns),
-				problems: [...problems.values()],
-				medicines: rows
-					.flatMap((row) => row.prescriptions)
-					.slice(0, 3)
-					.map((prescription) => toPrescription(prescription)),
-				results: orders
-					.filter((order) => order.results.length > 0)
-					.slice(0, 6)
-					.map(toClinicalOrder),
 			};
 		});
 	}

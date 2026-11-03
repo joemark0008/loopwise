@@ -428,10 +428,6 @@ describe('encounter record (e2e)', () => {
 		const OVERVIEW = `query ($id: ID!) {
 			patientOverview(patientId: $id) {
 				visits { encounter { id } diagnoses { icd10Code } prescriptions { status } orders { code } billStatus }
-				recentVitals { id voidedAt }
-				problems { icd10Code }
-				medicines { status }
-				results { code }
 			}
 		}`;
 		const { patientOverview } = await ok(users.reyes.cookie, OVERVIEW, { id: patientId });
@@ -441,14 +437,9 @@ describe('encounter record (e2e)', () => {
 		expect(visit.diagnoses.length).toBeGreaterThan(0);
 		expect(visit.billStatus).toBe('draft');
 		expect(visit.prescriptions.every((rx: { status: string }) => rx.status !== 'voided')).toBe(true);
-		expect(patientOverview.recentVitals.every((row: { voidedAt: string | null }) => row.voidedAt === null)).toBe(
-			true,
-		);
-		const codes = patientOverview.problems.map((problem: { icd10Code: string }) => problem.icd10Code);
-		expect(new Set(codes).size).toBe(codes.length);
 		expect(await audits('patient.overview')).toBe(1);
 
 		const hidden = (await ok(users.lim.cookie, OVERVIEW, { id: patientId })).patientOverview;
-		expect(hidden).toEqual({ visits: [], recentVitals: [], problems: [], medicines: [], results: [] });
+		expect(hidden).toEqual({ visits: [] });
 	});
 });

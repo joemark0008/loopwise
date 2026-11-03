@@ -16,7 +16,6 @@ const RECORD_INCLUDE = {
 export type EncounterRecordRow = Prisma.EncounterGetPayload<{ include: typeof RECORD_INCLUDE }>;
 
 const VISIT_INCLUDE = {
-	vitalSigns: { where: { voidedAt: null }, orderBy: { recordedAt: 'desc' } },
 	diagnoses: { where: { voidedAt: null }, orderBy: [{ isPrimary: 'desc' }, { rank: 'asc' }, { createdAt: 'asc' }] },
 	orders: { include: { results: true }, orderBy: { createdAt: 'desc' } },
 	prescriptions: { where: { status: { not: 'voided' } }, include: { items: true }, orderBy: { createdAt: 'desc' } },

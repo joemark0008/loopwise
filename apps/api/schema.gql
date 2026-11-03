@@ -1217,21 +1217,9 @@ type PatientIdentifier {
 }
 
 """
-The patient chart's overview, read as the user (row-level security): recent visits and summaries.
+The patient chart's overview, read as the user (row-level security): the recent visits.
 """
 type PatientOverview {
-  """The latest prescriptions that are not voided (up to 3)."""
-  medicines: [Prescription!]!
-
-  """Recent diagnoses, one per ICD-10 code, newest first."""
-  problems: [EncounterDiagnosis!]!
-
-  """The latest sets across visits, newest first (up to 6), for trends."""
-  recentVitals: [VitalSigns!]!
-
-  """Orders with results, newest first (up to 6)."""
-  results: [ClinicalOrder!]!
-
   """Newest first (the latest 20)."""
   visits: [PatientVisit!]!
 }
