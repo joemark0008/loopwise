@@ -1,5 +1,5 @@
 import type { Chat } from '@ai-sdk/react';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 
 /** An agent is a chat instance with tools */
 export type Agent = Chat<UIMessage>;

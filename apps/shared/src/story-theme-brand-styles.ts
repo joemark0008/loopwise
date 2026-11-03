@@ -6,7 +6,7 @@ export function storyBrandStyles(scope = ''): string {
 	);
 }
 
-const KPI_TILE = ':is(.quarry-kpi,.story-block:has(.quarry-kpi-card))';
+const KPI_TILE = ':is(.loopwise-kpi,.story-block:has(.loopwise-kpi-card))';
 const WASHED_CARD = 'color-mix(in srgb,var(--story-kpi-wash,var(--card)) var(--story-kpi-tint,0%),var(--card))';
 const HEADING_SCALE = 'var(--story-heading-scale,1)';
 /** The chart hover band (7% of the ink over the block), reused so every hover takes the theme's own tint. */
@@ -14,34 +14,34 @@ const INK_VEIL = 'color-mix(in srgb,var(--foreground) 7%,var(--card))';
 
 /** Which elements speak in each text role, with the size the role's multiplier scales; null keeps the element's own. */
 const ROLE_TARGETS: Record<StoryTextRole, [string, string | null][]> = {
-	wordmark: [['.quarry-brand-header__name', '24px']],
+	wordmark: [['.loopwise-brand-header__name', '24px']],
 	display: [
 		['h1', `calc(1.875rem * ${HEADING_SCALE})`],
-		['.quarry-slide__title', '52px'],
-		['.quarry-slides__title', null],
+		['.loopwise-slide__title', '52px'],
+		['.loopwise-slides__title', null],
 	],
 	heading: [['h2', `calc(1.5rem * ${HEADING_SCALE})`]],
 	subheading: [
 		['h3', `calc(1.25rem * ${HEADING_SCALE})`],
 		['h4', `calc(1.125rem * ${HEADING_SCALE})`],
-		['.quarry-block__title', '14px'],
-		['.quarry-chart-title', '14px'],
+		['.loopwise-block__title', '14px'],
+		['.loopwise-chart-title', '14px'],
 	],
 	body: [
 		[':is(p,li)', 'var(--story-body-size,1rem)'],
-		['.quarry-table-display td', null],
+		['.loopwise-table-display td', null],
 	],
 	label: [
-		['.quarry-kpi-card__name', '16px'],
-		['.quarry-table-display th', '12px'],
+		['.loopwise-kpi-card__name', '16px'],
+		['.loopwise-table-display th', '12px'],
 		['.recharts-cartesian-axis-tick text', '12px'],
-		[':is(.quarry-label,.quarry-slides__eyebrow,.quarry-slide__eyebrow)', null],
+		[':is(.loopwise-label,.loopwise-slides__eyebrow,.loopwise-slide__eyebrow)', null],
 	],
 	button: [
-		[':is(.quarry-button,.quarry-chip,.quarry-filter__control,.quarry-filter__clear)', '13px'],
-		[':is([role=tab],.quarry-story-tab)', null],
+		[':is(.loopwise-button,.loopwise-chip,.loopwise-filter__control,.loopwise-filter__clear)', '13px'],
+		[':is([role=tab],.loopwise-story-tab)', null],
 	],
-	figure: [['.quarry-kpi-card__value', null]],
+	figure: [['.loopwise-kpi-card__value', null]],
 };
 
 const BRAND_RULES: [string[], string][] = [
@@ -55,10 +55,10 @@ const BRAND_RULES: [string[], string][] = [
 	...STORY_TEXT_ROLES.flatMap((role) =>
 		ROLE_TARGETS[role].map(([selector, size]): [string[], string] => [[selector], roleDeclarations(role, size)]),
 	),
-	[['.quarry-kpi-card'], 'container-type:inline-size'],
+	[['.loopwise-kpi-card'], 'container-type:inline-size'],
 	/** Shrinks a long figure to its tile instead of clipping it. */
 	[
-		['.quarry-kpi-card__value'],
+		['.loopwise-kpi-card__value'],
 		'color:var(--story-kpi-value,var(--foreground));white-space:nowrap;font-size:min(calc(calc(var(--story-body-size,16px) * 2) * var(--story-type-figure-size,1)),16cqi)',
 	],
 	[[`${KPI_TILE}:nth-child(4n+1)`], '--story-kpi-wash:var(--chart-1)'],
@@ -78,32 +78,32 @@ const BRAND_RULES: [string[], string][] = [
 		].join(';'),
 	],
 	[
-		['.quarry-button', '.quarry-chip'],
+		['.loopwise-button', '.loopwise-chip'],
 		'display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 14px;line-height:1;white-space:nowrap;border-radius:var(--story-control-radius,8px);cursor:pointer;transition:background-color .15s,border-color .15s,color .15s',
 	],
-	[['.quarry-button'], 'color:var(--primary-foreground);background:var(--primary);border:1px solid var(--primary)'],
+	[['.loopwise-button'], 'color:var(--primary-foreground);background:var(--primary);border:1px solid var(--primary)'],
 	[
-		['.quarry-button--outline', '.quarry-chip'],
+		['.loopwise-button--outline', '.loopwise-chip'],
 		'color:var(--foreground);background:var(--card);border:1px solid var(--border)',
 	],
-	[['.quarry-chip:hover', '.quarry-button--outline:hover'], `background:${INK_VEIL}`],
+	[['.loopwise-chip:hover', '.loopwise-button--outline:hover'], `background:${INK_VEIL}`],
 	[
-		['.quarry-chip[aria-pressed=true]', '.quarry-chip[aria-selected=true]', '.quarry-chip--active'],
+		['.loopwise-chip[aria-pressed=true]', '.loopwise-chip[aria-selected=true]', '.loopwise-chip--active'],
 		'color:var(--primary-foreground);background:var(--primary);border-color:var(--primary)',
 	],
-	[['.quarry-chips'], 'display:flex;flex-wrap:wrap;align-items:center;gap:8px'],
+	[['.loopwise-chips'], 'display:flex;flex-wrap:wrap;align-items:center;gap:8px'],
 	/** The markdown story filter bar: a block-shaped panel whose controls take the brand's button shape. */
-	[['.quarry-filter-bar'], 'background:var(--card);border-color:var(--border);border-radius:var(--radius)'],
+	[['.loopwise-filter-bar'], 'background:var(--card);border-color:var(--border);border-radius:var(--radius)'],
 	[
-		['.quarry-filter__control', '.quarry-filter__clear'],
+		['.loopwise-filter__control', '.loopwise-filter__clear'],
 		'border-radius:var(--story-control-radius,8px);transition:border-color .15s,background-color .15s',
 	],
-	[['.quarry-filter__control'], 'background:var(--card);border-color:var(--border)'],
+	[['.loopwise-filter__control'], 'background:var(--card);border-color:var(--border)'],
 	[
-		['.quarry-filter__control:hover', '.quarry-filter__clear:hover'],
+		['.loopwise-filter__control:hover', '.loopwise-filter__clear:hover'],
 		`background:${INK_VEIL};color:var(--foreground)`,
 	],
-	[['.quarry-filter[data-active=true] .quarry-filter__control'], 'border-color:var(--primary)'],
+	[['.loopwise-filter[data-active=true] .loopwise-filter__control'], 'border-color:var(--primary)'],
 	/** Pickers mount inside the themed surface, so their menus speak the story's type and lines too. */
 	[
 		['[data-slot=select-content]', '[data-slot=dropdown-menu-content]', '[data-slot=popover-content]'],
@@ -124,20 +124,20 @@ const BRAND_RULES: [string[], string][] = [
 		'color:var(--foreground);background:var(--background);border-color:var(--border)',
 	],
 	[
-		['.quarry-brand-header'],
+		['.loopwise-brand-header'],
 		'padding:var(--story-header-padding,4px 0 20px);color:var(--story-header-fg,var(--foreground));background:var(--story-header-bg,transparent);border-bottom:var(--story-header-rule,0);border-radius:var(--story-header-radius,0)',
 	],
 	[
-		['.quarry-brand-header__bar'],
+		['.loopwise-brand-header__bar'],
 		'display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:32px',
 	],
-	[['.quarry-brand-header__mark'], 'display:flex;align-items:center;gap:12px;min-width:0'],
+	[['.loopwise-brand-header__mark'], 'display:flex;align-items:center;gap:12px;min-width:0'],
 	[
-		['.quarry-brand-header__logo'],
+		['.loopwise-brand-header__logo'],
 		'display:block;height:32px;max-width:220px;object-fit:contain;object-position:left center',
 	],
-	[['.quarry-brand-header__name'], 'line-height:1'],
-	[['.quarry-brand-header__meta'], 'display:flex;flex-wrap:wrap;align-items:center;gap:8px'],
+	[['.loopwise-brand-header__name'], 'line-height:1'],
+	[['.loopwise-brand-header__meta'], 'display:flex;flex-wrap:wrap;align-items:center;gap:8px'],
 ];
 
 function roleDeclarations(role: StoryTextRole, size: string | null): string {

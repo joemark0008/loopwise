@@ -1,5 +1,5 @@
+import type { CitationPayload } from '@loopwise/shared';
 import { Injectable, Logger } from '@nestjs/common';
-import type { CitationPayload } from '@quarry/shared';
 import nodeSqlParser from 'node-sql-parser';
 
 import { HandlerError } from '../common/errors/handler-error.js';

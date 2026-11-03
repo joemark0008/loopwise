@@ -1,4 +1,4 @@
-// Platform plumbing carried over from quarry: logs, activity, analytics events, notifications, locks and automations.
+// Platform plumbing carried over from loopwise: logs, activity, analytics events, notifications, locks and automations.
 
 model Activity {
   id            String      @id @default(uuid())

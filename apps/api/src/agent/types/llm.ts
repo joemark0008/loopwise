@@ -5,8 +5,8 @@ import type { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import type { MistralLanguageModelOptions } from '@ai-sdk/mistral';
 import type { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import type { OpenAICompatibleProviderOptions } from '@ai-sdk/openai-compatible';
+import { isLlmProvider, type LlmProvider, type LlmProviderKind } from '@loopwise/shared/types';
 import type { LanguageModelV3, OpenRouterProviderOptions } from '@openrouter/ai-sdk-provider';
-import { isLlmProvider, type LlmProvider, type LlmProviderKind } from '@quarry/shared/types';
 import type { JSONValue } from 'ai';
 import type { OllamaChatProviderOptions } from 'ai-sdk-ollama';
 import { z } from 'zod/v4';
@@ -104,9 +104,9 @@ export type ModelInferenceSettings = z.infer<typeof modelInferenceSettingsSchema
 export const modelSettingsMapSchema = z.record(z.string(), modelInferenceSettingsSchema);
 export type ModelSettingsMap = z.infer<typeof modelSettingsMapSchema>;
 
-/** Where a project's models and their credentials come from: its database config, quarry_config.yaml, the environment, or quarry. */
+/** Where a project's models and their credentials come from: its database config, loopwise_config.yaml, the environment, or loopwise. */
 export type ModelSource = {
-	/** Serves the providers quarry runs on its own keys. */
+	/** Serves the providers loopwise runs on its own keys. */
 	readonly managed?: boolean;
 	listProviders(projectId: string): Promise<ProviderModelSource[]>;
 	resolveModel(request: ModelRequest): Promise<ProviderModelResult | null>;
@@ -214,7 +214,7 @@ export const llmConfigSchema = z.object({
 	updatedAt: z.date(),
 });
 
-/** A provider declared in quarry_config.yaml rather than saved from the settings UI. */
+/** A provider declared in loopwise_config.yaml rather than saved from the settings UI. */
 export const configLlmProviderSchema = z.object({
 	provider: llmProviderSchema,
 	apiKeyPreview: z.string().nullable(),
@@ -304,7 +304,7 @@ export type ProviderMeta<P extends LlmProviderKind> = {
 	defaultBaseUrl?: string;
 	/** Set when the provider has no vendor endpoint to fall back on, so a base URL must be supplied. */
 	requiresBaseUrl?: boolean;
-	/** Set when quarry runs the provider on its own keys and bills it through credits, so projects cannot configure it. */
+	/** Set when loopwise runs the provider on its own keys and bills it through credits, so projects cannot configure it. */
 	managed?: boolean;
 	models: readonly ProviderModel<P>[];
 	extractorModelId: string;

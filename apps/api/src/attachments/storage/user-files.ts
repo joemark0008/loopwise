@@ -1,4 +1,4 @@
-import { documentMediaType, fileExtension, isBinaryDocument, toSafeFileName } from '@quarry/shared/attachments';
+import { documentMediaType, fileExtension, isBinaryDocument, toSafeFileName } from '@loopwise/shared/attachments';
 
 import { toReadableText } from '../file-text.js';
 import { getStorage, getStorageMaxFileSizeMb, isStorageEnabled } from './index.js';
@@ -208,7 +208,7 @@ export const assertWithinStorageSizeLimit = (relativePath: string, size: number)
 	}
 
 	throw new Error(
-		`File too large: ${relativePath} is ${formatMegabytes(size)} MB, above the ${getStorageMaxFileSizeMb()} MB limit for permanent storage. Write less data, or ask an admin to raise QUARRY_STORAGE_MAX_FILE_SIZE_MB.`,
+		`File too large: ${relativePath} is ${formatMegabytes(size)} MB, above the ${getStorageMaxFileSizeMb()} MB limit for permanent storage. Write less data, or ask an admin to raise LOOPWISE_STORAGE_MAX_FILE_SIZE_MB.`,
 	);
 };
 

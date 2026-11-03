@@ -1,4 +1,4 @@
-import type { ColumnLineageNode } from '@quarry/shared';
+import type { ColumnLineageNode } from '@loopwise/shared';
 import type { AST, Parser } from 'node-sql-parser';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

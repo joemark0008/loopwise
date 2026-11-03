@@ -27,7 +27,7 @@ export class SetupService implements OnApplicationBootstrap {
 		}
 		const { BETTER_AUTH_SECRET } = this.config.env;
 		this.logger.log(
-			`Quarry is not set up yet. Open ${this.config.baseUrl}/setup and enter this setup token: ${deriveSetupToken(BETTER_AUTH_SECRET)}`,
+			`Loopwise is not set up yet. Open ${this.config.baseUrl}/setup and enter this setup token: ${deriveSetupToken(BETTER_AUTH_SECRET)}`,
 		);
 	}
 

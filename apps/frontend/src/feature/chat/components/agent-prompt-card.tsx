@@ -70,7 +70,7 @@ function PromptText({ prompt }: { prompt: string }) {
 					);
 				}
 
-				if (/^(?:npx|uv|pip|unset|quarry)\b/.test(text)) {
+				if (/^(?:npx|uv|pip|unset|loopwise)\b/.test(text)) {
 					return (
 						<code key={index} className={styles.promptTextCode}>
 							{text}

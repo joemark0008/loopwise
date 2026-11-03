@@ -1,10 +1,10 @@
-import { LAB_TESTS } from '@quarry/shared/lab-tests';
+import { LAB_TESTS } from '@loopwise/shared/lab-tests';
 import {
 	type ActionOutput,
 	ActionOutputSchema,
 	resolveLabTest,
 	type WiseActionDefinition,
-} from '@quarry/shared/wise-actions';
+} from '@loopwise/shared/wise-actions';
 
 import type { ToolContext } from '../types/tools.js';
 import { createTool } from '../utils/tools.js';

@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import type { LanguageModelV3StreamPart } from '@ai-sdk/provider';
+import { getMetric } from '@loopwise/shared/tools';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { getMetric } from '@quarry/shared/tools';
 import { MockLanguageModelV3 } from 'ai/test';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -61,7 +61,7 @@ describe('analytics security (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.QUARRY_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'quarry-projects-'));
+		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -301,7 +301,7 @@ describe('analytics security (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', users.a.cookie)
-			.set('x-quarry-project-id', projectId)
+			.set('x-loopwise-project-id', projectId)
 			.send({ model: MODEL, message: { text: 'How many patients do I have, by age group?' } })
 			.buffer(true)
 			.parse((response, callback) => {
@@ -349,7 +349,7 @@ describe('analytics security (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', users.a.cookie)
-			.set('x-quarry-project-id', projectId)
+			.set('x-loopwise-project-id', projectId)
 			.send({ model: MODEL, message: { text: 'Make a report of my panel' } })
 			.buffer(true)
 			.parse((response, callback) => {

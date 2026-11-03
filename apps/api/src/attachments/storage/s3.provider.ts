@@ -157,7 +157,7 @@ export class S3StorageProvider implements StorageProvider {
 
 /**
  * Falls back to the default AWS credential chain so IAM roles, ECS task roles
- * and EKS/IRSA work without any quarry-specific configuration.
+ * and EKS/IRSA work without any loopwise-specific configuration.
  */
 const buildCredentials = (config: S3StorageConfig) => {
 	if (config.accessKeyId && config.secretAccessKey) {

@@ -1,6 +1,6 @@
 import writeXlsxFile from 'write-excel-file/universal';
-import { formatCellValue } from '@quarry/shared/story-table-utils';
-import type { DateFormatSettings } from '@quarry/shared/date';
+import { formatCellValue } from '@loopwise/shared/story-table-utils';
+import type { DateFormatSettings } from '@loopwise/shared/date';
 import type { Cell, Row } from 'write-excel-file/universal';
 import { triggerDownload } from '@/lib/download';
 

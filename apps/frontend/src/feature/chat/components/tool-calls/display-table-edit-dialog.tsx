@@ -1,5 +1,5 @@
-import { colorToHex, DEFAULT_THRESHOLD_COLOR } from '@quarry/shared/conditional-formatting';
-import { getFormattableColumnType } from '@quarry/shared/story-table-utils';
+import { colorToHex, DEFAULT_THRESHOLD_COLOR } from '@loopwise/shared/conditional-formatting';
+import { getFormattableColumnType } from '@loopwise/shared/story-table-utils';
 import { useMemo, useState } from 'react';
 import styles from './display-table-edit-dialog.module.css';
 import type {
@@ -8,8 +8,8 @@ import type {
 	StringOperator,
 	StringRule,
 	ThresholdOperator,
-} from '@quarry/shared/conditional-formatting';
-import type { FormattableColumnType } from '@quarry/shared/story-table-utils';
+} from '@loopwise/shared/conditional-formatting';
+import type { FormattableColumnType } from '@loopwise/shared/story-table-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

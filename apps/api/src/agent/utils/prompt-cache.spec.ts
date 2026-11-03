@@ -1,4 +1,4 @@
-import type { LlmSelectedModel } from '@quarry/shared/types';
+import type { LlmSelectedModel } from '@loopwise/shared/types';
 import type { ModelMessage } from 'ai';
 import { describe, expect, it } from 'vitest';
 

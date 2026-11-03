@@ -8,7 +8,6 @@ import { createMistral } from '@ai-sdk/mistral';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { createOpenRouter, LanguageModelV3 } from '@openrouter/ai-sdk-provider';
 import {
 	type LlmProvider,
 	type LlmProviderKind,
@@ -17,7 +16,8 @@ import {
 	providerKind,
 	providerLabel,
 	providerName,
-} from '@quarry/shared/types';
+} from '@loopwise/shared/types';
+import { createOpenRouter, LanguageModelV3 } from '@openrouter/ai-sdk-provider';
 import { createOllama } from 'ai-sdk-ollama';
 
 import type {
@@ -506,7 +506,7 @@ function resolveThinking(
 			return resolveGeminiThinking(capabilities, effort, settings);
 		case 'moonshot':
 		case 'meta':
-			// Kimi and Muse speak quarry's effort vocabulary, so the clamped value goes out as-is.
+			// Kimi and Muse speak loopwise's effort vocabulary, so the clamped value goes out as-is.
 			return resolveEffortThinking(effort, (e) => ({ reasoningEffort: e }));
 		case 'qwen':
 			return resolveQwenThinking(capabilities, settings);

@@ -1,4 +1,4 @@
-import { fileExtension } from '@quarry/shared/attachments';
+import { fileExtension } from '@loopwise/shared/attachments';
 import { FileCode, FileJson, FileSpreadsheet, FileText, FileType } from 'lucide-react';
 
 import styles from './attachment-file-icon.module.css';

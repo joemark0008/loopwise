@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client/react';
-import type { UserRole } from '@quarry/shared/types';
+import type { UserRole } from '@loopwise/shared/types';
 
 import type { ProjectSummaryFieldsFragment } from '@/graphql/generated/graphql';
 import { CurrentProjectDocument, ProjectsDocument } from '@/graphql/generated/graphql';

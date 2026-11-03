@@ -1,5 +1,5 @@
+import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import type { UserRole } from '@quarry/shared/types';
 
 import { HandlerError } from '../common/errors/handler-error.js';
 import type { SharedChat } from '../generated/prisma/client.js';

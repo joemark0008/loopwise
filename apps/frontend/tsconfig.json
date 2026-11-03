@@ -18,15 +18,15 @@
 		"noUnusedParameters": false,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true,
-		/* apps/api sources reached through @quarry/api/* use Nest decorators */
+		/* apps/api sources reached through @loopwise/api/* use Nest decorators */
 		"experimentalDecorators": true,
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"],
-			"@quarry/shared": ["../shared/src/index.ts"],
-			"@quarry/shared/*": ["../shared/src/*"],
+			"@loopwise/shared": ["../shared/src/index.ts"],
+			"@loopwise/shared/*": ["../shared/src/*"],
 			// apps/api's types, and its few pure modules the frontend shares (vite.config.ts aliases them too).
-			"@quarry/api/*": ["../api/src/*"],
+			"@loopwise/api/*": ["../api/src/*"],
 			"zod": ["../../node_modules/zod"],
 			"zod/*": ["../../node_modules/zod/*"],
 			"ai": ["../../node_modules/ai"]

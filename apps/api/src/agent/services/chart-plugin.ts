@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
 
-import { capitalizeWords, type ChartPluginManifestEntry } from '@quarry/shared';
-import { isBuiltinChartType } from '@quarry/shared/chart-types';
+import { capitalizeWords, type ChartPluginManifestEntry } from '@loopwise/shared';
+import { isBuiltinChartType } from '@loopwise/shared/chart-types';
 import { z } from 'zod';
 
 const PLUGIN_FILE_PATTERN = /^([a-z][a-z0-9_-]*)\.(js|mjs)$/;

@@ -1,5 +1,5 @@
 import type { MentionOption } from 'prompt-mentions';
-import type { ImageUploadData } from '@quarry/shared/attachments';
+import type { ImageUploadData } from '@loopwise/shared/attachments';
 import type { DocumentAttachment } from '@/lib/attachments';
 
 export interface QueuedMessage {

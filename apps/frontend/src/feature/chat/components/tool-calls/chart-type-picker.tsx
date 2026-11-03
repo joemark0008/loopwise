@@ -10,7 +10,7 @@ import {
 	SquareSigma,
 } from 'lucide-react';
 import styles from './chart-type-picker.module.css';
-import type { ChartType } from '@quarry/shared/chart-types';
+import type { ChartType } from '@loopwise/shared/chart-types';
 import type { ComponentType } from 'react';
 import ChartDonutIcon from '@/components/icons/chart-donut.svg';
 import ChartRadarIcon from '@/components/icons/chart-radar.svg';

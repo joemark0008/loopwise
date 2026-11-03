@@ -4,7 +4,7 @@ import type { Browser } from 'puppeteer-core';
 
 import { HandlerError } from '../../../common/errors/handler-error.js';
 
-// Ported from quarry's `stories/utils/headless-browser.ts`: one shared, lazily launched headless Chrome, relaunched
+// Ported from loopwise's `stories/utils/headless-browser.ts`: one shared, lazily launched headless Chrome, relaunched
 // if it disconnects. Chrome itself is not bundled: the image installs chromium (CHROME_PATH), a laptop uses Chrome.
 
 let browserPromise: Promise<Browser> | null = null;

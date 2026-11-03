@@ -184,7 +184,7 @@ export const providerLabels: Record<LlmProviderKind, string> = {
 	openaiCompatible: 'OpenAI Compatible',
 };
 
-/** One of quarry's built-in provider integrations. */
+/** One of loopwise's built-in provider integrations. */
 export type LlmProviderKind = (typeof LLM_PROVIDERS)[number];
 
 /** The only kind a project can declare several times, each instance under a name of its own. */

@@ -1,4 +1,4 @@
-import { wiseToolEntry } from '@quarry/shared/wise-tools';
+import { wiseToolEntry } from '@loopwise/shared/wise-tools';
 import { describe, expect, it, vi } from 'vitest';
 
 import { readOnlyToolServices, TOOL_SERVICE_READS } from '../services/tool-services.js';

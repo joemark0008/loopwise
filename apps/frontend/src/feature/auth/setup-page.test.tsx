@@ -179,7 +179,7 @@ describe('Setup page', () => {
 
 		expect(screen.getByText(/Create the first admin account/)).toBeTruthy();
 		expect(screen.getByText(/Printed in the server logs when Loopwise starts/)).toBeTruthy();
-		expect(screen.getByText(/logs quarry \| grep "setup token"/)).toBeTruthy();
+		expect(screen.getByText(/logs loopwise \| grep "setup token"/)).toBeTruthy();
 		expect(screen.getByText('At least 8 characters.')).toBeTruthy();
 	});
 });

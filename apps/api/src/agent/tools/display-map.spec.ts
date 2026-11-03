@@ -1,7 +1,7 @@
 import type { FeatureCollection } from 'geojson';
 import { describe, expect, it, vi } from 'vitest';
 
-// quarry: the chat history is read through `context.services` (upstream mocked `queries/chat.queries`).
+// loopwise: the chat history is read through `context.services` (upstream mocked `queries/chat.queries`).
 const chatQueries = {
 	getQueryResultByQueryId: vi.fn(
 		async (): Promise<{ columns: string[]; data: Record<string, unknown>[] } | null> => null,
@@ -18,7 +18,7 @@ vi.mock('../utils/safe-fetch.js', () => ({
 	parseAndValidateGeoJson: vi.fn(),
 }));
 
-import type { displayMap } from '@quarry/shared/tools';
+import type { displayMap } from '@loopwise/shared/tools';
 
 import type { QueryResult, ToolContext } from '../types/tools.js';
 import * as safeFetchModule from '../utils/safe-fetch.js';

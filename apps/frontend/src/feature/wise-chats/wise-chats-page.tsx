@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { MessageSquare, Plus } from 'lucide-react';
-import type { GroupedChatItem } from '@quarry/shared/types';
+import type { GroupedChatItem } from '@loopwise/shared/types';
 import { EmptyState } from '@/components/clinical/empty-state';
 import { PageHeader, PageSection } from '@/components/clinical/page-header';
 import pageStyles from '@/components/clinical/page.module.css';

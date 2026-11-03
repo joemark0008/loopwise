@@ -1,4 +1,4 @@
-import type { LlmProvider } from '@quarry/shared/types';
+import type { LlmProvider } from '@loopwise/shared/types';
 
 import { KNOWN_MODELS } from '../agent/providers/provider-meta.js';
 import type { CustomModelMetadata, ModelCosts } from '../agent/types/llm.js';

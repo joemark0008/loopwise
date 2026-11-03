@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { DATE_FORMAT_PRESETS, type DisplaySettings } from '@loopwise/shared/date';
+import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import { DATE_FORMAT_PRESETS, type DisplaySettings } from '@quarry/shared/date';
-import type { UserRole } from '@quarry/shared/types';
 import { z } from 'zod/v4';
 
 import { isDatabaseObjectAllowed } from '../agent/services/context-access.js';
@@ -52,8 +52,8 @@ export class ProjectsService {
 	}
 
 	/**
-	 * quarry addition (upstream self-hosted has one project from a default project path): a project gets a
-	 * folder under `QUARRY_PROJECTS_DIR` for its context, in the user's organization, with the user as admin.
+	 * loopwise addition (upstream self-hosted has one project from a default project path): a project gets a
+	 * folder under `LOOPWISE_PROJECTS_DIR` for its context, in the user's organization, with the user as admin.
 	 */
 	async createProject(userId: string, name: string): Promise<ProjectSummary> {
 		const trimmed = name.trim();
@@ -67,7 +67,7 @@ export class ProjectsService {
 		const folder = path.join(this.projectsDir(), `${slugify(trimmed)}-${id.slice(0, 8)}`);
 		await mkdir(folder, { recursive: true });
 		await writeFile(
-			path.join(folder, 'quarry_config.yaml'),
+			path.join(folder, 'loopwise_config.yaml'),
 			`project_name: ${JSON.stringify(trimmed)}\ndatabases: []\n`,
 		);
 		try {
@@ -97,7 +97,7 @@ export class ProjectsService {
 		return toSummary({ ...project, name: trimmed }, 'admin');
 	}
 
-	/** Deletes the project; its folder too when quarry created it under `QUARRY_PROJECTS_DIR`. */
+	/** Deletes the project; its folder too when loopwise created it under `LOOPWISE_PROJECTS_DIR`. */
 	async deleteProject(project: Project): Promise<void> {
 		await this.projects.deleteProject(project.id);
 		if (project.path && isInside(this.projectsDir(), project.path)) {
@@ -138,7 +138,7 @@ export class ProjectsService {
 	}
 
 	private projectsDir(): string {
-		return path.resolve(this.config.env.QUARRY_PROJECTS_DIR);
+		return path.resolve(this.config.env.LOOPWISE_PROJECTS_DIR);
 	}
 
 	/**

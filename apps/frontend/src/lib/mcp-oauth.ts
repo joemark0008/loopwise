@@ -1,7 +1,7 @@
 import { getActiveProjectId } from '@/lib/active-project';
 
 interface McpOAuthMessage {
-	type: 'quarry-mcp-oauth';
+	type: 'loopwise-mcp-oauth';
 	status: 'connected' | 'error';
 	server: string;
 	message?: string;
@@ -13,7 +13,7 @@ export interface McpConnectResult {
 }
 
 const isOAuthMessage = (data: unknown): data is McpOAuthMessage =>
-	!!data && typeof data === 'object' && (data as McpOAuthMessage).type === 'quarry-mcp-oauth';
+	!!data && typeof data === 'object' && (data as McpOAuthMessage).type === 'loopwise-mcp-oauth';
 
 /**
  * Opens the per-user MCP OAuth flow in a popup and resolves once the user connected, the flow
@@ -28,7 +28,7 @@ export function openMcpConnectPopup(server: string): Promise<McpConnectResult> {
 
 	const popup = window.open(
 		`/api/mcp-oauth/connect?${params.toString()}`,
-		'quarry-mcp-oauth',
+		'loopwise-mcp-oauth',
 		'width=520,height=720',
 	);
 	if (!popup) {

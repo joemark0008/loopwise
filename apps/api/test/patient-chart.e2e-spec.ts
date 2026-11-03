@@ -43,14 +43,14 @@ describe('patient chart (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-quarry-project-id': projectId } : {})
+			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
 			.send({ query, variables });
 
 	const ask = (cookie: string[], body: Record<string, unknown>) =>
 		request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', cookie)
-			.set('x-quarry-project-id', projectId)
+			.set('x-loopwise-project-id', projectId)
 			.send({ model: MODEL, ...body })
 			.buffer(true)
 			.parse((response, callback) => {
@@ -61,7 +61,7 @@ describe('patient chart (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.QUARRY_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'quarry-projects-'));
+		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);

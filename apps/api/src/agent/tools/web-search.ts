@@ -1,7 +1,7 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
-import type { LlmProvider } from '@quarry/shared/types';
+import type { LlmProvider } from '@loopwise/shared/types';
 
 import type { ProviderSettings } from '../types/llm.js';
 import { withToolKind } from '../utils/tools.js';

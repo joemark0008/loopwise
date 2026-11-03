@@ -1,10 +1,10 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Settings, TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { providerLabel, providerName } from '@quarry/shared/types';
+import { providerLabel, providerName } from '@loopwise/shared/types';
 
 import styles from './chat-input-model-select.module.css';
-import type { LlmProvider, LlmSelectedModel } from '@quarry/shared/types';
+import type { LlmProvider, LlmSelectedModel } from '@loopwise/shared/types';
 
 import { LlmProviderIcon } from '@/components/ui/llm-provider-icon';
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,8 +17,8 @@ import { getShortcutLabel } from '@/lib/keyboard-shortcuts';
 /** Listed as an option rather than a link, so that the keyboard reaches it like any other. */
 const MANAGE_MODELS_VALUE = 'manage-models';
 /** Follows the default chat model set by the admin instead of pinning a model. */
-const QUARRY_DEFAULT_VALUE = 'quarry-default';
-const QUARRY_DEFAULT_LABEL = 'Auto';
+const LOOPWISE_DEFAULT_VALUE = 'loopwise-default';
+const LOOPWISE_DEFAULT_LABEL = 'Auto';
 const EXAMPLE_MODEL_VALUE = 'example-model';
 const PROJECT_SETUP_VALUE = 'project-setup';
 const EXAMPLE_MODEL_NAME = 'GPT 6 Sol';
@@ -38,7 +38,7 @@ export function ChatInputModelSelect({ isExample = false }: { isExample?: boolea
 	} = useModelSelection();
 	const { isTooltipOpen, onTooltipOpenChange, onSelectOpenChange } = useSelectTriggerTooltip();
 
-	// Fall back to the quarry default when the pinned model is no longer available
+	// Fall back to the loopwise default when the pinned model is no longer available
 	useEffect(() => {
 		if (usesDefaultModel || !availableModels || availableModels.length === 0) {
 			return;
@@ -54,7 +54,7 @@ export function ChatInputModelSelect({ isExample = false }: { isExample?: boolea
 				navigate({ to: '/settings/project/models' });
 				return;
 			}
-			if (value === QUARRY_DEFAULT_VALUE) {
+			if (value === LOOPWISE_DEFAULT_VALUE) {
 				setSelectedModel(null);
 				return;
 			}
@@ -73,8 +73,12 @@ export function ChatInputModelSelect({ isExample = false }: { isExample?: boolea
 		? availableModels?.find((model) => isSameModel(model, defaultModel))
 		: undefined;
 	const resolvedModelName = selectedAvailableModel?.name ?? selectedModel?.modelId;
-	const selectedModelName = usesDefaultModel ? QUARRY_DEFAULT_LABEL : (resolvedModelName ?? 'Select model');
-	const selectValue = usesDefaultModel ? QUARRY_DEFAULT_VALUE : selectedModel ? modelValue(selectedModel) : undefined;
+	const selectedModelName = usesDefaultModel ? LOOPWISE_DEFAULT_LABEL : (resolvedModelName ?? 'Select model');
+	const selectValue = usesDefaultModel
+		? LOOPWISE_DEFAULT_VALUE
+		: selectedModel
+			? modelValue(selectedModel)
+			: undefined;
 
 	if (isExample) {
 		return <ExampleModel />;
@@ -152,7 +156,7 @@ export function ChatInputModelSelect({ isExample = false }: { isExample?: boolea
 			</Tooltip>
 
 			<SelectContent align='center' position='popper' side='top' collisionPadding={12}>
-				<SelectItem value={QUARRY_DEFAULT_VALUE}>
+				<SelectItem value={LOOPWISE_DEFAULT_VALUE}>
 					{defaultModel && (
 						<LlmProviderIcon
 							provider={defaultModel.provider}
@@ -160,7 +164,7 @@ export function ChatInputModelSelect({ isExample = false }: { isExample?: boolea
 							className={styles.chatInputModelSelectLlmProviderIcon}
 						/>
 					)}
-					{QUARRY_DEFAULT_LABEL}
+					{LOOPWISE_DEFAULT_LABEL}
 					{defaultAvailableModel && (
 						<span className={styles.chatInputModelSelectSpan2}>{defaultAvailableModel.name}</span>
 					)}

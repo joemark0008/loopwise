@@ -1,4 +1,4 @@
-import { displayChart } from '@quarry/shared/tools';
+import { displayChart } from '@loopwise/shared/tools';
 
 export function selectLatestDisplayChartTableFormats(
 	rows: { toolInput: unknown }[],

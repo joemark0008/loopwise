@@ -5,12 +5,12 @@ import { AuthService } from '../../auth/auth.service.js';
 import { ACCESS_KEY, type AccessRequirement } from '../decorators/access.decorator.js';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 import { HandlerError } from '../errors/handler-error.js';
-import { getArgs, getRequest, type QuarryRequest } from '../request.js';
+import { getArgs, getRequest, type LoopwiseRequest } from '../request.js';
 import { convertHeaders } from '../utils/auth-utils.js';
 import { AccessService } from './access.service.js';
 
-const PROJECT_HEADER = 'x-quarry-project-id';
-const ORGANIZATION_HEADER = 'x-quarry-organization-id';
+const PROJECT_HEADER = 'x-loopwise-project-id';
+const ORGANIZATION_HEADER = 'x-loopwise-organization-id';
 
 /** One session lookup per request: GraphQL runs the guard once per resolver, possibly in parallel. */
 const sessionLookups = new WeakMap<object, Promise<void>>();
@@ -75,7 +75,7 @@ export class AuthGuard implements CanActivate {
 		return true;
 	}
 
-	private async attachSession(req: QuarryRequest): Promise<void> {
+	private async attachSession(req: LoopwiseRequest): Promise<void> {
 		if (req.user) {
 			return;
 		}

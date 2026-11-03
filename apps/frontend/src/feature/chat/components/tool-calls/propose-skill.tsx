@@ -3,7 +3,7 @@ import { BookOpen, Check, Copy, Pencil, X } from 'lucide-react';
 import { memo, useState } from 'react';
 import { findAnswerForToolCall } from './clarification';
 import styles from './propose-skill.module.css';
-import type { SkillDraft } from '@quarry/shared/skill-authoring';
+import type { SkillDraft } from '@loopwise/shared/skill-authoring';
 import type { ToolCallComponentProps } from '.';
 
 import { Button } from '@/components/ui/button';

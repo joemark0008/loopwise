@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { restUntil, WORK_FITNESS } from '@quarry/shared/medical-certificate';
+import { restUntil, WORK_FITNESS } from '@loopwise/shared/medical-certificate';
 import { Plus, Printer } from 'lucide-react';
 import { useState } from 'react';
 import styles from './encounter.module.css';

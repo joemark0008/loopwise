@@ -1,7 +1,7 @@
+import type { UserRole } from '@loopwise/shared/types';
 import type { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host.js';
-import type { UserRole } from '@quarry/shared/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AuthService } from '../../auth/auth.service.js';
@@ -9,7 +9,7 @@ import type { OrganizationRepository } from '../../organizations/organization.re
 import type { ProjectRepository } from '../../projects/project.repository.js';
 import { OrgAdmin, OrgMember, ProjectAccess, ProjectAdmin, ProjectNonViewer } from '../decorators/access.decorator.js';
 import { Public } from '../decorators/public.decorator.js';
-import type { QuarryRequest } from '../request.js';
+import type { LoopwiseRequest } from '../request.js';
 import { AccessService } from './access.service.js';
 import { AuthGuard } from './auth.guard.js';
 
@@ -80,7 +80,7 @@ const guard = new AuthGuard(
 );
 
 function contextFor(route: Route, headers: Record<string, string> = {}) {
-	const req = { headers } as unknown as QuarryRequest;
+	const req = { headers } as unknown as LoopwiseRequest;
 	const context = new ExecutionContextHost([req, {}, () => undefined], Handlers, Handlers.prototype[route]);
 	context.setType('http');
 	return { req, context: context as unknown as ExecutionContext };
@@ -131,7 +131,7 @@ describe('@ProjectAccess()', () => {
 	});
 
 	it('passes the selected project header to the lookup', async () => {
-		await run('projectRoute', { 'x-quarry-project-id': 'project-1' });
+		await run('projectRoute', { 'x-loopwise-project-id': 'project-1' });
 		expect(projects.getProjectByUserId).toHaveBeenCalledWith(USER.id, 'project-1');
 	});
 
@@ -189,13 +189,13 @@ describe('@OrgMember()', () => {
 	});
 
 	it('resolves the organization from the selected organization header first', async () => {
-		await run('orgMemberRoute', { 'x-quarry-organization-id': 'org-1', 'x-quarry-project-id': 'project-1' });
+		await run('orgMemberRoute', { 'x-loopwise-organization-id': 'org-1', 'x-loopwise-project-id': 'project-1' });
 		expect(organizations.getUserOrgMembership).toHaveBeenCalledWith(USER.id, 'org-1');
 		expect(organizations.getUserOrgMembershipByProject).not.toHaveBeenCalled();
 	});
 
 	it('falls back to the selected project organization', async () => {
-		await run('orgMemberRoute', { 'x-quarry-project-id': 'project-1' });
+		await run('orgMemberRoute', { 'x-loopwise-project-id': 'project-1' });
 		expect(organizations.getUserOrgMembershipByProject).toHaveBeenCalledWith(USER.id, 'project-1');
 	});
 

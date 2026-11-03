@@ -1,7 +1,7 @@
 import { useDebouncedValue } from '@mantine/hooks';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { IDENTIFIER_SYSTEMS } from '@quarry/shared/patient-registration';
+import { IDENTIFIER_SYSTEMS } from '@loopwise/shared/patient-registration';
 import { CircleCheck, Search, SearchX, UserPlus, Users, X } from 'lucide-react';
 import { useState } from 'react';
 import { ageLabel, identifierValues, languageLabel, patientInitials, patientName } from './patient-format';

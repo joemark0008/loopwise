@@ -7,7 +7,7 @@ import {
 	OTHER_USERS_KEY,
 	OTHER_USERS_LABEL,
 } from './usage-by-user';
-import type { UsageByUserRecord } from '@quarry/shared/usage';
+import type { UsageByUserRecord } from '@loopwise/shared/usage';
 
 function user(userName: string, messageCount: number, totalTokens = 0, totalCost = 0) {
 	return { userName, messageCount, totalTokens, totalCost };

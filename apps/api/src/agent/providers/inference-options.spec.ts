@@ -1,4 +1,4 @@
-import { type LlmProvider, providerKind } from '@quarry/shared/types';
+import { type LlmProvider, providerKind } from '@loopwise/shared/types';
 import { describe, expect, it } from 'vitest';
 
 import type { ModelInferenceSettings, ProviderSettings } from '../types/llm.js';

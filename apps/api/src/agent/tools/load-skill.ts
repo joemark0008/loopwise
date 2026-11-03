@@ -1,5 +1,5 @@
-import { isSkillGranted } from '@quarry/shared';
-import { loadSkill } from '@quarry/shared/tools';
+import { isSkillGranted } from '@loopwise/shared';
+import { loadSkill } from '@loopwise/shared/tools';
 
 import type { Skill } from '../../skills/skill.service.js';
 import { isProjectContextPathAllowed } from '../services/project-context-path-access.service.js';

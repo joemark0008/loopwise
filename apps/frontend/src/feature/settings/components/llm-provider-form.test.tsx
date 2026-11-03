@@ -22,8 +22,8 @@ describe('LlmProviderForm', () => {
 			/>,
 		);
 
-		expect(screen.getByText('(optional - leave empty to use quarry_config.yaml)')).toBeTruthy();
-		expect(screen.getByPlaceholderText('Enter bearer token to override quarry_config.yaml')).toBeTruthy();
+		expect(screen.getByText('(optional - leave empty to use loopwise_config.yaml)')).toBeTruthy();
+		expect(screen.getByPlaceholderText('Enter bearer token to override loopwise_config.yaml')).toBeTruthy();
 		expect(screen.queryByText(/leave empty to use AWS credentials from environment/)).toBeNull();
 	});
 

@@ -1,6 +1,6 @@
 import { Slider } from '@mantine/core';
 import styles from './tool-call-density-slider.module.css';
-import type { ToolCallDensity } from '@quarry/shared/types';
+import type { ToolCallDensity } from '@loopwise/shared/types';
 import { cn } from '@/lib/utils';
 
 const densityOptions: { value: ToolCallDensity; label: string }[] = [

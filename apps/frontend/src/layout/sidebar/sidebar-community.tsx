@@ -7,7 +7,11 @@ import { createLocalStorage } from '@/lib/local-storage';
 import GithubIcon from '@/components/icons/github-icon.svg';
 import { NewsletterSubscribeDialog } from '@/feature/settings/components/newsletter-subscribe';
 import SlackIcon from '@/components/icons/slack.svg';
-import { QUARRY_COMMUNITY_URL, QUARRY_NEWSLETTER_SUBSCRIBE_URL, QUARRY_REPOSITORY_URL } from '@/lib/quarry-links';
+import {
+	LOOPWISE_COMMUNITY_URL,
+	LOOPWISE_NEWSLETTER_SUBSCRIBE_URL,
+	LOOPWISE_REPOSITORY_URL,
+} from '@/lib/loopwise-links';
 
 interface SidebarCommunityProps {
 	isCollapsed: boolean;
@@ -27,7 +31,7 @@ export function SidebarCommunity({ isCollapsed }: SidebarCommunityProps) {
 		}
 	};
 
-	if (isCollapsed || (!QUARRY_REPOSITORY_URL && !QUARRY_COMMUNITY_URL && !QUARRY_NEWSLETTER_SUBSCRIBE_URL)) {
+	if (isCollapsed || (!LOOPWISE_REPOSITORY_URL && !LOOPWISE_COMMUNITY_URL && !LOOPWISE_NEWSLETTER_SUBSCRIBE_URL)) {
 		return null;
 	}
 
@@ -35,9 +39,9 @@ export function SidebarCommunity({ isCollapsed }: SidebarCommunityProps) {
 		<div className={styles.sidebarCommunityDiv}>
 			<span className={styles.sidebarCommunitySpan}>Community</span>
 			<div className={styles.sidebarCommunityDiv2}>
-				{QUARRY_REPOSITORY_URL && (
+				{LOOPWISE_REPOSITORY_URL && (
 					<a
-						href={QUARRY_REPOSITORY_URL}
+						href={LOOPWISE_REPOSITORY_URL}
 						target='_blank'
 						rel='noopener noreferrer'
 						className={cn(styles.sidebarCommunityA)}
@@ -46,9 +50,9 @@ export function SidebarCommunity({ isCollapsed }: SidebarCommunityProps) {
 						<GithubIcon className={styles.sidebarCommunityGithubIcon} />
 					</a>
 				)}
-				{QUARRY_COMMUNITY_URL && (
+				{LOOPWISE_COMMUNITY_URL && (
 					<a
-						href={QUARRY_COMMUNITY_URL}
+						href={LOOPWISE_COMMUNITY_URL}
 						target='_blank'
 						rel='noopener noreferrer'
 						className={cn(styles.sidebarCommunityA)}
@@ -57,7 +61,7 @@ export function SidebarCommunity({ isCollapsed }: SidebarCommunityProps) {
 						<SlackIcon className={styles.sidebarCommunitySlackIcon} />
 					</a>
 				)}
-				{QUARRY_NEWSLETTER_SUBSCRIBE_URL && (
+				{LOOPWISE_NEWSLETTER_SUBSCRIBE_URL && (
 					<button
 						type='button'
 						onClick={handleNewsletterClick}

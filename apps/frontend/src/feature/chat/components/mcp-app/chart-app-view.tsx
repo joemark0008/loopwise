@@ -1,22 +1,22 @@
-import { isBuiltinChartType } from '@quarry/shared/chart-types';
+import { isBuiltinChartType } from '@loopwise/shared/chart-types';
 import { memo, useMemo } from 'react';
 
 import { McpAppHeader } from './mcp-app-header';
-import { OpenInQuarryButton } from './open-in-quarry-button';
+import { OpenInLoopwiseButton } from './open-in-loopwise-button';
 import styles from './chart-app-view.module.css';
-import type { displayChart } from '@quarry/shared/tools';
+import type { displayChart } from '@loopwise/shared/tools';
 import type { ReactNode } from 'react';
-import type { McpChartEmbedStoredConfig } from '@quarry/shared';
+import type { McpChartEmbedStoredConfig } from '@loopwise/shared';
 import { sortByDateKey } from '@/lib/charts.utils';
 import { ChartDisplay } from '@/feature/chat/components/tool-calls/display-chart';
 
 interface ChartAppViewProps {
 	config: McpChartEmbedStoredConfig;
 	data: Record<string, unknown>[];
-	quarryUrl?: string;
+	loopwiseUrl?: string;
 }
 
-export const ChartAppView = memo(function ChartAppView({ config, data, quarryUrl }: ChartAppViewProps) {
+export const ChartAppView = memo(function ChartAppView({ config, data, loopwiseUrl }: ChartAppViewProps) {
 	const chartData = useMemo(
 		() => (config.xAxisType === 'date' ? sortByDateKey(data, config.xAxisKey) : data),
 		[data, config.xAxisKey, config.xAxisType],
@@ -69,7 +69,7 @@ export const ChartAppView = memo(function ChartAppView({ config, data, quarryUrl
 	return (
 		<div className={styles.chartAppViewDiv3}>
 			<McpAppHeader title={config.title}>
-				{quarryUrl ? <OpenInQuarryButton url={quarryUrl} /> : null}
+				{loopwiseUrl ? <OpenInLoopwiseButton url={loopwiseUrl} /> : null}
 			</McpAppHeader>
 			<div className={styles.chartAppViewDiv4}>
 				<div className={styles.chartAppViewDiv5}>{body}</div>

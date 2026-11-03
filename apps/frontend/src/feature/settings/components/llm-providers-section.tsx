@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { providerLabel, providerLabels } from '@quarry/shared/types';
+import { providerLabel, providerLabels } from '@loopwise/shared/types';
 import { ProviderCard } from './llm-provider-card';
 import { LlmProviderForm } from './llm-provider-form';
 import styles from './llm-providers-section.module.css';
-import type { LlmProvider } from '@quarry/shared/types';
+import type { LlmProvider } from '@loopwise/shared/types';
 import { useLlmProviders } from '@/hooks/use-llm-providers';
 
 export type ProviderToEdit = { provider: LlmProvider; modelId?: string };
@@ -59,7 +59,7 @@ export function LlmProvidersSection({ isAdmin, providerToEdit, onProviderToEditO
 			badges.push(hasOwnCredentials ? 'ENV (overridden)' : 'ENV');
 		}
 		if (configProviders.some((c) => c.provider === config.provider)) {
-			badges.push('quarry_config.yaml (overridden)');
+			badges.push('loopwise_config.yaml (overridden)');
 		}
 		return badges;
 	};
@@ -100,7 +100,7 @@ export function LlmProvidersSection({ isAdmin, providerToEdit, onProviderToEditO
 				);
 			})}
 
-			{/* Providers declared in quarry_config.yaml */}
+			{/* Providers declared in loopwise_config.yaml */}
 			{unconfiguredConfigProviders.map((configProvider) => {
 				if (editingState?.isEditing && editingState.provider === configProvider.provider) {
 					return (
@@ -128,7 +128,7 @@ export function LlmProvidersSection({ isAdmin, providerToEdit, onProviderToEditO
 						credentialPreviews={configProvider.credentialPreviews}
 						baseUrl={configProvider.baseUrl}
 						enabledModels={configProvider.enabledModels}
-						badges={['quarry_config.yaml']}
+						badges={['loopwise_config.yaml']}
 						isAdmin={isAdmin}
 						isFormActive={!!editingState}
 						onEdit={() => handleOverrideConfigProvider(configProvider)}

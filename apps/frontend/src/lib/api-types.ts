@@ -4,25 +4,25 @@
  * router's types before the cut-over (Phase 8).
  *
  * The procedures are GraphQL fields whose `JSON` results the `lib/*-api.ts` modules cast; their types were
- *   generated once from upstream's router at the cut-over and point at quarry's own type modules. Keep them in step
+ *   generated once from upstream's router at the cut-over and point at loopwise's own type modules. Keep them in step
  *   with apps/api by hand.
  */
-import type { AgentSettings } from '@quarry/api/agent/types/agent-settings';
-import type { ForkMetadata, UIChat } from '@quarry/api/agent/types/chat';
-import type { StorageConfigSummary } from '@quarry/api/attachments/storage/index';
-import type { StorageUsage } from '@quarry/api/attachments/storage/usage';
-import type { SearchChatResult } from '@quarry/api/chats/chat.repository';
-import type { QueryRowsPage } from '@quarry/api/chats/query-rows.service';
-import type { SharedChatWithDetails } from '@quarry/api/chats/shared-chat.repository';
-import type { ModelSettingsService } from '@quarry/api/model-settings/model-settings.service';
-import type { Skill, SkillLoadError } from '@quarry/api/skills/skill.service';
-import type { DefaultModelSettings } from '@quarry/shared/background-models';
-import type { ChartPluginManifestEntry } from '@quarry/shared/chart-plugin';
-import type { ColumnLineageNode } from '@quarry/shared/citation';
-import type { DisplaySettings } from '@quarry/shared/date';
-import type { CustomBoundarySet } from '@quarry/shared/map';
-import type { displayChart, displayMap } from '@quarry/shared/tools';
-import type { GroupedChatListResponse, LlmProvider, LlmSelectedModel, UserRole } from '@quarry/shared/types';
+import type { AgentSettings } from '@loopwise/api/agent/types/agent-settings';
+import type { ForkMetadata, UIChat } from '@loopwise/api/agent/types/chat';
+import type { StorageConfigSummary } from '@loopwise/api/attachments/storage/index';
+import type { StorageUsage } from '@loopwise/api/attachments/storage/usage';
+import type { SearchChatResult } from '@loopwise/api/chats/chat.repository';
+import type { QueryRowsPage } from '@loopwise/api/chats/query-rows.service';
+import type { SharedChatWithDetails } from '@loopwise/api/chats/shared-chat.repository';
+import type { ModelSettingsService } from '@loopwise/api/model-settings/model-settings.service';
+import type { Skill, SkillLoadError } from '@loopwise/api/skills/skill.service';
+import type { DefaultModelSettings } from '@loopwise/shared/background-models';
+import type { ChartPluginManifestEntry } from '@loopwise/shared/chart-plugin';
+import type { ColumnLineageNode } from '@loopwise/shared/citation';
+import type { DisplaySettings } from '@loopwise/shared/date';
+import type { CustomBoundarySet } from '@loopwise/shared/map';
+import type { displayChart, displayMap } from '@loopwise/shared/tools';
+import type { GroupedChatListResponse, LlmProvider, LlmSelectedModel, UserRole } from '@loopwise/shared/types';
 import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import type {
 	AddAllergyInput,

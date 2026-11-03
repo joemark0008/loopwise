@@ -1,7 +1,7 @@
-import type { RepoProvider } from '@quarry/shared/types';
+import type { RepoProvider } from '@loopwise/shared/types';
 
-export type { ContextRecommendationCategory } from '@quarry/shared/context-recommendation';
-export { CONTEXT_RECOMMENDATION_CATEGORIES } from '@quarry/shared/context-recommendation';
+export type { ContextRecommendationCategory } from '@loopwise/shared/context-recommendation';
+export { CONTEXT_RECOMMENDATION_CATEGORIES } from '@loopwise/shared/context-recommendation';
 
 export const CONTEXT_RECOMMENDATION_RUN_STATUSES = ['running', 'completed', 'failed', 'cancelled'] as const;
 export type ContextRecommendationRunStatus = (typeof CONTEXT_RECOMMENDATION_RUN_STATUSES)[number];

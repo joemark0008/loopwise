@@ -1,4 +1,4 @@
-import { findPatient } from '@quarry/shared/tools';
+import { findPatient } from '@loopwise/shared/tools';
 
 import { createTool } from '../utils/tools.js';
 

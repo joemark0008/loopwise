@@ -1,4 +1,4 @@
-import type { LlmSelectedModel } from '@quarry/shared/types';
+import type { LlmSelectedModel } from '@loopwise/shared/types';
 import type { ModelMessage, SystemModelMessage } from 'ai';
 
 import { CACHE_1H, CACHE_5M } from '../providers/providers.js';

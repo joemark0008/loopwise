@@ -1,5 +1,5 @@
-import type { McpAccess, UserGroupFeature, WarehouseRowSecurity } from '@quarry/shared';
-import type { UserRulesGroupAccess } from '@quarry/shared/rules-template';
+import type { McpAccess, UserGroupFeature, WarehouseRowSecurity } from '@loopwise/shared';
+import type { UserRulesGroupAccess } from '@loopwise/shared/rules-template';
 import type {
 	chartFacilityPanel,
 	chartPatientTrend,
@@ -17,8 +17,8 @@ import type {
 	proposePatientRegistration,
 	report,
 	runAnalyticsSql,
-} from '@quarry/shared/tools';
-import type { LlmSelectedModel } from '@quarry/shared/types';
+} from '@loopwise/shared/tools';
+import type { LlmSelectedModel } from '@loopwise/shared/types';
 
 import type { ChatImage } from '../../attachments/image.repository.js';
 import type { SkillService } from '../../skills/skill.service.js';
@@ -53,7 +53,7 @@ export interface StoredQueryPart {
 }
 
 /**
- * quarry: the services tools call, built per run by the agent module (PLAN.md §6: tools are framework-agnostic
+ * loopwise: the services tools call, built per run by the agent module (PLAN.md §6: tools are framework-agnostic
  * AI SDK tools, services reach them through the ToolContext). Upstream imported these modules directly.
  */
 export interface AgentToolServices {

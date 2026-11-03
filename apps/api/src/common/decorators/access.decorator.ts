@@ -1,7 +1,7 @@
+import type { UserRole } from '@loopwise/shared/types';
 import { SetMetadata } from '@nestjs/common';
-import type { UserRole } from '@quarry/shared/types';
 
-export const ACCESS_KEY = 'quarry:access';
+export const ACCESS_KEY = 'loopwise:access';
 
 export type AccessRequirement =
 	{ kind: 'project'; roles?: readonly UserRole[] } | { kind: 'organization'; adminOnly: boolean };
@@ -12,7 +12,7 @@ export interface ProjectAccessOptions {
 }
 
 /**
- * Resolves the selected project (`projectId` argument or `x-quarry-project-id` header) and requires a role
+ * Resolves the selected project (`projectId` argument or `x-loopwise-project-id` header) and requires a role
  * in it. Sets `request.project` and `request.userRole` (`@CurrentProject()`, `@CurrentUserRole()`).
  */
 export const ProjectAccess = (options: ProjectAccessOptions = {}) =>
@@ -25,7 +25,7 @@ export const ProjectAdmin = () => ProjectAccess({ roles: ['admin'] });
 export const ProjectNonViewer = () => ProjectAccess({ roles: ['admin', 'user', 'context_admin'] });
 
 /**
- * Resolves the user's organization (`x-quarry-organization-id` header, else the selected project's, else the
+ * Resolves the user's organization (`x-loopwise-organization-id` header, else the selected project's, else the
  * oldest membership). Sets `request.organization` and `request.orgRole` (`@CurrentOrganization()`).
  */
 export const OrgMember = () =>

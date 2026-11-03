@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
-import { filterSupersededExecuteSqlParts } from '@quarry/shared/execute-sql-parts';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import { filterSupersededExecuteSqlParts } from '@loopwise/shared/execute-sql-parts';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import { areArraysShallowEqual } from '@/lib/utils';
 
 /**

@@ -6,14 +6,14 @@ import {
 	getModelParameterSpec,
 	getProviderAuth,
 	PROVIDER_META,
-} from '@quarry/api/agent/providers/provider-meta';
-import { NAMED_PROVIDER_KIND, providerKind, providerLabels, toProviderName } from '@quarry/shared/types';
+} from '@loopwise/api/agent/providers/provider-meta';
+import { NAMED_PROVIDER_KIND, providerKind, providerLabels, toProviderName } from '@loopwise/shared/types';
 import { CustomModelDialog } from './custom-model-dialog';
 import { ModelParametersDialog } from './model-parameters-dialog';
 import { applySavedModelSettings } from './model-settings-overrides';
 import styles from './llm-provider-form.module.css';
-import type { CustomModelMetadata, ModelSettingsMap } from '@quarry/api/agent/types/llm';
-import type { LlmProvider } from '@quarry/shared/types';
+import type { CustomModelMetadata, ModelSettingsMap } from '@loopwise/api/agent/types/llm';
+import type { LlmProvider } from '@loopwise/shared/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordField, TextField, TextareaField, FormError } from '@/components/ui/form-fields';
@@ -23,7 +23,7 @@ export type InheritedKeySource = 'env' | 'config';
 
 const INHERITED_KEY_LABELS: Record<InheritedKeySource, string> = {
 	env: 'env',
-	config: 'quarry_config.yaml',
+	config: 'loopwise_config.yaml',
 };
 
 export interface LlmProviderFormProps {
@@ -282,10 +282,10 @@ export function LlmProviderForm({
 				<div className={styles.contentDiv2}>
 					<TriangleAlert className={styles.contentTriangleAlert} />
 					<p className={styles.contentP}>
-						This provider is defined in <span className={styles.contentSpan2}>quarry_config.yaml</span>.
+						This provider is defined in <span className={styles.contentSpan2}>loopwise_config.yaml</span>.
 						Settings saved here are stored in the project and take precedence over the file, so later edits
-						to <span className={styles.contentSpan2}>quarry_config.yaml</span> are ignored until you delete
-						this provider here.
+						to <span className={styles.contentSpan2}>loopwise_config.yaml</span> are ignored until you
+						delete this provider here.
 					</p>
 				</div>
 			)}

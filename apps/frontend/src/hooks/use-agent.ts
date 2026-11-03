@@ -8,9 +8,9 @@ import { useLocalStorage } from './use-local-storage';
 import { usePrevRef } from './use-prev';
 import { useMemoObject } from './useMemoObject';
 import type { UseChatHelpers } from '@ai-sdk/react';
-import type { QueryWorkbenchContext, UIMessage } from '@quarry/api/agent/types/chat';
-import type { ImageUploadData } from '@quarry/shared/attachments';
-import type { CitationData, LlmSelectedModel } from '@quarry/shared/types';
+import type { QueryWorkbenchContext, UIMessage } from '@loopwise/api/agent/types/chat';
+import type { ImageUploadData } from '@loopwise/shared/attachments';
+import type { CitationData, LlmSelectedModel } from '@loopwise/shared/types';
 import type { DocumentAttachment } from '@/lib/attachments';
 import type { FileUIPart, InferUIMessageChunk } from 'ai';
 import type { MentionOption } from 'prompt-mentions';
@@ -85,10 +85,10 @@ export interface SendMessageArgs {
 	citation?: CitationData;
 }
 
-export const selectedModelStorage = createLocalStorage<LlmSelectedModel>('quarry-selected-model');
+export const selectedModelStorage = createLocalStorage<LlmSelectedModel>('loopwise-selected-model');
 
 export const getOnboardingChatIdStorage = (userId: string) =>
-	createLocalStorage<string>(`quarry-onboarding-chat-id:${userId}`);
+	createLocalStorage<string>(`loopwise-onboarding-chat-id:${userId}`);
 
 const agentCitationStore = new WeakMap<Agent<UIMessage>, CitationData | undefined>();
 /** Admin mode captured at send time, so an ack-time toggle cannot mislabel the message. */
@@ -120,7 +120,7 @@ export const useAgent = ({
 	const chat = useChatQuery({ chatId });
 	const { data: session } = useSession();
 
-	// A null pick means "quarry default": no model is sent and the server resolves the admin default.
+	// A null pick means "loopwise default": no model is sent and the server resolves the admin default.
 	const [pinnedModel, setSelectedModel] = useLocalStorage(selectedModelStorage);
 	const currentProject = useCurrentProject();
 	const hasProject = currentProject.data != null;

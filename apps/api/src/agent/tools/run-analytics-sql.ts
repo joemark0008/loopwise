@@ -1,4 +1,4 @@
-import { runAnalyticsSql } from '@quarry/shared/tools';
+import { runAnalyticsSql } from '@loopwise/shared/tools';
 
 import { createTool, rememberToolOutput, withResultId } from '../utils/tools.js';
 

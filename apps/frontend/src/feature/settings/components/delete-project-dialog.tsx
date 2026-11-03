@@ -26,7 +26,7 @@ interface DeleteProjectDialogProps {
 	projectName: string;
 }
 
-/** quarry: deletes the project once its name is typed back, then falls back to another project. */
+/** loopwise: deletes the project once its name is typed back, then falls back to another project. */
 export function DeleteProjectDialog({ open, onOpenChange, projectId, projectName }: DeleteProjectDialogProps) {
 	const [confirmation, setConfirmation] = useState('');
 	const [deleteProject, { loading, error, reset }] = useMutation(DeleteProjectDocument);

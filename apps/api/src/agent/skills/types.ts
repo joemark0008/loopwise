@@ -1,5 +1,5 @@
 /**
- * Internal skills are playbooks quarry ships with itself, rather than ones a user writes in
+ * Internal skills are playbooks loopwise ships with itself, rather than ones a user writes in
  * their project. They exist to teach the loop how to handle something the tools alone do
  * not explain — a file format with traps in it, typically.
  *

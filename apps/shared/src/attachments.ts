@@ -14,7 +14,7 @@ export type ImageUploadData = {
 };
 
 /**
- * The media type quarry stores each accepted document extension under. Browsers disagree on
+ * The media type loopwise stores each accepted document extension under. Browsers disagree on
  * the type of several of these and report none at all for others, so the extension is the
  * only part of the upload we trust.
  */
@@ -64,7 +64,7 @@ export const isImageMediaType = (mediaType: string): mediaType is ImageMediaType
 	return (ALLOWED_IMAGE_MEDIA_TYPES as readonly string[]).includes(mediaType);
 };
 
-/** The accepted extension of a file name, or undefined when quarry does not handle that kind of file. */
+/** The accepted extension of a file name, or undefined when loopwise does not handle that kind of file. */
 export const documentExtension = (fileName: string): DocumentExtension | undefined => {
 	const extension = fileExtension(fileName);
 	return Object.hasOwn(DOCUMENT_MEDIA_TYPES, extension) ? (extension as DocumentExtension) : undefined;

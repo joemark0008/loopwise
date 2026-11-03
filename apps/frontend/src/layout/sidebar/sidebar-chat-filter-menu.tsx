@@ -2,7 +2,7 @@ import { CheckIcon, ChevronRight, CircleIcon, ListFilter } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import styles from './sidebar-chat-filter-menu.module.css';
-import type { ChatFilterType, ChatGroupBy } from '@quarry/shared/types';
+import type { ChatFilterType, ChatGroupBy } from '@loopwise/shared/types';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,

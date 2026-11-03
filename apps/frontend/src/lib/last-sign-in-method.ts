@@ -2,7 +2,7 @@ export const SIGN_IN_METHODS = ['email', 'google', 'github', 'gitlab', 'microsof
 
 export type SignInMethod = (typeof SIGN_IN_METHODS)[number];
 
-const LAST_SIGN_IN_METHOD_STORAGE_KEY = 'quarry:last-sign-in-method';
+const LAST_SIGN_IN_METHOD_STORAGE_KEY = 'loopwise:last-sign-in-method';
 
 export function rememberSignInMethod(method: SignInMethod): void {
 	try {

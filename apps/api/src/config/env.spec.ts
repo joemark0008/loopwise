@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { EnvValidationError, parseEnv } from './env.js';
 
-/** Port of upstream `tests/env.test.ts`, minus the cloud and billing cases (quarry is self-hosted only). */
-const BASE_ENV = { DATABASE_URL: 'postgresql://localhost/quarry' };
+/** Port of upstream `tests/env.test.ts`, minus the cloud and billing cases (loopwise is self-hosted only). */
+const BASE_ENV = { DATABASE_URL: 'postgresql://localhost/loopwise' };
 
 function loadEnvWithOverrides(overrides: NodeJS.ProcessEnv) {
 	try {
@@ -31,10 +31,10 @@ describe('required and cross-field variables', () => {
 	});
 
 	it('requires a bucket for the S3 storage backend', () => {
-		expect(loadEnvWithOverrides({ QUARRY_STORAGE_BACKEND: 's3' }).status).toBe(1);
-		expect(loadEnvWithOverrides({ QUARRY_STORAGE_BACKEND: 's3', QUARRY_STORAGE_S3_BUCKET: 'bucket' }).status).toBe(
-			0,
-		);
+		expect(loadEnvWithOverrides({ LOOPWISE_STORAGE_BACKEND: 's3' }).status).toBe(1);
+		expect(
+			loadEnvWithOverrides({ LOOPWISE_STORAGE_BACKEND: 's3', LOOPWISE_STORAGE_S3_BUCKET: 'bucket' }).status,
+		).toBe(0);
 	});
 
 	it('requires BETTER_AUTH_SECRET in prod, so every replica prints the same setup token', () => {

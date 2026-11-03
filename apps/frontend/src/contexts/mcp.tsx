@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
-import type { McpServerStatus } from '@quarry/shared';
+import type { McpServerStatus } from '@loopwise/shared';
 
 interface McpContextValue {
 	servers: McpServerStatus[] | undefined;

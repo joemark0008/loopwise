@@ -1,5 +1,5 @@
+import type { UserRole } from '@loopwise/shared/types';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import type { UserRole } from '@quarry/shared/types';
 
 import type { AuthUser } from '../auth/auth.service.js';
 import { ProjectAdmin, ProjectNonViewer } from '../common/decorators/access.decorator.js';
@@ -25,7 +25,7 @@ import { UsageService } from './usage.service.js';
 
 /**
  * Settings → Usage. Viewers have no access; project admins see the whole project, other members their own usage.
- * The period settings are the caller's own, per project (`projectId` selects it, like the `x-quarry-project-id`
+ * The period settings are the caller's own, per project (`projectId` selects it, like the `x-loopwise-project-id`
  * header).
  */
 @Resolver()

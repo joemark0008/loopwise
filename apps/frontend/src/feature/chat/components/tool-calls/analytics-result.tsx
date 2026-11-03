@@ -1,11 +1,11 @@
 import { BarChart3, Database } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import { Legend, ResponsiveContainer, Tooltip } from 'recharts';
-import { buildAnalyticsChart, compatibleChartTypes, retype } from '@quarry/shared/analytics-chart';
+import { buildAnalyticsChart, compatibleChartTypes, retype } from '@loopwise/shared/analytics-chart';
 import { TableDisplay } from './display-table';
 import styles from './analytics-result.module.css';
 import { SqlQueryDisplay } from './sql-query-display';
-import type { runAnalyticsSql } from '@quarry/shared/tools';
+import type { runAnalyticsSql } from '@loopwise/shared/tools';
 import type { ToolCallComponentProps } from '.';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/ui/error-message';

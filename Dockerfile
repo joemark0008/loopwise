@@ -24,10 +24,10 @@ COPY apps/api/prisma.config.ts apps/api/
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm ci --no-audit --no-fund
 
 COPY . .
-# Frontend links are build-time variables (VITE_QUARRY_*): pass them as build args to show those links.
-ARG VITE_QUARRY_DOCS_URL VITE_QUARRY_SUPPORT_EMAIL VITE_QUARRY_REPOSITORY_URL VITE_QUARRY_COMMUNITY_URL \
-	VITE_QUARRY_NEWSLETTER_SUBSCRIBE_URL VITE_QUARRY_PRIVACY_URL
-RUN npm run build -w @quarry/frontend
+# Frontend links are build-time variables (VITE_LOOPWISE_*): pass them as build args to show those links.
+ARG VITE_LOOPWISE_DOCS_URL VITE_LOOPWISE_SUPPORT_EMAIL VITE_LOOPWISE_REPOSITORY_URL VITE_LOOPWISE_COMMUNITY_URL \
+	VITE_LOOPWISE_NEWSLETTER_SUBSCRIBE_URL VITE_LOOPWISE_PRIVACY_URL
+RUN npm run build -w @loopwise/frontend
 
 FROM base AS runtime
 
@@ -36,12 +36,12 @@ COPY --from=build /app /app
 ENV NODE_ENV=production \
 	MODE=prod \
 	PORT=5006 \
-	QUARRY_FRONTEND_DIST=/app/apps/frontend/dist \
-	QUARRY_PROJECTS_DIR=/data/projects \
-	QUARRY_STORAGE_LOCAL_PATH=/data/storage
+	LOOPWISE_FRONTEND_DIST=/app/apps/frontend/dist \
+	LOOPWISE_PROJECTS_DIR=/data/projects \
+	LOOPWISE_STORAGE_LOCAL_PATH=/data/storage
 
 VOLUME /data
 EXPOSE 5006
 
 # Applies pending Prisma migrations, then starts the API (which serves the frontend).
-CMD ["sh", "-c", "npm run db:deploy -w @quarry/api && exec npm run start -w @quarry/api"]
+CMD ["sh", "-c", "npm run db:deploy -w @loopwise/api && exec npm run start -w @loopwise/api"]

@@ -7,9 +7,9 @@ import {
 	isStoryFolderMentionId,
 	isStoryReferenceMentionId,
 	normalizeCitationMarkers,
-} from '@quarry/shared';
-import { fileExtension } from '@quarry/shared/attachments';
-import type { CitationData, LlmProvider, LlmSelectedModel } from '@quarry/shared/types';
+} from '@loopwise/shared';
+import { fileExtension } from '@loopwise/shared/attachments';
+import type { CitationData, LlmProvider, LlmSelectedModel } from '@loopwise/shared/types';
 import {
 	convertToModelMessages,
 	createUIMessageStream,
@@ -103,7 +103,7 @@ export interface AgentManagerDependencies {
  * UI message stream, persists the assistant message when the run ends (stopped or not), and generates the chat
  * title for a new chat. Long conversations are compacted (`RunCompaction` in the step preparation, summary rebuilt
  * from the last `data-compaction` part). Memory extraction is scheduled once the request is sent and `/` skill
- * mentions are expanded in the last user message. Loopwise dropped quarry's story mode, story references and
+ * mentions are expanded in the last user message. Loopwise dropped loopwise's story mode, story references and
  * conversation artifacts with the stories module.
  * Not ported: PostHog tracking.
  */
@@ -147,7 +147,7 @@ export class AgentManager {
 			prepareStep: async ({ messages }) => this._prepareStep(messages),
 			stopWhen: this._stopConditions,
 			experimental_context: this._toolContext,
-			experimental_telemetry: llmTelemetry('quarry-agent', {
+			experimental_telemetry: llmTelemetry('loopwise-agent', {
 				sessionId: this.chat.id,
 				userId: this.chat.userId,
 				tags: [this._modelSelection.provider],
@@ -364,7 +364,7 @@ export class AgentManager {
 			system: 'Generate a short, descriptive title (3-8 words) for this conversation based on the user message. Always generate a title, no matter the input. Only capitalize the first letter of the title and nouns. Answer with the title alone, without quotes or any other text.',
 			messages: [{ role: 'user', content: titleGenerationUserMessage(userMessageText) }],
 			maxOutputTokens: TITLE_MAX_OUTPUT_TOKENS,
-			experimental_telemetry: llmTelemetry('quarry-generate-title', {
+			experimental_telemetry: llmTelemetry('loopwise-generate-title', {
 				sessionId: this.chat.id,
 				userId: this.chat.userId,
 				tags: [provider],

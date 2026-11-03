@@ -70,7 +70,7 @@ export const NAV_SECTIONS: { id: NavSection; label: string; isAdvanced?: boolean
 
 const isMember = ({ isViewer }: NavContext) => !isViewer;
 const isContextManager = ({ isAdmin, isContextAdmin }: NavContext) => isAdmin || isContextAdmin;
-/** quarry's project, model and usage settings: kept for the admin who runs the instance, hidden from clinicians. */
+/** loopwise's project, model and usage settings: kept for the admin who runs the instance, hidden from clinicians. */
 const isInstanceAdmin = ({ isAdmin }: NavContext) => isAdmin;
 
 const CLINICIANS: StaffRole[] = ['doctor', 'nurse', 'specialist'];

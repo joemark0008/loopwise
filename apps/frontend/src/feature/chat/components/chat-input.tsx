@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, PencilRuler, Paperclip, Shield, Check } from 'lucide-react';
-import { ALLOWED_IMAGE_MEDIA_TYPES, ATTACHMENT_ACCEPT } from '@quarry/shared/attachments';
+import { ALLOWED_IMAGE_MEDIA_TYPES, ATTACHMENT_ACCEPT } from '@loopwise/shared/attachments';
 import { SlidingWaveform } from './chat-input-sliding-waveform';
 import { ChatPrompt, openMentionMenuAtEnd, SKILL_MENTION_TRIGGER } from './chat-input-prompt';
 import { ChatInputAnimatedBorder } from './chat-input-animated-border';
@@ -42,7 +42,7 @@ import { messageQueueStore } from '@/stores/chat-message-queue';
 import { chatInputRestoreStore, useChatInputRestore } from '@/stores/chat-input-restore';
 import { chatPendingCitationStore } from '@/stores/chat-pending-citation';
 import { useChatPendingCitation } from '@/hooks/use-chat-pending-citation';
-import { useIsCloud } from '@/hooks/use-quarry-mode';
+import { useIsCloud } from '@/hooks/use-loopwise-mode';
 import { useCurrentProject } from '@/hooks/use-current-project';
 import { projectApi } from '@/lib/project-api';
 import { storageApi } from '@/lib/storage-api';
@@ -122,10 +122,10 @@ function ChatInputBase({
 		mode,
 	} = useAgentContext();
 	const navigate = useNavigate();
-	const { canChatWithQuarryData, isAdmin } = usePermissions();
+	const { canChatWithLoopwiseData, isAdmin } = usePermissions();
 	const chatId = useChatId();
 
-	const isAdminMode = canChatWithQuarryData && adminMode;
+	const isAdminMode = canChatWithLoopwiseData && adminMode;
 	const adminModeLocked = useAgentMessagesSelector((messages) => messages.some((message) => message.role === 'user'));
 	const handleSelectAdminMode = useCallback(() => {
 		if (!adminModeLocked) {
@@ -439,7 +439,7 @@ function ChatInputBase({
 							{mode !== 'onboarding' && (
 								<ChatInputPlusMenu
 									hasSkills={hasSkills}
-									canChatWithQuarryData={canChatWithQuarryData}
+									canChatWithLoopwiseData={canChatWithLoopwiseData}
 									isAdminMode={isAdminMode}
 									adminModeLocked={adminModeLocked}
 									isTrial={isTrial}
@@ -522,7 +522,7 @@ function ChatInputAdminBadge() {
 
 function ChatInputPlusMenu({
 	hasSkills,
-	canChatWithQuarryData,
+	canChatWithLoopwiseData,
 	isAdminMode,
 	adminModeLocked,
 	onSelectAdminMode,
@@ -531,7 +531,7 @@ function ChatInputPlusMenu({
 	onFocusPrompt,
 }: {
 	hasSkills: boolean;
-	canChatWithQuarryData: boolean;
+	canChatWithLoopwiseData: boolean;
 	isAdminMode: boolean;
 	adminModeLocked: boolean;
 	isTrial: boolean;
@@ -584,7 +584,7 @@ function ChatInputPlusMenu({
 						<span>Skills</span>
 					</DropdownMenuItem>
 				)}
-				{canChatWithQuarryData && (
+				{canChatWithLoopwiseData && (
 					<>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem

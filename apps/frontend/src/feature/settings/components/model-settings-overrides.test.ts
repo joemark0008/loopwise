@@ -1,8 +1,8 @@
-import { getDefaultModelId } from '@quarry/api/agent/providers/provider-meta';
+import { getDefaultModelId } from '@loopwise/api/agent/providers/provider-meta';
 import { describe, expect, it } from 'vitest';
 
 import { applySavedModelSettings } from './model-settings-overrides';
-import type { ModelSettingsMap } from '@quarry/api/agent/types/llm';
+import type { ModelSettingsMap } from '@loopwise/api/agent/types/llm';
 
 describe('applySavedModelSettings', () => {
 	const provider = 'anthropic';

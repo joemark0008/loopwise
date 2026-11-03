@@ -49,7 +49,7 @@ async function seed() {
 		const orgs = app.get(OrganizationRepository);
 		const projects = app.get(ProjectRepository);
 
-		const projectPath = env.QUARRY_DEFAULT_PROJECT_PATH ?? './';
+		const projectPath = env.LOOPWISE_DEFAULT_PROJECT_PATH ?? './';
 		const useGithubAuth = env.GITHUB_SSO && !!env.GITHUB_CLIENT_ID && !!env.GITHUB_CLIENT_SECRET;
 
 		console.log('Seeding database...');

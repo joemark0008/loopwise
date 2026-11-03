@@ -4,14 +4,14 @@ import {
 	getStaticToolName as getStaticToolNameAi,
 	getToolName as getToolNameAi,
 } from 'ai';
-import { isImageMediaType } from '@quarry/shared/attachments';
-import { isQueryToolAgentName } from '@quarry/shared/query-tools';
-import { WISE_ACTIONS } from '@quarry/shared/wise-actions';
+import { isImageMediaType } from '@loopwise/shared/attachments';
+import { isQueryToolAgentName } from '@loopwise/shared/query-tools';
+import { WISE_ACTIONS } from '@loopwise/shared/wise-actions';
 import type { ReasoningUIPart, ToolUIPart } from 'ai';
 import type { UseChatHelpers } from '@ai-sdk/react';
-import type { UITools, UIToolPart, UIMessage, UIMessagePart, StaticToolName } from '@quarry/api/agent/types/chat';
-import type { ImageUploadData } from '@quarry/shared/attachments';
-import type { ToolCallDensity } from '@quarry/shared/types';
+import type { UITools, UIToolPart, UIMessage, UIMessagePart, StaticToolName } from '@loopwise/api/agent/types/chat';
+import type { ImageUploadData } from '@loopwise/shared/attachments';
+import type { ToolCallDensity } from '@loopwise/shared/types';
 import type { GroupablePart, ToolGroupPart, QueryGroupPart, GroupedMessagePart, MessageGroup } from '@/types/ai';
 import type { DynamicToolName } from '@/feature/chat/components/tool-calls/index';
 

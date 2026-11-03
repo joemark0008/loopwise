@@ -1,6 +1,6 @@
-import { isImageMediaType } from '@quarry/shared/attachments';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
-import type { ImageUploadData } from '@quarry/shared/attachments';
+import { isImageMediaType } from '@loopwise/shared/attachments';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
+import type { ImageUploadData } from '@loopwise/shared/attachments';
 import type { SendMessageArgs } from '@/hooks/use-agent';
 
 export function lastUserMessagePayload(messages: UIMessage[]): SendMessageArgs | null {

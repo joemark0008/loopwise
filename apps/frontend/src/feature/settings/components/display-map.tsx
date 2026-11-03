@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import styles from './display-map.module.css';
-import type { CustomBoundarySet } from '@quarry/shared';
+import type { CustomBoundarySet } from '@loopwise/shared';
 import type { FeatureCollection } from 'geojson';
 import { isDarkColorScheme } from '@/lib/color-scheme';
 

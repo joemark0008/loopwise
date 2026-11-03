@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import { ViewerToolbarControls } from './viewer-toolbar-controls';
 import { ViewerEmptyState, ViewerGroups } from './viewer-shared-items';
 import styles from './viewer-home.module.css';
-import type { StoryPanelDisplayMode, Visibility } from '@quarry/shared/types';
+import type { StoryPanelDisplayMode, Visibility } from '@loopwise/shared/types';
 import type { GroupBy, SharedItem } from '@/lib/viewer-home';
 import { MobileHeader } from '@/layout/mobile-header';
 import { ProjectSwitcher } from '@/components/project-selector';

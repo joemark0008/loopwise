@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
-import type { UIToolPart } from '@quarry/api/agent/types/chat';
+import type { UIToolPart } from '@loopwise/api/agent/types/chat';
 import { useMemoObject } from '@/hooks/useMemoObject';
 
 type ToolCallContextValue = {

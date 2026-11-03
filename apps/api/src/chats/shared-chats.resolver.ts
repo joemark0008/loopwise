@@ -1,5 +1,5 @@
+import type { UserRole } from '@loopwise/shared/types';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import type { UserRole } from '@quarry/shared/types';
 
 import type { AuthUser } from '../auth/auth.service.js';
 import { ProjectNonViewer } from '../common/decorators/access.decorator.js';

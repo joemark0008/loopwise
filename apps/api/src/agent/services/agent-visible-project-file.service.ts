@@ -3,7 +3,7 @@ import {
 	renderConditionalGroupBlocksWithSourceLines,
 	type RenderedConditionalGroupBlocks,
 	type UserRulesGroupAccess,
-} from '@quarry/shared/rules-template';
+} from '@loopwise/shared/rules-template';
 
 import type { ToolContext } from '../types/tools.js';
 

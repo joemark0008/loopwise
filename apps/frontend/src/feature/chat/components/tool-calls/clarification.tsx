@@ -2,7 +2,7 @@ import { Check, HelpCircle } from 'lucide-react';
 import { memo } from 'react';
 import styles from './clarification.module.css';
 import type { ToolCallComponentProps } from '.';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAgentContext, useAgentMessagesSelector } from '@/contexts/agent.provider';

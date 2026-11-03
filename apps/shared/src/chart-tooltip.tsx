@@ -53,7 +53,7 @@ type TooltipContentProps = React.ComponentProps<typeof Tooltip> &
 		cn?: ClassNameMerger;
 	};
 
-/** `quarry-chart-tooltip__*` classes let sandboxed custom stories style the same markup. */
+/** `loopwise-chart-tooltip__*` classes let sandboxed custom stories style the same markup. */
 export function ChartTooltipContent({
 	active,
 	payload,
@@ -86,7 +86,7 @@ export function ChartTooltipContent({
 		const itemConfig = getPayloadConfigFromPayload(config, item, key);
 		const isAxisValue = !labelKey && (typeof label === 'string' || typeof label === 'number');
 		const value = isAxisValue ? config[String(label)]?.label || label : itemConfig?.label;
-		const labelClasses = cn('quarry-shared-labelclasses-2689f3 quarry-chart-tooltip__label', labelClassName);
+		const labelClasses = cn('loopwise-shared-labelclasses-2689f3 loopwise-chart-tooltip__label', labelClassName);
 
 		if (labelFormatter) {
 			return <div className={labelClasses}>{labelFormatter(value, payload)}</div>;
@@ -126,9 +126,9 @@ export function ChartTooltipContent({
 	const firstItemFormat = getPayloadConfigFromPayload(config, firstItem, firstItemKey)?.valueFormat;
 
 	return (
-		<div className={cn('quarry-shared-charttooltipcontentdiv-24a33e quarry-chart-tooltip', className)}>
+		<div className={cn('loopwise-shared-charttooltipcontentdiv-24a33e loopwise-chart-tooltip', className)}>
 			{!nestLabel ? tooltipLabel : null}
-			<div className='quarry-shared-charttooltipcontentdiv-c7bd35 quarry-chart-tooltip__items'>
+			<div className='loopwise-shared-charttooltipcontentdiv-c7bd35 loopwise-chart-tooltip__items'>
 				{visiblePayload.map((item, index) => {
 					const key = `${nameKey || item.name || item.dataKey || 'value'}`;
 					const itemConfig = getPayloadConfigFromPayload(config, item, key);
@@ -138,8 +138,8 @@ export function ChartTooltipContent({
 						<div
 							key={item.dataKey}
 							className={cn(
-								'quarry-shared-charttooltipcontentdiv-f0192d quarry-chart-tooltip__item',
-								indicator === 'dot' && 'quarry-shared-charttooltipcontentdiv-3960ff',
+								'loopwise-shared-charttooltipcontentdiv-f0192d loopwise-chart-tooltip__item',
+								indicator === 'dot' && 'loopwise-shared-charttooltipcontentdiv-3960ff',
 							)}
 						>
 							{formatter && item?.value !== undefined && item.name ? (
@@ -152,15 +152,15 @@ export function ChartTooltipContent({
 										!hideIndicator && (
 											<div
 												className={cn(
-													`quarry-chart-tooltip__indicator quarry-chart-tooltip__indicator--${indicator} quarry-chart-tooltip__indicator-layout`,
+													`loopwise-chart-tooltip__indicator loopwise-chart-tooltip__indicator--${indicator} loopwise-chart-tooltip__indicator-layout`,
 													{
-														'quarry-shared-charttooltipcontentdiv-315860':
+														'loopwise-shared-charttooltipcontentdiv-315860':
 															indicator === 'dot',
-														'quarry-shared-charttooltipcontentdiv-0b0057':
+														'loopwise-shared-charttooltipcontentdiv-0b0057':
 															indicator === 'line',
-														'quarry-shared-charttooltipcontentdiv-c4f2ae':
+														'loopwise-shared-charttooltipcontentdiv-c4f2ae':
 															indicator === 'dashed',
-														'quarry-shared-charttooltipcontentdiv-7bd3b5':
+														'loopwise-shared-charttooltipcontentdiv-7bd3b5':
 															nestLabel && indicator === 'dashed',
 													},
 												)}
@@ -175,20 +175,20 @@ export function ChartTooltipContent({
 									)}
 									<div
 										className={cn(
-											'quarry-shared-charttooltipcontentdiv-72d25d quarry-chart-tooltip__row',
+											'loopwise-shared-charttooltipcontentdiv-72d25d loopwise-chart-tooltip__row',
 											nestLabel
-												? 'quarry-shared-charttooltipcontentdiv-6f27f4'
-												: 'quarry-shared-charttooltipcontentdiv-3960ff',
+												? 'loopwise-shared-charttooltipcontentdiv-6f27f4'
+												: 'loopwise-shared-charttooltipcontentdiv-3960ff',
 										)}
 									>
-										<div className='quarry-shared-charttooltipcontentdiv-c7bd35'>
+										<div className='loopwise-shared-charttooltipcontentdiv-c7bd35'>
 											{nestLabel ? tooltipLabel : null}
-											<span className='quarry-shared-charttooltipcontentspan-bfa603 quarry-chart-tooltip__name'>
+											<span className='loopwise-shared-charttooltipcontentspan-bfa603 loopwise-chart-tooltip__name'>
 												{itemConfig?.label || item.name}
 											</span>
 										</div>
 										{item.value !== undefined && item.value !== null && (
-											<span className='quarry-shared-charttooltipcontentspan-40f631 quarry-chart-tooltip__value'>
+											<span className='loopwise-shared-charttooltipcontentspan-40f631 loopwise-chart-tooltip__value'>
 												{formatTooltipValue(item.value, {
 													percent,
 													shareBase,
@@ -204,12 +204,12 @@ export function ChartTooltipContent({
 					);
 				})}
 				{showTotal && (
-					<div className='quarry-shared-charttooltipcontentdiv-1a8d63 quarry-chart-tooltip__total'>
-						<div className='quarry-shared-charttooltipcontentdiv-d70e83 quarry-chart-tooltip__row'>
-							<span className='quarry-shared-charttooltipcontentspan-5963c2 quarry-chart-tooltip__name'>
+					<div className='loopwise-shared-charttooltipcontentdiv-1a8d63 loopwise-chart-tooltip__total'>
+						<div className='loopwise-shared-charttooltipcontentdiv-d70e83 loopwise-chart-tooltip__row'>
+							<span className='loopwise-shared-charttooltipcontentspan-5963c2 loopwise-chart-tooltip__name'>
 								Total
 							</span>
-							<span className='quarry-shared-charttooltipcontentspan-40f631 quarry-chart-tooltip__value'>
+							<span className='loopwise-shared-charttooltipcontentspan-40f631 loopwise-chart-tooltip__value'>
 								{percent
 									? '100%'
 									: valueFormatter
@@ -233,7 +233,7 @@ type LegendContentProps = React.ComponentProps<'div'> &
 		cn?: ClassNameMerger;
 	};
 
-/** `quarry-chart-legend__*` classes let sandboxed custom stories style the same markup. */
+/** `loopwise-chart-legend__*` classes let sandboxed custom stories style the same markup. */
 export function ChartLegendContent({
 	className,
 	hideIcon = false,
@@ -256,19 +256,19 @@ export function ChartLegendContent({
 	return (
 		<div
 			className={cn(
-				'quarry-shared-chartlegendcontentdiv-1b314c quarry-chart-legend',
+				'loopwise-shared-chartlegendcontentdiv-1b314c loopwise-chart-legend',
 				isVertical
-					? 'quarry-shared-chartlegendcontentdiv-446d83'
+					? 'loopwise-shared-chartlegendcontentdiv-446d83'
 					: cn(
-							'quarry-shared-chartlegendcontentdiv-bc3c5d',
+							'loopwise-shared-chartlegendcontentdiv-bc3c5d',
 							align === 'right'
-								? 'quarry-shared-chartlegendcontentdiv-77c08e'
+								? 'loopwise-shared-chartlegendcontentdiv-77c08e'
 								: align === 'left'
-									? 'quarry-shared-chartlegendcontentdiv-4b5cc1'
-									: 'quarry-shared-chartlegendcontentdiv-86843c',
+									? 'loopwise-shared-chartlegendcontentdiv-4b5cc1'
+									: 'loopwise-shared-chartlegendcontentdiv-86843c',
 							verticalAlign === 'top'
-								? 'quarry-shared-chartlegendcontentdiv-7fcf91'
-								: 'quarry-shared-chartlegendcontentdiv-ce335a',
+								? 'loopwise-shared-chartlegendcontentdiv-7fcf91'
+								: 'loopwise-shared-chartlegendcontentdiv-ce335a',
 						),
 				className,
 			)}
@@ -284,11 +284,11 @@ export function ChartLegendContent({
 						<div
 							key={item.value}
 							className={cn(
-								'quarry-shared-chartlegendcontentdiv-e898c8 quarry-chart-legend__item',
+								'loopwise-shared-chartlegendcontentdiv-e898c8 loopwise-chart-legend__item',
 								onItemClick &&
-									'quarry-shared-chartlegendcontentdiv-b18edd quarry-chart-legend__item--clickable',
+									'loopwise-shared-chartlegendcontentdiv-b18edd loopwise-chart-legend__item--clickable',
 								item.isHidden &&
-									'quarry-shared-chartlegendcontentdiv-2a2db4 quarry-chart-legend__item--hidden',
+									'loopwise-shared-chartlegendcontentdiv-2a2db4 loopwise-chart-legend__item--hidden',
 							)}
 							onClick={() => onItemClick?.(dataKey)}
 						>
@@ -296,7 +296,7 @@ export function ChartLegendContent({
 								<itemConfig.icon />
 							) : (
 								<div
-									className='quarry-shared-chartlegendcontentdiv-b72f31 quarry-chart-legend__swatch'
+									className='loopwise-shared-chartlegendcontentdiv-b72f31 loopwise-chart-legend__swatch'
 									style={{ backgroundColor: item.color }}
 								/>
 							)}

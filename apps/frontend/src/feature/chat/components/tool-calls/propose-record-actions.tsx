@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { DIAGNOSIS_CERTAINTIES } from '@quarry/shared/encounter-record';
-import { formatPesos } from '@quarry/shared/encounter-bill';
-import { resolveLabTest } from '@quarry/shared/wise-actions';
+import { DIAGNOSIS_CERTAINTIES } from '@loopwise/shared/encounter-record';
+import { formatPesos } from '@loopwise/shared/encounter-bill';
+import { resolveLabTest } from '@loopwise/shared/wise-actions';
 import {
 	BookmarkPlus,
 	ClipboardList,
@@ -18,7 +18,7 @@ import { ActionCard, ActionFrame, EncounterGate, isEdited, VisitLink } from './p
 import styles from './propose-action.module.css';
 import type { ProposalConfirm } from './proposal-card/proposal-card';
 import type { ToolPart } from './propose-action';
-import type { listLabOrders, report } from '@quarry/shared/tools';
+import type { listLabOrders, report } from '@loopwise/shared/tools';
 import type {
 	ActionOutput,
 	ProposeBillStepInput,
@@ -31,7 +31,7 @@ import type {
 	ProposeVoidDiagnosisInput,
 	ProposeVoidDocumentInput,
 	ProposeVoidVitalsInput,
-} from '@quarry/shared/wise-actions';
+} from '@loopwise/shared/wise-actions';
 import type { ToolCallComponentProps } from '.';
 import type { EncounterRecordFieldsFragment } from '@/graphql/generated/graphql';
 import { ErrorMessage } from '@/components/ui/error-message';

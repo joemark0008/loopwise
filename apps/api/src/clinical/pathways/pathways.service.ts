@@ -1,5 +1,5 @@
+import { parsePathwayDefinition, type PathwayDefinition } from '@loopwise/shared/pathway-rules';
 import { Injectable } from '@nestjs/common';
-import { parsePathwayDefinition, type PathwayDefinition } from '@quarry/shared/pathway-rules';
 
 import { ClinicalDbService } from '../rls/clinical-db.service.js';
 import { PathwayRepository } from './pathway.repository.js';
@@ -8,7 +8,7 @@ import { PathwayRepository } from './pathway.repository.js';
 const CACHE_MS = 60_000;
 
 /**
- * The active pathways, validated against `@quarry/shared/pathway-rules` (DESIGN.md §7). Read as system work, since the
+ * The active pathways, validated against `@loopwise/shared/pathway-rules` (DESIGN.md §7). Read as system work, since the
  * rules engine runs for the hub, and cached; a row that fails validation fails the load loudly rather than letting the
  * engine run on half a rule set.
  */

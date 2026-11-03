@@ -1,4 +1,4 @@
-import { proposeEncounterNote } from '@quarry/shared/tools';
+import { proposeEncounterNote } from '@loopwise/shared/tools';
 
 import { createTool } from '../utils/tools.js';
 

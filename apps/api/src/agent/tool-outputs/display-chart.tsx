@@ -1,4 +1,4 @@
-import type { displayChart } from '@quarry/shared/tools';
+import type { displayChart } from '@loopwise/shared/tools';
 
 import { Block } from '../markdown/index.js';
 

@@ -74,17 +74,17 @@ describe('S3StorageProvider keys', () => {
 	});
 
 	it('prepends the configured prefix', async () => {
-		const storage = new S3StorageProvider({ ...baseConfig, prefix: 'quarry' });
+		const storage = new S3StorageProvider({ ...baseConfig, prefix: 'loopwise' });
 		await storage.write('projects/p1/users/u1/a.csv', Buffer.from('x'));
 
-		expect(lastInput().Key).toBe('quarry/projects/p1/users/u1/a.csv');
+		expect(lastInput().Key).toBe('loopwise/projects/p1/users/u1/a.csv');
 	});
 
 	it('tolerates a prefix written with surrounding slashes', async () => {
-		const storage = new S3StorageProvider({ ...baseConfig, prefix: '/quarry/' });
+		const storage = new S3StorageProvider({ ...baseConfig, prefix: '/loopwise/' });
 		await storage.write('a.csv', Buffer.from('x'));
 
-		expect(lastInput().Key).toBe('quarry/a.csv');
+		expect(lastInput().Key).toBe('loopwise/a.csv');
 	});
 
 	it('passes the content type through', async () => {
@@ -95,7 +95,7 @@ describe('S3StorageProvider keys', () => {
 	});
 
 	it('rejects a key that exceeds the S3 limit after adding the configured prefix', async () => {
-		const storage = new S3StorageProvider({ ...baseConfig, prefix: 'quarry' });
+		const storage = new S3StorageProvider({ ...baseConfig, prefix: 'loopwise' });
 
 		await expect(storage.write('a'.repeat(1021), Buffer.from('x'))).rejects.toThrow(
 			'including the configured prefix',
@@ -124,13 +124,13 @@ describe('S3StorageProvider read', () => {
 describe('S3StorageProvider list', () => {
 	it('matches the prefix at a segment boundary and strips the configured prefix', async () => {
 		mocks.respond = () => ({
-			Contents: [{ Key: 'quarry/projects/p1/users/u1/a.csv', Size: 3, LastModified: new Date(0) }],
+			Contents: [{ Key: 'loopwise/projects/p1/users/u1/a.csv', Size: 3, LastModified: new Date(0) }],
 		});
 
-		const storage = new S3StorageProvider({ ...baseConfig, prefix: 'quarry' });
+		const storage = new S3StorageProvider({ ...baseConfig, prefix: 'loopwise' });
 		const objects = await storage.list('projects/p1/users/u1');
 
-		expect(lastInput().Prefix).toBe('quarry/projects/p1/users/u1/');
+		expect(lastInput().Prefix).toBe('loopwise/projects/p1/users/u1/');
 		expect(objects).toEqual([{ key: 'projects/p1/users/u1/a.csv', size: 3, lastModified: new Date(0) }]);
 	});
 
@@ -149,8 +149,8 @@ describe('S3StorageProvider list', () => {
 		await new S3StorageProvider(baseConfig).list('');
 		expect(lastInput().Prefix).toBe('');
 
-		await new S3StorageProvider({ ...baseConfig, prefix: 'quarry' }).list('');
-		expect(lastInput().Prefix).toBe('quarry/');
+		await new S3StorageProvider({ ...baseConfig, prefix: 'loopwise' }).list('');
+		expect(lastInput().Prefix).toBe('loopwise/');
 	});
 
 	it('follows pagination until the listing is complete', async () => {

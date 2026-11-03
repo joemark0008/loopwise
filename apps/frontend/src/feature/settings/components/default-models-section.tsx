@@ -6,11 +6,11 @@ import {
 	setBackgroundModelMode,
 	setDefaultChatModel,
 	setSingleBackgroundModel,
-} from '@quarry/shared';
+} from '@loopwise/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { findModel, ModelSelectField } from './model-select-field';
 import styles from './default-models-section.module.css';
-import type { BackgroundModelCategory, BackgroundModelMode, DefaultModelSettings } from '@quarry/shared';
+import type { BackgroundModelCategory, BackgroundModelMode, DefaultModelSettings } from '@loopwise/shared';
 import type { ReactNode } from 'react';
 import type { AvailableModel, ResolvedModel } from './model-select-field';
 

@@ -3,9 +3,9 @@ import {
 	isImageMediaType,
 	MAX_ATTACHMENTS_PER_MESSAGE,
 	MAX_IMAGE_SIZE_MB,
-} from '@quarry/shared/attachments';
+} from '@loopwise/shared/attachments';
 import { useCallback, useRef, useState } from 'react';
-import type { ImageMediaType, ImageUploadData } from '@quarry/shared/attachments';
+import type { ImageMediaType, ImageUploadData } from '@loopwise/shared/attachments';
 
 import type { DocumentAttachment } from '@/lib/attachments';
 import { uploadAttachment } from '@/lib/attachments';

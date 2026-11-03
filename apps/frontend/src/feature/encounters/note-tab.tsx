@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fieldErrors, EncounterNoteSchema } from '@quarry/shared/encounter-record';
+import { fieldErrors, EncounterNoteSchema } from '@loopwise/shared/encounter-record';
 import { DiagnosesSection } from './diagnoses-section';
 import styles from './encounter.module.css';
 import { noteFormFrom, toUpdateNoteInput } from './encounter-form-values';

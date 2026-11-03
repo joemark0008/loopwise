@@ -1,4 +1,4 @@
-import type { LlmProvider } from '@quarry/shared/types';
+import type { LlmProvider } from '@loopwise/shared/types';
 import { z } from 'zod/v4';
 
 import type { UIMessage } from './chat.js';

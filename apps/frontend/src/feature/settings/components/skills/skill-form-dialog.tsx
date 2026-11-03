@@ -1,7 +1,7 @@
-import { SKILL_NAME_PATTERN } from '@quarry/shared/skill-authoring';
+import { SKILL_NAME_PATTERN } from '@loopwise/shared/skill-authoring';
 import { useState } from 'react';
 import styles from './skills-settings.module.css';
-import type { SkillDraft } from '@quarry/shared/skill-authoring';
+import type { SkillDraft } from '@loopwise/shared/skill-authoring';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

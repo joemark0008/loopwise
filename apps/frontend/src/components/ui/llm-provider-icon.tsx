@@ -1,7 +1,7 @@
 import { Sun } from 'lucide-react';
-import { providerKind } from '@quarry/shared/types';
+import { providerKind } from '@loopwise/shared/types';
 import styles from './llm-provider-icon.module.css';
-import type { LlmProvider } from '@quarry/shared/types';
+import type { LlmProvider } from '@loopwise/shared/types';
 import AzureIcon from '@/components/icons/azure.svg';
 import ClaudeIcon from '@/components/icons/claude.svg';
 import GoogleIcon from '@/components/icons/google.svg';

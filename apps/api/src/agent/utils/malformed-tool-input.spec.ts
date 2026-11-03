@@ -109,7 +109,7 @@ function findStoryPart(message: UIMessage) {
 	if (!part) {
 		throw new Error('No story tool part found');
 	}
-	// `story` isn't one of quarry's tool parts yet (its write path isn't ported), so type the part loosely.
+	// `story` isn't one of loopwise's tool parts yet (its write path isn't ported), so type the part loosely.
 	return part as unknown as { state: string; input?: unknown; rawInput?: unknown; errorText?: string };
 }
 

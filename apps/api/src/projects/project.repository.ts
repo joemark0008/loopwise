@@ -1,8 +1,8 @@
+import type { CustomBoundarySet, MapSettings } from '@loopwise/shared';
+import type { DisplaySettings } from '@loopwise/shared/date';
+import { DEFAULT_DATE_FORMAT_SETTINGS } from '@loopwise/shared/date';
+import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import type { CustomBoundarySet, MapSettings } from '@quarry/shared';
-import type { DisplaySettings } from '@quarry/shared/date';
-import { DEFAULT_DATE_FORMAT_SETTINGS } from '@quarry/shared/date';
-import type { UserRole } from '@quarry/shared/types';
 
 import { HandlerError } from '../common/errors/handler-error.js';
 import { ConfigService } from '../config/config.service.js';
@@ -56,7 +56,7 @@ export class ProjectRepository {
 	}
 
 	async getDefaultProject(): Promise<Project | null> {
-		const projectPath = this.config.env.QUARRY_DEFAULT_PROJECT_PATH;
+		const projectPath = this.config.env.LOOPWISE_DEFAULT_PROJECT_PATH;
 		if (projectPath) {
 			return this.getProjectByPath(projectPath);
 		}
@@ -64,8 +64,8 @@ export class ProjectRepository {
 	}
 
 	/**
-	 * The project a request works on. quarry is self-hosted but has several projects (upstream's cloud mode):
-	 * the selected project when the user can access it, else the default project (`QUARRY_DEFAULT_PROJECT_PATH`)
+	 * The project a request works on. loopwise is self-hosted but has several projects (upstream's cloud mode):
+	 * the selected project when the user can access it, else the default project (`LOOPWISE_DEFAULT_PROJECT_PATH`)
 	 * when the user has a role in it, else the user's first project.
 	 */
 	async getProjectByUserId(userId: string, selectedProjectId?: string | null): Promise<Project | null> {

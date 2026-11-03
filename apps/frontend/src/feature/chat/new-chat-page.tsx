@@ -1,9 +1,9 @@
 import { getRouteApi, Link, Navigate } from '@tanstack/react-router';
 import { ArrowRight } from 'lucide-react';
 import { useEffect } from 'react';
-import { SYSTEM_EXAMPLE_PROJECT_ID } from '@quarry/shared';
+import { SYSTEM_EXAMPLE_PROJECT_ID } from '@loopwise/shared';
 import styles from './new-chat-page.module.css';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import { ChatInput } from '@/feature/chat/components/chat-input';
 import { ChatMessages } from '@/feature/chat/components/chat-messages/chat-messages';
 import { SavedPromptSuggestions } from '@/feature/chat/components/chat-saved-prompt-suggestions';
@@ -14,7 +14,7 @@ import { ViewerHome } from '@/feature/chat/components/viewer-home';
 import { useAgentContext, useAgentMessagesSelector } from '@/contexts/agent.provider';
 import { useIsDarkMode } from '@/contexts/theme.provider';
 import { useMultiProject } from '@/hooks/use-multi-project';
-import { useIsCloud } from '@/hooks/use-quarry-mode';
+import { useIsCloud } from '@/hooks/use-loopwise-mode';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useStaffRole } from '@/hooks/use-staff-role';
 import { useProjectSwitch } from '@/hooks/use-project-switch';
@@ -42,15 +42,15 @@ function HomePage() {
 	const username = session?.user?.name;
 	const { setAdminMode } = useAgentContext();
 	const isEmptyState = useAgentMessagesSelector(checkHasNoMessages);
-	const { canChatWithQuarryData } = usePermissions();
+	const { canChatWithLoopwiseData } = usePermissions();
 	const { admin: adminSearch, example: exampleSearch } = Route.useSearch();
 
 	useEffect(() => {
-		if (!canChatWithQuarryData) {
+		if (!canChatWithLoopwiseData) {
 			return;
 		}
 		setAdminMode(adminSearch === true);
-	}, [canChatWithQuarryData, adminSearch, setAdminMode]);
+	}, [canChatWithLoopwiseData, adminSearch, setAdminMode]);
 
 	const project = useCurrentProject();
 	const projects = useProjects();

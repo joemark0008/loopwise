@@ -1,4 +1,4 @@
-import { CONTEXT_CONFIG_FILENAME, normalizeFileTreePath } from '@quarry/shared';
+import { CONTEXT_CONFIG_FILENAME, normalizeFileTreePath } from '@loopwise/shared';
 import fs from 'fs';
 import path from 'path';
 
@@ -54,7 +54,7 @@ function getFileTreeCatalog(projectFolder: string, scope: FileTreeScope): FileTr
 	return { syncState: 'ready', entries: scanFileTreeDirectory(rootFolder, '', projectFolder, scope) };
 }
 
-/** The agent can never read `quarry_config.yaml` wherever it lives, so a grant on it would be unusable. */
+/** The agent can never read `loopwise_config.yaml` wherever it lives, so a grant on it would be unusable. */
 function isProjectConfigFile(entryName: string): boolean {
 	return entryName.toLowerCase() === CONTEXT_CONFIG_FILENAME;
 }

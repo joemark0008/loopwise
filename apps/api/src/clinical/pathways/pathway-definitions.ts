@@ -1,7 +1,7 @@
-import type { PathwayDefinitionInput } from '@quarry/shared/pathway-rules';
+import type { PathwayDefinitionInput } from '@loopwise/shared/pathway-rules';
 
 /**
- * The clinical pathways (seeded by `prisma/seed-pathways.ts`) (DESIGN.md §2, §7 `Pathway`, §8), in the schema of `@quarry/shared/pathway-rules`.
+ * The clinical pathways (seeded by `prisma/seed-pathways.ts`) (DESIGN.md §2, §7 `Pathway`, §8), in the schema of `@loopwise/shared/pathway-rules`.
  * Synthetic configuration: the thresholds follow the published guidelines cited next to them, but a pilot needs them
  * reviewed and signed off by the facility's clinicians (DESIGN.md §16). Bump a pathway's `version` whenever its rules
  * change, so every stored evaluation names the rules it came from.

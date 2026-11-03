@@ -1,4 +1,4 @@
-import { fileExtension } from '@quarry/shared/attachments';
+import { fileExtension } from '@loopwise/shared/attachments';
 
 import { fetchAttachment, fetchAttachmentSize } from '@/lib/attachments';
 import { parseDelimitedText } from '@/lib/delimited-text';

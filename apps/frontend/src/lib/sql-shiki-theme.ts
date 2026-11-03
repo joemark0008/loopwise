@@ -7,7 +7,7 @@ import { createOnigurumaEngine } from 'shiki/engine/oniguruma';
 import type { Monaco } from '@monaco-editor/react';
 import type { ThemeRegistration } from 'shiki/core';
 
-export const SQL_SHIKI_THEME = { light: 'quarry-sql-light', dark: 'quarry-sql-dark' } as const;
+export const SQL_SHIKI_THEME = { light: 'loopwise-sql-light', dark: 'loopwise-sql-dark' } as const;
 
 const TRANSPARENT = '#00000000';
 

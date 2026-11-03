@@ -16,7 +16,7 @@ const MODEL_SETTINGS = {
 /**
  * Settings → Models on Postgres through GraphQL. The model-settings cases port upstream
  * `tests/project-llm-config-model-settings.test.ts` (a SQLite round-trip of the repository); upstream
- * `project-llm-config-override.test.ts` covers the `quarry_config.yaml` `llm` block, which quarry does not port.
+ * `project-llm-config-override.test.ts` covers the `loopwise_config.yaml` `llm` block, which loopwise does not port.
  */
 describe('model settings (e2e)', () => {
 	let app: NestExpressApplication;
@@ -25,7 +25,7 @@ describe('model settings (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.QUARRY_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'quarry-projects-'));
+		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		({ cookie } = await createTestUser(app, { name: 'Ada', email: 'ada@example.com', password: 'Sup3r-secret!' }));
@@ -41,7 +41,7 @@ describe('model settings (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-quarry-project-id': projectId } : {})
+			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
 			.send({ query, variables });
 
 	const upsert = (input: Record<string, unknown>) =>

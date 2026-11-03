@@ -303,7 +303,7 @@ export type Output = z.infer<typeof OutputSchema>;
 
 export type BuiltinChartInput = Omit<ChartInput, 'chart_type'> & { chart_type: ChartType };
 
-/** Display types quarry renders natively (as opposed to project-defined custom charts): builtins plus `table`. */
+/** Display types loopwise renders natively (as opposed to project-defined custom charts): builtins plus `table`. */
 export function isNativeDisplayType(type: string): boolean {
 	return type === 'table' || isBuiltinChartType(type);
 }

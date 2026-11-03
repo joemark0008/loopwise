@@ -21,7 +21,7 @@ describe('project and user settings (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.QUARRY_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'quarry-projects-'));
+		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		({ cookie } = await createTestUser(app, { name: 'Ada', email: 'ada@example.com', password: 'Sup3r-secret!' }));
@@ -38,7 +38,7 @@ describe('project and user settings (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-quarry-project-id': projectId } : {})
+			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
 			.send({ query, variables });
 
 	it('lists the synced tables of the project', async () => {

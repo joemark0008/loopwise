@@ -1,10 +1,10 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { ArrowRight, PanelTop } from 'lucide-react';
 import { memo, useEffect, useRef } from 'react';
-import { APP_PAGES, appPageHref } from '@quarry/shared/app-pages';
+import { APP_PAGES, appPageHref } from '@loopwise/shared/app-pages';
 import styles from './open-page.module.css';
-import type { AppPageKey } from '@quarry/shared/app-pages';
-import type { openPage } from '@quarry/shared/tools';
+import type { AppPageKey } from '@loopwise/shared/app-pages';
+import type { openPage } from '@loopwise/shared/tools';
 import type { FileRoutesByTo } from '@/routeTree.gen';
 import type { ToolCallComponentProps } from '.';
 import { ErrorMessage } from '@/components/ui/error-message';

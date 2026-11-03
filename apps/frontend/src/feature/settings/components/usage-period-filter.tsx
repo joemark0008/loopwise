@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { CheckIcon, ChevronDownIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import { MAX_SAVED_USAGE_PERIODS } from '@quarry/shared/usage';
+import { MAX_SAVED_USAGE_PERIODS } from '@loopwise/shared/usage';
 import styles from './usage-period-filter.module.css';
 import type {
 	Granularity,
@@ -8,7 +8,7 @@ import type {
 	SavedUsagePeriodInput,
 	UsagePeriodMode,
 	UsagePeriodSelection,
-} from '@quarry/shared/usage';
+} from '@loopwise/shared/usage';
 import { SavedUsagePeriodDialog } from '@/feature/settings/components/saved-usage-period-dialog';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';

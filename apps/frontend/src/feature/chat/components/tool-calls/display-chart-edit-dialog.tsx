@@ -1,4 +1,4 @@
-import { computeKpiComparison, DEFAULT_COLORS } from '@quarry/shared';
+import { computeKpiComparison, DEFAULT_COLORS } from '@loopwise/shared';
 import {
 	chartTypeSupportsAxisLabels,
 	chartTypeSupportsComboSeries,
@@ -6,8 +6,8 @@ import {
 	isPercentStackedChartType,
 	isStackedChartType,
 	resolveShowDataLabels,
-} from '@quarry/shared/chart-types';
-import { displayChart } from '@quarry/shared/tools';
+} from '@loopwise/shared/chart-types';
+import { displayChart } from '@loopwise/shared/tools';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChartArea, ChartBar, ChartColumn, ChartColumnIncreasing, ChartLine, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
@@ -20,9 +20,9 @@ import styles from './display-chart-edit-dialog.module.css';
 import type { ColumnValueKind } from '@/lib/chart-selection-summary';
 import type { SourceQuery } from '@/lib/execute-sql-messages';
 import type { LucideIcon } from 'lucide-react';
-import type { executeSql } from '@quarry/shared/tools';
-import type { ChartType } from '@quarry/shared/chart-types';
-import type { UIMessage, UIToolPart } from '@quarry/api/agent/types/chat';
+import type { executeSql } from '@loopwise/shared/tools';
+import type { ChartType } from '@loopwise/shared/chart-types';
+import type { UIMessage, UIToolPart } from '@loopwise/api/agent/types/chat';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,

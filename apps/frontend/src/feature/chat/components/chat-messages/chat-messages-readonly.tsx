@@ -1,13 +1,13 @@
 import { memo, useMemo } from 'react';
 import { ThumbsDown, ThumbsUp } from 'lucide-react';
-import { filterSupersededExecuteSqlParts } from '@quarry/shared/execute-sql-parts';
+import { filterSupersededExecuteSqlParts } from '@loopwise/shared/execute-sql-parts';
 import { UserMessageBubble } from './user-message';
 import { MessageModelLabel } from './message-model-label';
 import { AssistantCompaction } from './assistant-compaction';
 import { MessageParts } from './assistant-message';
 import styles from './chat-messages-readonly.module.css';
 import type { StickToBottomContext } from 'use-stick-to-bottom';
-import type { ForkMetadata, MessageModel, UIMessage } from '@quarry/api/agent/types/chat';
+import type { ForkMetadata, MessageModel, UIMessage } from '@loopwise/api/agent/types/chat';
 import { SelectionCitationExcerpt } from '@/feature/chat/components/selection-citation-excerpt';
 import { checkAssistantMessageHasContent, groupMessages, groupToolCalls } from '@/lib/ai';
 import { cn } from '@/lib/utils';

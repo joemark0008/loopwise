@@ -1,5 +1,5 @@
 import styles from './report-sections.module.css';
-import type { createReport } from '@quarry/shared/tools';
+import type { createReport } from '@loopwise/shared/tools';
 import { ClinicalChartView } from '@/feature/chat/components/tool-calls/clinical-chart';
 
 /** The data sections of a Wise report (DESIGN.md §9.2), as the server froze them; the PDF prints the same ones. */

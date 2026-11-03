@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import type { executeSql } from '@quarry/shared/tools';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { executeSql } from '@loopwise/shared/tools';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import type { SourceQuery } from '@/lib/execute-sql-messages';
 import { useAgentMessagesSelector } from '@/contexts/agent.provider';
 import { areSourceQueriesEqual, findLatestExecuteSqlInMessages } from '@/lib/execute-sql-messages';

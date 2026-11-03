@@ -1,4 +1,4 @@
-import type { StoryFormat } from '@quarry/shared/types';
+import type { StoryFormat } from '@loopwise/shared/types';
 
 export interface StorySummary {
 	id: string;

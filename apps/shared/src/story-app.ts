@@ -15,12 +15,12 @@ export const STORY_APP_ALLOWED_IMPORTS = [
 	'lucide-react',
 	'leaflet',
 	'react-leaflet',
-	'@quarry/story-kit',
+	'@loopwise/story-kit',
 ] as const;
 
 export type StoryAppAllowedImport = (typeof STORY_APP_ALLOWED_IMPORTS)[number];
 
-export const STORY_APP_MANIFEST_PATH = 'quarry.json';
+export const STORY_APP_MANIFEST_PATH = 'loopwise.json';
 
 export const STORY_APP_ENTRY_CANDIDATES = ['app.jsx', 'app.tsx', 'app.js', 'app.ts'] as const;
 
@@ -34,9 +34,9 @@ export const isHtmlStoryEntry = (path: string): boolean => {
 	return /\.html$/i.test(path);
 };
 
-export const STORY_DOCUMENT_SLOTS = { head: '<!--quarry:head-->', body: '<!--quarry:body-->' } as const;
+export const STORY_DOCUMENT_SLOTS = { head: '<!--loopwise:head-->', body: '<!--loopwise:body-->' } as const;
 
-export const STORY_HTML_API_GLOBAL = 'quarry';
+export const STORY_HTML_API_GLOBAL = 'loopwise';
 
 export interface StoryHtmlApi {
 	query(queryId: string, options?: { fresh?: boolean }): Promise<StoryQueryResult>;
@@ -62,7 +62,7 @@ export const isAllowedStoryImport = (specifier: string): specifier is StoryAppAl
 };
 
 /** Module the frame's bootstrap uses to mount the app and talk to the host; stories cannot import it. */
-export const STORY_HOST_MODULE = '@quarry/story-host';
+export const STORY_HOST_MODULE = '@loopwise/story-host';
 
 export const STORY_RUNTIME_PATH = '/story-runtime';
 
@@ -83,7 +83,7 @@ export const STORY_RUNTIME_MODULES: Record<StoryAppAllowedImport | typeof STORY_
 	'lucide-react': 'lucide-react',
 	leaflet: 'leaflet',
 	'react-leaflet': 'react-leaflet',
-	'@quarry/story-kit': 'story-kit',
+	'@loopwise/story-kit': 'story-kit',
 	[STORY_HOST_MODULE]: 'story-host',
 };
 
@@ -132,22 +132,22 @@ export const EMPTY_STORY_STATE_SNAPSHOT: StoryStateSnapshot = { shared: {}, own:
 export const STORY_STANDALONE_RUNTIME_FILE = 'standalone.js';
 
 /** Global the standalone runtime fills with each module namespace, keyed by bare specifier. */
-export const STORY_STANDALONE_RUNTIME_GLOBAL = '__quarryStoryRuntime';
+export const STORY_STANDALONE_RUNTIME_GLOBAL = '__loopwiseStoryRuntime';
 
 /** Global the PDF renderer sets before a downloaded story boots. */
-export const STORY_PRINT_FLAG = '__quarryStoryPrint';
+export const STORY_PRINT_FLAG = '__loopwiseStoryPrint';
 
 /** Set on `<html>` while a printed story lays out a deck: the PDF renderer then prints one slide per page. */
-export const STORY_PRINT_SLIDES_ATTRIBUTE = 'data-quarry-print-slides';
+export const STORY_PRINT_SLIDES_ATTRIBUTE = 'data-loopwise-print-slides';
 
 /** Set to the printed Canvas dimensions, as `{width}x{height}`. */
-export const STORY_PRINT_CANVAS_ATTRIBUTE = 'data-quarry-print-canvas';
+export const STORY_PRINT_CANVAS_ATTRIBUTE = 'data-loopwise-print-canvas';
 
 /** Marks the story's own stylesheets, which the kit rebases on a fixed frame (Slides, Canvas). */
-export const STORY_STYLE_ATTRIBUTE = 'data-quarry-story-style';
+export const STORY_STYLE_ATTRIBUTE = 'data-loopwise-story-style';
 
 /** Container query name of the fixed frames (a Slide, a Canvas surface) the story's own styles are rebased on. */
-export const STORY_FRAME_CONTAINER = 'quarry-frame';
+export const STORY_FRAME_CONTAINER = 'loopwise-frame';
 
 export const STORY_SLIDE_SIZE = { width: 1280, height: 720 } as const;
 
@@ -207,45 +207,45 @@ export const isStoryKitEditableBlock = (value: string): value is StoryKitEditabl
 
 /** Frame → host. */
 export type StoryFrameMessage =
-	| { type: 'quarry-story:ready' }
-	| { type: 'quarry-story:query'; requestId: string; queryId: string; fresh?: boolean }
-	| { type: 'quarry-story:narratives'; requestId: string }
-	| { type: 'quarry-story:error'; message: string; stack?: string }
-	| { type: 'quarry-story:copy-table'; columns: string[]; rows: Record<string, unknown>[] }
+	| { type: 'loopwise-story:ready' }
+	| { type: 'loopwise-story:query'; requestId: string; queryId: string; fresh?: boolean }
+	| { type: 'loopwise-story:narratives'; requestId: string }
+	| { type: 'loopwise-story:error'; message: string; stack?: string }
+	| { type: 'loopwise-story:copy-table'; columns: string[]; rows: Record<string, unknown>[] }
 	| {
-			type: 'quarry-story:export-table';
+			type: 'loopwise-story:export-table';
 			format: StoryTableExportFormat;
 			filename: string;
 			columns: string[];
 			rows: Record<string, unknown>[];
 	  }
-	| ({ type: 'quarry-story:edit-block' } & StoryBlockEditPayload)
-	| ({ type: 'quarry-story:edit-table-format' } & StoryTableFormatEditRequest)
-	| { type: 'quarry-story:query-sql'; requestId: string; queryId: string }
-	| ({ type: 'quarry-story:set-state' } & StoryStateChange)
-	| { type: 'quarry-story:ask-block'; block: StoryBlockReference }
-	| ({ type: 'quarry-story:keydown' } & KeydownSnapshot);
+	| ({ type: 'loopwise-story:edit-block' } & StoryBlockEditPayload)
+	| ({ type: 'loopwise-story:edit-table-format' } & StoryTableFormatEditRequest)
+	| { type: 'loopwise-story:query-sql'; requestId: string; queryId: string }
+	| ({ type: 'loopwise-story:set-state' } & StoryStateChange)
+	| { type: 'loopwise-story:ask-block'; block: StoryBlockReference }
+	| ({ type: 'loopwise-story:keydown' } & KeydownSnapshot);
 
 /** Plain keys the host hands to the story while it holds focus; everything else needs the story focused. */
 export const STORY_FORWARDED_KEYS: readonly string[] = ['ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown'];
 
 /** Host → frame. */
 export type StoryHostMessage =
-	| { type: 'quarry-story:query-result'; requestId: string; result: StoryQueryResult }
-	| { type: 'quarry-story:query-error'; requestId: string; message: string }
-	| { type: 'quarry-story:query-sql-result'; requestId: string; sqlQuery: string }
-	| { type: 'quarry-story:query-sql-error'; requestId: string; message: string }
-	| { type: 'quarry-story:narratives-result'; requestId: string; narratives: StoryNarratives }
-	| { type: 'quarry-story:editing'; enabled: boolean }
-	| { type: 'quarry-story:theme'; theme: StoryTheme }
-	| { type: 'quarry-story:shortcuts'; shortcuts: Shortcut[] }
-	| ({ type: 'quarry-story:keydown' } & KeydownSnapshot);
+	| { type: 'loopwise-story:query-result'; requestId: string; result: StoryQueryResult }
+	| { type: 'loopwise-story:query-error'; requestId: string; message: string }
+	| { type: 'loopwise-story:query-sql-result'; requestId: string; sqlQuery: string }
+	| { type: 'loopwise-story:query-sql-error'; requestId: string; message: string }
+	| { type: 'loopwise-story:narratives-result'; requestId: string; narratives: StoryNarratives }
+	| { type: 'loopwise-story:editing'; enabled: boolean }
+	| { type: 'loopwise-story:theme'; theme: StoryTheme }
+	| { type: 'loopwise-story:shortcuts'; shortcuts: Shortcut[] }
+	| ({ type: 'loopwise-story:keydown' } & KeydownSnapshot);
 
 /**
  * Answers the frame's `ready` once, transferring the MessagePort every later message travels on.
  * The port belongs to the story's document, so a document the story navigates to never receives replies.
  */
-export const STORY_CONNECT_MESSAGE = 'quarry-story:connect';
+export const STORY_CONNECT_MESSAGE = 'loopwise-story:connect';
 
 export const isStoryConnectMessage = (value: unknown): boolean => {
 	return isStoryMessage(value) && value.type === STORY_CONNECT_MESSAGE;
@@ -263,18 +263,18 @@ export const isStoryFrameMessage = (value: unknown): value is StoryFrameMessage 
 	return (
 		isStoryMessage(value) &&
 		[
-			'quarry-story:ready',
-			'quarry-story:query',
-			'quarry-story:narratives',
-			'quarry-story:error',
-			'quarry-story:copy-table',
-			'quarry-story:export-table',
-			'quarry-story:edit-block',
-			'quarry-story:edit-table-format',
-			'quarry-story:query-sql',
-			'quarry-story:set-state',
-			'quarry-story:ask-block',
-			'quarry-story:keydown',
+			'loopwise-story:ready',
+			'loopwise-story:query',
+			'loopwise-story:narratives',
+			'loopwise-story:error',
+			'loopwise-story:copy-table',
+			'loopwise-story:export-table',
+			'loopwise-story:edit-block',
+			'loopwise-story:edit-table-format',
+			'loopwise-story:query-sql',
+			'loopwise-story:set-state',
+			'loopwise-story:ask-block',
+			'loopwise-story:keydown',
 		].includes(value.type)
 	);
 };
@@ -283,15 +283,15 @@ export const isStoryHostMessage = (value: unknown): value is StoryHostMessage =>
 	return (
 		isStoryMessage(value) &&
 		[
-			'quarry-story:query-result',
-			'quarry-story:query-error',
-			'quarry-story:query-sql-result',
-			'quarry-story:query-sql-error',
-			'quarry-story:narratives-result',
-			'quarry-story:editing',
-			'quarry-story:theme',
-			'quarry-story:shortcuts',
-			'quarry-story:keydown',
+			'loopwise-story:query-result',
+			'loopwise-story:query-error',
+			'loopwise-story:query-sql-result',
+			'loopwise-story:query-sql-error',
+			'loopwise-story:narratives-result',
+			'loopwise-story:editing',
+			'loopwise-story:theme',
+			'loopwise-story:shortcuts',
+			'loopwise-story:keydown',
 		].includes(value.type)
 	);
 };

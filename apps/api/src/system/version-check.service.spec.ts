@@ -36,7 +36,7 @@ describe('VersionCheckService', () => {
 		);
 		vi.stubGlobal('fetch', fetchMock);
 		const service = new VersionCheckService({
-			env: { APP_VERSION: '1.4.0', QUARRY_RELEASES_REPOSITORY: 'acme/quarry' },
+			env: { APP_VERSION: '1.4.0', LOOPWISE_RELEASES_REPOSITORY: 'acme/loopwise' },
 		} as ConfigService);
 
 		await expect(service.checkForUpdate()).resolves.toEqual({
@@ -45,7 +45,10 @@ describe('VersionCheckService', () => {
 			updateAvailable: true,
 		});
 		await service.checkForUpdate();
-		expect(fetchMock).toHaveBeenCalledWith('https://api.github.com/repos/acme/quarry/releases', expect.anything());
+		expect(fetchMock).toHaveBeenCalledWith(
+			'https://api.github.com/repos/acme/loopwise/releases',
+			expect.anything(),
+		);
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 
@@ -64,7 +67,7 @@ describe('VersionCheckService', () => {
 			vi.fn(async () => new Response('', { status: 503 })),
 		);
 		const service = new VersionCheckService({
-			env: { APP_VERSION: '1.4.0', QUARRY_RELEASES_REPOSITORY: 'acme/quarry' },
+			env: { APP_VERSION: '1.4.0', LOOPWISE_RELEASES_REPOSITORY: 'acme/loopwise' },
 		} as ConfigService);
 
 		await expect(service.checkForUpdate()).resolves.toMatchObject({ latestVersion: null, updateAvailable: false });

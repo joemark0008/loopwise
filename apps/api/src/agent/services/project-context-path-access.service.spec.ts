@@ -1,11 +1,11 @@
-import type { FilesContextAccess } from '@quarry/shared';
+import type { FilesContextAccess } from '@loopwise/shared';
 import { describe, expect, it } from 'vitest';
 
 import { isProjectContextPathAllowed as isAllowed } from './project-context-path-access.service.js';
 
 type AccessContext = Parameters<typeof isAllowed>[0];
 
-// quarry: typechecked specs — upstream's fixtures omit the required `skillsAccess` (absent means all skills).
+// loopwise: typechecked specs — upstream's fixtures omit the required `skillsAccess` (absent means all skills).
 function isProjectContextPathAllowed(
 	context: Omit<AccessContext, 'skillsAccess'> & Partial<Pick<AccessContext, 'skillsAccess'>>,
 	...args: Parameters<typeof isAllowed> extends [unknown, ...infer Rest] ? Rest : never
@@ -83,28 +83,34 @@ describe('project context path access', () => {
 		expect(isProjectContextPathAllowed(context, '/notes.md', '/notes.md', 'file')).toBe(true);
 	});
 
-	it('hides quarry_config.yaml wherever it lives and however it is addressed', () => {
+	it('hides loopwise_config.yaml wherever it lives and however it is addressed', () => {
 		const context = {
 			warehouseTableAccess: unrestrictedWarehouse,
 			docsContextAccess: { enforced: false as const },
 			filesContextAccess: unenforcedFiles,
 			mcpAccess: allMcpAccess,
 		};
-		expect(isProjectContextPathAllowed(context, '/quarry_config.yaml', '/quarry_config.yaml', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, 'quarry_config.yaml', '/quarry_config.yaml', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/QUARRY_CONFIG.YAML', '/QUARRY_CONFIG.YAML', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/alias.yaml', '/quarry_config.yaml', 'file')).toBe(false);
+		expect(isProjectContextPathAllowed(context, '/loopwise_config.yaml', '/loopwise_config.yaml', 'file')).toBe(
+			false,
+		);
+		expect(isProjectContextPathAllowed(context, 'loopwise_config.yaml', '/loopwise_config.yaml', 'file')).toBe(
+			false,
+		);
+		expect(isProjectContextPathAllowed(context, '/LOOPWISE_CONFIG.YAML', '/LOOPWISE_CONFIG.YAML', 'file')).toBe(
+			false,
+		);
+		expect(isProjectContextPathAllowed(context, '/alias.yaml', '/loopwise_config.yaml', 'file')).toBe(false);
 		expect(
 			isProjectContextPathAllowed(
 				context,
-				'/repos/other/quarry_config.yaml',
-				'/repos/other/quarry_config.yaml',
+				'/repos/other/loopwise_config.yaml',
+				'/repos/other/loopwise_config.yaml',
 				'file',
 			),
 		).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/quarry_config.yaml.md', '/quarry_config.yaml.md', 'file')).toBe(
-			true,
-		);
+		expect(
+			isProjectContextPathAllowed(context, '/loopwise_config.yaml.md', '/loopwise_config.yaml.md', 'file'),
+		).toBe(true);
 	});
 
 	it('treats nested docs grant paths as relative to the outer docs root', () => {

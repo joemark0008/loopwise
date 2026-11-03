@@ -1,13 +1,13 @@
 import crypto from 'node:crypto';
 import path from 'node:path';
 
-import { isLlmProvider, LLM_PROVIDERS, NAMED_PROVIDER_KIND } from '@quarry/shared/types';
+import { isLlmProvider, LLM_PROVIDERS, NAMED_PROVIDER_KIND } from '@loopwise/shared/types';
 import dotenv from 'dotenv';
 import { z } from 'zod/v4';
 
 /**
  * Port of upstream `apps/backend/src/env.ts`, minus billing (Stripe, credits), enterprise SSO
- * (OIDC, Microsoft Entra), the license key and cloud-only settings: quarry is self-hosted only.
+ * (OIDC, Microsoft Entra), the license key and cloud-only settings: loopwise is self-hosted only.
  * Settings of areas not ported (Redis, SMTP sending, Slack, the MCP server's OAuth, PostHog, Langfuse) are left out
  * too; see `docs/deferred-features.md`. `DB_URI` is `DATABASE_URL` (Prisma) and `SERVER_PORT` is `PORT`.
  */
@@ -73,29 +73,29 @@ const baseEnvSchema = z.object({
 	APP_COMMIT: z.string().default('unknown'),
 	APP_BUILD_DATE: z.string().default(''),
 	/** GitHub `owner/name` whose releases the update check compares against. Unset: no update check. */
-	QUARRY_RELEASES_REPOSITORY: optionalNonEmptyString,
+	LOOPWISE_RELEASES_REPOSITORY: optionalNonEmptyString,
 
-	QUARRY_DEFAULT_PROJECT_PATH: z.string().optional(),
-	QUARRY_PROJECTS_DIR: z.string().default('./projects'),
+	LOOPWISE_DEFAULT_PROJECT_PATH: z.string().optional(),
+	LOOPWISE_PROJECTS_DIR: z.string().default('./projects'),
 	/** `off`: skills are managed as files only, the app and the agent's drafts can't save them. */
-	QUARRY_SKILL_AUTHORING: z.enum(['auto', 'off']).default('auto'),
+	LOOPWISE_SKILL_AUTHORING: z.enum(['auto', 'off']).default('auto'),
 	/** Built frontend (`apps/frontend/dist`) served by the API, as in the Docker image. Unset in development (Vite). */
-	QUARRY_FRONTEND_DIST: optionalNonEmptyString,
+	LOOPWISE_FRONTEND_DIST: optionalNonEmptyString,
 
-	QUARRY_STORAGE_BACKEND: z.enum(['none', 'local', 's3']).default('local'),
-	QUARRY_STORAGE_LOCAL_PATH: z.string().default('./storage'),
-	QUARRY_STORAGE_S3_BUCKET: optionalNonEmptyString,
-	QUARRY_STORAGE_S3_REGION: optionalNonEmptyString,
-	QUARRY_STORAGE_S3_ENDPOINT: optionalNonEmptyString.pipe(
-		z.url({ message: 'QUARRY_STORAGE_S3_ENDPOINT must be a valid URL' }).optional(),
+	LOOPWISE_STORAGE_BACKEND: z.enum(['none', 'local', 's3']).default('local'),
+	LOOPWISE_STORAGE_LOCAL_PATH: z.string().default('./storage'),
+	LOOPWISE_STORAGE_S3_BUCKET: optionalNonEmptyString,
+	LOOPWISE_STORAGE_S3_REGION: optionalNonEmptyString,
+	LOOPWISE_STORAGE_S3_ENDPOINT: optionalNonEmptyString.pipe(
+		z.url({ message: 'LOOPWISE_STORAGE_S3_ENDPOINT must be a valid URL' }).optional(),
 	),
-	QUARRY_STORAGE_S3_PREFIX: optionalNonEmptyString,
-	QUARRY_STORAGE_S3_ACCESS_KEY_ID: optionalNonEmptyString,
-	QUARRY_STORAGE_S3_SECRET_ACCESS_KEY: optionalNonEmptyString,
-	QUARRY_STORAGE_S3_FORCE_PATH_STYLE: booleanString('false'),
-	QUARRY_STORAGE_MAX_FILE_SIZE_MB: z.coerce
-		.number({ message: 'QUARRY_STORAGE_MAX_FILE_SIZE_MB must be a number of megabytes' })
-		.positive({ message: 'QUARRY_STORAGE_MAX_FILE_SIZE_MB must be greater than 0' })
+	LOOPWISE_STORAGE_S3_PREFIX: optionalNonEmptyString,
+	LOOPWISE_STORAGE_S3_ACCESS_KEY_ID: optionalNonEmptyString,
+	LOOPWISE_STORAGE_S3_SECRET_ACCESS_KEY: optionalNonEmptyString,
+	LOOPWISE_STORAGE_S3_FORCE_PATH_STYLE: booleanString('false'),
+	LOOPWISE_STORAGE_MAX_FILE_SIZE_MB: z.coerce
+		.number({ message: 'LOOPWISE_STORAGE_MAX_FILE_SIZE_MB must be a number of megabytes' })
+		.positive({ message: 'LOOPWISE_STORAGE_MAX_FILE_SIZE_MB must be greater than 0' })
 		.default(10),
 
 	/**
@@ -141,11 +141,11 @@ export const envSchema = baseEnvSchema
 					'BETTER_AUTH_SECRET is required when MODE=prod: it signs sessions and derives the setup token, so every replica and restart must share one value (generate one with `openssl rand -base64 32`).',
 			});
 		}
-		if (data.QUARRY_STORAGE_BACKEND === 's3' && !data.QUARRY_STORAGE_S3_BUCKET) {
+		if (data.LOOPWISE_STORAGE_BACKEND === 's3' && !data.LOOPWISE_STORAGE_S3_BUCKET) {
 			ctx.addIssue({
 				code: 'custom',
-				path: ['QUARRY_STORAGE_S3_BUCKET'],
-				message: 'QUARRY_STORAGE_S3_BUCKET is required when QUARRY_STORAGE_BACKEND=s3.',
+				path: ['LOOPWISE_STORAGE_S3_BUCKET'],
+				message: 'LOOPWISE_STORAGE_S3_BUCKET is required when LOOPWISE_STORAGE_BACKEND=s3.',
 			});
 		}
 	})
@@ -157,20 +157,20 @@ export const envSchema = baseEnvSchema
 export type Env = z.output<typeof envSchema>;
 
 /**
- * The permanent-storage variables alone. Upstream's storage reads the module-level `env`; quarry's storage
+ * The permanent-storage variables alone. Upstream's storage reads the module-level `env`; loopwise's storage
  * (`attachments/storage`) stays module-level too, so it parses these from `process.env` itself.
  */
 export const storageEnvSchema = baseEnvSchema.pick({
-	QUARRY_STORAGE_BACKEND: true,
-	QUARRY_STORAGE_LOCAL_PATH: true,
-	QUARRY_STORAGE_S3_BUCKET: true,
-	QUARRY_STORAGE_S3_REGION: true,
-	QUARRY_STORAGE_S3_ENDPOINT: true,
-	QUARRY_STORAGE_S3_PREFIX: true,
-	QUARRY_STORAGE_S3_ACCESS_KEY_ID: true,
-	QUARRY_STORAGE_S3_SECRET_ACCESS_KEY: true,
-	QUARRY_STORAGE_S3_FORCE_PATH_STYLE: true,
-	QUARRY_STORAGE_MAX_FILE_SIZE_MB: true,
+	LOOPWISE_STORAGE_BACKEND: true,
+	LOOPWISE_STORAGE_LOCAL_PATH: true,
+	LOOPWISE_STORAGE_S3_BUCKET: true,
+	LOOPWISE_STORAGE_S3_REGION: true,
+	LOOPWISE_STORAGE_S3_ENDPOINT: true,
+	LOOPWISE_STORAGE_S3_PREFIX: true,
+	LOOPWISE_STORAGE_S3_ACCESS_KEY_ID: true,
+	LOOPWISE_STORAGE_S3_SECRET_ACCESS_KEY: true,
+	LOOPWISE_STORAGE_S3_FORCE_PATH_STYLE: true,
+	LOOPWISE_STORAGE_MAX_FILE_SIZE_MB: true,
 });
 
 export type StorageEnv = z.output<typeof storageEnvSchema>;

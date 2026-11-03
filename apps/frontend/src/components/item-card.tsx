@@ -1,7 +1,7 @@
 import { Activity, Dot, Globe, Lock, ShieldCheck, Users } from 'lucide-react';
 import styles from './item-card.module.css';
 import type { ReactNode } from 'react';
-import type { StoryPanelDisplayMode, Visibility } from '@quarry/shared/types';
+import type { StoryPanelDisplayMode, Visibility } from '@loopwise/shared/types';
 import { SimpleTooltip } from '@/components/ui/tooltip';
 import { formatRelativeDate } from '@/lib/time-ago';
 import { cn } from '@/lib/utils';

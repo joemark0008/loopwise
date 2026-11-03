@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ToolCallDensity, UserPreferences } from '@quarry/shared/types';
+import type { ToolCallDensity, UserPreferences } from '@loopwise/shared/types';
 import { useEffectiveUserGroupFeatures } from '@/hooks/use-effective-user-group-features';
 import { useSession } from '@/lib/auth-client';
 import { getEffectiveToolCallDensity } from '@/lib/effective-user-group-features';

@@ -1,5 +1,5 @@
+import { type CustomBoundarySet, resolveBoundary } from '@loopwise/shared';
 import { Injectable } from '@nestjs/common';
-import { type CustomBoundarySet, resolveBoundary } from '@quarry/shared';
 import type { FeatureCollection } from 'geojson';
 import { z } from 'zod/v4';
 
@@ -80,7 +80,7 @@ export class MapBoundariesService {
 
 	async validateMapBoundaryUrl(rawInput: unknown) {
 		const input = parse(validateMapBoundaryUrlSchema, rawInput);
-		// quarry: upstream lets the fetch error through as a tRPC error carrying its message; here unknown errors
+		// loopwise: upstream lets the fetch error through as a tRPC error carrying its message; here unknown errors
 		// are masked, so the reason (unreachable host, invalid GeoJSON…) is reported as a bad request.
 		try {
 			const text = await safeFetch(input.url);

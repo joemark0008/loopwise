@@ -3,8 +3,8 @@ import {
 	isBuiltinChartType,
 	isPieChart,
 	isStackedChartType,
-} from '@quarry/shared/chart-types';
-import { displayChart } from '@quarry/shared/tools';
+} from '@loopwise/shared/chart-types';
+import { displayChart } from '@loopwise/shared/tools';
 
 import { hasChartPlugin } from '../services/chart-plugin.js';
 import { getQueryResult } from '../services/query-result.service.js';

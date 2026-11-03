@@ -1,8 +1,8 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import { getDefaultModelId, getProviderAuth } from '@quarry/api/agent/providers/provider-meta';
-import { providerKind, providerLabel, providerLabels, providerName } from '@quarry/shared/types';
+import { getDefaultModelId, getProviderAuth } from '@loopwise/api/agent/providers/provider-meta';
+import { providerKind, providerLabel, providerLabels, providerName } from '@loopwise/shared/types';
 import styles from './llm-provider-card.module.css';
-import type { LlmProvider } from '@quarry/shared/types';
+import type { LlmProvider } from '@loopwise/shared/types';
 import { LlmProviderIcon } from '@/components/ui/llm-provider-icon';
 import { Button } from '@/components/ui/button';
 
@@ -14,7 +14,7 @@ interface ProviderCardProps {
 	envBaseUrl?: string;
 	enabledModels?: string[] | null;
 	status?: string;
-	/** Where this provider comes from, e.g. `ENV` or `quarry_config.yaml`. */
+	/** Where this provider comes from, e.g. `ENV` or `loopwise_config.yaml`. */
 	badges?: string[];
 	isAdmin: boolean;
 	isFormActive: boolean;

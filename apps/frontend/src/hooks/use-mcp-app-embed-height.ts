@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 
-export const QUARRY_MCP_APP_EMBED_SIZE_MSG = 'quarry-embed-size' as const;
+export const LOOPWISE_MCP_APP_EMBED_SIZE_MSG = 'loopwise-embed-size' as const;
 
-export const QUARRY_MCP_EMBED_MEASURE_ATTR = 'data-quarry-mcp-embed-measure';
+export const LOOPWISE_MCP_EMBED_MEASURE_ATTR = 'data-loopwise-mcp-embed-measure';
 
 export function useMcpAppEmbedHeightReporting(): void {
 	useEffect(() => {
@@ -15,12 +15,12 @@ export function useMcpAppEmbedHeightReporting(): void {
 			cancelAnimationFrame(raf);
 			raf = requestAnimationFrame(() => {
 				const height = readEmbedMeasureHeight();
-				window.parent.postMessage({ type: QUARRY_MCP_APP_EMBED_SIZE_MSG, height }, '*');
+				window.parent.postMessage({ type: LOOPWISE_MCP_APP_EMBED_SIZE_MSG, height }, '*');
 			});
 		};
 
 		const ro = new ResizeObserver(report);
-		const measured = document.querySelector(`[${QUARRY_MCP_EMBED_MEASURE_ATTR}]`);
+		const measured = document.querySelector(`[${LOOPWISE_MCP_EMBED_MEASURE_ATTR}]`);
 		if (measured) {
 			ro.observe(measured);
 		} else {
@@ -45,7 +45,7 @@ export function useMcpAppEmbedHeightReporting(): void {
 }
 
 function readEmbedMeasureHeight(): number {
-	const measured = document.querySelector(`[${QUARRY_MCP_EMBED_MEASURE_ATTR}]`);
+	const measured = document.querySelector(`[${LOOPWISE_MCP_EMBED_MEASURE_ATTR}]`);
 	if (measured) {
 		const el = measured as HTMLElement;
 		return Math.ceil(Math.max(el.scrollHeight, el.offsetHeight, el.getBoundingClientRect().height, 1) + 6);

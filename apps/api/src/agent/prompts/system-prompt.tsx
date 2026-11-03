@@ -1,5 +1,5 @@
-import type { ChartPluginManifestEntry } from '@quarry/shared';
-import { wiseToolEntry } from '@quarry/shared/wise-tools';
+import type { ChartPluginManifestEntry } from '@loopwise/shared';
+import { wiseToolEntry } from '@loopwise/shared/wise-tools';
 
 import { Block, Bold, Br, List, ListItem, Location, Span, Title, XML } from '../markdown/index.js';
 import type { PreloadedSkill, Skill } from '../services/skill.js';
@@ -17,7 +17,7 @@ type SystemPromptProps = {
 	skills?: Skill[];
 	/** Project skills injected in full; they are left out of the regular skills listing. */
 	preloadedSkills?: PreloadedSkill[];
-	/** Defaults to every skill quarry ships; only tests pass this. */
+	/** Defaults to every skill loopwise ships; only tests pass this. */
 	internalSkills?: InternalSkill[];
 	customCharts?: ChartPluginManifestEntry[];
 	timezone?: string;

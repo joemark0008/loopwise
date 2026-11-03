@@ -1,7 +1,7 @@
 import { TableDisplay } from './display-table';
 import styles from './sql-result-display.module.css';
-import type { ColumnConditionalFormats } from '@quarry/shared/conditional-formatting';
-import type { executeSql } from '@quarry/shared/tools';
+import type { ColumnConditionalFormats } from '@loopwise/shared/conditional-formatting';
+import type { executeSql } from '@loopwise/shared/tools';
 import type { QueryRowsSource } from '@/hooks/use-query-rows';
 import { useFullQueryOutput, useServerPaginatedRows } from '@/hooks/use-query-rows';
 

@@ -1,6 +1,6 @@
+import { VoidReasonSchema } from '@loopwise/shared/encounter-record';
+import { MedicalCertificateDraftSchema } from '@loopwise/shared/medical-certificate';
 import { Injectable } from '@nestjs/common';
-import { VoidReasonSchema } from '@quarry/shared/encounter-record';
-import { MedicalCertificateDraftSchema } from '@quarry/shared/medical-certificate';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
 import type { MedicalCertificate as MedicalCertificateRow } from '../../generated/prisma/client.js';

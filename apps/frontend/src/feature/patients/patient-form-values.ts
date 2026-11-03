@@ -1,5 +1,5 @@
-import { patientDraftErrors } from '@quarry/shared/patient-registration';
-import type { PatientDraft, PatientLanguage, PatientSex } from '@quarry/shared/patient-registration';
+import { patientDraftErrors } from '@loopwise/shared/patient-registration';
+import type { PatientDraft, PatientLanguage, PatientSex } from '@loopwise/shared/patient-registration';
 import type { PatientDraftInput } from '@/graphql/generated/graphql';
 
 /** What the register form and the Wise card edit: every field as typed, before `PatientDraftSchema` parses it. */

@@ -14,11 +14,11 @@ async function bootstrap() {
 	configureApp(app);
 
 	const config = app.get(ConfigService);
-	if (config.env.QUARRY_FRONTEND_DIST) {
-		serveFrontend(app, config.env.QUARRY_FRONTEND_DIST);
+	if (config.env.LOOPWISE_FRONTEND_DIST) {
+		serveFrontend(app, config.env.LOOPWISE_FRONTEND_DIST);
 	}
 	await app.listen(config.env.PORT);
-	Logger.log(`quarry api listening on http://localhost:${config.env.PORT}`, 'Bootstrap');
+	Logger.log(`loopwise api listening on http://localhost:${config.env.PORT}`, 'Bootstrap');
 }
 
 void bootstrap();

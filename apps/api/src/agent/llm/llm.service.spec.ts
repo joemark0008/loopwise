@@ -7,8 +7,8 @@ import type { ProjectLlmConfigRepository } from './project-llm-config.repository
 /**
  * Ports of upstream `tests/disabled-providers.test.ts`, `tests/annotation-model.test.ts` and
  * `tests/project-available-models.test.ts` (the parts covering `utils/llm.ts`). Upstream's query modules
- * are replaced by a mocked `ProjectLlmConfigRepository`. Quarry drops the managed `quarry` provider (billing)
- * and the `llm` block of `quarry_config.yaml`, so the cases about those are not ported.
+ * are replaced by a mocked `ProjectLlmConfigRepository`. Loopwise drops the managed `loopwise` provider (billing)
+ * and the `llm` block of `loopwise_config.yaml`, so the cases about those are not ported.
  */
 const mocks = vi.hoisted(() => ({
 	getProjectLlmConfigs: vi.fn(),
@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
 
 const llm = new LlmService(mocks as unknown as ProjectLlmConfigRepository);
 
-const BASE_ENV = { DATABASE_URL: 'postgresql://localhost/quarry' };
+const BASE_ENV = { DATABASE_URL: 'postgresql://localhost/loopwise' };
 
 function parseDisabledProviders(value: string): string[] {
 	return parseEnv({ ...BASE_ENV, DISABLED_PROVIDERS: value }).DISABLED_PROVIDERS;
@@ -159,5 +159,5 @@ describe('resolveAnnotationModelId', () => {
 	});
 });
 
-// Upstream's `getProjectAvailableModels` cases are not ported: the managed `quarry` provider (credits, BYOK alongside
-// curated models) is dropped, and quarry does not read named openai-compatible endpoints from quarry_config.yaml.
+// Upstream's `getProjectAvailableModels` cases are not ported: the managed `loopwise` provider (credits, BYOK alongside
+// curated models) is dropped, and loopwise does not read named openai-compatible endpoints from loopwise_config.yaml.

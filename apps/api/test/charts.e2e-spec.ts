@@ -73,7 +73,7 @@ describe('charts and maps (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.QUARRY_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'quarry-projects-'));
+		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -98,7 +98,7 @@ describe('charts and maps (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-quarry-project-id': projectId } : {})
+			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
 			.send({ query, variables });
 
 	async function seed() {

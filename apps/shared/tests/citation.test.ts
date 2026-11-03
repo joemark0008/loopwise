@@ -17,7 +17,7 @@ describe('normalizeCitationMarkers', () => {
 		);
 	});
 
-	it('drops ChatGPT citations, which point to sources quarry does not have', () => {
+	it('drops ChatGPT citations, which point to sources loopwise does not have', () => {
 		const text =
 			'Revenue was **622**. \uE200cite\uE202turn_e2bf7643\uE201 It grew 49,9 %. \uE200cite\uE202turn0\uE201';
 		expect(normalizeCitationMarkers(text)).toBe('Revenue was **622**. It grew 49,9 %.');

@@ -24,8 +24,8 @@ export interface StoryDocumentParts {
 	body: string;
 }
 
-const PAYLOAD_ELEMENT_ID = 'quarry-story-export';
-const DATE_MARKER = '$quarryDate';
+const PAYLOAD_ELEMENT_ID = 'loopwise-story-export';
+const DATE_MARKER = '$loopwiseDate';
 
 /**
  * A downloaded custom story runs the same code as in the app: the standalone runtime, the story bundle and the data
@@ -141,10 +141,10 @@ const EXPORT_LOADER = `
 		importMap.textContent = JSON.stringify({ imports });
 		document.head.append(importMap);
 
-		globalThis.__quarryStoryBoot = payload.boot;
+		globalThis.__loopwiseStoryBoot = payload.boot;
 		const boot = document.createElement('script');
 		boot.type = 'module';
-		boot.textContent = 'import { bootStory } from ' + JSON.stringify(${JSON.stringify(STORY_HOST_MODULE)}) + '; bootStory(globalThis.__quarryStoryBoot);';
+		boot.textContent = 'import { bootStory } from ' + JSON.stringify(${JSON.stringify(STORY_HOST_MODULE)}) + '; bootStory(globalThis.__loopwiseStoryBoot);';
 		document.body.append(boot);
 	};
 	document.body.append(runtime);
@@ -152,7 +152,7 @@ const EXPORT_LOADER = `
 `;
 
 /** Marks the theme variables so a live swap can rewrite them without changing where they sit in the cascade. */
-export const STORY_THEME_STYLE_ID = 'quarry-story-theme';
+export const STORY_THEME_STYLE_ID = 'loopwise-story-theme';
 
 /** Theme fonts and variables, base and kit styles, then the story's own CSS: shared by the frame and downloads. */
 export function storyStylesheets(theme: StoryTheme, styles: string[]): string {
@@ -192,7 +192,7 @@ body{background:var(--background);color:var(--story-body-color);font-family:var(
 h1,h2,h3,h4,h5,h6{font-family:var(--font-heading);color:var(--foreground);letter-spacing:var(--story-heading-tracking);margin:0}
 #root{min-height:100vh}
 #recharts_measurement_span{line-height:normal}
-.quarry-story-crash{margin:16px;padding:12px 16px;border-radius:8px;background:#fef2f2;color:#991b1b;font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap}
+.loopwise-story-crash{margin:16px;padding:12px 16px;border-radius:8px;background:#fef2f2;color:#991b1b;font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap}
 `;
 
 function escapeStyle(css: string): string {

@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { WISE_TOOL_CATEGORIES, WISE_TOOL_CATEGORY_LABELS, WISE_TOOL_KIND_LABELS } from '@quarry/shared/wise-tools';
+import { WISE_TOOL_CATEGORIES, WISE_TOOL_CATEGORY_LABELS, WISE_TOOL_KIND_LABELS } from '@loopwise/shared/wise-tools';
 import { Lock, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import styles from './wise-tools-page.module.css';
-import type { WiseToolCategory, WiseToolKind } from '@quarry/shared/wise-tools';
+import type { WiseToolCategory, WiseToolKind } from '@loopwise/shared/wise-tools';
 import type { WiseToolRow } from '@/lib/wise-tools-api';
 import { Badge } from '@/components/ui/badge';
 import { ErrorMessage } from '@/components/ui/error-message';

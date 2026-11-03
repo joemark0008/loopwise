@@ -17,7 +17,7 @@ import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
 
 /**
  * A bill draft. The DTO only checks shapes; `BillingService` parses it with the shared `BillDraftSchema`
- * (`@quarry/shared/encounter-bill`) and computes the totals itself.
+ * (`@loopwise/shared/encounter-bill`) and computes the totals itself.
  */
 @InputType()
 export class ChargeInput {

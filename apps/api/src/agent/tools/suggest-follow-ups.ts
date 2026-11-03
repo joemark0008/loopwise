@@ -1,4 +1,4 @@
-import { suggestFollowUps } from '@quarry/shared/tools';
+import { suggestFollowUps } from '@loopwise/shared/tools';
 import { tool } from 'ai';
 
 import { withToolKind } from '../utils/tools.js';

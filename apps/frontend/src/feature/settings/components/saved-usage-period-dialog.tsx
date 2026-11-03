@@ -3,9 +3,9 @@ import {
 	getUsageChartBucketCount,
 	MAX_USAGE_CHART_BUCKETS_PER_REQUEST,
 	USAGE_CHART_BUCKET_LIMIT_MESSAGE,
-} from '@quarry/shared/usage';
+} from '@loopwise/shared/usage';
 import styles from './saved-usage-period-dialog.module.css';
-import type { Granularity, SavedUsagePeriod, SavedUsagePeriodInput } from '@quarry/shared/usage';
+import type { Granularity, SavedUsagePeriod, SavedUsagePeriodInput } from '@loopwise/shared/usage';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';

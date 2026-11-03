@@ -1,5 +1,5 @@
-import type { CustomBoundarySet } from '@quarry/shared';
-import { displayMap } from '@quarry/shared/tools';
+import type { CustomBoundarySet } from '@loopwise/shared';
+import { displayMap } from '@loopwise/shared/tools';
 
 import { getQueryResult } from '../services/query-result.service.js';
 import { DisplayMapOutput, renderToModelOutput } from '../tool-outputs/index.js';

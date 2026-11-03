@@ -1,4 +1,4 @@
-import type { displayMap } from '@quarry/shared/tools';
+import type { displayMap } from '@loopwise/shared/tools';
 
 import { Block } from '../markdown/index.js';
 

@@ -1,6 +1,6 @@
+import type { UserRole } from '@loopwise/shared/types';
 import { Controller, Get, Head, HttpCode, Post, Query, Res, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import type { UserRole } from '@quarry/shared/types';
 import type { Response } from 'express';
 
 import type { AuthUser } from '../auth/auth.service.js';
@@ -66,7 +66,7 @@ function setFileHeaders(response: Response, file: { fileName: string; mediaType:
 	return (
 		response
 			.setHeader('Content-Type', file.mediaType)
-			// Always a download: an uploaded .html rendered on quarry's own origin would run as first-party script.
+			// Always a download: an uploaded .html rendered on loopwise's own origin would run as first-party script.
 			.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(file.fileName)}`)
 			.setHeader('X-Content-Type-Options', 'nosniff')
 			.setHeader('Cache-Control', 'private, max-age=3600') as Response

@@ -8,7 +8,7 @@ import { defineConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
 
 /** apps/api (NestJS + GraphQL), which serves every request the frontend makes. */
-const QUARRY_API_URL = process.env.QUARRY_API_URL ?? 'http://localhost:5006';
+const LOOPWISE_API_URL = process.env.LOOPWISE_API_URL ?? 'http://localhost:5006';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -34,7 +34,7 @@ export default defineConfig({
 		alias: [
 			{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
 			// Pure modules of apps/api the frontend shares (provider metadata, story summaries); the rest is types.
-			{ find: /^@quarry\/api\/(.*)$/, replacement: fileURLToPath(new URL('../api/src/$1', import.meta.url)) },
+			{ find: /^@loopwise\/api\/(.*)$/, replacement: fileURLToPath(new URL('../api/src/$1', import.meta.url)) },
 		],
 	},
 	test: {
@@ -49,11 +49,11 @@ export default defineConfig({
 		},
 		// In production apps/api serves the built frontend from the same origin.
 		proxy: {
-			'/graphql': { target: QUARRY_API_URL },
-			'/api': { target: QUARRY_API_URL },
-			'/health': { target: QUARRY_API_URL },
-			'/i/': { target: QUARRY_API_URL },
-			'/c/': { target: QUARRY_API_URL },
+			'/graphql': { target: LOOPWISE_API_URL },
+			'/api': { target: LOOPWISE_API_URL },
+			'/health': { target: LOOPWISE_API_URL },
+			'/i/': { target: LOOPWISE_API_URL },
+			'/c/': { target: LOOPWISE_API_URL },
 		},
 	},
 });

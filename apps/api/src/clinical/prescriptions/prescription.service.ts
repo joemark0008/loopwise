@@ -1,6 +1,6 @@
+import { VoidReasonSchema } from '@loopwise/shared/encounter-record';
+import { allergyWarnings, PrescriptionDraftSchema } from '@loopwise/shared/prescription';
 import { Injectable } from '@nestjs/common';
-import { VoidReasonSchema } from '@quarry/shared/encounter-record';
-import { allergyWarnings, PrescriptionDraftSchema } from '@quarry/shared/prescription';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
 import { OrganizationRepository } from '../../organizations/organization.repository.js';

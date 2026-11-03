@@ -205,7 +205,7 @@ export type StoryThemeMode = (typeof STORY_THEME_MODES)[number];
 
 export const DEFAULT_STORY_THEME: StoryTheme = storyThemeSchema.parse({});
 
-/** quarry's own dark tokens, as hex, so unthemed stories follow the app in dark mode. Only colours change; the schema fills the rest. */
+/** loopwise's own dark tokens, as hex, so unthemed stories follow the app in dark mode. Only colours change; the schema fills the rest. */
 export const DEFAULT_DARK_STORY_THEME: StoryTheme = storyThemeSchema.parse({
 	surfaces: { page: '#090a0c', sunken: '#17181c' },
 	accent: { color: '#a591ff', ink: '#17181c' },
@@ -224,7 +224,7 @@ export const storyThemePairSchema = z.object({
 	dark: storyThemeSchema,
 });
 
-/** One theme per app colour scheme; the story picks the one matching quarry's current mode. */
+/** One theme per app colour scheme; the story picks the one matching loopwise's current mode. */
 export type StoryThemePair = z.infer<typeof storyThemePairSchema>;
 
 export const DEFAULT_STORY_THEME_PAIR: StoryThemePair = {
@@ -280,7 +280,7 @@ export function showsBrandIdentity(brand: StoryTheme['brand']): boolean {
 
 /**
  * The bridge to the running app: a custom story container gets these as inline
- * CSS custom properties, so quarry's components pick the theme up without being
+ * CSS custom properties, so loopwise's components pick the theme up without being
  * rewritten. Names match the tokens already declared in the frontend styles.
  */
 export function storyThemeToCssVars(theme: StoryTheme): Record<string, string> {

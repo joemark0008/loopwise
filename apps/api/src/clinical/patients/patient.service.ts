@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
 import {
 	IDENTIFIER_SYSTEMS,
 	type PatientDraft,
 	PatientDraftSchema,
 	patientInitials,
-} from '@quarry/shared/patient-registration';
+} from '@loopwise/shared/patient-registration';
+import { Injectable } from '@nestjs/common';
 
 import { ChatRepository } from '../../chats/chat.repository.js';
 import { HandlerError } from '../../common/errors/handler-error.js';

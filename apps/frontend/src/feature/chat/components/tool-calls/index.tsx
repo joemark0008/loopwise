@@ -43,7 +43,7 @@ import { ReportToolCall } from './report-card';
 import { ReportChipToolCall } from './report-chip';
 import { WebFetchToolCall } from './web-fetch';
 import { WebSearchToolCall } from './web-search';
-import type { StaticToolName, UIToolPart } from '@quarry/api/agent/types/chat';
+import type { StaticToolName, UIToolPart } from '@loopwise/api/agent/types/chat';
 import { getToolName, isToolSettled } from '@/lib/ai';
 import { ToolCallProvider } from '@/contexts/tool-call';
 import { useAssistantMessage } from '@/contexts/assistant-message';

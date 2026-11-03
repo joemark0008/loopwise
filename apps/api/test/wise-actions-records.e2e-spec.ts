@@ -37,7 +37,7 @@ describe('Wise actions, phase 2 (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-quarry-project-id': projectId } : {})
+			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
 			.send({ query, variables });
 
 	const ok = async (cookie: string[], query: string, variables: Record<string, unknown> = {}) => {
@@ -54,7 +54,7 @@ describe('Wise actions, phase 2 (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', user.cookie)
-			.set('x-quarry-project-id', projectId)
+			.set('x-loopwise-project-id', projectId)
 			.send({
 				model: MODEL,
 				...(chatId ? { chatId } : as === 'doctor' ? { patientId } : {}),
@@ -85,7 +85,7 @@ describe('Wise actions, phase 2 (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.QUARRY_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'quarry-projects-'));
+		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);

@@ -7,7 +7,7 @@ registerEnumType(Urgency, { name: 'Urgency' });
 registerEnumType(CaseState, { name: 'CaseState' });
 registerEnumType(EvidenceType, { name: 'EvidenceType' });
 
-/** One threshold or code list of a trigger and what it concludes (`@quarry/shared/pathway-rules`). */
+/** One threshold or code list of a trigger and what it concludes (`@loopwise/shared/pathway-rules`). */
 @ObjectType()
 export class PathwayBand {
 	@Field({ description: 'The range ("6.5 – < 10 %") or the codes ("BI-RADS 4") the band covers.' })

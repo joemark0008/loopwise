@@ -25,7 +25,7 @@ let originalEnv: typeof process.env;
 
 beforeEach(async () => {
 	originalEnv = { ...process.env };
-	root = await fs.mkdtemp(path.join(os.tmpdir(), 'quarry-user-files-test-'));
+	root = await fs.mkdtemp(path.join(os.tmpdir(), 'loopwise-user-files-test-'));
 	useBackend('local', root);
 });
 
@@ -286,16 +286,16 @@ async function onlyUploadPath(): Promise<string> {
 }
 
 function useSizeLimit(megabytes: number): void {
-	process.env.QUARRY_STORAGE_MAX_FILE_SIZE_MB = String(megabytes);
+	process.env.LOOPWISE_STORAGE_MAX_FILE_SIZE_MB = String(megabytes);
 	__reloadEnvForTesting();
 }
 
 function useBackend(backend: 'none' | 'local' | 's3', localPath?: string): void {
-	process.env.QUARRY_STORAGE_BACKEND = backend;
+	process.env.LOOPWISE_STORAGE_BACKEND = backend;
 	if (localPath) {
-		process.env.QUARRY_STORAGE_LOCAL_PATH = localPath;
+		process.env.LOOPWISE_STORAGE_LOCAL_PATH = localPath;
 	}
-	process.env.QUARRY_STORAGE_S3_BUCKET = 'test-bucket';
+	process.env.LOOPWISE_STORAGE_S3_BUCKET = 'test-bucket';
 	__reloadEnvForTesting();
 	__resetStorageForTesting();
 }

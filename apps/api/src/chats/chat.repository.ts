@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
+import { isQueryToolAgentName, QUERY_TOOL_NAME_PREFIX } from '@loopwise/shared/query-tools';
+import { executeSemanticQuery, executeSql, savedQueryTool } from '@loopwise/shared/tools';
+import type { CitationData, LlmProvider } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import { isQueryToolAgentName, QUERY_TOOL_NAME_PREFIX } from '@quarry/shared/query-tools';
-import { executeSemanticQuery, executeSql, savedQueryTool } from '@quarry/shared/tools';
-import type { CitationData, LlmProvider } from '@quarry/shared/types';
 
 import type {
 	ForkMetadata,

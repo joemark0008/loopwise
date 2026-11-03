@@ -1,5 +1,5 @@
-import { isQueryToolAgentName, QUERY_TOOL_NAME_PREFIX } from '@quarry/shared/query-tools';
-import type { UIToolPart } from '@quarry/api/agent/types/chat';
+import { isQueryToolAgentName, QUERY_TOOL_NAME_PREFIX } from '@loopwise/shared/query-tools';
+import type { UIToolPart } from '@loopwise/api/agent/types/chat';
 import type { GroupablePart } from '@/types/ai';
 import { getToolName, isReasoningPart, isToolSettled } from '@/lib/ai';
 import { getFileName, getReadContextLabel } from '@/lib/file-path';

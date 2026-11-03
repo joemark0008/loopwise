@@ -7,7 +7,7 @@ import {
 	isMcpToolGranted,
 	mayTraverseFileTreeDirectory,
 	type McpAccess,
-} from '@quarry/shared';
+} from '@loopwise/shared';
 import path from 'path';
 
 import type { ToolContext } from '../types/tools.js';
@@ -92,7 +92,7 @@ export function isDocsProjectPath(virtualPath: string): boolean {
 	return parseProjectPath(virtualPath).kind === 'docs';
 }
 
-/** `quarry_config.yaml` can hold plaintext LLM keys and warehouse credentials, so the agent never sees it. */
+/** `loopwise_config.yaml` can hold plaintext LLM keys and warehouse credentials, so the agent never sees it. */
 function isProjectConfigPath(virtualPath: string): boolean {
 	return path.posix.basename(virtualPath).toLowerCase() === CONTEXT_CONFIG_FILENAME;
 }

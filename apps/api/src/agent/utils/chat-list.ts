@@ -1,4 +1,4 @@
-import type { ChatFilterType, ChatGroup, ChatGroupBy, GroupedChatItem } from '@quarry/shared/types';
+import type { ChatFilterType, ChatGroup, ChatGroupBy, GroupedChatItem } from '@loopwise/shared/types';
 
 const DAY_MS = 86_400_000;
 

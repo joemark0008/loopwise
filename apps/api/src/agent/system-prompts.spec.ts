@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('fs');
 
-import { getSystemPromptOverride, hasQuarryPromptPlaceholder, injectQuarryPrompt } from './system-prompts.js';
+import { getSystemPromptOverride, hasLoopwisePromptPlaceholder, injectLoopwisePrompt } from './system-prompts.js';
 
 const mockExistsSync = vi.mocked(existsSync);
 const mockReadFileSync = vi.mocked(readFileSync);
@@ -106,26 +106,26 @@ describe('getSystemPromptOverride', () => {
 	});
 });
 
-describe('hasQuarryPromptPlaceholder', () => {
+describe('hasLoopwisePromptPlaceholder', () => {
 	it('detects the placeholder with varying whitespace', () => {
-		expect(hasQuarryPromptPlaceholder('before {{ quarry_prompt }} after')).toBe(true);
-		expect(hasQuarryPromptPlaceholder('{{quarry_prompt}}')).toBe(true);
-		expect(hasQuarryPromptPlaceholder('{{   quarry_prompt   }}')).toBe(true);
+		expect(hasLoopwisePromptPlaceholder('before {{ loopwise_prompt }} after')).toBe(true);
+		expect(hasLoopwisePromptPlaceholder('{{loopwise_prompt}}')).toBe(true);
+		expect(hasLoopwisePromptPlaceholder('{{   loopwise_prompt   }}')).toBe(true);
 	});
 
 	it('returns false when the placeholder is absent', () => {
-		expect(hasQuarryPromptPlaceholder('Just my own prompt')).toBe(false);
-		expect(hasQuarryPromptPlaceholder('{{ other_var }}')).toBe(false);
+		expect(hasLoopwisePromptPlaceholder('Just my own prompt')).toBe(false);
+		expect(hasLoopwisePromptPlaceholder('{{ other_var }}')).toBe(false);
 	});
 });
 
-describe('injectQuarryPrompt', () => {
+describe('injectLoopwisePrompt', () => {
 	it('replaces every placeholder occurrence with the default prompt', () => {
-		const result = injectQuarryPrompt('Header\n{{ quarry_prompt }}\nFooter {{quarry_prompt}}', 'DEFAULT');
+		const result = injectLoopwisePrompt('Header\n{{ loopwise_prompt }}\nFooter {{loopwise_prompt}}', 'DEFAULT');
 		expect(result).toBe('Header\nDEFAULT\nFooter DEFAULT');
 	});
 
 	it('leaves content unchanged when there is no placeholder', () => {
-		expect(injectQuarryPrompt('No placeholder here', 'DEFAULT')).toBe('No placeholder here');
+		expect(injectLoopwisePrompt('No placeholder here', 'DEFAULT')).toBe('No placeholder here');
 	});
 });

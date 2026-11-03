@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-export const CONTEXT_CONFIG_FILENAME = 'quarry_config.yaml';
+export const CONTEXT_CONFIG_FILENAME = 'loopwise_config.yaml';
 
 export const TOOL_LABELS: Record<string, string> = {
 	'tool-read': 'file',

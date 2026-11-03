@@ -1,4 +1,4 @@
-import { clinicalChart, createReport } from '@quarry/shared/tools';
+import { clinicalChart, createReport } from '@loopwise/shared/tools';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 

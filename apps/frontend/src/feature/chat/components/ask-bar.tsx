@@ -5,7 +5,7 @@ import { ChatInputAnimatedBorder } from './chat-input-animated-border';
 import { SelectionCitationExcerpt } from './selection-citation-excerpt';
 import styles from './ask-bar.module.css';
 import type { FormEvent, ReactNode, RefObject } from 'react';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 
 import type { AskQuestion, AskSelection } from '@/stores/ask-bar';
 import { ChatMessagesContent } from '@/feature/chat/components/chat-messages/chat-messages';

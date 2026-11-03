@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import { CheckIcon, Radio, Split, Users } from 'lucide-react';
-import { providerLabel } from '@quarry/shared/types';
+import { providerLabel } from '@loopwise/shared/types';
 import styles from './usage-filters.module.css';
-import type { SavedUsagePeriod, SavedUsagePeriodInput, UsagePeriodSelection, UsageSource } from '@quarry/shared/usage';
-import type { LlmProvider } from '@quarry/shared/types';
+import type {
+	SavedUsagePeriod,
+	SavedUsagePeriodInput,
+	UsagePeriodSelection,
+	UsageSource,
+} from '@loopwise/shared/usage';
+import type { LlmProvider } from '@loopwise/shared/types';
 import type { LucideIcon } from 'lucide-react';
 import type { UsageUserFacets } from '@/lib/usage-api';
 import { UsagePeriodFilter } from '@/feature/settings/components/usage-period-filter';
@@ -132,7 +137,7 @@ export function SourceAndUserFilters({
 		label: name,
 		count: chatFacets?.userNameCounts[name],
 	}));
-	const sourceOptions = QUARRY_SOURCES.map((value) => ({
+	const sourceOptions = LOOPWISE_SOURCES.map((value) => ({
 		value,
 		label: sourceLabels[value],
 	}));
@@ -195,8 +200,8 @@ type MultiSelectFilterProps<T extends string> = {
 	onChange: (value: T[] | undefined) => void;
 };
 
-/** The sources quarry's chats come from (no messaging integrations or MCP server yet, see docs/deferred-features.md). */
-const QUARRY_SOURCES = ['web', 'contextRecommendations', 'onboarding'] as const satisfies readonly UsageSource[];
+/** The sources loopwise's chats come from (no messaging integrations or MCP server yet, see docs/deferred-features.md). */
+const LOOPWISE_SOURCES = ['web', 'contextRecommendations', 'onboarding'] as const satisfies readonly UsageSource[];
 
 const sourceLabels: Record<UsageSource, string> = {
 	web: 'Web',

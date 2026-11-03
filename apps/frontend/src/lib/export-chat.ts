@@ -21,7 +21,7 @@ function downloadBlob(filename: string, blob: Blob): void {
 }
 
 /** Turns a chat title into a safe file slug. */
-export function toFileSlug(title: string | undefined, fallback = 'quarry-chat'): string {
+export function toFileSlug(title: string | undefined, fallback = 'loopwise-chat'): string {
 	const slug = (title ?? '')
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, '-')

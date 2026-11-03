@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TOOL_LABELS, pluralize } from '@quarry/shared';
+import { TOOL_LABELS, pluralize } from '@loopwise/shared';
 import type { GroupablePart } from '@/types/ai';
 import { isReasoningPart } from '@/lib/ai';
 import { getPartMcpServer, isMcpPart } from '@/lib/mcp';

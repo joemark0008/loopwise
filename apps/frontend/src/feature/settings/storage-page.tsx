@@ -1,6 +1,6 @@
 import { Ban, Cloud, HardDrive, Info, TriangleAlert } from 'lucide-react';
 import styles from './storage-page.module.css';
-import type { displayChart } from '@quarry/shared/tools';
+import type { displayChart } from '@loopwise/shared/tools';
 import { ChartDisplay } from '@/feature/chat/components/tool-calls/display-chart';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { SettingsCard, SettingsPageWrapper } from '@/components/ui/settings-card';
@@ -64,7 +64,7 @@ function AdminStoragePage() {
 			{backend === 'none' ? (
 				<DisabledNotice>
 					The agent cannot save files, and files saved earlier are not reachable. Set{' '}
-					<Mono>QUARRY_STORAGE_BACKEND</Mono> to <Mono>local</Mono> or <Mono>s3</Mono> to turn it on.
+					<Mono>LOOPWISE_STORAGE_BACKEND</Mono> to <Mono>local</Mono> or <Mono>s3</Mono> to turn it on.
 				</DisabledNotice>
 			) : (
 				<>

@@ -1,4 +1,4 @@
-import type { MessageBubble, StoryFormat, Visibility } from '@quarry/shared/types';
+import type { MessageBubble, StoryFormat, Visibility } from '@loopwise/shared/types';
 
 export type GroupBy = 'type' | 'date' | 'author';
 

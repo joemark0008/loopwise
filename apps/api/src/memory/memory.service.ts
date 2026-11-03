@@ -1,5 +1,5 @@
+import type { LlmProvider } from '@loopwise/shared/types';
 import { Injectable, Logger } from '@nestjs/common';
-import type { LlmProvider } from '@quarry/shared/types';
 
 import { LlmService } from '../agent/llm/llm.service.js';
 import { disableModelReasoning, getProviderMeta, type ProviderModelResult } from '../agent/providers/providers.js';

@@ -1,4 +1,4 @@
-import { findUnfinishedCitationMarker, normalizeCitationMarkers } from '@quarry/shared';
+import { findUnfinishedCitationMarker, normalizeCitationMarkers } from '@loopwise/shared';
 import type { StreamTextTransform, TextStreamPart, ToolSet } from 'ai';
 
 type TextDeltaPart = Extract<TextStreamPart<ToolSet>, { type: 'text-delta' }>;

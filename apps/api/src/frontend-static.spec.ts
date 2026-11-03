@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { serveFrontend } from './frontend-static.js';
 
 function buildDist(): string {
-	const dist = mkdtempSync(path.join(tmpdir(), 'quarry-dist-'));
+	const dist = mkdtempSync(path.join(tmpdir(), 'loopwise-dist-'));
 	mkdirSync(path.join(dist, 'assets'));
 	writeFileSync(path.join(dist, 'index.html'), '<!doctype html><div id="app"></div>');
 	writeFileSync(path.join(dist, 'assets', 'main-abc123.js'), 'console.log(1);');

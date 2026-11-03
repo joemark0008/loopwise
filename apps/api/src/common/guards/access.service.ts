@@ -1,5 +1,5 @@
+import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import type { UserRole } from '@quarry/shared/types';
 
 import type { Project } from '../../generated/prisma/client.js';
 import { OrganizationRepository, type UserOrgMembership } from '../../organizations/organization.repository.js';

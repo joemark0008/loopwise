@@ -19,7 +19,7 @@ const newControlId = () => `IT${randomUUID().replace(/-/g, '').slice(0, 18)}`;
  * Against a real hub (`npm run dev:api` with the seed). Skipped unless HUB_IT_URL is set:
  *
  *   HUB_IT_URL=http://localhost:5006 HUB_IT_KEY=lw_dev_bohol_diagnostics_synthetic_key_0001 \
- *     npm test -w @quarry/connector -- hub.integration
+ *     npm test -w @loopwise/connector -- hub.integration
  *
  * HUB_IT_OUTBOX=1 also checks the outbox endpoint. Synthetic messages only; each run adds one HbA1c result for the
  * seeded synthetic patient to that hub's database.

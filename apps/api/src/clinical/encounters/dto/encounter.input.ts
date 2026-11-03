@@ -6,7 +6,7 @@ import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
 
 /**
  * A new encounter. The DTO only checks shapes; `EncounterService` parses the fields with the shared
- * `EncounterDraftSchema` (`@quarry/shared/encounter`), the same rules the form and the Wise card use.
+ * `EncounterDraftSchema` (`@loopwise/shared/encounter`), the same rules the form and the Wise card use.
  */
 @InputType()
 export class CreateEncounterInput {

@@ -9,7 +9,7 @@ it('notifies subscribers when another tab changes the active project', () => {
 	const unsubscribe = subscribeToExternalActiveProjectChanges(listener);
 
 	window.dispatchEvent(new StorageEvent('storage', { key: 'unrelated' }));
-	window.dispatchEvent(new StorageEvent('storage', { key: 'quarry.active-project-id' }));
+	window.dispatchEvent(new StorageEvent('storage', { key: 'loopwise.active-project-id' }));
 
 	expect(listener).toHaveBeenCalledOnce();
 	unsubscribe();

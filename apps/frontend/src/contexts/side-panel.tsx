@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useRef } from 'react';
-import type { ShareSource } from '@quarry/shared/types';
+import type { ShareSource } from '@loopwise/shared/types';
 
 interface SidePanelContext {
 	isVisible: boolean;

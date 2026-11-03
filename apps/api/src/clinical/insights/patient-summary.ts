@@ -1,4 +1,4 @@
-import type { chartPatientTrend, createReport } from '@quarry/shared/tools';
+import type { chartPatientTrend, createReport } from '@loopwise/shared/tools';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { EncounterSummaryRow, PatientHeaderRow, PrescriptionRow } from './insights.repository.js';

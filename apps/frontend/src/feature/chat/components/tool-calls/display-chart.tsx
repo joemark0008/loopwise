@@ -1,12 +1,12 @@
-import { bucketPieData, buildChart, labelize, resolveDataKey, useChartStyle } from '@quarry/shared';
+import { bucketPieData, buildChart, labelize, resolveDataKey, useChartStyle } from '@loopwise/shared';
 import {
 	buildSeriesChartConfig,
 	buildSeriesLegendPayload,
 	seriesColorAt,
 	useSeriesVisibility,
-} from '@quarry/shared/chart-series';
-import { isBuiltinChartType, isComboChart, isPercentStackedChartType, isPieChart } from '@quarry/shared/chart-types';
-import { displayChart } from '@quarry/shared/tools';
+} from '@loopwise/shared/chart-series';
+import { isBuiltinChartType, isComboChart, isPercentStackedChartType, isPieChart } from '@loopwise/shared/chart-types';
+import { displayChart } from '@loopwise/shared/tools';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChartNoAxesColumn, ChevronLeft, ChevronRight, Code, Download, Pencil, Table as TableIcon } from 'lucide-react';
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -20,8 +20,8 @@ import { SqlResultDisplay } from './sql-result-display';
 import { VisualizationSkeleton } from './visualization-skeleton';
 import { ToolCallWrapper } from './tool-call-wrapper';
 import styles from './display-chart.module.css';
-import type { ChartConfig } from '@quarry/shared/chart-tooltip';
-import type { ChartType } from '@quarry/shared/chart-types';
+import type { ChartConfig } from '@loopwise/shared/chart-tooltip';
+import type { ChartType } from '@loopwise/shared/chart-types';
 import type { ToolCallComponentProps } from '.';
 import type { DateRange } from '@/lib/charts.utils';
 import { useOptionalAgentContext } from '@/contexts/agent.provider.tsx';
@@ -204,7 +204,7 @@ export const DisplayChartToolCall = ({ toolPart }: ToolCallComponentProps<'displ
 			>
 				{chartConfig.chart_type != 'kpi_card' ? (
 					<div className={styles.displayChartToolCallDiv17}>
-						<span className={`${styles.displayChartToolCallSpan} quarry-chart-title`}>
+						<span className={`${styles.displayChartToolCallSpan} loopwise-chart-title`}>
 							{chartConfig.title}
 						</span>
 						{viewMode === 'chart' &&
@@ -671,7 +671,7 @@ export const ChartDisplay = memo(function ChartDisplay({
 	const inlineHeader = useInlineHeader ? (
 		<div className={styles.inlineHeaderDiv}>
 			<div className={showInlineLegend ? styles.inlineHeaderDiv2 : styles.inlineHeaderDiv3}>
-				<span className={`${styles.inlineHeaderSpan} quarry-chart-title`}>{title}</span>
+				<span className={`${styles.inlineHeaderSpan} loopwise-chart-title`}>{title}</span>
 				{titleAccessory}
 			</div>
 			{showInlineLegend && canScrollLeft && (

@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import styles from './viewer-shared-items.module.css';
 import type { ReactNode } from 'react';
 import type { SharedGroup, SharedItem } from '@/lib/viewer-home';
-import type { MessageBubble, StoryPanelDisplayMode } from '@quarry/shared/types';
+import type { MessageBubble, StoryPanelDisplayMode } from '@loopwise/shared/types';
 import {
 	AuthorDateLabel,
 	CardsGrid,

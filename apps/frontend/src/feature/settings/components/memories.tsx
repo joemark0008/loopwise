@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { SettingsMemoryItem, SettingsMemorySkeleton } from './memory-item';
 import styles from './memories.module.css';
-import type { UserMemoryRecord } from '@quarry/api/agent/types/memory';
+import type { UserMemoryRecord } from '@loopwise/api/agent/types/memory';
 import {
 	AlertDialog,
 	AlertDialogAction,

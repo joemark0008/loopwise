@@ -1,4 +1,4 @@
-import type { UserRulesGroupAccess } from '@quarry/shared/rules-template';
+import type { UserRulesGroupAccess } from '@loopwise/shared/rules-template';
 import { createHash } from 'crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';

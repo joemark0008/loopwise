@@ -1,7 +1,7 @@
-import { resolveDataKey } from '@quarry/shared';
-import { chartTypeRequiresXAxisKey, isPieChart } from '@quarry/shared/chart-types';
-import type { ChartType } from '@quarry/shared/chart-types';
-import type { displayChart } from '@quarry/shared/tools';
+import { resolveDataKey } from '@loopwise/shared';
+import { chartTypeRequiresXAxisKey, isPieChart } from '@loopwise/shared/chart-types';
+import type { ChartType } from '@loopwise/shared/chart-types';
+import type { displayChart } from '@loopwise/shared/tools';
 
 export type ColumnValueKind = 'number' | 'date' | 'boolean' | 'text' | 'empty' | 'mixed';
 

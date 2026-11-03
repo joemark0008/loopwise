@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import type { LlmProvider, UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import type { LlmProvider, UserRole } from '@quarry/shared/types';
 import type { z } from 'zod/v4';
 
 import { LlmService } from '../agent/llm/llm.service.js';

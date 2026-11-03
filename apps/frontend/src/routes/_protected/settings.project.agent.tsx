@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { isLlmProvider } from '@quarry/shared/types';
+import { isLlmProvider } from '@loopwise/shared/types';
 import type { AgentSearch } from '@/feature/settings/agent-page';
 import { ProjectAgentPage, isAgentTab } from '@/feature/settings/agent-page';
 

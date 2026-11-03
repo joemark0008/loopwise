@@ -14,7 +14,7 @@ export function serveFrontend(app: { use(...handlers: unknown[]): unknown }, dis
 	const root = path.resolve(distDir);
 	const indexHtml = path.join(root, 'index.html');
 	if (!existsSync(indexHtml)) {
-		throw new Error(`QUARRY_FRONTEND_DIST has no index.html: ${root}`);
+		throw new Error(`LOOPWISE_FRONTEND_DIST has no index.html: ${root}`);
 	}
 
 	app.use('/assets', express.static(path.join(root, 'assets'), { immutable: true, maxAge: '1y' }));

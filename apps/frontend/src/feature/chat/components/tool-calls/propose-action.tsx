@@ -1,14 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ALLERGY_KINDS, ALLERGY_SEVERITIES, AllergyDraftSchema, fieldErrors } from '@quarry/shared/encounter-record';
-import { VITAL_FIELDS, VITAL_RANGES } from '@quarry/shared/vitals';
-import { wiseAction } from '@quarry/shared/wise-actions';
+import { ALLERGY_KINDS, ALLERGY_SEVERITIES, AllergyDraftSchema, fieldErrors } from '@loopwise/shared/encounter-record';
+import { VITAL_FIELDS, VITAL_RANGES } from '@loopwise/shared/vitals';
+import { wiseAction } from '@loopwise/shared/wise-actions';
 import { ClipboardCheck, FlaskConical, HeartPulse, ShieldAlert, ShieldX, TestTubes } from 'lucide-react';
 import { memo, useState } from 'react';
 import { ProposalCard } from './proposal-card/proposal-card';
 import styles from './propose-action.module.css';
 import type { ProposalConfirm } from './proposal-card/proposal-card';
-import type { listResultsToReview } from '@quarry/shared/tools';
+import type { listResultsToReview } from '@loopwise/shared/tools';
 import type {
 	ActionOutput,
 	ProposeAllergyInput,
@@ -16,7 +16,7 @@ import type {
 	ProposeRemoveAllergyInput,
 	ProposeResultReviewInput,
 	ProposeVitalsInput,
-} from '@quarry/shared/wise-actions';
+} from '@loopwise/shared/wise-actions';
 import type { z } from 'zod/v3';
 import type { ToolCallComponentProps } from '.';
 import type { VitalsFormValues } from '@/feature/encounters/encounter-form-values';
@@ -39,7 +39,7 @@ import { wiseActionsApi } from '@/lib/wise-actions-api';
 import { resultValue, testName, URGENCY_LABELS } from '@/feature/results/result-format';
 
 /*
- * The cards of the Wise action tools (DESIGN.md §9.4, `@quarry/shared/wise-actions`). Each is the shared proposal card
+ * The cards of the Wise action tools (DESIGN.md §9.4, `@loopwise/shared/wise-actions`). Each is the shared proposal card
  * in the mode and confirm strength its definition gives, around a small body: the draft, editable, and the record it
  * is about, loaded as the clinician. Confirm calls the action's mutation with the card's `wiseOrigin`, and the API
  * accepts it only from that tool, once.

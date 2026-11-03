@@ -1,4 +1,4 @@
-import { computeBmi, VITAL_FIELDS, VITAL_RANGES, vitalFlag } from '@quarry/shared/vitals';
+import { computeBmi, VITAL_FIELDS, VITAL_RANGES, vitalFlag } from '@loopwise/shared/vitals';
 import { useState } from 'react';
 import styles from './encounter.module.css';
 import { emptyVitalsForm, toRecordVitalsInput, validateVitalsForm } from './encounter-form-values';
@@ -7,7 +7,7 @@ import { FormField } from './form-field';
 import { useRecordMutation } from './use-record-mutation';
 import { VoidDialog } from './void-dialog';
 import type { VitalsFormValues } from './encounter-form-values';
-import type { VitalFlag } from '@quarry/shared/vitals';
+import type { VitalFlag } from '@loopwise/shared/vitals';
 import type { EncounterRecordFieldsFragment } from '@/graphql/generated/graphql';
 import { FlaggedValue } from '@/components/clinical/clinical-flag';
 import { Button } from '@/components/ui/button';

@@ -1,14 +1,14 @@
 import type { ExecutionContext } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { QuarryRequest } from '../common/request.js';
+import type { LoopwiseRequest } from '../common/request.js';
 import { FacilityKeyGuard } from './facility-key.guard.js';
 import type { FacilityKeyService } from './facility-key.service.js';
 import { describeFacilityKey, generateFacilityKey, readBearerFacilityKey } from './facility-key-token.js';
 
 const LAB = { id: 'org-lab', name: 'Lab' };
 
-const contextFor = (req: Partial<QuarryRequest>) =>
+const contextFor = (req: Partial<LoopwiseRequest>) =>
 	({
 		getType: () => 'http',
 		switchToHttp: () => ({ getRequest: () => req }),
@@ -41,13 +41,13 @@ describe('FacilityKeyGuard', () => {
 	const guard = new FacilityKeyGuard(service);
 
 	it('sets the facility for a valid key', async () => {
-		const req: Partial<QuarryRequest> = { headers: { authorization: 'Bearer lw_good' } };
+		const req: Partial<LoopwiseRequest> = { headers: { authorization: 'Bearer lw_good' } };
 		await expect(guard.canActivate(contextFor(req))).resolves.toBe(true);
 		expect(req.facility).toEqual(LAB);
 	});
 
 	it.each([['Bearer lw_revoked'], ['Bearer nope'], [undefined]])('rejects %s with 401', async (authorization) => {
-		const req: Partial<QuarryRequest> = { headers: { authorization } };
+		const req: Partial<LoopwiseRequest> = { headers: { authorization } };
 		await expect(guard.canActivate(contextFor(req))).rejects.toMatchObject({ code: 401 });
 		expect(req.facility).toBeUndefined();
 	});

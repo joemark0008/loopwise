@@ -20,7 +20,7 @@ afterEach(cleanup);
 describe('CommandBlock', () => {
 	it('reports clipboard failures without rejecting the click handler', async () => {
 		writeText.mockRejectedValue(new Error('Clipboard permission denied'));
-		render(<CommandBlock command='quarry init' />);
+		render(<CommandBlock command='loopwise init' />);
 
 		fireEvent.click(screen.getByRole('button', { name: 'Copy command' }));
 

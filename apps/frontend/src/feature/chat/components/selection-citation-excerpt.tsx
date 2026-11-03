@@ -1,5 +1,5 @@
 import styles from './selection-citation-excerpt.module.css';
-import type { StoryBlockReference } from '@quarry/shared/types';
+import type { StoryBlockReference } from '@loopwise/shared/types';
 import { cn } from '@/lib/utils';
 
 interface SelectionCitationExcerptProps {

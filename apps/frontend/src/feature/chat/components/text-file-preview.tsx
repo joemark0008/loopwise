@@ -36,7 +36,7 @@ export function TextFilePreview({ filePath, content }: { filePath: string; conte
 		<Editor
 			value={content}
 			language={getLanguageFromPath(filePath)}
-			theme={editorTheme === 'vs-dark' ? 'quarry-dark' : 'quarry-light'}
+			theme={editorTheme === 'vs-dark' ? 'loopwise-dark' : 'loopwise-light'}
 			beforeMount={defineCustomThemes}
 			onMount={forwardCommandPaletteShortcut}
 			options={{
@@ -63,7 +63,7 @@ function getLanguageFromPath(filePath: string): string {
 }
 
 function defineCustomThemes(monaco: Monaco) {
-	monaco.editor.defineTheme('quarry-light', {
+	monaco.editor.defineTheme('loopwise-light', {
 		base: 'vs',
 		inherit: true,
 		rules: [],
@@ -72,7 +72,7 @@ function defineCustomThemes(monaco: Monaco) {
 			'editor.lineHighlightBorder': '#00000000',
 		},
 	});
-	monaco.editor.defineTheme('quarry-dark', {
+	monaco.editor.defineTheme('loopwise-dark', {
 		base: 'vs-dark',
 		inherit: true,
 		rules: [],

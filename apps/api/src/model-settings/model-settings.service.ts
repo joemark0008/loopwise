@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { BACKGROUND_MODEL_CATEGORIES, type BackgroundModelCategory, type DefaultModelSettings } from '@quarry/shared';
+import { BACKGROUND_MODEL_CATEGORIES, type BackgroundModelCategory, type DefaultModelSettings } from '@loopwise/shared';
 import {
 	type LlmProvider,
 	type LlmSelectedModel,
 	MAX_PYTHON_EXECUTION_DURATION_SECS,
 	MIN_PYTHON_EXECUTION_DURATION_SECS,
 	SEMANTIC_LAYER_MODES,
-} from '@quarry/shared/types';
+} from '@loopwise/shared/types';
+import { Injectable } from '@nestjs/common';
 import { z } from 'zod/v4';
 
 import { getEnvApiKey, getEnvBaseUrls, getEnvProviders, LlmService } from '../agent/llm/llm.service.js';
@@ -25,7 +25,7 @@ import {
 	llmSelectedModelSchema,
 	modelSettingsMapSchema,
 } from '../agent/types/llm.js';
-import { extractConfiguredSemanticLayer } from '../agent/utils/quarry-config.js';
+import { extractConfiguredSemanticLayer } from '../agent/utils/loopwise-config.js';
 import { buildCredentialPreviews, previewApiKey } from '../agent/utils/utils.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import type { Prisma, Project, ProjectLlmConfig } from '../generated/prisma/client.js';
@@ -93,7 +93,7 @@ type AvailableModel = Awaited<ReturnType<LlmService['getProjectAvailableModels']
  * Port of the model and agent settings procedures of upstream `trpc/project.routes.ts` (`getLlmConfigs`,
  * `upsertLlmConfig`, `deleteLlmConfig`, `getKnownModels`, `getDefaultModels`, `updateDefaultModels`,
  * `getDefaultChatModel`, `getAgentSettings`, `updateAgentSettings`) and of `services/default-models.service.ts`.
- * Not ported: the `llm` block of `quarry_config.yaml` (no `configProviders`), messaging integrations (Phase 7, so no
+ * Not ported: the `llm` block of `loopwise_config.yaml` (no `configProviders`), messaging integrations (Phase 7, so no
  * integration models) and the MCP endpoint (Phase 6).
  */
 @Injectable()

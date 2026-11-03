@@ -1,7 +1,7 @@
-import { buildAnalyticsChart } from '@quarry/shared/analytics-chart';
-import { DEFAULT_COLORS } from '@quarry/shared/chart-builder';
-import { type ReportSegment, splitReport } from '@quarry/shared/report-blocks';
-import type { clinicalChart, createReport, report, runAnalyticsSql } from '@quarry/shared/tools';
+import { buildAnalyticsChart } from '@loopwise/shared/analytics-chart';
+import { DEFAULT_COLORS } from '@loopwise/shared/chart-builder';
+import { type ReportSegment, splitReport } from '@loopwise/shared/report-blocks';
+import type { clinicalChart, createReport, report, runAnalyticsSql } from '@loopwise/shared/tools';
 import { Marked } from 'marked';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';

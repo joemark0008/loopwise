@@ -1,6 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
 
-export const JOB_HANDLER_KEY = 'quarry:job';
+export const JOB_HANDLER_KEY = 'loopwise:job';
 
 export interface JobOptions {
 	/** Cron expression: the job is scheduled with `boss.schedule()` at boot. */

@@ -65,7 +65,7 @@ export const CLOUD_BILLING_TRIAL_DAYS = 14;
 export const CLOUD_BILLING_PLANS = {
 	monthly: {
 		key: 'cloud_monthly_v2',
-		name: 'quarry Cloud',
+		name: 'loopwise Cloud',
 		interval: 'month',
 		intervalCount: 1,
 		trialDays: CLOUD_BILLING_TRIAL_DAYS,
@@ -73,7 +73,7 @@ export const CLOUD_BILLING_PLANS = {
 	},
 	yearly: {
 		key: 'cloud_yearly_v1',
-		name: 'quarry Cloud',
+		name: 'loopwise Cloud',
 		interval: 'year',
 		intervalCount: 1,
 		trialDays: CLOUD_BILLING_TRIAL_DAYS,

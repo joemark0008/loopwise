@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import type { UserRole } from '@quarry/shared/types';
+import type { UserRole } from '@loopwise/shared/types';
 import { useCurrentProject } from '@/hooks/use-current-project';
 
 export function usePermissions() {
@@ -21,7 +21,7 @@ export function usePermissions() {
 			canViewUsage: role === 'admin' || role === 'user' || role === 'context_admin',
 			canViewAllUsage: role === 'admin',
 			canViewRecommendations: role === 'admin' || role === 'context_admin',
-			canChatWithQuarryData: role === 'admin' || role === 'context_admin',
+			canChatWithLoopwiseData: role === 'admin' || role === 'context_admin',
 			canStartNewChat: role !== 'viewer' && !!role,
 			canViewSharedObjects: !!role,
 		}),

@@ -18,7 +18,7 @@ describe('documentMediaType', () => {
 		);
 	});
 
-	it('rejects an extension quarry has no use for', () => {
+	it('rejects an extension loopwise has no use for', () => {
 		expect(documentMediaType('installer.exe')).toBeUndefined();
 		expect(documentMediaType('archive.zip')).toBeUndefined();
 		expect(documentMediaType('README')).toBeUndefined();

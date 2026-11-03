@@ -1,5 +1,5 @@
+import type { LlmProvider } from '@loopwise/shared/types';
 import { Inject, Injectable, Optional } from '@nestjs/common';
-import type { LlmProvider } from '@quarry/shared/types';
 import type { ModelMessage, Tool } from 'ai';
 
 import { LlmInferenceService } from '../../usage/llm-inference.service.js';

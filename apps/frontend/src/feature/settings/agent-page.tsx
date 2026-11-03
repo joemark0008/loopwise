@@ -1,6 +1,6 @@
 import { getRouteApi, useNavigate } from '@tanstack/react-router';
 import styles from './agent-page.module.css';
-import type { LlmProvider } from '@quarry/shared/types';
+import type { LlmProvider } from '@loopwise/shared/types';
 import type { ProviderToEdit } from '@/feature/settings/components/llm-providers-section';
 import type { TabBarItem } from '@/components/ui/tab-bar';
 import { DefaultModelsSection } from '@/feature/settings/components/default-models-section';

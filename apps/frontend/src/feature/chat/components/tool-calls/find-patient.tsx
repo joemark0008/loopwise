@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Search } from 'lucide-react';
 import { memo } from 'react';
 import styles from './find-patient.module.css';
-import type { findPatient } from '@quarry/shared/tools';
+import type { findPatient } from '@loopwise/shared/tools';
 import type { ToolCallComponentProps } from '.';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { useAgentContext } from '@/contexts/agent.provider';

@@ -2,7 +2,7 @@ import { memo, useState } from 'react';
 import { Copy, Download, Maximize2 } from 'lucide-react';
 import styles from './data-table-card.module.css';
 import type { ReactNode } from 'react';
-import type { ColumnConditionalFormats } from '@quarry/shared/conditional-formatting';
+import type { ColumnConditionalFormats } from '@loopwise/shared/conditional-formatting';
 import { ExportDataMenu } from '@/components/export-data-menu';
 import { TableDisplay } from '@/feature/chat/components/tool-calls/display-table';
 import { Button } from '@/components/ui/button';

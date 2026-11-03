@@ -1,4 +1,4 @@
-import { chartPatientTrend, clinicalChart } from '@quarry/shared/tools';
+import { chartPatientTrend, clinicalChart } from '@loopwise/shared/tools';
 
 import type { Prisma } from '../../generated/prisma/client.js';
 

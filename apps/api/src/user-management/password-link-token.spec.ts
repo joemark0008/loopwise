@@ -23,8 +23,8 @@ describe('password link tokens', () => {
 	});
 
 	it('build the set-password URL on the app origin', () => {
-		expect(buildPasswordLinkUrl('https://quarry.example.com/', 'a-b_c')).toBe(
-			'https://quarry.example.com/set-password?token=a-b_c',
+		expect(buildPasswordLinkUrl('https://loopwise.example.com/', 'a-b_c')).toBe(
+			'https://loopwise.example.com/set-password?token=a-b_c',
 		);
 	});
 });

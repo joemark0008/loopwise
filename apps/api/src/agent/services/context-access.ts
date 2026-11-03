@@ -1,4 +1,4 @@
-import { type DatabaseContextAccess, isDatabaseContextTableGranted } from '@quarry/shared';
+import { type DatabaseContextAccess, isDatabaseContextTableGranted } from '@loopwise/shared';
 
 import type { DatabaseContextCatalog, DatabaseObject } from '../user-rules.js';
 

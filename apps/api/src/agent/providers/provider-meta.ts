@@ -1,4 +1,4 @@
-import { type LlmProvider, type LlmProviderKind, providerKind } from '@quarry/shared/types';
+import { type LlmProvider, type LlmProviderKind, providerKind } from '@loopwise/shared/types';
 
 import {
 	type ActiveEffort,

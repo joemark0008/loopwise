@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { SelectorStore } from './abstract-store';
-import type { CitationData } from '@quarry/shared/types';
+import type { CitationData } from '@loopwise/shared/types';
 import type { DocumentAttachment } from '@/lib/attachments';
 
 export type ChatInputRestore = {

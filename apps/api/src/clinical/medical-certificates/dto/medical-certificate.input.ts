@@ -7,7 +7,7 @@ import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
 
 /**
  * A medical certificate draft. The DTO only checks shapes; `MedicalCertificateService` parses it with the shared
- * `MedicalCertificateDraftSchema` (`@quarry/shared/medical-certificate`).
+ * `MedicalCertificateDraftSchema` (`@loopwise/shared/medical-certificate`).
  */
 @InputType()
 export class SaveMedicalCertificateInput {

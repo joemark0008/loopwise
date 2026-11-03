@@ -4,7 +4,7 @@ import {
 	DISCOUNT_LABELS,
 	FEE_SCHEDULE,
 	formatPesos,
-} from '@quarry/shared/encounter-bill';
+} from '@loopwise/shared/encounter-bill';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import styles from './encounter.module.css';

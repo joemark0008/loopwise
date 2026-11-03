@@ -1,5 +1,5 @@
 import { skipToken, useQuery } from '@tanstack/react-query';
-import { restUntil } from '@quarry/shared/medical-certificate';
+import { restUntil } from '@loopwise/shared/medical-certificate';
 import { fitnessLabel, formatDay } from '../encounter-format';
 import { Letterhead, PatientLines, PrintShell, SignatureBlock, watermarkFor } from './print-shell';
 import styles from './print.module.css';

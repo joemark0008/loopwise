@@ -1,5 +1,5 @@
-import type { displayChart } from '@quarry/shared/tools';
-import type { UsageByUserRecord, UserUsageBreakdown } from '@quarry/shared/usage';
+import type { displayChart } from '@loopwise/shared/tools';
+import type { UsageByUserRecord, UserUsageBreakdown } from '@loopwise/shared/usage';
 
 export type UserUsageMetric = keyof Omit<UserUsageBreakdown, 'userName'>;
 

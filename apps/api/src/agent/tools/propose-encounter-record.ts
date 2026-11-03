@@ -1,5 +1,5 @@
-import type { encounterProposal } from '@quarry/shared/tools';
-import { proposeCharges, proposeMedicalCertificate, proposePrescription } from '@quarry/shared/tools';
+import type { encounterProposal } from '@loopwise/shared/tools';
+import { proposeCharges, proposeMedicalCertificate, proposePrescription } from '@loopwise/shared/tools';
 import type { ZodType } from 'zod/v3';
 
 import type { ToolContext } from '../types/tools.js';

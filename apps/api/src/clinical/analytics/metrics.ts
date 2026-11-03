@@ -1,4 +1,4 @@
-import type { getMetric, runAnalyticsSql } from '@quarry/shared/tools';
+import type { getMetric, runAnalyticsSql } from '@loopwise/shared/tools';
 
 export interface MetricParams {
 	months: number;

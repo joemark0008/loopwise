@@ -1,5 +1,5 @@
-import { isQueryResultPartType } from '@quarry/shared/execute-sql-parts';
-import type { executeSql } from '@quarry/shared/tools';
+import { isQueryResultPartType } from '@loopwise/shared/execute-sql-parts';
+import type { executeSql } from '@loopwise/shared/tools';
 import type { InferUIMessageChunk } from 'ai';
 
 import type { UIChat, UIMessage, UIMessagePart } from '../types/chat.js';

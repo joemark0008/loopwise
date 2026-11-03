@@ -1,6 +1,6 @@
-import { getDefaultModelId } from '@quarry/api/agent/providers/provider-meta';
-import type { ModelInferenceSettings, ModelSettingsMap } from '@quarry/api/agent/types/llm';
-import type { LlmProvider } from '@quarry/shared/types';
+import { getDefaultModelId } from '@loopwise/api/agent/providers/provider-meta';
+import type { ModelInferenceSettings, ModelSettingsMap } from '@loopwise/api/agent/types/llm';
+import type { LlmProvider } from '@loopwise/shared/types';
 
 interface ApplySavedModelSettingsArgs {
 	provider: LlmProvider;

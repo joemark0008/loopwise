@@ -17,7 +17,7 @@ export class SystemService {
 		const { env } = this.config;
 		const google = await this.organizations.getGoogleConfig();
 		return {
-			quarryMode: 'self-hosted',
+			loopwiseMode: 'self-hosted',
 			enableUserLogin: env.ENABLE_USER_LOGIN,
 			emailVerificationEnabled: false,
 			betaAutomationsEnabled: env.BETA_AUTOMATIONS_ENABLED,

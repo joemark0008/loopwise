@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp, Download, FileText } from 'lucide-react';
 import { memo, useState } from 'react';
-import { createReport } from '@quarry/shared/tools';
+import { createReport } from '@loopwise/shared/tools';
 import styles from './report-card.module.css';
 import type { ToolCallComponentProps } from '.';
 import { Button } from '@/components/ui/button';

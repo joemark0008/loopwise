@@ -2,7 +2,7 @@ import { z } from 'zod/v4';
 
 /**
  * Pre-registered OAuth client for providers that reject Dynamic Client Registration.
- * When set, quarry sends this client in the authorization-code + PKCE flow instead of registering itself.
+ * When set, loopwise sends this client in the authorization-code + PKCE flow instead of registering itself.
  */
 export interface McpOAuthClientConfig {
 	clientId: string;

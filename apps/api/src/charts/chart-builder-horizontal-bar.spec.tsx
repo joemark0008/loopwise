@@ -1,4 +1,4 @@
-import { buildChart } from '@quarry/shared';
+import { buildChart } from '@loopwise/shared';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';

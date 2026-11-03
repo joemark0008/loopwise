@@ -192,7 +192,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 		search: { tab: 'models' },
 		title: 'Default models',
 		description:
-			'Choose the model new chats start on, the model each messaging integration and the MCP ask_quarry tool answer with, and the models behind background tasks.',
+			'Choose the model new chats start on, the model each messaging integration and the MCP ask_loopwise tool answer with, and the models behind background tasks.',
 		keywords: [
 			'default model',
 			'chat model',
@@ -203,7 +203,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 			'whatsapp model',
 			'mattermost model',
 			'mcp model',
-			'ask_quarry',
+			'ask_loopwise',
 			'background',
 			'live story',
 			'title generation',

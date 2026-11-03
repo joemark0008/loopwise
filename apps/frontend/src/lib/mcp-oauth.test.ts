@@ -19,7 +19,7 @@ describe('openMcpConnectPopup', () => {
 			new MessageEvent('message', {
 				origin: window.location.origin,
 				source: otherWindow,
-				data: { type: 'quarry-mcp-oauth', status: 'connected', server: 'metabase' },
+				data: { type: 'loopwise-mcp-oauth', status: 'connected', server: 'metabase' },
 			}),
 		);
 
@@ -31,7 +31,7 @@ describe('openMcpConnectPopup', () => {
 			new MessageEvent('message', {
 				origin: window.location.origin,
 				source: popup,
-				data: { type: 'quarry-mcp-oauth', status: 'connected', server: 'metabase' },
+				data: { type: 'loopwise-mcp-oauth', status: 'connected', server: 'metabase' },
 			}),
 		);
 
@@ -47,7 +47,7 @@ describe('openMcpConnectPopup', () => {
 			new MessageEvent('message', {
 				origin: window.location.origin,
 				source: popup,
-				data: { type: 'quarry-mcp-oauth', status: 'error', server: 'meta-ads', message: 'invalid_client' },
+				data: { type: 'loopwise-mcp-oauth', status: 'error', server: 'meta-ads', message: 'invalid_client' },
 			}),
 		);
 

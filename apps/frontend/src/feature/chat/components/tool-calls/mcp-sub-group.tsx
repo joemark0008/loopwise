@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { pluralize } from '@quarry/shared';
+import { pluralize } from '@loopwise/shared';
 import { McpTitle } from './mcp-title';
 import styles from './mcp-sub-group.module.css';
 import { ToolCall } from './index';

@@ -703,7 +703,7 @@ describe('story filter tags', () => {
 			column: 'product_name',
 			label: 'Product',
 			type: 'select',
-			table: '`quarry-production`.`prod_silver`.`dim_products`',
+			table: '`loopwise-production`.`prod_silver`.`dim_products`',
 			database_id: 'bigquery',
 		});
 
@@ -713,7 +713,7 @@ describe('story filter tags', () => {
 				column: 'product_name',
 				label: 'Product',
 				filterType: 'select',
-				table: '`quarry-production`.`prod_silver`.`dim_products`',
+				table: '`loopwise-production`.`prod_silver`.`dim_products`',
 				databaseId: 'bigquery',
 				rawTag: expect.any(String),
 			},

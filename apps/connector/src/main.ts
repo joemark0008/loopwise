@@ -2,7 +2,7 @@ import { ConfigError, loadConfig } from './config.ts';
 import { startConnector } from './connector.ts';
 import { createLogger, errorText } from './logger.ts';
 
-/** Entry point: `npm start -w @quarry/connector` (or the Docker image). Stops cleanly on SIGINT / SIGTERM. */
+/** Entry point: `npm start -w @loopwise/connector` (or the Docker image). Stops cleanly on SIGINT / SIGTERM. */
 async function main(): Promise<void> {
 	let config;
 	try {

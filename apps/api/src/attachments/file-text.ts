@@ -1,4 +1,4 @@
-import { fileExtension, isBinaryDocument } from '@quarry/shared/attachments';
+import { fileExtension, isBinaryDocument } from '@loopwise/shared/attachments';
 
 import { extractPdfText } from './pdf.js';
 import { describeWorkbook } from './workbook.js';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { isManagedProvider, PROVIDER_META } from '@quarry/api/agent/providers/provider-meta';
+import { isManagedProvider, PROVIDER_META } from '@loopwise/api/agent/providers/provider-meta';
 import {
 	LLM_PROVIDERS,
 	NAMED_PROVIDER_KIND,
@@ -8,9 +8,9 @@ import {
 	providerName,
 	toNamedProvider,
 	toProviderName,
-} from '@quarry/shared/types';
-import type { CustomModelMetadata, ModelSettingsMap } from '@quarry/api/agent/types/llm';
-import type { LlmProvider, LlmProviderKind } from '@quarry/shared/types';
+} from '@loopwise/shared/types';
+import type { CustomModelMetadata, ModelSettingsMap } from '@loopwise/api/agent/types/llm';
+import type { LlmProvider, LlmProviderKind } from '@loopwise/shared/types';
 import type { InheritedKeySource } from '@/feature/settings/components/llm-provider-form';
 import { projectApi } from '@/lib/project-api';
 
@@ -147,7 +147,7 @@ export function useLlmProviders() {
 		});
 	};
 
-	/** Seed the form with the quarry_config.yaml values so saving creates an override of them. */
+	/** Seed the form with the loopwise_config.yaml values so saving creates an override of them. */
 	const handleOverrideConfigProvider = (configProvider: (typeof configProviders)[0]) => {
 		setEditingState({
 			provider: configProvider.provider,
@@ -178,7 +178,7 @@ export function useLlmProviders() {
 	};
 
 	const handleConfigureEnvProvider = (provider: LlmProvider) => {
-		// Endpoints quarry cannot guess start from the environment value rather than an empty field.
+		// Endpoints loopwise cannot guess start from the environment value rather than an empty field.
 		const baseUrl = PROVIDER_META[providerKind(provider)].requiresBaseUrl ? (envBaseUrls[provider] ?? '') : '';
 		setEditingState({
 			provider,

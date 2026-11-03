@@ -1,6 +1,6 @@
 # RULES.md
 
-> Included with every message sent to the quarry agent. Keep it lean — it points to context, it doesn't copy it. Per-table detail belongs in `databases/<table>/`, metrics in the semantic layer, domain rules in `docs/`.
+> Included with every message sent to the loopwise agent. Keep it lean — it points to context, it doesn't copy it. Per-table detail belongs in `databases/<table>/`, metrics in the semantic layer, domain rules in `docs/`.
 
 ## Business overview
 

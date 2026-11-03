@@ -6,9 +6,9 @@ import {
 	DEFAULT_DATE_FORMAT_SETTINGS,
 	formatDateValue,
 	SUPPORTED_DATE_FORMAT_TOKENS,
-} from '@quarry/shared/date';
+} from '@loopwise/shared/date';
 import styles from './date-format-section.module.css';
-import type { DateFormatPreset } from '@quarry/shared/date';
+import type { DateFormatPreset } from '@loopwise/shared/date';
 
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

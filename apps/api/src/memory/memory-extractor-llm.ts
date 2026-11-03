@@ -50,7 +50,7 @@ export class MemoryExtractorLLM {
 			system: MEMORY_EXTRACTION_SYSTEM_PROMPT,
 			messages: modelMessages,
 			maxOutputTokens: MAX_OUTPUT_TOKENS,
-			experimental_telemetry: llmTelemetry('quarry-memory-extraction'),
+			experimental_telemetry: llmTelemetry('loopwise-memory-extraction'),
 		});
 
 		debugMemory('output', output);

@@ -1,4 +1,4 @@
-import { MAX_IMAGE_SIZE_MB } from '@quarry/shared/attachments';
+import { MAX_IMAGE_SIZE_MB } from '@loopwise/shared/attachments';
 import { describe, expect, it } from 'vitest';
 
 import { AgentRequestSchema, AgentRequestUserMessageSchema } from './chat.js';
@@ -21,7 +21,7 @@ describe('agent chat modes', () => {
 		expect(request.mode).toBe('example');
 	});
 
-	// Upstream's `getChatModeMismatchError` (services/agent-run.ts) is not ported: onboarding chats are not in quarry yet.
+	// Upstream's `getChatModeMismatchError` (services/agent-run.ts) is not ported: onboarding chats are not in loopwise yet.
 });
 
 describe('AgentRequestSchema query workbench', () => {

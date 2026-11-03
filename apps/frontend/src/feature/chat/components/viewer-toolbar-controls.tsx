@@ -2,7 +2,7 @@ import { LayoutGrid, List, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import styles from './viewer-toolbar-controls.module.css';
 import type { KeyboardEvent } from 'react';
-import type { StoryPanelDisplayMode } from '@quarry/shared/types';
+import type { StoryPanelDisplayMode } from '@loopwise/shared/types';
 import type { GroupBy } from '@/lib/viewer-home';
 import { GROUP_BY_LABELS } from '@/lib/viewer-home';
 import { cn } from '@/lib/utils';

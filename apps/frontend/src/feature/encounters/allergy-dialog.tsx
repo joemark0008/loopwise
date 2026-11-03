@@ -1,4 +1,4 @@
-import { ALLERGY_KINDS, ALLERGY_SEVERITIES } from '@quarry/shared/encounter-record';
+import { ALLERGY_KINDS, ALLERGY_SEVERITIES } from '@loopwise/shared/encounter-record';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import styles from './encounter.module.css';

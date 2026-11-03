@@ -1,4 +1,4 @@
-import { PATIENT_LANGUAGES } from '@quarry/shared/patient-registration';
+import { PATIENT_LANGUAGES } from '@loopwise/shared/patient-registration';
 import type { PatientFieldsFragment } from '@/graphql/generated/graphql';
 
 export const patientName = (patient: Pick<PatientFieldsFragment, 'givenName' | 'familyName'>) =>

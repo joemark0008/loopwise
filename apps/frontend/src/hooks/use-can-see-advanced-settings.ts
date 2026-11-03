@@ -1,4 +1,4 @@
-import type { UserRole } from '@quarry/shared/types';
+import type { UserRole } from '@loopwise/shared/types';
 
 import { useCurrentProject } from '@/hooks/use-current-project';
 import { canSeeAdvancedSettings } from '@/lib/effective-user-group-features';

@@ -28,7 +28,7 @@ import { RequestLoaders } from './common/dataloader/request-loaders.js';
 import { AllExceptionsFilter } from './common/errors/all-exceptions.filter.js';
 import type { GraphQLContext } from './common/graphql-context.js';
 import { GuardsModule } from './common/guards/guards.module.js';
-import type { QuarryRequest } from './common/request.js';
+import type { LoopwiseRequest } from './common/request.js';
 import { ConfigModule } from './config/config.module.js';
 import { ConfigService } from './config/config.service.js';
 import { FacilityKeysModule } from './facility-keys/facility-keys.module.js';
@@ -66,7 +66,7 @@ export const SCHEMA_FILE = path.join(import.meta.dirname, '..', 'schema.gql');
 				graphiql: config.isDev,
 				introspection: config.env.MODE !== 'prod',
 				includeStacktraceInErrorResponses: config.isDev,
-				context: ({ req, res }: { req: QuarryRequest; res: Response }): GraphQLContext => ({
+				context: ({ req, res }: { req: LoopwiseRequest; res: Response }): GraphQLContext => ({
 					req,
 					res,
 					loaders: new RequestLoaders(moduleRef),

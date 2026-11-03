@@ -1,4 +1,4 @@
-import { encounterDraftErrors } from '@quarry/shared/encounter';
+import { encounterDraftErrors } from '@loopwise/shared/encounter';
 import type { CreateEncounterInput } from '@/graphql/generated/graphql';
 
 /** What the New encounter form and the Wise card edit. `startedAt` is a `datetime-local` value (local time). */

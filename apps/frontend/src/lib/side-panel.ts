@@ -9,7 +9,7 @@ export const STORY_BLOCK_EDIT_PANEL_MIN_WIDTH = 300;
 export const SIDE_PANEL_ANIMATION_DURATION = 300;
 export const SIDE_PANEL_ANIMATION_EASING = 'cubic-bezier(0.5, 0.5, 0, 1)';
 export const SIDE_PANEL_DEFAULT_WIDTH_RATIO = 0.5;
-export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'quarry:side-panel-width-ratio';
+export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'loopwise:side-panel-width-ratio';
 
 export function loadPersistedWidthRatio(defaultRatio = SIDE_PANEL_DEFAULT_WIDTH_RATIO): number {
 	try {

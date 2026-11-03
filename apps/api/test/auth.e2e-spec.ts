@@ -32,10 +32,10 @@ describe('auth (e2e)', () => {
 	});
 
 	it('reports no users yet', async () => {
-		const res = await graphql('{ hasUsers publicConfig { quarryMode enableUserLogin } }');
+		const res = await graphql('{ hasUsers publicConfig { loopwiseMode enableUserLogin } }');
 		expect(res.body.data).toEqual({
 			hasUsers: false,
-			publicConfig: { quarryMode: 'self-hosted', enableUserLogin: true },
+			publicConfig: { loopwiseMode: 'self-hosted', enableUserLogin: true },
 		});
 	});
 

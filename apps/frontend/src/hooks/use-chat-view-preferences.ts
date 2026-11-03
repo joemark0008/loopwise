@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { ChatFilterType, ChatGroupBy } from '@quarry/shared/types';
+import type { ChatFilterType, ChatGroupBy } from '@loopwise/shared/types';
 
 const GROUP_BY_KEY = 'sidebar-chat-group-by';
 const FILTERS_KEY = 'sidebar-chat-filters';

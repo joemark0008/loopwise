@@ -1,4 +1,4 @@
-import { createReport } from '@quarry/shared/tools';
+import { createReport } from '@loopwise/shared/tools';
 
 import { createTool, rememberToolOutput, withResultId } from '../utils/tools.js';
 

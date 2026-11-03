@@ -1,6 +1,6 @@
 /**
  * Port of upstream `utils/keyed-lock.ts`, in-memory only: upstream serializes across backend instances with a
- * leased row in its `keyed_lock` table when it runs on Postgres. quarry's only caller is `str_replace`, which edits
+ * leased row in its `keyed_lock` table when it runs on Postgres. loopwise's only caller is `str_replace`, which edits
  * permanent storage and custom stories (Phase 2d / Phase 4); the database lease comes with them.
  */
 const inMemoryLocks = new Map<string, Promise<unknown>>();

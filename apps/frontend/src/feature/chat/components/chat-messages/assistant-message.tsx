@@ -4,7 +4,7 @@ import { AssistantCompaction } from './assistant-compaction';
 import { AssistantTextWithCitation } from './citation-text';
 import { AssistantMessageActions } from './assistant-message-actions';
 import styles from './assistant-message.module.css';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import type { GroupedMessagePart } from '@/types/ai';
 import {
 	areGroupedMessagePartArraysEqual,

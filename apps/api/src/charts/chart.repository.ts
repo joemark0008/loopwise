@@ -1,5 +1,5 @@
+import { displayChart, type displayMap } from '@loopwise/shared/tools';
 import { Injectable } from '@nestjs/common';
-import { displayChart, type displayMap } from '@quarry/shared/tools';
 
 import { HandlerError } from '../common/errors/handler-error.js';
 import type { Prisma } from '../generated/prisma/client.js';

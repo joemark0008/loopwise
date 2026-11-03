@@ -1,7 +1,7 @@
 /**
  * Demo: sends a synthetic ORU^R01 (HbA1c) over MLLP to a running connector and prints the ACK.
  *
- *   npm run send-mllp -w @quarry/connector -- --port 2575 [--host 127.0.0.1] [--count 3] [--file message.hl7]
+ *   npm run send-mllp -w @loopwise/connector -- --port 2575 [--host 127.0.0.1] [--count 3] [--file message.hl7]
  *
  * Synthetic data only: the patient is the seed's synthetic Maria Santos, so a seeded hub matches her. `--file` sends your own (synthetic) message instead; LF or CRLF
  * line endings are turned into HL7's CR.

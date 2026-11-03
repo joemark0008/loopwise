@@ -5,17 +5,17 @@
 Loopwise makes sure every ordered test and every actionable screening result becomes timely care, with a clear owner at
 each step, safe AI help for doctors, and documented closure across providers.
 
-| Item               | Value                                                                               |
-| ------------------ | ----------------------------------------------------------------------------------- |
-| Competition        | Future Health Digital Innovation Challenge (Hack2skill, Future Health – Abu Dhabi)  |
-| Focus area         | Population Health                                                                   |
-| Challenge          | **Closing the Screening-to-Care Loop**                                              |
-| Registration close | 10 Nov 2026                                                                         |
-| Prototype due      | 20 Nov 2026 (working prototype + technical docs + assumptions and limitations)      |
-| Evaluation         | 20–30 Nov 2026; top 3 present at GITEX (7–11 Dec 2026)                              |
-| Prizes             | USD 50k / 35k / 20k                                                                 |
-| Team               | Up to 5, lead 18+                                                                   |
-| Base code          | [quarry](https://github.com/joemark0008/quarry) (NestJS 11, GraphQL, Prisma, React) |
+| Item               | Value                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| Competition        | Future Health Digital Innovation Challenge (Hack2skill, Future Health – Abu Dhabi) |
+| Focus area         | Population Health                                                                  |
+| Challenge          | **Closing the Screening-to-Care Loop**                                             |
+| Registration close | 10 Nov 2026                                                                        |
+| Prototype due      | 20 Nov 2026 (working prototype + technical docs + assumptions and limitations)     |
+| Evaluation         | 20–30 Nov 2026; top 3 present at GITEX (7–11 Dec 2026)                             |
+| Prizes             | USD 50k / 35k / 20k                                                                |
+| Team               | Up to 5, lead 18+                                                                  |
+| Base code          | NestJS 11, GraphQL, Prisma, React                                                  |
 
 ---
 
@@ -158,7 +158,7 @@ The patient never learns bad news from a machine.
  │  Rules engine ──► Case engine ──► Messaging (SMS/Messenger)│
  │  actionable? urgency?  states, owners, SLAs, escalation    │
  │                                                            │
- │  Wise agent (from quarry)    GraphQL API (auth, roles)     │
+ │  Wise agent                  GraphQL API (auth, roles)     │
  │  Postgres (RLS, audit)       pg-boss (SLA timers, jobs)    │
  └────────────────────────────────────────────────────────────┘
         │                  │                     │
@@ -175,7 +175,7 @@ dependency, so it runs on a small box or a Docker host next to the LIS (§11).
 2. Ingest converts to an internal FHIR-shaped model, matches the patient, publishes `order.*` / `result.received`.
 3. Rules engine evaluates the result against the pathway → `case.actionable` with urgency. Built (in process, not
    NATS): `ResultEvaluationSubscriber` takes each `result.received`, `RulesService.evaluateAndStore` runs the pure
-   `RulesEngine.evaluate` (`@quarry/shared/rules-engine`) against the active pathways, stores a `ResultEvaluation`
+   `RulesEngine.evaluate` (`@loopwise/shared/rules-engine`) against the active pathways, stores a `ResultEvaluation`
    and publishes `result.evaluated` (classification, urgency, next state, SLA) for the case engine.
 4. Case engine opens/advances the case, assigns the owner, starts SLA timers.
 5. Messaging sends the appropriate patient message; replies come back as events.
@@ -191,13 +191,13 @@ dependency, so it runs on a small box or a Docker host next to the LIS (§11).
 | NATS JetStream for events                             | Durable, decouples HL7 from case logic, already in use   | One more component (optional for demo)      |
 | HL7 v2 at the edges, FHIR-shaped model inside         | Works with legacy LIS/RIS, modern core                   | Mapping layer                               |
 | Rules-first decisions; AI for language and assistance | Safe, explainable                                        | Less "AI magic", but scores on safety       |
-| Build on quarry                                       | Agent, chat UI, auth, orgs, jobs already working         | Must strip unused modules                   |
+| Build on an existing agent base                       | Agent, chat UI, auth, orgs, jobs already working         | Must strip unused modules                   |
 
 ## 7. Data model (Prisma, new clinical models)
 
 | Model               | Key fields                                                                                            |
 | ------------------- | ----------------------------------------------------------------------------------------------------- |
-| `Organization`      | (quarry) type: clinic, lab, imaging, hospital, pharmacy, program                                      |
+| `Organization`      | type: clinic, lab, imaging, hospital, pharmacy, program                                               |
 | `Patient`           | name, birthDate, sex, phone, preferredLanguage, consentAt                                             |
 | `PatientIdentifier` | patientId, orgId, system (MRN, PhilHealth ID), value — the patient index                              |
 | `CareRelationship`  | patientId, userId, orgId, reason (encounter, order, referral, case_owner), expiresAt                  |
@@ -275,7 +275,7 @@ open → notified → acknowledged → confirming → referred → accepted → 
 - `closed` requires `Evidence` (confirmatory result, visit note, dispense) **or** a clinician `signoff` with reason.
 - Normal results: `reviewed → notified → closed` (short loop).
 
-## 9. Wise — the doctor's assistant (from quarry)
+## 9. Wise — the doctor's assistant
 
 Doctors run their work by chat (text or voice):
 
@@ -296,7 +296,7 @@ the care team shares the chart, not the conversation. General chats (no patient)
 
 ### 9.1 Rule: AI drafts, the doctor confirms
 
-Reuses quarry's proposal pattern (`propose-sql`: shows a card, then stops and waits). Every change to a record —
+Uses the proposal pattern (`propose-sql`: shows a card, then stops and waits). Every change to a record —
 creating, editing or voiding it — is a **proposal card** with Confirm / Edit / Cancel. Only the confirm button calls the
 real GraphQL mutation, as the user (RLS and authorization apply). The agent never saves anything, sends orders,
 referrals or patient messages, or closes a case by itself, and never says something is saved before the clinician
@@ -405,7 +405,7 @@ number: it picks a fixed dataset and the server reads it as the user (RLS) and a
 - `create_report`: a patient clinical summary, an encounter summary or a facility panel summary. The server builds the
   data sections and freezes them in the tool output; Wise writes only the narrative, which is refused when it has a
   number the sections lack. Audited `report.generate`. The card's **Download PDF** prints the frozen data on the
-  server with headless Chrome (`puppeteer-core`, quarry's export path: static HTML, charts as server-drawn SVG from
+  server with headless Chrome (`puppeteer-core`, the existing export path: static HTML, charts as server-drawn SVG from
   the shared `buildChart`), for the chat's owner only, while they still see the patient; audited `report.export`.
   Every page carries the "Synthetic data — prototype" watermark and an AI-draft footer. Viewing and downloading are
   reads: nothing is saved to the chart (saving a report as a chart document is a later `propose_*` card).
@@ -413,7 +413,7 @@ number: it picks a fixed dataset and the server reads it as the user (RLS) and a
 Analytics (built, `apps/api/src/clinical/analytics/`, §10.2 for the safety model): `describe_analytics` (the views,
 their documented columns, the metrics), `run_analytics_sql` (one validated SELECT run as the user; the model gets 50
 rows, the card the table up to 5,000 rows with View query) and `get_metric` (certified metrics, §12). All `read`.
-Both draw a chart when asked, of any Recharts type (`@quarry/shared/analytics-chart`): grouped, stacked and 100% bars
+Both draw a chart when asked, of any Recharts type (`@loopwise/shared/analytics-chart`): grouped, stacked and 100% bars
 (vertical and horizontal), line, area, stacked and 100% areas, composed bar + line on two axes, scatter, bubble, pie,
 donut, radar, radial bar, treemap, funnel and Sankey. One shared validator checks every column a chart names is in the
 result and its value columns numeric (the server refuses, the card offers only the types that fit, as a chart-type
@@ -429,7 +429,7 @@ engine, read as the user (RLS) and audited as `result_evaluation.view`. The char
 (`[result <id>]`) for it. Wise quotes the reason and the guideline; it never classifies a result itself (rules-first,
 §2), and the system prompt says so. The card shows the `ResultEvaluationBadge` and links to `/pathways`.
 
-Reports in a side panel (built, quarry's Stories ported: `apps/api/src/agent/tools/report.ts`,
+Reports in a side panel (built, Stories ported: `apps/api/src/agent/tools/report.ts`,
 `apps/api/src/clinical/reports/`, `apps/frontend/src/feature/reports/`). The `report` tool (kind `display`; create,
 search/replace update, replace, restore) writes markdown with blocks that embed tool results of the same chat by
 their result id: `<chart ref/>` (a patient trend or an analytics result with a chart), `<table ref/>` (an analytics
@@ -443,13 +443,13 @@ with the results it embeds into `clinical_document` (migration `0016`: append-on
 per version, audited `document.create`); the chart lists them under Documents and opens them as saved
 (`document.view`).
 
-Plus kept quarry tools: `clarification`, `suggest-follow-ups`, `load-skill` (clinical guidelines as Markdown
+Plus the general tools: `clarification`, `suggest-follow-ups`, `load-skill` (clinical guidelines as Markdown
 skills). `display_chart` and `display_map` plot `execute_sql` results, so they left the model's toolset with the SQL
 tools; their cards still render old chats.
 
 ### 9.4 Every action from chat, and Wise tool settings
 
-**Wise actions** (built, phases 1 and 2). One definition per action in `@quarry/shared/wise-actions` (`WISE_ACTIONS`): tool
+**Wise actions** (built, phases 1 and 2). One definition per action in `@loopwise/shared/wise-actions` (`WISE_ACTIONS`): tool
 name, the mutation that confirms it, the record it is about (encounter, patient or result), the card mode (create,
 update, destructive), the confirm strength (standard, reason, strong) and a loose input schema for the model.
 `createActionTool(def)` (`agent/tools/action-tool.ts`) turns it into a `propose` tool that only checks the chat and
@@ -478,7 +478,7 @@ names, birth date, sex and identifiers drive the duplicate match and stay with r
 in a general chat (`patientChat: false`) and are on by default for labs, imaging centers and hospitals. Never from chat: users, passwords, facility keys, LLM config, and these settings.
 
 **Wise tool settings** (Settings → Wise tools, `apps/api/src/wise-tools/`, migration `0020_wise_tool_settings`).
-`@quarry/shared/wise-tools` catalogues every tool: label, plain-language summary, kind, category, `locked`,
+`@loopwise/shared/wise-tools` catalogues every tool: label, plain-language summary, kind, category, `locked`,
 `comingSoon`, and its default per facility type (clinic and hospital: everything; lab, imaging, pharmacy, program: the
 reads, reports and analytics, no chart-writing tools). A facility's admin turns tools on or off there; a user can turn
 a tool off for themselves, never on past their facility. `wise_tool_setting` stores overrides only (facility rows or a
@@ -504,7 +504,7 @@ any of them. `registry.spec.ts` fails when a tool the model can get is missing f
    case owner).
 2. **Postgres row-level security.** Each request sets the user/org in the session; Postgres filters rows. App bugs
    can't leak other patients.
-3. **Agent scoped the same way.** Tools run with the doctor's identity. quarry's `execute-sql` / `query-app-db` are
+3. **Agent scoped the same way.** Tools run with the doctor's identity. The generic `execute-sql` / `query-app-db` are
    gone. Wise analytics (migration `0015_analytics`) lets Wise write SQL over curated `analytics` views of the
    doctor's own patients, with four locks Postgres enforces itself: its own login role `loopwise_analyst` (SELECT on
    `analytics.*` and EXECUTE on `analytics.bind` only, a separate connection pool, no role to switch to), views owned
@@ -593,7 +593,7 @@ top diagnoses, results awaiting review, open orders by age, overdue follow-ups, 
 totals). Wise's `get_metric` uses them now; the dashboard and reports should call the same definitions rather than
 repeat the SQL.
 
-## 13. Building on quarry
+## 13. Building on the base code
 
 ### Keep
 
@@ -622,7 +622,7 @@ repeat the SQL.
   dashboard, simulated patient phone.
 - RLS policies + migrations.
 
-Follow quarry's module conventions (`CLAUDE.md`): one folder per feature, thin resolvers, logic in services, Prisma
+Follow the module conventions (`CLAUDE.md`): one folder per feature, thin resolvers, logic in services, Prisma
 only in repositories, kebab-case files.
 
 ## 14. Prototype scope
@@ -650,7 +650,7 @@ probabilistic patient matching, mobile apps, patient access log UI, Arabic templ
 | Days  | Dates     | Work                                                                                                                                           |
 | ----- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1     | 3 Nov     | Finalise design, team, register on Hack2skill (deadline 10 Nov), repo + domain                                                                 |
-| 2–3   | 4–5 Nov   | Fork quarry → strip modules; clinical Prisma schema; RLS; seed synthetic data                                                                  |
+| 2–3   | 4–5 Nov   | Fork the base → strip modules; clinical Prisma schema; RLS; seed synthetic data                                                                |
 | 4–6   | 6–8 Nov   | Patient registration and the patient chart (encounters, chart chat; done); HL7 ingest + edge connector; orders/results; rules engine; pathways |
 | 7–9   | 9–11 Nov  | Case engine (states, owners, SLAs, escalations via pg-boss); referrals; evidence                                                               |
 | 10–12 | 12–14 Nov | Wise tools + proposal cards + clinical prompt; results inbox                                                                                   |
@@ -691,5 +691,5 @@ Chromium in the image (`CHROME_PATH`).
 - Team members and roles (clinician advisor?).
 - Exact pathways and thresholds — confirm with a doctor.
 - Which LLM for the demo (and a local/sovereign option to mention).
-- Repo: new repo forked from quarry (recommended) vs branch.
+- Repo: new repo forked from the base (recommended) vs branch.
 - Domain / GitHub org name availability for Loopwise.

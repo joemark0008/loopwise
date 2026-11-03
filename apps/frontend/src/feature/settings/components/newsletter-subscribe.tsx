@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { QUARRY_NEWSLETTER_SUBSCRIBE_URL } from '@/lib/quarry-links';
+import { LOOPWISE_NEWSLETTER_SUBSCRIBE_URL } from '@/lib/loopwise-links';
 
 interface NewsletterSubscribeDialogProps {
 	open: boolean;
@@ -122,10 +122,10 @@ function NewsletterSubscribeForm({ initialEmail = '', variant = 'dialog' }: News
 }
 
 async function subscribeToNewsletter(email: string) {
-	if (!QUARRY_NEWSLETTER_SUBSCRIBE_URL) {
+	if (!LOOPWISE_NEWSLETTER_SUBSCRIBE_URL) {
 		throw new Error('No newsletter is configured for this deployment.');
 	}
-	const response = await fetch(QUARRY_NEWSLETTER_SUBSCRIBE_URL, {
+	const response = await fetch(LOOPWISE_NEWSLETTER_SUBSCRIBE_URL, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ email: email.trim() }),

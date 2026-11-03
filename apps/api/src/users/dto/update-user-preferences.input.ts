@@ -1,5 +1,5 @@
+import { TOOL_CALL_DENSITIES, type ToolCallDensity } from '@loopwise/shared/types';
 import { Field, InputType } from '@nestjs/graphql';
-import { TOOL_CALL_DENSITIES, type ToolCallDensity } from '@quarry/shared/types';
 import { IsIn, IsOptional } from 'class-validator';
 
 @InputType()

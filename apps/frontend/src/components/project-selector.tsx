@@ -1,9 +1,9 @@
-import { USER_ROLE_LABELS } from '@quarry/shared/types';
+import { USER_ROLE_LABELS } from '@loopwise/shared/types';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import styles from './project-selector.module.css';
-import type { UserRole } from '@quarry/shared/types';
+import type { UserRole } from '@loopwise/shared/types';
 
 import { UpgradeToEnterprise } from '@/feature/settings/components/upgrade-to-enterprise';
 import { CreateProjectDialog } from '@/feature/settings/components/create-project-dialog';
@@ -102,7 +102,7 @@ function SidebarProjectSwitcher({
 	const mode = useMultiProject();
 
 	if (!currentProject) {
-		// quarry: with no project left (e.g. all deleted), the switcher is the only way to create one.
+		// loopwise: with no project left (e.g. all deleted), the switcher is the only way to create one.
 		return mode === 'static' ? null : <NewProjectButton className={className} />;
 	}
 

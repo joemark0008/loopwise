@@ -1,8 +1,8 @@
 import { existsSync, readdirSync, readFileSync, realpathSync, statSync, watch } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
 
+import { debounce } from '@loopwise/shared';
 import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
-import { debounce } from '@quarry/shared';
 import matter from 'gray-matter';
 
 import { truncateMiddle } from '../agent/utils/utils.js';

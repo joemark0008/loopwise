@@ -35,9 +35,6 @@ The design, scope and plan are in [docs/DESIGN.md](docs/DESIGN.md).
 | Testing        | Vitest (unit and e2e), Playwright (browser)                                       |
 | Deployment     | Docker (a single image: the API also serves the built frontend)                   |
 
-Loopwise is built on [quarry](https://github.com/joemark0008/quarry): its agent, chat UI, auth, organizations and jobs.
-The workspace packages keep quarry's `@quarry/*` names for now.
-
 ## Repository layout
 
 | Path                               | Contents                                                                    |
@@ -58,8 +55,8 @@ nvm use
 npm install
 cp .env.example .env            # set BETTER_AUTH_SECRET (openssl rand -base64 32) and an LLM key
 npm run db:up                   # Postgres 16 on localhost:5435, database `loopwise`
-npm run db:deploy -w @quarry/api
-npm run db:seed -w @quarry/api  # synthetic demo data; user test@test.test / test1234
+npm run db:deploy -w @loopwise/api
+npm run db:seed -w @loopwise/api  # synthetic demo data; user test@test.test / test1234
 ```
 
 Then, in two terminals:
@@ -94,8 +91,8 @@ over MLLP, queues each message in a local SQLite file, ACKs the LIS, and pushes 
 facility API key, retrying while the hub is unreachable. It can also deliver hub orders to the LIS.
 
 ```bash
-HUB_URL=http://localhost:5006 FACILITY_KEY=<facility key> npm start -w @quarry/connector
-npm run send-mllp -w @quarry/connector -- --port 2575   # a synthetic ORU^R01
+HUB_URL=http://localhost:5006 FACILITY_KEY=<facility key> npm start -w @loopwise/connector
+npm run send-mllp -w @loopwise/connector -- --port 2575   # a synthetic ORU^R01
 ```
 
 ## Development checks
@@ -110,8 +107,8 @@ After you change the GraphQL schema, run `npm run codegen` to regenerate the fro
 
 ## Acknowledgements
 
-Loopwise builds on quarry, which builds on [nao](https://github.com/getnao/nao) by nao Labs, released under the Apache
-License 2.0.
+Loopwise includes code from other Apache-2.0 projects, among them [nao](https://github.com/getnao/nao) by nao Labs.
+They are credited in [NOTICE](NOTICE).
 
 ## License
 

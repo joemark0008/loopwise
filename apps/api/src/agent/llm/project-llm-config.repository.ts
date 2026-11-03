@@ -1,5 +1,5 @@
+import type { LlmProvider } from '@loopwise/shared/types';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import type { LlmProvider } from '@quarry/shared/types';
 
 import { decryptSecret, encryptSecret } from '../../common/utils/encryption.js';
 import { ConfigService } from '../../config/config.service.js';

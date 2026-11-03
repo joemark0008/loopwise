@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
-import { FORMULARY } from '@quarry/shared/formulary';
-import { allergyWarnings, FREQUENCIES, MEDICATION_ROUTES } from '@quarry/shared/prescription';
+import { FORMULARY } from '@loopwise/shared/formulary';
+import { allergyWarnings, FREQUENCIES, MEDICATION_ROUTES } from '@loopwise/shared/prescription';
 import { OctagonAlert, Plus, Printer, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
 import styles from './encounter.module.css';

@@ -1,4 +1,4 @@
-import { getMetric } from '@quarry/shared/tools';
+import { getMetric } from '@loopwise/shared/tools';
 
 import { createTool, rememberToolOutput, withResultId } from '../utils/tools.js';
 import { sampleTable } from './run-analytics-sql.js';

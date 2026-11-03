@@ -1,6 +1,6 @@
 import { areStructurallyEqual, isToolUIPart } from './ai';
-import type { executeSql } from '@quarry/shared/tools';
-import type { UIMessage, UIMessagePart } from '@quarry/api/agent/types/chat';
+import type { executeSql } from '@loopwise/shared/tools';
+import type { UIMessage, UIMessagePart } from '@loopwise/api/agent/types/chat';
 
 export type SourceQuery = { input?: executeSql.Input; output: executeSql.Output; toolCallId?: string };
 const sourceQueryIndex = new WeakMap<UIMessage[], Map<string, SourceQuery>>();

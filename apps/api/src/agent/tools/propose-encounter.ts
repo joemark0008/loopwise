@@ -1,4 +1,4 @@
-import { proposeEncounter } from '@quarry/shared/tools';
+import { proposeEncounter } from '@loopwise/shared/tools';
 
 import { createTool } from '../utils/tools.js';
 

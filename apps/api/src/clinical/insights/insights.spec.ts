@@ -1,4 +1,4 @@
-import { createReport } from '@quarry/shared/tools';
+import { createReport } from '@loopwise/shared/tools';
 import { describe, expect, it } from 'vitest';
 
 import { buildEncounterSummarySections } from './encounter-summary.js';

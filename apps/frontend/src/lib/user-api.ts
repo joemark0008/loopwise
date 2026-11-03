@@ -1,4 +1,4 @@
-import type { UserPreferences } from '@quarry/shared/types';
+import type { UserPreferences } from '@loopwise/shared/types';
 
 import { UpdateUserPreferencesDocument, UserPreferencesDocument } from '@/graphql/generated/graphql';
 import { mutation, query, runMutation, runQuery } from '@/lib/apollo-procedures';

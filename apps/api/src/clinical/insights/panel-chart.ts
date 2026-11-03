@@ -1,5 +1,5 @@
-import { icd10Chapter } from '@quarry/shared/icd10-chapters';
-import { chartFacilityPanel, clinicalChart } from '@quarry/shared/tools';
+import { icd10Chapter } from '@loopwise/shared/icd10-chapters';
+import { chartFacilityPanel, clinicalChart } from '@loopwise/shared/tools';
 
 type PanelMetric = chartFacilityPanel.PanelMetric;
 type ChartSpec = clinicalChart.ChartSpec;

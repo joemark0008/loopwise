@@ -1,6 +1,6 @@
+import { type DefaultModelSettings, selectBackgroundModel } from '@loopwise/shared';
+import { type LlmProvider, type LlmSelectedModel, providerKind } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import { type DefaultModelSettings, selectBackgroundModel } from '@quarry/shared';
-import { type LlmProvider, type LlmSelectedModel, providerKind } from '@quarry/shared/types';
 
 import type { ManagedAiUsageContext } from '../providers/managed-ai.js';
 import {
@@ -22,7 +22,7 @@ interface ProviderAccess {
 /**
  * Port of upstream `utils/llm.ts`: which models a project can use and how to reach them. Sources, in order:
  * the project's LLM configs (Settings → Models), then provider keys from the environment (`OPENAI_API_KEY`,
- * `ANTHROPIC_API_KEY`…, `<PROVIDER>_BASE_URL`). Not ported: the `llm` block of `quarry_config.yaml` and the
+ * `ANTHROPIC_API_KEY`…, `<PROVIDER>_BASE_URL`). Not ported: the `llm` block of `loopwise_config.yaml` and the
  * managed provider (billing).
  */
 @Injectable()
@@ -80,7 +80,7 @@ export class LlmService {
 		modelSelection: LlmSelectedModel,
 		fallbackModelId: string,
 	): Promise<string> {
-		const envOverride = process.env.QUARRY_ANNOTATION_MODEL;
+		const envOverride = process.env.LOOPWISE_ANNOTATION_MODEL;
 		if (envOverride) {
 			return envOverride;
 		}

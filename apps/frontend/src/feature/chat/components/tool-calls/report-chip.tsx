@@ -13,7 +13,7 @@ const autoOpened = new Set<string>();
 const ACTION_LABELS = { create: 'Created', update: 'Updated', replace: 'Rewritten', restore: 'Restored' } as const;
 
 /**
- * Wise's `report` (DESIGN.md §9.2), as quarry's story chip: the report opens in the side panel next to the chat (or
+ * Wise's `report` (DESIGN.md §9.2), as loopwise's story chip: the report opens in the side panel next to the chat (or
  * over the page in an embedded chat), by itself once when Wise writes it live, and again from the chip.
  */
 export const ReportChipToolCall = memo(({ toolPart }: ToolCallComponentProps<'report'>) => {

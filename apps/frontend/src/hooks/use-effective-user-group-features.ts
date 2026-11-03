@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import type { UserGroupFeature } from '@quarry/shared';
+import type { UserGroupFeature } from '@loopwise/shared';
 
-import { useIsCloud } from '@/hooks/use-quarry-mode';
+import { useIsCloud } from '@/hooks/use-loopwise-mode';
 import { getActiveProjectId } from '@/lib/active-project';
 import { getRenderableUserGroupAccess, PROJECT_MEMBER_ACCESS } from '@/lib/effective-user-group-features';
 import { useOptionalAgentContext } from '@/contexts/agent.provider';

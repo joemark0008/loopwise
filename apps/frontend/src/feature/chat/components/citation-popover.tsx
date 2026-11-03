@@ -2,7 +2,7 @@ import { memo, useCallback, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight } from 'lucide-react';
 import styles from './citation-popover.module.css';
-import type { CitationPayload, ColumnLineageNode } from '@quarry/shared';
+import type { CitationPayload, ColumnLineageNode } from '@loopwise/shared';
 import { cn } from '@/lib/utils';
 import { formatSQL } from '@/lib/sql-formatter';
 import { useSidePanel } from '@/contexts/side-panel';

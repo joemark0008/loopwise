@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
 import {
 	type FacilityType,
 	isWiseToolOnByDefault,
 	WISE_TOOL_CATALOG,
 	wiseToolEntry,
 	wiseToolOffMessage,
-} from '@quarry/shared/wise-tools';
+} from '@loopwise/shared/wise-tools';
+import { Injectable } from '@nestjs/common';
 
 import { HandlerError } from '../common/errors/handler-error.js';
 import type { Organization, WiseToolSetting } from '../generated/prisma/client.js';

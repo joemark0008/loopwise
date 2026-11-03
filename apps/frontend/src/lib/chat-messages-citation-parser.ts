@@ -1,4 +1,4 @@
-import type { CitationData } from '@quarry/shared/types';
+import type { CitationData } from '@loopwise/shared/types';
 
 export interface ParsedChatMessageCitation extends CitationData {
 	question: string;

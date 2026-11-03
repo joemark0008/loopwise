@@ -1,6 +1,6 @@
-import { canRoleSeeAdvancedSettings, DEFAULT_TOOL_CALL_DENSITY_POLICY } from '@quarry/shared';
-import type { ToolCallDensityPolicy, UserGroupFeature } from '@quarry/shared';
-import type { ToolCallDensity, UserRole } from '@quarry/shared/types';
+import { canRoleSeeAdvancedSettings, DEFAULT_TOOL_CALL_DENSITY_POLICY } from '@loopwise/shared';
+import type { ToolCallDensityPolicy, UserGroupFeature } from '@loopwise/shared';
+import type { ToolCallDensity, UserRole } from '@loopwise/shared/types';
 
 export type EffectiveUserGroupFeatures = Record<UserGroupFeature, boolean>;
 

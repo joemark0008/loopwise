@@ -1,7 +1,7 @@
+import { findLabTest, LAB_TESTS, type LabTest } from '@loopwise/shared/lab-tests';
+import type { listLabOrders } from '@loopwise/shared/tools';
+import { type WiseActionMutation, wiseActionToolsFor } from '@loopwise/shared/wise-actions';
 import { Injectable } from '@nestjs/common';
-import { findLabTest, LAB_TESTS, type LabTest } from '@quarry/shared/lab-tests';
-import type { listLabOrders } from '@quarry/shared/tools';
-import { type WiseActionMutation, wiseActionToolsFor } from '@quarry/shared/wise-actions';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
 import type { Prisma } from '../../generated/prisma/client.js';

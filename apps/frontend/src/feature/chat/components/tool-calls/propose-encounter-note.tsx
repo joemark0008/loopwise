@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { EncounterNoteSchema } from '@quarry/shared/encounter-record';
-import { proposeEncounterNote } from '@quarry/shared/tools';
+import { EncounterNoteSchema } from '@loopwise/shared/encounter-record';
+import { proposeEncounterNote } from '@loopwise/shared/tools';
 import { FilePenLine } from 'lucide-react';
 import { memo, useState } from 'react';
 import { diffFields } from './proposal-card/diff-fields';

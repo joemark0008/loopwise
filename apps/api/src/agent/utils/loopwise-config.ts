@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { RepoProvider } from '@quarry/shared/types';
+import type { RepoProvider } from '@loopwise/shared/types';
 import yaml from 'js-yaml';
 
 import { escapeRegExp, gitlabBaseUrl } from '../services/gitlab.js';
@@ -18,7 +18,7 @@ export type ContextPresence = {
 	notionDocs: boolean;
 	databases: boolean;
 };
-const QUARRY_CONFIG_ENV_PATTERN = /\$?\{\{\s*env\(['"]([^'"]+)['"]\)\s*\}\}/g;
+const LOOPWISE_CONFIG_ENV_PATTERN = /\$?\{\{\s*env\(['"]([^'"]+)['"]\)\s*\}\}/g;
 const MCP_CONFIG_ENV_PATTERN = /\$\{(\w+)\}/g;
 const DATABASE_IDENTIFYING_FIELDS = ['database', 'project_id', 'dataset_id', 'catalog'] as const;
 
@@ -36,11 +36,11 @@ export type ConfiguredSemanticLayer = {
 };
 
 export function extractRequiredEnvVars(projectFolder: string): string[] {
-	const configPath = path.join(projectFolder, 'quarry_config.yaml');
+	const configPath = path.join(projectFolder, 'loopwise_config.yaml');
 	const mcpConfigPath = path.join(projectFolder, 'agent', 'mcps', 'mcp.json');
 	const vars = new Set<string>();
 
-	addEnvVarsFromFile(configPath, QUARRY_CONFIG_ENV_PATTERN, vars);
+	addEnvVarsFromFile(configPath, LOOPWISE_CONFIG_ENV_PATTERN, vars);
 	addEnvVarsFromFile(mcpConfigPath, MCP_CONFIG_ENV_PATTERN, vars);
 
 	return [...vars];
@@ -159,7 +159,7 @@ function configuredTemplatesFrom(config: unknown): string[] {
 }
 
 function loadProjectConfig(projectFolder: string): unknown {
-	const configPath = path.join(projectFolder, 'quarry_config.yaml');
+	const configPath = path.join(projectFolder, 'loopwise_config.yaml');
 	return fs.existsSync(configPath) ? loadConfig(configPath) : null;
 }
 
@@ -193,7 +193,7 @@ function getDatabaseTemplates(database: Record<string, unknown>): string[] {
 }
 
 export function extractConfiguredDatabases(projectFolder: string): ConfiguredDatabase[] {
-	const configPath = path.join(projectFolder, 'quarry_config.yaml');
+	const configPath = path.join(projectFolder, 'loopwise_config.yaml');
 	if (!fs.existsSync(configPath)) {
 		return [];
 	}
@@ -233,9 +233,9 @@ export function extractConfiguredDatabases(projectFolder: string): ConfiguredDat
 	});
 }
 
-/** The `semantic_layer` section of quarry_config.yaml, or null when the project declares none. */
+/** The `semantic_layer` section of loopwise_config.yaml, or null when the project declares none. */
 export function extractConfiguredSemanticLayer(projectFolder: string): ConfiguredSemanticLayer | null {
-	const configPath = path.join(projectFolder, 'quarry_config.yaml');
+	const configPath = path.join(projectFolder, 'loopwise_config.yaml');
 	if (!fs.existsSync(configPath)) {
 		return null;
 	}

@@ -1,4 +1,4 @@
-import type { list } from '@quarry/shared/tools';
+import type { list } from '@loopwise/shared/tools';
 
 interface VirtualFile {
 	path: string;

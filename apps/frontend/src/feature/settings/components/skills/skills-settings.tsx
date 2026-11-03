@@ -3,7 +3,7 @@ import { BookOpen, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { SkillFormDialog } from './skill-form-dialog';
 import styles from './skills-settings.module.css';
-import type { SkillDraft } from '@quarry/shared/skill-authoring';
+import type { SkillDraft } from '@loopwise/shared/skill-authoring';
 
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';

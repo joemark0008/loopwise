@@ -1,5 +1,5 @@
+import { type WiseActionMutation, wiseActionToolsFor } from '@loopwise/shared/wise-actions';
 import { Injectable } from '@nestjs/common';
-import { type WiseActionMutation, wiseActionToolsFor } from '@quarry/shared/wise-actions';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
 import { Prisma } from '../../generated/prisma/client.js';

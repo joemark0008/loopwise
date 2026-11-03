@@ -1,9 +1,9 @@
-import { VITAL_FIELDS, vitalsDraftErrors } from '@quarry/shared/vitals';
-import { BillDraftSchema, computeBillTotals, FEE_SCHEDULE } from '@quarry/shared/encounter-bill';
-import { fieldErrors } from '@quarry/shared/encounter-record';
-import { MedicalCertificateDraftSchema } from '@quarry/shared/medical-certificate';
-import { PrescriptionDraftSchema } from '@quarry/shared/prescription';
-import type { VitalField } from '@quarry/shared/vitals';
+import { VITAL_FIELDS, vitalsDraftErrors } from '@loopwise/shared/vitals';
+import { BillDraftSchema, computeBillTotals, FEE_SCHEDULE } from '@loopwise/shared/encounter-bill';
+import { fieldErrors } from '@loopwise/shared/encounter-record';
+import { MedicalCertificateDraftSchema } from '@loopwise/shared/medical-certificate';
+import { PrescriptionDraftSchema } from '@loopwise/shared/prescription';
+import type { VitalField } from '@loopwise/shared/vitals';
 import type {
 	BillDiscountKind,
 	ChargeKind,
@@ -20,7 +20,7 @@ import type {
 
 /*
  * Form values of the encounter page (strings, as inputs hold them) and their mapping to the API inputs. Validation is
- * the shared rules (`@quarry/shared/*`), the same the API applies.
+ * the shared rules (`@loopwise/shared/*`), the same the API applies.
  */
 
 type Encounter = EncounterRecordFieldsFragment['encounter'];

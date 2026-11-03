@@ -7,7 +7,7 @@ const LOOKUP_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 type FaviconLookup = { src: string | null; checkedAt: number };
 
-const lookupStorage = createLocalStorage<Record<string, FaviconLookup>>('quarry-favicon-lookups', {});
+const lookupStorage = createLocalStorage<Record<string, FaviconLookup>>('loopwise-favicon-lookups', {});
 
 let lookups: Record<string, FaviconLookup> | null = null;
 

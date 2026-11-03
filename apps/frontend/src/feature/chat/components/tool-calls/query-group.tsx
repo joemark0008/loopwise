@@ -1,8 +1,8 @@
 import { memo, useEffect, useMemo, useState } from 'react';
-import { pluralize } from '@quarry/shared';
+import { pluralize } from '@loopwise/shared';
 import styles from './query-group.module.css';
 import { ToolCall } from './index';
-import type { UIToolPart } from '@quarry/api/agent/types/chat';
+import type { UIToolPart } from '@loopwise/api/agent/types/chat';
 import type { GroupablePart } from '@/types/ai';
 import { Expandable } from '@/components/ui/expandable';
 import { AssistantReasoning } from '@/feature/chat/components/chat-messages/assistant-reasoning';

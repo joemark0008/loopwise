@@ -10,7 +10,7 @@ import type {
 	FileEditabilityReason,
 	FileTreeEntry,
 	FileWriteResponse,
-} from '@quarry/shared/types';
+} from '@loopwise/shared/types';
 import { spawn } from 'child_process';
 import fs from 'fs/promises';
 
@@ -18,7 +18,7 @@ import { getRipgrepPath } from '../../agent/utils/ripgrep.js';
 import {
 	BUILT_IN_EXCLUSION_GLOBS,
 	isWithinProjectFolder,
-	loadQuarryignorePatterns,
+	loadLoopwiseignorePatterns,
 	shouldExcludeEntry,
 	toRealPath,
 	toVirtualPath,
@@ -182,10 +182,10 @@ export function getFileEditability(filePath: string, realPath: string): FileEdit
 		projectPath.startsWith('docs/obsidian/')
 	) {
 		return readOnly('synced-source', {
-			message: 'This path is replaced by context sync. Change its source in quarry_config.yaml.',
+			message: 'This path is replaced by context sync. Change its source in loopwise_config.yaml.',
 			actionKind: 'file',
-			actionPath: '/quarry_config.yaml',
-			actionLabel: 'Open quarry_config.yaml',
+			actionPath: '/loopwise_config.yaml',
+			actionLabel: 'Open loopwise_config.yaml',
 		});
 	}
 	return { isEditable: true, reason: null, guidance: null };
@@ -226,7 +226,7 @@ function buildSearchArguments(query: string, projectFolder: string): string[] {
 		args.push('--glob', exclusionGlob);
 	}
 
-	for (const ignorePattern of loadQuarryignorePatterns(projectFolder)) {
+	for (const ignorePattern of loadLoopwiseignorePatterns(projectFolder)) {
 		const cleanPattern = ignorePattern.endsWith('/') ? ignorePattern.slice(0, -1) : ignorePattern;
 		args.push('--glob', `!${cleanPattern}`);
 		args.push('--glob', `!${cleanPattern}/**`);
@@ -549,7 +549,7 @@ function toFileError(error: unknown, filePath: string): HandlerError {
 		message.includes('protected .git metadata') ||
 		message.includes('protected environment file') ||
 		message.includes('excluded directory') ||
-		message.includes('ignored by .quarryignore') ||
+		message.includes('ignored by .loopwiseignore') ||
 		message.includes('symlink')
 	) {
 		return new HandlerError('FORBIDDEN', message);

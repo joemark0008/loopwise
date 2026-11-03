@@ -40,7 +40,7 @@ describe('SkillAuthoringService', () => {
 	const skillFile = (name = DRAFT.name) => join(root, 'agent', 'skills', `${name}.md`);
 
 	beforeEach(() => {
-		root = mkdtempSync(join(tmpdir(), 'quarry-skill-authoring-'));
+		root = mkdtempSync(join(tmpdir(), 'loopwise-skill-authoring-'));
 		project = { id: `project-${root}`, path: root } as Project;
 		authoringEnv = 'auto';
 		skills = new SkillService({
@@ -48,7 +48,7 @@ describe('SkillAuthoringService', () => {
 		} as unknown as ProjectRepository);
 		authoring = new SkillAuthoringService(skills, {
 			get env() {
-				return { QUARRY_SKILL_AUTHORING: authoringEnv };
+				return { LOOPWISE_SKILL_AUTHORING: authoringEnv };
 			},
 		} as unknown as ConfigService);
 	});
@@ -112,7 +112,7 @@ describe('SkillAuthoringService', () => {
 		});
 
 		it('refuses to write through a symlinked folder', async () => {
-			const outside = mkdtempSync(join(tmpdir(), 'quarry-skill-outside-'));
+			const outside = mkdtempSync(join(tmpdir(), 'loopwise-skill-outside-'));
 			mkdirSync(join(root, 'agent'));
 			symlinkSync(outside, join(root, 'agent', 'skills'));
 

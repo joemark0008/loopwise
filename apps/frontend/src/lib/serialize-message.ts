@@ -1,6 +1,6 @@
-import { normalizeCitationMarkers } from '@quarry/shared';
+import { normalizeCitationMarkers } from '@loopwise/shared';
 
-import type { UIMessage, UIMessagePart, UIToolPart } from '@quarry/api/agent/types/chat';
+import type { UIMessage, UIMessagePart, UIToolPart } from '@loopwise/api/agent/types/chat';
 
 const BLOCK_SEPARATOR = '\n\n';
 const MESSAGE_SEPARATOR = '\n\n---\n\n';

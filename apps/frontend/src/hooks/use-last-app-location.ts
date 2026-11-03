@@ -1,7 +1,7 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useCallback, useEffect } from 'react';
 
-const LAST_APP_LOCATION_KEY = 'quarry:last-app-location';
+const LAST_APP_LOCATION_KEY = 'loopwise:last-app-location';
 const DEFAULT_APP_LOCATION = '/';
 
 /** Remembers the last page visited outside of settings, so "Back to app" can return to it. */

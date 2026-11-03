@@ -49,7 +49,7 @@ export function writeFileAtomically(options: AtomicWriteOptions): void {
 	assertNoSymlinkInWritePath(root, target, displayPath);
 
 	const originalMode = getExistingFileMode(target);
-	const temporaryPath = path.join(parent, `.${path.basename(target)}.quarry-tmp-${randomUUID()}`);
+	const temporaryPath = path.join(parent, `.${path.basename(target)}.loopwise-tmp-${randomUUID()}`);
 	const flags = fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY | fs.constants.O_NOFOLLOW;
 	let fileDescriptor: number | null = null;
 

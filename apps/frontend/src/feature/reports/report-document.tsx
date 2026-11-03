@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { Streamdown } from 'streamdown';
-import { splitReport } from '@quarry/shared/report-blocks';
+import { splitReport } from '@loopwise/shared/report-blocks';
 import styles from './report-panel.module.css';
 import { ReportSections } from './report-sections';
-import type { clinicalChart, createReport, report, runAnalyticsSql } from '@quarry/shared/tools';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { clinicalChart, createReport, report, runAnalyticsSql } from '@loopwise/shared/tools';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import { markdownLinkSafety } from '@/components/external-link-dialog';
 import { ResultChartView, ResultTable } from '@/feature/chat/components/tool-calls/analytics-result';
 import { ClinicalChartView } from '@/feature/chat/components/tool-calls/clinical-chart';

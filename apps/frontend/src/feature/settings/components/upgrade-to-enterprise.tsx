@@ -8,7 +8,7 @@ interface UpgradeToEnterpriseProps {
 	iconOnly?: boolean;
 }
 
-/** Badge for upstream enterprise features. quarry does not port them, so there is no page to link to. */
+/** Badge for upstream enterprise features. loopwise does not port them, so there is no page to link to. */
 export function UpgradeToEnterprise({ className, iconOnly = false }: UpgradeToEnterpriseProps) {
 	return (
 		<span

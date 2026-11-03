@@ -43,7 +43,7 @@ describe('Wise actions (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-quarry-project-id': projectId } : {})
+			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
 			.send({ query, variables });
 
 	/** One Wise turn in the doctor's chart chat that calls `toolName`; returns the card. */
@@ -52,7 +52,7 @@ describe('Wise actions (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', doctor.cookie)
-			.set('x-quarry-project-id', projectId)
+			.set('x-loopwise-project-id', projectId)
 			.send({ model: MODEL, ...(chatId ? { chatId } : { patientId }), message: { text: toolName } })
 			.buffer(true)
 			.parse((response, callback) => {
@@ -76,7 +76,7 @@ describe('Wise actions (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.QUARRY_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'quarry-projects-'));
+		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);

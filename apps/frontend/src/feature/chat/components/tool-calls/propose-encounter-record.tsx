@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { formatPesos } from '@quarry/shared/encounter-bill';
-import { allergyWarnings } from '@quarry/shared/prescription';
+import { formatPesos } from '@loopwise/shared/encounter-bill';
+import { allergyWarnings } from '@loopwise/shared/prescription';
 import { FileText, Pill, ReceiptText } from 'lucide-react';
 import { memo, useState } from 'react';
 import { diffFields } from './proposal-card/diff-fields';
@@ -13,7 +13,7 @@ import type {
 	proposeCharges,
 	proposeMedicalCertificate,
 	proposePrescription,
-} from '@quarry/shared/tools';
+} from '@loopwise/shared/tools';
 import type { ToolCallComponentProps } from '.';
 import type {
 	BillFormValues,

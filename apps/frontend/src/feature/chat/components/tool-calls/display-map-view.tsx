@@ -21,14 +21,14 @@ import {
 	resolveBoundary,
 	scaleBubbleRadius,
 	withOpacity,
-} from '@quarry/shared';
+} from '@loopwise/shared';
 import { useQuery } from '@tanstack/react-query';
 import { formatRgb } from 'culori';
 import { memo, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import styles from './display-map-view.module.css';
 import type { DataDrivenPropertyValueSpecification } from 'maplibre-gl';
 import type { Ref } from 'react';
-import type { displayMap } from '@quarry/shared/tools';
+import type { displayMap } from '@loopwise/shared/tools';
 import type {
 	ChoroplethEntry,
 	CustomBoundarySet,
@@ -36,7 +36,7 @@ import type {
 	MapGeometry,
 	MapPoint,
 	NumericDomain,
-} from '@quarry/shared';
+} from '@loopwise/shared';
 
 import { getMapStyle, isMapStyleDark, MAP_STYLE_LIGHT, resolveStyleUrl, useMapStyle } from '@/hooks/use-map-style';
 import { getActiveProjectId } from '@/lib/active-project';

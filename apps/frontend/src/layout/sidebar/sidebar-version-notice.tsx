@@ -5,7 +5,7 @@ import styles from './sidebar-version-notice.module.css';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn, hideIf } from '@/lib/utils';
 import { CheckUpdateDocument } from '@/graphql/generated/graphql';
-import { QUARRY_REPOSITORY_URL } from '@/lib/quarry-links';
+import { LOOPWISE_REPOSITORY_URL } from '@/lib/loopwise-links';
 
 interface SidebarVersionNoticeProps {
 	isCollapsed: boolean;
@@ -36,7 +36,9 @@ export function SidebarVersionNotice({ isCollapsed }: SidebarVersionNoticeProps)
 
 	return (
 		<a
-			href={QUARRY_REPOSITORY_URL ? `${QUARRY_REPOSITORY_URL}/releases/tag/v${data.latestVersion}` : undefined}
+			href={
+				LOOPWISE_REPOSITORY_URL ? `${LOOPWISE_REPOSITORY_URL}/releases/tag/v${data.latestVersion}` : undefined
+			}
 			target='_blank'
 			rel='noopener noreferrer'
 			className={styles.sidebarVersionNoticeA}

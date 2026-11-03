@@ -3,7 +3,7 @@ import { memo, useState } from 'react';
 import { ProposalCard } from './proposal-card/proposal-card';
 import styles from './propose-patient-registration.module.css';
 import type { ProposalConfirm } from './proposal-card/proposal-card';
-import type { proposePatientRegistration } from '@quarry/shared/tools';
+import type { proposePatientRegistration } from '@loopwise/shared/tools';
 import type { PatientFormValues } from '@/feature/patients/patient-form-values';
 import type { ToolCallComponentProps } from '.';
 import { Checkbox } from '@/components/ui/checkbox';

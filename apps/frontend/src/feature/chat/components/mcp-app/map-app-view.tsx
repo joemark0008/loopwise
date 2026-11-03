@@ -1,9 +1,9 @@
-import { buildMapPoints, MAX_MAP_POINTS, resolveMapConfig } from '@quarry/shared';
+import { buildMapPoints, MAX_MAP_POINTS, resolveMapConfig } from '@loopwise/shared';
 import { lazy, memo, Suspense, useMemo } from 'react';
 import { McpAppHeader } from './mcp-app-header';
-import { OpenInQuarryButton } from './open-in-quarry-button';
+import { OpenInLoopwiseButton } from './open-in-loopwise-button';
 import styles from './map-app-view.module.css';
-import type { CustomBoundarySet, MapPoint, McpMapEmbedStoredConfig } from '@quarry/shared';
+import type { CustomBoundarySet, MapPoint, McpMapEmbedStoredConfig } from '@loopwise/shared';
 
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -13,7 +13,7 @@ interface MapAppViewProps {
 	config: McpMapEmbedStoredConfig;
 	data: Record<string, unknown>[];
 	columns: string[];
-	quarryUrl?: string;
+	loopwiseUrl?: string;
 	projectId?: string;
 	customBoundaries?: CustomBoundarySet[];
 }
@@ -21,7 +21,7 @@ interface MapAppViewProps {
 export const MapAppView = memo(function MapAppView({
 	config,
 	data,
-	quarryUrl,
+	loopwiseUrl,
 	projectId,
 	customBoundaries,
 }: MapAppViewProps) {
@@ -36,7 +36,7 @@ export const MapAppView = memo(function MapAppView({
 	return (
 		<div className={styles.mapAppViewDiv}>
 			<McpAppHeader title={config.title}>
-				{quarryUrl ? <OpenInQuarryButton url={quarryUrl} /> : null}
+				{loopwiseUrl ? <OpenInLoopwiseButton url={loopwiseUrl} /> : null}
 			</McpAppHeader>
 			<div className={styles.mapAppViewDiv2}>
 				<div className={styles.mapAppViewDiv3}>

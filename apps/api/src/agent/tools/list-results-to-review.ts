@@ -1,4 +1,4 @@
-import { listResultsToReview } from '@quarry/shared/tools';
+import { listResultsToReview } from '@loopwise/shared/tools';
 
 import type { ToolContext } from '../types/tools.js';
 import { createTool } from '../utils/tools.js';

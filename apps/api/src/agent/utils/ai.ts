@@ -1,4 +1,4 @@
-import type { LlmProvider } from '@quarry/shared/types';
+import type { LlmProvider } from '@loopwise/shared/types';
 import { isToolUIPart, LanguageModelUsage, ModelMessage, parsePartialJson } from 'ai';
 
 import { getProviderMeta } from '../providers/providers.js';
@@ -37,7 +37,7 @@ export const convertToCost = (
 	const builtInCosts = getProviderMeta(provider).models.find((model) => model.id === modelId)?.costPerM;
 	const declaredCosts = customModels.find((m) => m.id === modelId)?.costPerM;
 
-	// Prices declared for a model win over quarry's built-in table, token type by token type.
+	// Prices declared for a model win over loopwise's built-in table, token type by token type.
 	const costPerM = builtInCosts || declaredCosts ? { ...builtInCosts, ...declaredCosts } : costs;
 
 	if (!costPerM) {

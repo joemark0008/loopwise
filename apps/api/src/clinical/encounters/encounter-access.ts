@@ -1,4 +1,4 @@
-import { staleEditMessage } from '@quarry/shared/wise-proposal';
+import { staleEditMessage } from '@loopwise/shared/wise-proposal';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
 import type { Encounter, Prisma } from '../../generated/prisma/client.js';

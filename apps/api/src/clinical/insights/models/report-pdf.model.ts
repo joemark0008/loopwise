@@ -1,6 +1,6 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 
-/** A report printed to PDF, base64-encoded for the GraphQL response (quarry's `chatDownload` shape). */
+/** A report printed to PDF, base64-encoded for the GraphQL response (loopwise's `chatDownload` shape). */
 @ObjectType()
 export class ReportPdf {
 	@Field()

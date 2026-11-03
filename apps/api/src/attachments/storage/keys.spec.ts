@@ -24,7 +24,7 @@ describe('userIdFromKey', () => {
 	it('ignores keys that are not inside a user space', () => {
 		expect(userIdFromKey('projects/proj-1/users/user-1')).toBeNull();
 		expect(userIdFromKey('projects/proj-1/shared/notes.md')).toBeNull();
-		expect(userIdFromKey('.quarry-storage-health')).toBeNull();
+		expect(userIdFromKey('.loopwise-storage-health')).toBeNull();
 	});
 });
 

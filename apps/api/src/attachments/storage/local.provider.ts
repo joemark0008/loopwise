@@ -3,10 +3,10 @@ import path from 'node:path';
 
 import type { StorageHealth, StorageObject, StorageProvider, WriteOptions } from './types.js';
 
-const HEALTH_PROBE_KEY = '.quarry-storage-health';
+const HEALTH_PROBE_KEY = '.loopwise-storage-health';
 
 /**
- * Stores files on a local directory. When quarry runs with more than one replica
+ * Stores files on a local directory. When loopwise runs with more than one replica
  * the root must be a shared read-write-many volume, otherwise each replica
  * sees a different set of files.
  *

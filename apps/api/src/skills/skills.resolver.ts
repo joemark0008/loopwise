@@ -1,5 +1,5 @@
+import { isSkillGranted } from '@loopwise/shared';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { isSkillGranted } from '@quarry/shared';
 
 import { fullProjectContextAccess } from '../agent/services/user-group-context-access.service.js';
 import { ProjectAccess } from '../common/decorators/access.decorator.js';

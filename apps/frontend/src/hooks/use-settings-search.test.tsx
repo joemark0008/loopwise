@@ -20,7 +20,7 @@ vi.mock('@/hooks/use-can-see-advanced-settings', () => ({
 	useCanSeeAdvancedSettings: () => mocks.canSeeAdvancedSettings,
 }));
 
-vi.mock('@/hooks/use-quarry-mode', () => ({
+vi.mock('@/hooks/use-loopwise-mode', () => ({
 	useIsCloud: () => mocks.isCloud,
 }));
 

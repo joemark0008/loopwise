@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Scale } from 'lucide-react';
 import { memo } from 'react';
 import styles from './explain-result.module.css';
-import type { explainResult } from '@quarry/shared/tools';
+import type { explainResult } from '@loopwise/shared/tools';
 import type { ToolCallComponentProps } from '.';
 import { ResultEvaluationBadge } from '@/components/clinical/result-evaluation-badge';
 import { ErrorMessage } from '@/components/ui/error-message';

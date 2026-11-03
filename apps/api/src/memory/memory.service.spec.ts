@@ -6,7 +6,7 @@ import type { LlmInferenceService } from '../usage/llm-inference.service.js';
 import type { MemoryRepository } from './memory.repository.js';
 import { MemoryService } from './memory.service.js';
 
-// Upstream has no memory service tests; these cover the parts quarry rewrote (repository calls, model gating).
+// Upstream has no memory service tests; these cover the parts loopwise rewrote (repository calls, model gating).
 const extract = vi.fn();
 vi.mock('./memory-extractor-llm.js', () => ({
 	MemoryExtractorLLM: class {

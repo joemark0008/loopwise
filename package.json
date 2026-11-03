@@ -1,5 +1,5 @@
 {
-	"name": "quarry",
+	"name": "loopwise",
 	"license": "Apache-2.0",
 	"private": true,
 	"type": "module",
@@ -21,10 +21,10 @@
 		"db:down": "docker compose stop",
 		"db:reset": "docker compose down -v",
 		"prepare": "husky",
-		"dev:api": "npm run dev -w @quarry/api",
-		"dev:frontend": "npm run dev -w @quarry/frontend",
-		"dev:studio": "npm run db:studio -w @quarry/api",
-		"codegen": "npm run codegen -w @quarry/frontend",
+		"dev:api": "npm run dev -w @loopwise/api",
+		"dev:frontend": "npm run dev -w @loopwise/frontend",
+		"dev:studio": "npm run db:studio -w @loopwise/api",
+		"codegen": "npm run codegen -w @loopwise/frontend",
 		"test:e2e:setup": "./scripts/e2e-setup-wizard.sh",
 		"hl7:sample": "./scripts/send-hl7-sample.sh"
 	},

@@ -1,4 +1,4 @@
-import { proposeSkill } from '@quarry/shared/tools';
+import { proposeSkill } from '@loopwise/shared/tools';
 
 import { findInternalSkill } from '../skills/index.js';
 import { createTool } from '../utils/tools.js';

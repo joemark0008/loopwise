@@ -3,11 +3,11 @@ import {
 	ChartConfigProvider,
 	ChartLegendContent as SharedChartLegendContent,
 	ChartTooltipContent as SharedChartTooltipContent,
-} from '@quarry/shared/chart-tooltip';
+} from '@loopwise/shared/chart-tooltip';
 import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
 import styles from './chart.module.css';
-import type { ChartConfig } from '@quarry/shared/chart-tooltip';
+import type { ChartConfig } from '@loopwise/shared/chart-tooltip';
 
 import { cn } from '@/lib/utils';
 

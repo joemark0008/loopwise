@@ -32,7 +32,7 @@ export class CompactionLLM implements ICompactionLLM {
 			system: COMPACTION_SYSTEM_PROMPT,
 			messages: modelMessages,
 			maxOutputTokens: MAX_OUTPUT_TOKENS,
-			experimental_telemetry: llmTelemetry('quarry-compaction'),
+			experimental_telemetry: llmTelemetry('loopwise-compaction'),
 		});
 
 		return { summary: text, usage: convertToTokenUsage(usage) };

@@ -94,7 +94,7 @@ describe('chart plugins', () => {
 });
 
 function createProject(withChartsFolder = true): string {
-	const project = mkdtempSync(join(tmpdir(), 'quarry-chart-plugin-'));
+	const project = mkdtempSync(join(tmpdir(), 'loopwise-chart-plugin-'));
 	projectFolders.push(project);
 	if (withChartsFolder) {
 		mkdirSync(join(project, 'agent', 'charts'), { recursive: true });

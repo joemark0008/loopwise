@@ -17,8 +17,8 @@ export class AuthProviders {
 
 @ObjectType()
 export class PublicConfig {
-	@Field({ description: 'Always "self-hosted": quarry has no cloud mode.' })
-	quarryMode: string;
+	@Field({ description: 'Always "self-hosted": loopwise has no cloud mode.' })
+	loopwiseMode: string;
 
 	@Field()
 	enableUserLogin: boolean;

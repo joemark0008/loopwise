@@ -4,8 +4,8 @@ import {
 	DEFAULT_USAGE_PERIOD_SELECTION,
 	resolveUsagePeriod,
 	resolveUsagePeriodGranularity,
-} from '@quarry/shared/usage';
-import type { SavedUsagePeriod, SavedUsagePeriodInput, UsagePeriodSelection } from '@quarry/shared/usage';
+} from '@loopwise/shared/usage';
+import type { SavedUsagePeriod, SavedUsagePeriodInput, UsagePeriodSelection } from '@loopwise/shared/usage';
 import type { UsageRouteSearch } from '@/feature/settings/components/usage-route-search';
 import {
 	clearStoredUsagePeriodSelection,

@@ -1,7 +1,7 @@
+import { chartProblem, retype } from '@loopwise/shared/analytics-chart';
+import type { PathwayDefinition } from '@loopwise/shared/pathway-rules';
+import { describeAnalytics, getMetric, runAnalyticsSql } from '@loopwise/shared/tools';
 import { Injectable } from '@nestjs/common';
-import { chartProblem, retype } from '@quarry/shared/analytics-chart';
-import type { PathwayDefinition } from '@quarry/shared/pathway-rules';
-import { describeAnalytics, getMetric, runAnalyticsSql } from '@quarry/shared/tools';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
 import { OrganizationRepository } from '../../organizations/organization.repository.js';
@@ -251,7 +251,7 @@ function metricChart(
 }
 
 /**
- * A chart drawn from the result's own columns (`@quarry/shared/analytics-chart`): every column it names must be in the
+ * A chart drawn from the result's own columns (`@loopwise/shared/analytics-chart`): every column it names must be in the
  * result and the value columns numeric, so a chart can't show a number the query didn't return. Refused with a
  * message the model can act on. Model-supplied references are dropped: the server resolves thresholds itself.
  */

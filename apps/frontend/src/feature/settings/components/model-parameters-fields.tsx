@@ -1,5 +1,5 @@
 import styles from './model-parameters-fields.module.css';
-import type { ModelInferenceSettings, ParamControl, ParamKey, ReasoningEffort } from '@quarry/api/agent/types/llm';
+import type { ModelInferenceSettings, ParamControl, ParamKey, ReasoningEffort } from '@loopwise/api/agent/types/llm';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 

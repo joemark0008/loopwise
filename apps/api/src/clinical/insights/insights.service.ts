@@ -1,5 +1,5 @@
+import { chartFacilityPanel, chartPatientTrend, createReport } from '@loopwise/shared/tools';
 import { Injectable } from '@nestjs/common';
-import { chartFacilityPanel, chartPatientTrend, createReport } from '@quarry/shared/tools';
 
 import { ChatRepository } from '../../chats/chat.repository.js';
 import { HandlerError } from '../../common/errors/handler-error.js';

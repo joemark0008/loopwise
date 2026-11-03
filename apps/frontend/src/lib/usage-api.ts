@@ -7,8 +7,8 @@ import type {
 	UsageFilter,
 	UsagePeriodSelection,
 	UsageRecord,
-} from '@quarry/shared/usage';
-import type { LlmProvider } from '@quarry/shared/types';
+} from '@loopwise/shared/usage';
+import type { LlmProvider } from '@loopwise/shared/types';
 
 import {
 	CreateSavedUsagePeriodDocument,

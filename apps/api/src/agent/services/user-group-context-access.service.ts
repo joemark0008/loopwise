@@ -1,6 +1,6 @@
-import type { McpAccess, UserGroupFeature, WarehouseRowSecurity } from '@quarry/shared';
-import { ALL_MCP_ACCESS, type FileTreeAccess, USER_GROUP_FEATURES } from '@quarry/shared';
-import type { UserRulesGroupAccess } from '@quarry/shared/rules-template';
+import type { McpAccess, UserGroupFeature, WarehouseRowSecurity } from '@loopwise/shared';
+import { ALL_MCP_ACCESS, type FileTreeAccess, USER_GROUP_FEATURES } from '@loopwise/shared';
+import type { UserRulesGroupAccess } from '@loopwise/shared/rules-template';
 
 import type { WarehouseTableAccess } from './context-access.js';
 

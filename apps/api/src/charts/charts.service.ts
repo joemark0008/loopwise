@@ -1,7 +1,7 @@
+import type { ChartPluginManifestEntry } from '@loopwise/shared';
+import { isBuiltinChartType } from '@loopwise/shared/chart-types';
+import { displayChart, displayMap } from '@loopwise/shared/tools';
 import { Injectable } from '@nestjs/common';
-import type { ChartPluginManifestEntry } from '@quarry/shared';
-import { isBuiltinChartType } from '@quarry/shared/chart-types';
-import { displayChart, displayMap } from '@quarry/shared/tools';
 import { z } from 'zod/v4';
 
 import { listChartPlugins, readChartPlugin } from '../agent/services/chart-plugin.js';

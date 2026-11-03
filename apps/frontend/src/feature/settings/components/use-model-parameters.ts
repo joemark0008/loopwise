@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getModelParameterSpec } from '@quarry/api/agent/providers/provider-meta';
+import { getModelParameterSpec } from '@loopwise/api/agent/providers/provider-meta';
 import { buildInferenceSettings, getParamErrors, seedParamValues } from './model-parameters-fields';
 import type { ParamValues } from './model-parameters-fields';
-import type { ModelInferenceSettings, ParamKey } from '@quarry/api/agent/types/llm';
-import type { LlmProvider } from '@quarry/shared/types';
+import type { ModelInferenceSettings, ParamKey } from '@loopwise/api/agent/types/llm';
+import type { LlmProvider } from '@loopwise/shared/types';
 
 interface UseModelParametersArgs {
 	provider: LlmProvider;

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { type LlmProvider, providerKind } from '@quarry/shared/types';
+import { type LlmProvider, providerKind } from '@loopwise/shared/types';
 import type { ModelMessage } from 'ai';
 
 const PROVIDER_SAFE_IDENTIFIER_PATTERN = /^[a-zA-Z0-9_-]+$/;

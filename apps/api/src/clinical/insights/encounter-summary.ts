@@ -1,4 +1,4 @@
-import type { createReport } from '@quarry/shared/tools';
+import type { createReport } from '@loopwise/shared/tools';
 
 import type { EncounterRecordRow } from './insights.repository.js';
 import { ageOn } from './patient-summary.js';

@@ -67,7 +67,7 @@ interface TablePaging {
 	toggleSort: (column: string) => void;
 }
 
-/** `quarry-table-display__*` classes let sandboxed custom stories style the same markup. */
+/** `loopwise-table-display__*` classes let sandboxed custom stories style the same markup. */
 export const TableDisplay = memo(function TableDisplay({
 	data,
 	serverPagination,
@@ -109,21 +109,21 @@ export const TableDisplay = memo(function TableDisplay({
 	}
 
 	return (
-		<div className={cn('quarry-shared-tabledisplaydiv-555def quarry-table-display', className)}>
+		<div className={cn('loopwise-shared-tabledisplaydiv-555def loopwise-table-display', className)}>
 			{title ? (
-				<span className='quarry-shared-tabledisplayspan-acadca quarry-table-display__title'>{title}</span>
+				<span className='loopwise-shared-tabledisplayspan-acadca loopwise-table-display__title'>{title}</span>
 			) : null}
 
 			<div
 				className={cn(
-					'quarry-shared-tabledisplaydiv-2aa2d0 quarry-table-display__scroll',
+					'loopwise-shared-tabledisplaydiv-2aa2d0 loopwise-table-display__scroll',
 					tableContainerClassName,
 				)}
 			>
-				<table className='quarry-shared-tabledisplaytable-3c8cbd'>
-					<thead className='quarry-shared-tabledisplaythead-532791'>
+				<table className='loopwise-shared-tabledisplaytable-3c8cbd'>
+					<thead className='loopwise-shared-tabledisplaythead-532791'>
 						<tr>
-							<th className='quarry-shared-tabledisplayth-3513f5 quarry-table-display__index' />
+							<th className='loopwise-shared-tabledisplayth-3513f5 loopwise-table-display__index' />
 							{resolvedColumns.map((column) => {
 								const alignRight = numericColumns.has(column);
 								const sortDirection = activeSort?.column === column ? activeSort.direction : null;
@@ -140,17 +140,19 @@ export const TableDisplay = memo(function TableDisplay({
 												: 'none'
 										}
 										className={cn(
-											'quarry-shared-tabledisplayth-df8127',
+											'loopwise-shared-tabledisplayth-df8127',
 											alignRight &&
-												'quarry-shared-tabledisplayth-a01bce quarry-table-display__numeric',
+												'loopwise-shared-tabledisplayth-a01bce loopwise-table-display__numeric',
 										)}
 									>
 										<button
 											type='button'
 											onClick={() => paging.toggleSort(column)}
-											className='quarry-shared-tabledisplaybutton-9f278e group'
+											className='loopwise-shared-tabledisplaybutton-9f278e group'
 										>
-											<span className={cn(alignRight && 'quarry-shared-tabledisplayspan-fb56d9')}>
+											<span
+												className={cn(alignRight && 'loopwise-shared-tabledisplayspan-fb56d9')}
+											>
 												{columnLabel(column)}
 											</span>
 											<SortIndicator direction={sortDirection} cn={cn} />
@@ -164,9 +166,9 @@ export const TableDisplay = memo(function TableDisplay({
 					<tbody>
 						{hasRows ? (
 							pageData.map((row, rowIndex) => (
-								<tr key={rowIndex} className='quarry-shared-tabledisplaytr-b7b16d'>
-									<td className='quarry-shared-tabledisplaytd-ecce13 quarry-table-display__index'>
-										<span className='quarry-shared-tabledisplayspan-a04514'>
+								<tr key={rowIndex} className='loopwise-shared-tabledisplaytr-b7b16d'>
+									<td className='loopwise-shared-tabledisplaytd-ecce13 loopwise-table-display__index'>
+										<span className='loopwise-shared-tabledisplayspan-a04514'>
 											{pageIndex * pageSize + rowIndex + 1}
 										</span>
 									</td>
@@ -182,13 +184,13 @@ export const TableDisplay = memo(function TableDisplay({
 													...(background ? { backgroundColor: background } : {}),
 												}}
 												className={cn(
-													'quarry-shared-tabledisplaytd-0e23ef quarry-table-display__cell',
+													'loopwise-shared-tabledisplaytd-0e23ef loopwise-table-display__cell',
 													numericColumns.has(column) &&
-														'quarry-shared-tabledisplaytd-a01bce quarry-table-display__numeric',
+														'loopwise-shared-tabledisplaytd-a01bce loopwise-table-display__numeric',
 												)}
 											>
 												{isNull ? (
-													<span className='quarry-shared-tabledisplayspan-eb2299 quarry-table-display__null'>
+													<span className='loopwise-shared-tabledisplayspan-eb2299 loopwise-table-display__null'>
 														NULL
 													</span>
 												) : (
@@ -203,7 +205,7 @@ export const TableDisplay = memo(function TableDisplay({
 							<tr>
 								<td
 									colSpan={resolvedColumns.length + 1}
-									className='quarry-shared-tabledisplaytd-5a87e7 quarry-table-display__empty'
+									className='loopwise-shared-tabledisplaytd-5a87e7 loopwise-table-display__empty'
 								>
 									{emptyLabel}
 								</td>
@@ -226,16 +228,18 @@ export const TableDisplay = memo(function TableDisplay({
 			) : showRowCount ? (
 				<div
 					className={cn(
-						'quarry-shared-tabledisplaydiv-469660 quarry-table-display__row-count',
-						compactFooter ? 'quarry-shared-tabledisplaydiv-4b5cc1' : 'quarry-shared-tabledisplaydiv-77c08e',
+						'loopwise-shared-tabledisplaydiv-469660 loopwise-table-display__row-count',
+						compactFooter
+							? 'loopwise-shared-tabledisplaydiv-4b5cc1'
+							: 'loopwise-shared-tabledisplaydiv-77c08e',
 					)}
 				>
 					<span
 						className={cn(
-							'quarry-shared-tabledisplayspan-bfa603',
+							'loopwise-shared-tabledisplayspan-bfa603',
 							compactFooter
-								? 'quarry-shared-tabledisplayspan-359090'
-								: 'quarry-shared-tabledisplayspan-fc7473',
+								? 'loopwise-shared-tabledisplayspan-359090'
+								: 'loopwise-shared-tabledisplayspan-fc7473',
 						)}
 					>
 						{paging.totalRows} rows
@@ -319,23 +323,23 @@ function useLocalTablePaging(data: TableRow[], columns: string[], maxRowsBeforeP
 
 function SortIndicator({ direction, cn }: { direction: SortDirection | null; cn: ClassNameMerger }) {
 	return (
-		<span className='quarry-shared-sortindicatorspan-0eb978 quarry-table-display__sort'>
+		<span className='loopwise-shared-sortindicatorspan-0eb978 loopwise-table-display__sort'>
 			<ChevronIcon
 				path='m18 15-6-6-6 6'
 				className={cn(
-					'quarry-shared-sortindicatorchevronicon-ef2d6f',
+					'loopwise-shared-sortindicatorchevronicon-ef2d6f',
 					direction === 'asc'
-						? 'quarry-shared-sortindicatorchevronicon-d4108a quarry-table-display__sort--active'
-						: 'quarry-shared-sortindicatorchevronicon-3a33f1',
+						? 'loopwise-shared-sortindicatorchevronicon-d4108a loopwise-table-display__sort--active'
+						: 'loopwise-shared-sortindicatorchevronicon-3a33f1',
 				)}
 			/>
 			<ChevronIcon
 				path='m6 9 6 6 6-6'
 				className={cn(
-					'quarry-shared-sortindicatorchevronicon-ef2d6f',
+					'loopwise-shared-sortindicatorchevronicon-ef2d6f',
 					direction === 'desc'
-						? 'quarry-shared-sortindicatorchevronicon-d4108a quarry-table-display__sort--active'
-						: 'quarry-shared-sortindicatorchevronicon-3a33f1',
+						? 'loopwise-shared-sortindicatorchevronicon-d4108a loopwise-table-display__sort--active'
+						: 'loopwise-shared-sortindicatorchevronicon-3a33f1',
 				)}
 			/>
 		</span>

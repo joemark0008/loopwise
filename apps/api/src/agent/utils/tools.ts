@@ -121,25 +121,25 @@ export const BUILT_IN_EXCLUSION_GLOBS = [...EXCLUDED_DIRECTORY_NAMES, ...ENVIRON
 	(pattern) => [`!${pattern}`, `!${pattern}/**`, `!**/${pattern}`, `!**/${pattern}/**`],
 );
 
-type QuarryignoreCacheEntry = {
-	/** `mtimeMs:size` of the .quarryignore file, or `null` if the file does not exist */
+type LoopwiseignoreCacheEntry = {
+	/** `mtimeMs:size` of the .loopwiseignore file, or `null` if the file does not exist */
 	signature: string | null;
 	patterns: string[];
 };
 
 /**
- * Cache for .quarryignore patterns per project folder.
+ * Cache for .loopwiseignore patterns per project folder.
  * Entries are invalidated automatically when the underlying file changes.
  */
-const quarryignoreCache = new Map<string, QuarryignoreCacheEntry>();
+const loopwiseignoreCache = new Map<string, LoopwiseignoreCacheEntry>();
 
 /**
- * Computes a cheap fingerprint of the .quarryignore file used to detect changes.
+ * Computes a cheap fingerprint of the .loopwiseignore file used to detect changes.
  * Returns `null` when the file does not exist or cannot be stat-ed.
  */
-const getQuarryignoreSignature = (quarryignorePath: string): string | null => {
+const getLoopwiseignoreSignature = (loopwiseignorePath: string): string | null => {
 	try {
-		const stat = fs.statSync(quarryignorePath);
+		const stat = fs.statSync(loopwiseignorePath);
 		return `${stat.mtimeMs}:${stat.size}`;
 	} catch {
 		return null;
@@ -147,15 +147,15 @@ const getQuarryignoreSignature = (quarryignorePath: string): string | null => {
 };
 
 /**
- * Loads and parses the .quarryignore file from the project folder.
+ * Loads and parses the .loopwiseignore file from the project folder.
  * Returns an array of patterns. Results are cached per project folder and
  * invalidated when the file's mtime or size changes.
  */
-export const loadQuarryignorePatterns = (projectFolder: string): string[] => {
-	const quarryignorePath = path.join(projectFolder, '.quarryignore');
-	const signature = getQuarryignoreSignature(quarryignorePath);
+export const loadLoopwiseignorePatterns = (projectFolder: string): string[] => {
+	const loopwiseignorePath = path.join(projectFolder, '.loopwiseignore');
+	const signature = getLoopwiseignoreSignature(loopwiseignorePath);
 
-	const cached = quarryignoreCache.get(projectFolder);
+	const cached = loopwiseignoreCache.get(projectFolder);
 	if (cached && cached.signature === signature) {
 		return cached.patterns;
 	}
@@ -163,7 +163,7 @@ export const loadQuarryignorePatterns = (projectFolder: string): string[] => {
 	let patterns: string[] = [];
 	if (signature !== null) {
 		try {
-			const content = fs.readFileSync(quarryignorePath, 'utf-8');
+			const content = fs.readFileSync(loopwiseignorePath, 'utf-8');
 			patterns = content
 				.split('\n')
 				.map((line) => line.trim())
@@ -173,25 +173,25 @@ export const loadQuarryignorePatterns = (projectFolder: string): string[] => {
 		}
 	}
 
-	quarryignoreCache.set(projectFolder, { signature, patterns });
+	loopwiseignoreCache.set(projectFolder, { signature, patterns });
 	return patterns;
 };
 
 /**
- * Clears the quarryignore cache. Useful for testing or to force a reload.
+ * Clears the loopwiseignore cache. Useful for testing or to force a reload.
  */
-export const clearQuarryignoreCache = (): void => {
-	quarryignoreCache.clear();
+export const clearLoopwiseignoreCache = (): void => {
+	loopwiseignoreCache.clear();
 };
 
 /**
- * Checks if a path matches any .quarryignore pattern.
+ * Checks if a path matches any .loopwiseignore pattern.
  * @param relativePath - Path relative to the project folder (e.g., "templates/foo.md")
  * @param projectFolder - The project folder path
  * @returns true if the path should be ignored
  */
-export const isIgnoredByQuarryignore = (relativePath: string, projectFolder: string): boolean => {
-	const patterns = loadQuarryignorePatterns(projectFolder);
+export const isIgnoredByLoopwiseignore = (relativePath: string, projectFolder: string): boolean => {
+	const patterns = loadLoopwiseignorePatterns(projectFolder);
 
 	// Normalize the path (remove leading slash if present)
 	const normalizedPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
@@ -228,7 +228,7 @@ export const isIgnoredByQuarryignore = (relativePath: string, projectFolder: str
 };
 
 /**
- * Checks if a real filesystem path should be ignored based on .quarryignore.
+ * Checks if a real filesystem path should be ignored based on .loopwiseignore.
  * @param realPath - Absolute filesystem path
  * @param projectFolder - The project folder path
  * @returns true if the path should be ignored
@@ -238,12 +238,12 @@ export const isIgnoredPath = (realPath: string, projectFolder: string): boolean 
 	const normalizedFolder = path.resolve(projectFolder);
 	const relativePath = path.relative(normalizedFolder, resolved);
 
-	// Paths outside project folder are not subject to quarryignore
+	// Paths outside project folder are not subject to loopwiseignore
 	if (relativePath.startsWith('..')) {
 		return false;
 	}
 
-	return isIgnoredByQuarryignore(relativePath, normalizedFolder);
+	return isIgnoredByLoopwiseignore(relativePath, normalizedFolder);
 };
 
 /**
@@ -271,7 +271,7 @@ const isEnvironmentFileName = (name: string): boolean => {
 
 /**
  * Checks if an entry should be excluded from directory listings.
- * Combines excluded directories and .quarryignore patterns.
+ * Combines excluded directories and .loopwiseignore patterns.
  * @param entryName - The name of the entry (file or directory)
  * @param parentPath - The parent directory path relative to project folder
  * @param projectFolder - The project folder path
@@ -288,14 +288,14 @@ export const shouldExcludeEntry = (entryName: string, parentPath: string, projec
 		return true;
 	}
 
-	// Then check quarryignore patterns
+	// Then check loopwiseignore patterns
 	const relativePath = parentPath ? `${parentPath}/${entryName}` : entryName;
-	return isIgnoredByQuarryignore(relativePath, projectFolder);
+	return isIgnoredByLoopwiseignore(relativePath, projectFolder);
 };
 
 /**
  * Checks if a given path is within the project folder, not in an excluded directory,
- * and not ignored by .quarryignore.
+ * and not ignored by .loopwiseignore.
  */
 export const isWithinProjectFolder = (filePath: string, projectFolder: string): boolean => {
 	const resolved = path.resolve(filePath);
@@ -329,7 +329,7 @@ type ToRealPathOptions = {
  *
  * The guards run on the lexical path and again on the symlink-resolved path, so a
  * symlink inside the project cannot reach outside it or into a protected file.
- * @throws Error if the resolved path escapes the project folder or is ignored by .quarryignore
+ * @throws Error if the resolved path escapes the project folder or is ignored by .loopwiseignore
  */
 export const toRealPath = (virtualPath: string, projectFolder: string, options: ToRealPathOptions = {}): string => {
 	const normalizedFolder = path.resolve(projectFolder);
@@ -376,7 +376,7 @@ const assertAllowedProjectPath = (absolutePath: string, projectFolder: string, v
 	}
 
 	if (isIgnoredPath(absolutePath, projectFolder)) {
-		throw new Error(`Access denied: path '${virtualPath}' is ignored by .quarryignore`);
+		throw new Error(`Access denied: path '${virtualPath}' is ignored by .loopwiseignore`);
 	}
 };
 

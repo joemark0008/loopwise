@@ -1,6 +1,6 @@
+import type { SkillDraft, SkillSaveMode } from '@loopwise/shared/skill-authoring';
+import { SkillDraftSchema, skillFilePath } from '@loopwise/shared/skill-authoring';
 import { Injectable } from '@nestjs/common';
-import type { SkillDraft, SkillSaveMode } from '@quarry/shared/skill-authoring';
-import { SkillDraftSchema, skillFilePath } from '@quarry/shared/skill-authoring';
 import matter from 'gray-matter';
 
 import { findInternalSkill } from '../agent/skills/index.js';
@@ -79,7 +79,7 @@ export class SkillAuthoringService {
 	}
 
 	private resolveTarget(project: Project): SkillWriteTarget {
-		if (this.config.env.QUARRY_SKILL_AUTHORING === 'off') {
+		if (this.config.env.LOOPWISE_SKILL_AUTHORING === 'off') {
 			return { mode: 'disabled', message: DISABLED_MESSAGE };
 		}
 		if (!project.path) {

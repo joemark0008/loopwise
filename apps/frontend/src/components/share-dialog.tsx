@@ -1,7 +1,7 @@
 import { Check, Globe, Link as LinkIcon, Loader2, SearchIcon, Unlink, Users } from 'lucide-react';
 
 import styles from './share-dialog.module.css';
-import type { Visibility } from '@quarry/shared/types';
+import type { Visibility } from '@loopwise/shared/types';
 
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

@@ -1,7 +1,7 @@
-import { bucketPieData, buildChart, labelize, resolveDataKey, sortByDateKey } from '@quarry/shared';
-import { isBuiltinChartType } from '@quarry/shared/chart-types';
-import type { DateFormatSettings } from '@quarry/shared/date';
-import { displayChart } from '@quarry/shared/tools';
+import { bucketPieData, buildChart, labelize, resolveDataKey, sortByDateKey } from '@loopwise/shared';
+import { isBuiltinChartType } from '@loopwise/shared/chart-types';
+import type { DateFormatSettings } from '@loopwise/shared/date';
+import { displayChart } from '@loopwise/shared/tools';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 

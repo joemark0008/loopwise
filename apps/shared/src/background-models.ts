@@ -30,7 +30,7 @@ export type BackgroundModelMode = 'single' | 'perCategory';
 
 /**
  * Project-wide model defaults: the model new chats start on (also used by every surface that
- * runs without an explicit selection, such as the MCP `ask_quarry` tool) and the background tasks.
+ * runs without an explicit selection, such as the MCP `ask_loopwise` tool) and the background tasks.
  */
 export interface DefaultModelSettings {
 	mode: BackgroundModelMode;

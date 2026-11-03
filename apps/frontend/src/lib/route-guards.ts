@@ -1,6 +1,6 @@
 import { redirect } from '@tanstack/react-router';
 
-import type { UserRole } from '@quarry/shared/types';
+import type { UserRole } from '@loopwise/shared/types';
 import { fetchPublicConfig } from '@/hooks/use-public-config';
 import { fetchCurrentProject } from '@/hooks/use-current-project';
 import { canSeeAdvancedSettings } from '@/lib/effective-user-group-features';
@@ -40,14 +40,14 @@ export async function requireOrgAdmin() {
 
 export async function requireNonCloud() {
 	const config = await fetchPublicConfig();
-	if (config.quarryMode === 'cloud') {
+	if (config.loopwiseMode === 'cloud') {
 		throw redirect({ to: '/settings/account' });
 	}
 }
 
 export async function requireCloud() {
 	const config = await fetchPublicConfig();
-	if (config.quarryMode !== 'cloud') {
+	if (config.loopwiseMode !== 'cloud') {
 		throw redirect({ to: '/settings/account' });
 	}
 	return config;

@@ -1,5 +1,5 @@
+import { CHAT_FILTER_OPTIONS, CHAT_GROUP_BY_OPTIONS } from '@loopwise/shared/types';
 import { Field, ID, InputType, Int } from '@nestjs/graphql';
-import { CHAT_FILTER_OPTIONS, CHAT_GROUP_BY_OPTIONS } from '@quarry/shared/types';
 import { Type } from 'class-transformer';
 import {
 	IsArray,

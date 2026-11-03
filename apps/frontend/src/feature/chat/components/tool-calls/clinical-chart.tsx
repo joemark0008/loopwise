@@ -2,7 +2,7 @@ import { Activity } from 'lucide-react';
 import { memo, useState } from 'react';
 import styles from './clinical-chart.module.css';
 import { ChartDisplay } from './display-chart';
-import type { clinicalChart } from '@quarry/shared/tools';
+import type { clinicalChart } from '@loopwise/shared/tools';
 import type { ToolCallComponentProps } from '.';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/ui/error-message';

@@ -123,7 +123,7 @@ const HORIZONTAL_BAR_CATEGORY_GAP = '20%';
 const HORIZONTAL_BAR_RADIUS = 999;
 const HORIZONTAL_BAR_TRACK_COLOR = 'var(--muted, #e5e7eb)';
 const HORIZONTAL_BAR_BASELINE_COLOR = 'var(--muted-foreground, #6b7280)';
-const HORIZONTAL_BAR_ORIGINAL_VALUE_KEY = '__quarryHorizontalBarValue';
+const HORIZONTAL_BAR_ORIGINAL_VALUE_KEY = '__loopwiseHorizontalBarValue';
 const HORIZONTAL_BAR_VALUE_LABEL_RIGHT_PADDING = 4;
 const HORIZONTAL_BAR_LABEL_VERTICAL_ROOM = Math.ceil(CHART_LABEL_FONT_SIZE / 2) + 2;
 /** Reserves horizontal room for a rotated axis title so it does not overlap tick values. */
@@ -356,7 +356,7 @@ export interface BuildChartProps {
 	idPrefix?: string;
 	/** Optional node rendered inline to the left of the first KPI card's title (used for a per-column drag handle in the story editor). */
 	kpiLeadingSlot?: React.ReactNode;
-	/** Recharts-prop styling (bar radius); defaults to quarry's look. Themed custom stories pass their own. */
+	/** Recharts-prop styling (bar radius); defaults to loopwise's look. Themed custom stories pass their own. */
 	chartStyle?: ChartStyle;
 	hideAxes?: boolean;
 }
@@ -503,7 +503,7 @@ function buildKpiCard(props: ResolvedProps, leadingSlot?: React.ReactNode) {
 }
 
 function KpiCardContainer({ children }: { children: React.ReactNode }) {
-	return <div className='quarry-shared-kpicardcontainerdiv-c3b7da'>{children}</div>;
+	return <div className='loopwise-shared-kpicardcontainerdiv-c3b7da'>{children}</div>;
 }
 
 export interface KpiCardProps {
@@ -515,7 +515,7 @@ export interface KpiCardProps {
 	leadingSlot?: React.ReactNode;
 }
 
-/** `quarry-kpi-card__*` classes let sandboxed custom stories style the same markup. */
+/** `loopwise-kpi-card__*` classes let sandboxed custom stories style the same markup. */
 export function KpiCard({ value, displayName, comparison, valueFormat, leadingSlot }: KpiCardProps) {
 	let formattedValue = '';
 
@@ -529,30 +529,30 @@ export function KpiCard({ value, displayName, comparison, valueFormat, leadingSl
 	const trend = showArrowAndColor ? comparison.direction : 'neutral';
 	const pillColorClass = showArrowAndColor
 		? comparison.direction === 'up'
-			? 'quarry-shared-pillcolorclass-b0a7de'
-			: 'quarry-shared-pillcolorclass-421d45'
-		: 'quarry-shared-pillcolorclass-bfa603';
+			? 'loopwise-shared-pillcolorclass-b0a7de'
+			: 'loopwise-shared-pillcolorclass-421d45'
+		: 'loopwise-shared-pillcolorclass-bfa603';
 
 	return (
-		<div className='quarry-shared-kpicarddiv-a58241 quarry-kpi-card'>
+		<div className='loopwise-shared-kpicarddiv-a58241 loopwise-kpi-card'>
 			{(displayName || leadingSlot) && (
-				<div className='quarry-shared-kpicarddiv-986e63 quarry-kpi-card__header'>
+				<div className='loopwise-shared-kpicarddiv-986e63 loopwise-kpi-card__header'>
 					{leadingSlot}
 					{displayName && (
-						<div className='quarry-shared-kpicarddiv-efaca3 quarry-kpi-card__name'>{displayName}</div>
+						<div className='loopwise-shared-kpicarddiv-efaca3 loopwise-kpi-card__name'>{displayName}</div>
 					)}
 				</div>
 			)}
-			<div className='quarry-shared-kpicarddiv-bbdaca quarry-kpi-card__value'>{formattedValue}</div>
+			<div className='loopwise-shared-kpicarddiv-bbdaca loopwise-kpi-card__value'>{formattedValue}</div>
 			{comparison && (
 				<div
-					className={`quarry-kpi-card__comparison quarry-kpi-card__comparison--${trend} quarry-kpi-card__comparison-layout ${pillColorClass}`}
+					className={`loopwise-kpi-card__comparison loopwise-kpi-card__comparison--${trend} loopwise-kpi-card__comparison-layout ${pillColorClass}`}
 				>
 					{showArrowAndColor && <KpiTrendArrow direction={comparison.direction} />}
-					<span className='quarry-shared-kpicardspan-3a48a8 quarry-kpi-card__comparison-value'>
+					<span className='loopwise-shared-kpicardspan-3a48a8 loopwise-kpi-card__comparison-value'>
 						{comparison.valueText}
 					</span>
-					<span className='quarry-shared-kpicardspan-8ecebc'>vs. {comparison.periodLabel}</span>
+					<span className='loopwise-shared-kpicardspan-8ecebc'>vs. {comparison.periodLabel}</span>
 				</div>
 			)}
 		</div>
@@ -570,7 +570,7 @@ function KpiTrendArrow({ direction }: { direction: KpiComparisonDirection }) {
 			strokeWidth='1.6'
 			strokeLinejoin='round'
 			aria-hidden='true'
-			className='quarry-shared-kpitrendarrowsvg-012fbd'
+			className='loopwise-shared-kpitrendarrowsvg-012fbd'
 		>
 			<path d={direction === 'up' ? 'M7 2.5 12 10 2 10Z' : 'M2 2.5 12 2.5 7 10Z'} />
 		</svg>
@@ -1762,7 +1762,7 @@ function renderChartTitle(title: string) {
 			key='chart-title'
 			component={({ width = 0 }: { width?: number }) => (
 				<text
-					className='quarry-chart-title'
+					className='loopwise-chart-title'
 					x={width / 2}
 					y={16}
 					textAnchor='middle'

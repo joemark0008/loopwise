@@ -1,4 +1,4 @@
-import type { LlmSelectedModel, SemanticLayerMode } from '@quarry/shared/types';
+import type { LlmSelectedModel, SemanticLayerMode } from '@loopwise/shared/types';
 
 export type WebSearchMode = 'provider';
 

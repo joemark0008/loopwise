@@ -11,13 +11,13 @@ No runtime dependencies: Node 22 runs the TypeScript sources directly, and the q
 ## Run it
 
 ```bash
-HUB_URL=http://localhost:5006 FACILITY_KEY=<facility key> MLLP_PORT=2575 npm start -w @quarry/connector
+HUB_URL=http://localhost:5006 FACILITY_KEY=<facility key> MLLP_PORT=2575 npm start -w @loopwise/connector
 ```
 
 Send a synthetic ORU^R01 (HbA1c 8.2 %) to it and print the ACK:
 
 ```bash
-npm run send-mllp -w @quarry/connector -- --port 2575
+npm run send-mllp -w @loopwise/connector -- --port 2575
 ```
 
 `--count 5` sends five, `--value 5.1` changes the HbA1c, `--file message.hl7` sends your own (synthetic) message.
@@ -83,7 +83,7 @@ On a seeded development database the hub accepts the synthetic dev key of Bohol 
 
 ## Tests
 
-`npm test -w @quarry/connector`: framing, ACKs, the queue across a restart, the forwarder against a fake hub (500 then
+`npm test -w @loopwise/connector`: framing, ACKs, the queue across a restart, the forwarder against a fake hub (500 then
 200, 401, AE), the outbox poller against a fake hub and a fake LIS, and end to end over real TCP and HTTP.
 
 `test/hub.integration.test.ts` runs against a real hub and is skipped unless `HUB_IT_URL` is set (`HUB_IT_KEY`

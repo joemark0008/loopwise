@@ -1,5 +1,5 @@
 {
-	"name": "@quarry/connector",
+	"name": "@loopwise/connector",
 	"private": true,
 	"type": "module",
 	"description": "Loopwise edge connector: HL7 v2 over MLLP in, HTTPS to the hub out, with a local SQLite retry queue.",

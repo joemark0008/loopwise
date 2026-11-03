@@ -4,7 +4,7 @@ import { EllipsisVertical, Pencil, StarIcon, StarOffIcon, TrashIcon, Upload } fr
 import { useState } from 'react';
 import styles from './sidebar-chat-list-item.module.css';
 import type { ComponentProps } from 'react';
-import type { GroupedChatItem } from '@quarry/shared/types';
+import type { GroupedChatItem } from '@loopwise/shared/types';
 import { ShareChatDialog } from '@/components/share-dialog.chat.tsx';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import {

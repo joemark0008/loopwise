@@ -2,7 +2,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useId } from 'react';
 import styles from './model-select-field.module.css';
 import type { ReactNode } from 'react';
-import type { LlmProvider, LlmSelectedModel } from '@quarry/shared/types';
+import type { LlmProvider, LlmSelectedModel } from '@loopwise/shared/types';
 
 import { LlmProviderIcon } from '@/components/ui/llm-provider-icon';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,14 +12,14 @@ import { cn } from '@/lib/utils';
 export type AvailableModel = { provider: LlmProvider; modelId: string; name: string; baseUrl: string | null };
 export type ResolvedModel = { provider: LlmProvider; modelId: string; name: string };
 
-/** The entry offered on top of the model list, standing for "let quarry decide". */
+/** The entry offered on top of the model list, standing for "let loopwise decide". */
 export interface DefaultModelOption {
 	label: string;
 	model?: ResolvedModel | null;
 	hint?: string;
 }
 
-const DEFAULT_VALUE = '__quarry_default__';
+const DEFAULT_VALUE = '__loopwise_default__';
 
 const FALLBACK_UNAVAILABLE_WARNING =
 	'The selected model is no longer available. Loopwise automatically falls back to another available model until you pick a new one.';

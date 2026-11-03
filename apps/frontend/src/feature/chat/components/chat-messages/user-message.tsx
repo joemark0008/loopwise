@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { ChatMessagesCitationChip } from './chat-messages-citation-chip';
 import styles from './user-message.module.css';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import type { MessageMentionConfig, MentionOption, PromptTheme } from 'prompt-mentions';
 import { cn } from '@/lib/utils';
 import { useAgentContext } from '@/contexts/agent.provider';

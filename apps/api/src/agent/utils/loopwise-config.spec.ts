@@ -4,18 +4,18 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { extractConfiguredRepos, extractRequiredEnvVars } from './quarry-config.js';
+import { extractConfiguredRepos, extractRequiredEnvVars } from './loopwise-config.js';
 
 vi.mock('./logger.js', () => ({
 	logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
 describe('extractRequiredEnvVars', () => {
-	it('returns env vars declared in quarry_config.yaml', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quarry-config-'));
+	it('returns env vars declared in loopwise_config.yaml', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopwise-config-'));
 		try {
 			fs.writeFileSync(
-				path.join(dir, 'quarry_config.yaml'),
+				path.join(dir, 'loopwise_config.yaml'),
 				[
 					'project_name: demo',
 					'databases:',
@@ -32,7 +32,7 @@ describe('extractRequiredEnvVars', () => {
 	});
 
 	it('returns env vars declared in mcp.json', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quarry-config-'));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopwise-config-'));
 		try {
 			const mcpDir = path.join(dir, 'agent', 'mcps');
 			fs.mkdirSync(mcpDir, { recursive: true });
@@ -57,12 +57,12 @@ describe('extractRequiredEnvVars', () => {
 		}
 	});
 
-	it('deduplicates env vars across quarry_config.yaml and mcp.json', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quarry-config-'));
+	it('deduplicates env vars across loopwise_config.yaml and mcp.json', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopwise-config-'));
 		try {
 			const mcpDir = path.join(dir, 'agent', 'mcps');
 			fs.mkdirSync(mcpDir, { recursive: true });
-			fs.writeFileSync(path.join(dir, 'quarry_config.yaml'), 'password: "{{ env(\'DB_PASSWORD\') }}"\n');
+			fs.writeFileSync(path.join(dir, 'loopwise_config.yaml'), 'password: "{{ env(\'DB_PASSWORD\') }}"\n');
 			fs.writeFileSync(
 				path.join(mcpDir, 'mcp.json'),
 				JSON.stringify({
@@ -85,7 +85,7 @@ describe('extractRequiredEnvVars', () => {
 	});
 
 	it('skips config files that cannot be read', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quarry-config-'));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopwise-config-'));
 		try {
 			const mcpConfigPath = path.join(dir, 'agent', 'mcps', 'mcp.json');
 			fs.mkdirSync(mcpConfigPath, { recursive: true });
@@ -98,16 +98,16 @@ describe('extractRequiredEnvVars', () => {
 });
 
 describe('extractConfiguredRepos', () => {
-	it('returns repos declared in quarry_config.yaml with GitHub metadata', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quarry-config-'));
+	it('returns repos declared in loopwise_config.yaml with GitHub metadata', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopwise-config-'));
 		try {
 			fs.writeFileSync(
-				path.join(dir, 'quarry_config.yaml'),
+				path.join(dir, 'loopwise_config.yaml'),
 				[
 					'project_name: demo',
 					'repos:',
 					'  - name: dbt-models',
-					'    url: https://github.com/quarry/dbt-models.git',
+					'    url: https://github.com/loopwise/dbt-models.git',
 					'    branch: main',
 					'  - name: local-docs',
 					'    local_path: ../docs',
@@ -121,8 +121,8 @@ describe('extractConfiguredRepos', () => {
 					localPath: null,
 					name: 'dbt-models',
 					provider: 'github',
-					repoFullName: 'quarry/dbt-models',
-					url: 'https://github.com/quarry/dbt-models.git',
+					repoFullName: 'loopwise/dbt-models',
+					url: 'https://github.com/loopwise/dbt-models.git',
 				},
 				{
 					branch: null,
@@ -139,16 +139,16 @@ describe('extractConfiguredRepos', () => {
 		}
 	});
 
-	it('returns repos declared in quarry_config.yaml with GitLab metadata', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quarry-config-'));
+	it('returns repos declared in loopwise_config.yaml with GitLab metadata', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopwise-config-'));
 		try {
 			fs.writeFileSync(
-				path.join(dir, 'quarry_config.yaml'),
+				path.join(dir, 'loopwise_config.yaml'),
 				[
 					'project_name: demo',
 					'repos:',
 					'  - name: dbt-models',
-					'    url: https://gitlab.com/quarry/dbt-models.git',
+					'    url: https://gitlab.com/loopwise/dbt-models.git',
 					'    branch: main',
 				].join('\n'),
 			);
@@ -160,8 +160,8 @@ describe('extractConfiguredRepos', () => {
 					localPath: null,
 					name: 'dbt-models',
 					provider: 'gitlab',
-					repoFullName: 'quarry/dbt-models',
-					url: 'https://gitlab.com/quarry/dbt-models.git',
+					repoFullName: 'loopwise/dbt-models',
+					url: 'https://gitlab.com/loopwise/dbt-models.git',
 				},
 			]);
 		} finally {
@@ -170,15 +170,15 @@ describe('extractConfiguredRepos', () => {
 	});
 
 	it('leaves provider null when the repo url does not match a recognized host', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quarry-config-'));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopwise-config-'));
 		try {
 			fs.writeFileSync(
-				path.join(dir, 'quarry_config.yaml'),
+				path.join(dir, 'loopwise_config.yaml'),
 				[
 					'project_name: demo',
 					'repos:',
 					'  - name: dbt-models',
-					'    url: https://bitbucket.org/quarry/dbt-models.git',
+					'    url: https://bitbucket.org/loopwise/dbt-models.git',
 				].join('\n'),
 			);
 
@@ -190,7 +190,7 @@ describe('extractConfiguredRepos', () => {
 					name: 'dbt-models',
 					provider: null,
 					repoFullName: null,
-					url: 'https://bitbucket.org/quarry/dbt-models.git',
+					url: 'https://bitbucket.org/loopwise/dbt-models.git',
 				},
 			]);
 		} finally {

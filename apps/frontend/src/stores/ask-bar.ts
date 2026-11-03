@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { ValueStore } from './value-store';
-import type { StoryBlockReference } from '@quarry/shared/types';
+import type { StoryBlockReference } from '@loopwise/shared/types';
 
 /** The part of the page the user asks about: selected text, with its position, or a block of a custom story. */
 export type AskSelection = {

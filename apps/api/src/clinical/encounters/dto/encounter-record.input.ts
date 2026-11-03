@@ -17,7 +17,7 @@ import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
 
 /*
  * Inputs of the encounter record. The DTOs only check shapes; `EncounterRecordService` parses the fields with the
- * shared rules (`@quarry/shared/encounter-record`, `@quarry/shared/vitals`), the same the forms and Wise cards use.
+ * shared rules (`@loopwise/shared/encounter-record`, `@loopwise/shared/vitals`), the same the forms and Wise cards use.
  */
 
 @InputType()

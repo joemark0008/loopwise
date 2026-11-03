@@ -25,7 +25,7 @@ export const MAP_STYLE_OPTIONS: MapStyleOption[] = [
 	{ id: 'dark', label: 'Dark', url: `${OPENFREEMAP_STYLES}/dark`, dark: true },
 ];
 
-const MAP_STYLE_STORAGE_KEY = 'quarry:map-style';
+const MAP_STYLE_STORAGE_KEY = 'loopwise:map-style';
 const storage = createLocalStorage<MapStyleId>(MAP_STYLE_STORAGE_KEY, 'auto');
 const listeners = new Set<() => void>();
 let current = normalize(storage.get());

@@ -1,6 +1,6 @@
 import { CornerDownRight } from 'lucide-react';
 import styles from './follow-up-suggestions.module.css';
-import type { UIToolPart } from '@quarry/api/agent/types/chat';
+import type { UIToolPart } from '@loopwise/api/agent/types/chat';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSetChatInputCallback } from '@/contexts/set-chat-input-callback';

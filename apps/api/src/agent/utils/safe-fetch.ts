@@ -27,7 +27,7 @@ const PRIVATE_IPV4_RANGES = [
 	{ start: ip4ToInt('224.0.0.0'), end: ip4ToInt('255.255.255.255') },
 ];
 
-const DEFAULT_HEADERS = { accept: '*/*', 'accept-encoding': 'gzip, deflate, br', 'user-agent': 'quarry' };
+const DEFAULT_HEADERS = { accept: '*/*', 'accept-encoding': 'gzip, deflate, br', 'user-agent': 'loopwise' };
 
 const PRIVATE_HOSTNAME_SUFFIXES = ['.localhost', '.internal', '.local', '.arpa'];
 

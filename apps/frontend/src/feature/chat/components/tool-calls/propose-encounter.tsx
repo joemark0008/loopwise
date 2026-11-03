@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Stethoscope } from 'lucide-react';
-import { computeBmi, VITAL_FIELDS, VitalsDraftSchema } from '@quarry/shared/vitals';
+import { computeBmi, VITAL_FIELDS, VitalsDraftSchema } from '@loopwise/shared/vitals';
 import { memo, useState } from 'react';
 import { ProposalCard } from './proposal-card/proposal-card';
 import styles from './propose-encounter.module.css';
 import type { ProposalConfirm } from './proposal-card/proposal-card';
-import type { proposeEncounter } from '@quarry/shared/tools';
+import type { proposeEncounter } from '@loopwise/shared/tools';
 import type { EncounterFormValues } from '@/feature/patients/encounter-form-values';
 import type { ToolCallComponentProps } from '.';
 import type { WiseOriginInput } from '@/graphql/generated/graphql';

@@ -1,5 +1,5 @@
 import { Store } from './abstract-store';
-import type { StoryBlockEditPayload, StoryTableFormatEditRequest } from '@quarry/shared/story-app';
+import type { StoryBlockEditPayload, StoryTableFormatEditRequest } from '@loopwise/shared/story-app';
 
 interface StoryEditTargetBase {
 	chatId: string;

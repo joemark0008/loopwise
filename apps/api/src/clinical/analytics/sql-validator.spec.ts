@@ -1,4 +1,4 @@
-import { getMetric } from '@quarry/shared/tools';
+import { getMetric } from '@loopwise/shared/tools';
 import { describe, expect, it } from 'vitest';
 
 import { METRIC_DEFINITIONS } from './metrics.js';

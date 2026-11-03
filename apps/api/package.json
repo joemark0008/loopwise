@@ -1,5 +1,5 @@
 {
-	"name": "@quarry/api",
+	"name": "@loopwise/api",
 	"version": "0.0.1",
 	"private": true,
 	"type": "module",
@@ -40,7 +40,7 @@
 		"@openrouter/ai-sdk-provider": "^2.10.0",
 		"@prisma/adapter-pg": "7.10.1",
 		"@prisma/client": "7.10.1",
-		"@quarry/shared": "*",
+		"@loopwise/shared": "*",
 		"@resvg/resvg-js": "^2.6.2",
 		"@vscode/ripgrep": "^1.18.0",
 		"ai": "^6.0.317",

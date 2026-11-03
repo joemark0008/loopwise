@@ -1,10 +1,10 @@
-import { DEFAULT_MARKER_COLOR, DEFAULT_MARKER_RADIUS } from '@quarry/shared';
-import { displayMap } from '@quarry/shared/tools';
+import { DEFAULT_MARKER_COLOR, DEFAULT_MARKER_RADIUS } from '@loopwise/shared';
+import { displayMap } from '@loopwise/shared/tools';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import styles from './display-map-edit-dialog.module.css';
-import type { BoundarySource } from '@quarry/shared';
+import type { BoundarySource } from '@loopwise/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

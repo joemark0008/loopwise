@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { SimpleTooltip, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSidebar } from '@/contexts/sidebar';
 import { resetLastAppLocation, useTrackLastAppLocation } from '@/hooks/use-last-app-location';
-import { useIsCloud } from '@/hooks/use-quarry-mode';
+import { useIsCloud } from '@/hooks/use-loopwise-mode';
 import { useProjectSwitch } from '@/hooks/use-project-switch';
 import { useStaffRole } from '@/hooks/use-staff-role';
 import { getActiveProjectId, setActiveProjectId } from '@/lib/active-project';

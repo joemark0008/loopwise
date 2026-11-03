@@ -14,7 +14,7 @@ let root: string;
 let storage: LocalStorageProvider;
 
 beforeEach(async () => {
-	root = await fs.mkdtemp(path.join(os.tmpdir(), 'quarry-storage-test-'));
+	root = await fs.mkdtemp(path.join(os.tmpdir(), 'loopwise-storage-test-'));
 	storage = new LocalStorageProvider(root);
 });
 

@@ -20,7 +20,7 @@ describe('validateUsageSearch', () => {
 			setItem: (key: string, value: string) => storedValues.set(key, value),
 		});
 		localStorage.clear();
-		localStorage.setItem('quarry.active-project-id', JSON.stringify('project-a'));
+		localStorage.setItem('loopwise.active-project-id', JSON.stringify('project-a'));
 	});
 
 	it('accepts supported providers', () => {
@@ -109,7 +109,7 @@ describe('validateUsageSearch', () => {
 
 	it('keeps stored periods for migration without applying them to route state', () => {
 		localStorage.setItem(
-			'quarry.usage-filters.project-a',
+			'loopwise.usage-filters.project-a',
 			JSON.stringify({ provider: 'openai', periodMode: '6m' }),
 		);
 
@@ -121,12 +121,12 @@ describe('validateUsageSearch', () => {
 	});
 
 	it('preserves a legacy period while saving other filters', () => {
-		localStorage.setItem('quarry.usage-filters.project-a', JSON.stringify({ periodMode: '6m' }));
+		localStorage.setItem('loopwise.usage-filters.project-a', JSON.stringify({ periodMode: '6m' }));
 
 		saveUsageFilters({ ...DEFAULT_USAGE_SEARCH, provider: 'openai' });
 
 		expect(readStoredUsagePeriodSelection('project-a')).toEqual({ mode: '6m' });
-		expect(JSON.parse(localStorage.getItem('quarry.usage-filters.project-a') ?? '{}')).toMatchObject({
+		expect(JSON.parse(localStorage.getItem('loopwise.usage-filters.project-a') ?? '{}')).toMatchObject({
 			provider: 'openai',
 			periodMode: '6m',
 		});

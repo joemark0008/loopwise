@@ -40,7 +40,7 @@ describe('canonical project paths', () => {
 });
 
 function createTemporaryFolder(): string {
-	const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'quarry-canonical-path-'));
+	const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'loopwise-canonical-path-'));
 	temporaryFolders.push(folder);
 	return folder;
 }

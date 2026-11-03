@@ -6,7 +6,7 @@ import { apolloClient } from '@/lib/apollo-client';
 
 /**
  * The public config from apps/api, in the shape the upstream screens read (`config.data?.x`).
- * quarry has no billing: `cloudBillingEnabled` stays false until the billing UI is removed.
+ * loopwise has no billing: `cloudBillingEnabled` stays false until the billing UI is removed.
  */
 export type PublicConfig = PublicConfigQuery['publicConfig'] & { cloudBillingEnabled: boolean };
 

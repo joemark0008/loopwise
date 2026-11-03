@@ -90,16 +90,16 @@ export function mapAppPayloadFrom(output: Record<string, unknown> & McpMapAppPay
 export function buildMcpEmbedMarkdownLinks(options: {
 	title: string;
 	embedUrl?: string | null;
-	quarryUrl?: string | null;
+	loopwiseUrl?: string | null;
 	missingQueryMessage?: string;
 }): string {
-	const { title, embedUrl, quarryUrl, missingQueryMessage } = options;
+	const { title, embedUrl, loopwiseUrl, missingQueryMessage } = options;
 	if (missingQueryMessage) {
 		return `**${title}**\n\n${missingQueryMessage}`;
 	}
 	if (embedUrl) {
-		if (quarryUrl) {
-			return `**${title}**\n\n[Open in Loopwise](${quarryUrl}) · [Interactive app](${embedUrl})`;
+		if (loopwiseUrl) {
+			return `**${title}**\n\n[Open in Loopwise](${loopwiseUrl}) · [Interactive app](${embedUrl})`;
 		}
 		return `**${title}**\n\n[Interactive app](${embedUrl})`;
 	}

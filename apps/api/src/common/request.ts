@@ -1,6 +1,6 @@
+import type { UserRole } from '@loopwise/shared/types';
 import type { ExecutionContext } from '@nestjs/common';
 import { type GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
-import type { UserRole } from '@quarry/shared/types';
 import type { Request } from 'express';
 
 import type { AuthSession, AuthUser } from '../auth/auth.service.js';
@@ -8,7 +8,7 @@ import type { Organization, Project } from '../generated/prisma/client.js';
 import type { OrgRole } from '../organizations/organization.repository.js';
 
 /** What the `AuthGuard` attaches to the request, for both REST and GraphQL. */
-export interface QuarryRequest extends Request {
+export interface LoopwiseRequest extends Request {
 	user?: AuthUser;
 	session?: AuthSession['session'];
 	/** Set by `@ProjectAccess()` / `@ProjectAdmin()`. */
@@ -22,11 +22,11 @@ export interface QuarryRequest extends Request {
 }
 
 /** The Express request behind a REST handler or a GraphQL resolver. */
-export function getRequest(context: ExecutionContext): QuarryRequest {
+export function getRequest(context: ExecutionContext): LoopwiseRequest {
 	if (context.getType<GqlContextType>() === 'graphql') {
-		return GqlExecutionContext.create(context).getContext<{ req: QuarryRequest }>().req;
+		return GqlExecutionContext.create(context).getContext<{ req: LoopwiseRequest }>().req;
 	}
-	return context.switchToHttp().getRequest<QuarryRequest>();
+	return context.switchToHttp().getRequest<LoopwiseRequest>();
 }
 
 /** GraphQL resolver arguments (empty for REST). */

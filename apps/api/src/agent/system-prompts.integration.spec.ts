@@ -3,13 +3,13 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getSystemPromptOverride, hasQuarryPromptPlaceholder, injectQuarryPrompt } from './system-prompts.js';
+import { getSystemPromptOverride, hasLoopwisePromptPlaceholder, injectLoopwisePrompt } from './system-prompts.js';
 
 describe('getSystemPromptOverride (real filesystem)', () => {
 	let projectFolder: string;
 
 	beforeEach(() => {
-		projectFolder = mkdtempSync(join(tmpdir(), 'quarry-prompts-'));
+		projectFolder = mkdtempSync(join(tmpdir(), 'loopwise-prompts-'));
 		mkdirSync(join(projectFolder, 'agent', 'prompts'), { recursive: true });
 	});
 
@@ -51,7 +51,7 @@ describe('getSystemPromptOverride (real filesystem)', () => {
 	});
 
 	it('refuses to follow a symlink that points outside the project folder', () => {
-		const secretDir = mkdtempSync(join(tmpdir(), 'quarry-secret-'));
+		const secretDir = mkdtempSync(join(tmpdir(), 'loopwise-secret-'));
 		const secretFile = join(secretDir, 'secret.md');
 		writeFileSync(secretFile, 'TOP SECRET HOST FILE', 'utf-8');
 		symlinkSync(secretFile, join(projectFolder, 'agent', 'prompts', 'system.md'));
@@ -68,14 +68,14 @@ describe('getSystemPromptOverride (real filesystem)', () => {
 		}
 	});
 
-	it('composes the default prompt into a file that keeps the {{ quarry_prompt }} placeholder', () => {
-		writePrompt('slack.md', '{{ quarry_prompt }}\n\n## House rules\n- Answer in EUR.');
+	it('composes the default prompt into a file that keeps the {{ loopwise_prompt }} placeholder', () => {
+		writePrompt('slack.md', '{{ loopwise_prompt }}\n\n## House rules\n- Answer in EUR.');
 
 		const override = getSystemPromptOverride(projectFolder, 'slack');
 		expect(override).toBeDefined();
-		expect(hasQuarryPromptPlaceholder(override!)).toBe(true);
+		expect(hasLoopwisePromptPlaceholder(override!)).toBe(true);
 
-		const composed = injectQuarryPrompt(override!, 'DEFAULT_SLACK_PROMPT');
+		const composed = injectLoopwisePrompt(override!, 'DEFAULT_SLACK_PROMPT');
 		expect(composed).toBe('DEFAULT_SLACK_PROMPT\n\n## House rules\n- Answer in EUR.');
 	});
 });

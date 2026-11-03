@@ -1,7 +1,7 @@
 import { Outlet, useRouterState } from '@tanstack/react-router';
 import { AgentProvider } from '@/contexts/agent.provider';
 import { useChatId } from '@/hooks/use-chat-id';
-import { useIsCloud } from '@/hooks/use-quarry-mode';
+import { useIsCloud } from '@/hooks/use-loopwise-mode';
 import { useChatQuery } from '@/queries/use-chat-query';
 import { SetChatInputCallbackProvider } from '@/contexts/set-chat-input-callback';
 

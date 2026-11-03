@@ -24,7 +24,7 @@ interface CreateProjectDialogProps {
 	onOpenChange: (open: boolean) => void;
 }
 
-/** quarry: creates a project (its own context folder), selects it and opens its warehouse settings. */
+/** loopwise: creates a project (its own context folder), selects it and opens its warehouse settings. */
 export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogProps) {
 	const [name, setName] = useState('');
 	const [createProject, { loading, error, reset }] = useMutation(CreateProjectDocument);

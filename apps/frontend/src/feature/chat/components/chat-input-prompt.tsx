@@ -1,7 +1,7 @@
 import 'prompt-mentions/style.css';
 
 import { useQuery } from '@tanstack/react-query';
-import { SKILL_MENTION_TRIGGER } from '@quarry/shared';
+import { SKILL_MENTION_TRIGGER } from '@loopwise/shared';
 import { Prompt } from 'prompt-mentions';
 import styles from './chat-input-prompt.module.css';
 import type { PromptHandle, PromptTheme, SelectedMention } from 'prompt-mentions';
@@ -99,7 +99,7 @@ export function ChatPrompt({
 			onChange={onChange}
 			onEnter={onEnter}
 			submitOnEnter={submitOnEnter}
-			className={cn(`${styles.chatPromptPrompt} quarry-input`, resizable && 'quarry-input-resizable')}
+			className={cn(`${styles.chatPromptPrompt} loopwise-input`, resizable && 'loopwise-input-resizable')}
 			style={
 				{
 					'--prompt-min-height': minHeight || '70px',

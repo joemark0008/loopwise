@@ -1,8 +1,11 @@
-import { createCellBackgroundResolver } from '@quarry/shared/conditional-formatting';
-import { TableDisplay as SharedTableDisplay } from '@quarry/shared/table-display';
+import { createCellBackgroundResolver } from '@loopwise/shared/conditional-formatting';
+import { TableDisplay as SharedTableDisplay } from '@loopwise/shared/table-display';
 import { memo, useMemo } from 'react';
-import type { TableDisplayProps as SharedTableDisplayProps, TablePaginationProps } from '@quarry/shared/table-display';
-import type { ColumnConditionalFormats } from '@quarry/shared/conditional-formatting';
+import type {
+	TableDisplayProps as SharedTableDisplayProps,
+	TablePaginationProps,
+} from '@loopwise/shared/table-display';
+import type { ColumnConditionalFormats } from '@loopwise/shared/conditional-formatting';
 
 import { TablePagination } from '@/components/ui/table-pagination';
 import { TablePaginationCompact } from '@/components/ui/table-pagination-compact';

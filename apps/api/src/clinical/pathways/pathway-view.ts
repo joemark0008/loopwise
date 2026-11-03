@@ -1,4 +1,4 @@
-import { describeNumericBand, type PathwayDefinition, stepSlaHours } from '@quarry/shared/pathway-rules';
+import { describeNumericBand, type PathwayDefinition, stepSlaHours } from '@loopwise/shared/pathway-rules';
 
 import type { Pathway } from './models/pathway.model.js';
 

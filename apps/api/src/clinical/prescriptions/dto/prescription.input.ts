@@ -17,7 +17,7 @@ import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
 
 /**
  * A prescription draft. The DTO only checks shapes; `PrescriptionService` parses it with the shared
- * `PrescriptionDraftSchema` (`@quarry/shared/prescription`), the same rules the form and the Wise card use.
+ * `PrescriptionDraftSchema` (`@loopwise/shared/prescription`), the same rules the form and the Wise card use.
  */
 @InputType()
 export class PrescriptionItemInput {

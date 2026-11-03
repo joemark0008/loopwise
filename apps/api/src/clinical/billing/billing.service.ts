@@ -1,8 +1,8 @@
+import { BillDraftSchema, computeBillTotals } from '@loopwise/shared/encounter-bill';
+import { VoidReasonSchema } from '@loopwise/shared/encounter-record';
+import type { WiseActionMutation } from '@loopwise/shared/wise-actions';
+import { staleEditMessage } from '@loopwise/shared/wise-proposal';
 import { Injectable } from '@nestjs/common';
-import { BillDraftSchema, computeBillTotals } from '@quarry/shared/encounter-bill';
-import { VoidReasonSchema } from '@quarry/shared/encounter-record';
-import type { WiseActionMutation } from '@quarry/shared/wise-actions';
-import { staleEditMessage } from '@quarry/shared/wise-proposal';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
 import type { Prisma } from '../../generated/prisma/client.js';

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import styles from './chat-input-context-window-ring.module.css';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useChatId } from '@/hooks/use-chat-id';

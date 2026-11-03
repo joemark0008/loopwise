@@ -4,7 +4,7 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
 
 ## Done
 
-- quarry stripped to what DESIGN.md §13 keeps (API, frontend, migration `0004_strip_quarry`).
+- Base code stripped to what DESIGN.md §13 keeps (API, frontend, migration 0004).
 - Clinical schema (§7): migration `0005_clinical`, append-only `case_event` / `audit_log`,
   `apps/api/test/clinical-schema.e2e-spec.ts`.
 - Own Postgres: `docker compose up -d --wait` → `loopwise_postgres` on :5435, databases `loopwise` / `loopwise_test`.
@@ -82,7 +82,7 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
   `describe_analytics`, `run_analytics_sql`, `get_metric` (read facades); card `tool-calls/analytics-result.tsx`.
   Seed: barangays. Tests: `test/analytics-security.e2e-spec.ts`, `sql-validator.spec.ts`, `e2e/analytics.spec.ts`.
 - Wise charts and summary reports (§9.2, branch `reports-charts`): `apps/api/src/clinical/insights/` (repository,
-  service, `exportReportPdf` resolver, `report-pdf/` with the headless-Chrome printer ported from quarry). Tools
+  service, `exportReportPdf` resolver, `report-pdf/` with the headless-Chrome printer). Tools
   `chart_patient_trend`, `chart_facility_panel`, `create_report` (patient, encounter, facility panel); shared schemas
   in `apps/shared/src/tools/{clinical-chart,chart-patient-trend,chart-facility-panel,create-report}.ts` and
   `apps/shared/src/icd10-chapters.ts`. The chart chat's patient record now lists problems, issued medicines, latest
@@ -100,7 +100,7 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
   linked breadcrumbs, skip link and route focus. Today at `/`, Wise chats at `/chats`, planned pages for results,
   cases, worklist, referrals, orders and dashboard (and the patient's results, cases and messages), all in the page
   registry. `/patients/:id/*` is one layout: sticky patient banner with allergies (`patientAllergies` query), Wise
-  docked (overlay below 80rem, sheet on a phone). quarry settings are admin-only. `e2e/a11y.spec.ts` (axe, WCAG 2.2
+  docked (overlay below 80rem, sheet on a phone). Agent, project and storage settings are admin-only. `e2e/a11y.spec.ts` (axe, WCAG 2.2
   AA) and `e2e/ux-screens.spec.ts` (screenshots, `E2E_UX_DIR`).
 
 - UX redesign phase 2: patients list as a table; registration in fieldsets with required markers, linked errors and
@@ -114,14 +114,14 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
   warnings; a failed tool call reads "Failed"; the model picker is admin-only; find-patient rows show age and birth
   date. `e2e/navigation.spec.ts` › app shell covers the sidebar and the dock.
 
-- Edge connector (§6.2, §11, branch `edge-connector`): new workspace `apps/connector` (`@quarry/connector`), no
+- Edge connector (§6.2, §11, branch `edge-connector`): new workspace `apps/connector` (`@loopwise/connector`), no
   runtime dependencies (Node 22 type stripping, built-in `node:sqlite`). MLLP listener (framing across partial and
   joined reads), commit ACK **after the message is in the local SQLite queue** (AR for non-HL7, AE if the write fails),
   forwarder to `POST /api/hl7/messages` (in order per sender; AA delivered, AE/AR or other 4xx failed and kept, 5xx /
   network retried with capped backoff, 401/403 halts with an alert), outbox poller (`GET /api/hl7/outbox` → LIS over
   MLLP → `POST /api/hl7/outbox/:id/ack`; off without `LIS_HOST`), `/health`, status log line, graceful shutdown, logs
   without bodies. `apps/connector/Dockerfile`, `docker-compose.example.yml`, `scripts/send-mllp.ts` (synthetic ORU),
-  README. Tests against a fake hub and a fake LIS, plus end to end over TCP and HTTP (`npm test -w @quarry/connector`).
+  README. Tests against a fake hub and a fake LIS, plus end to end over TCP and HTTP (`npm test -w @loopwise/connector`).
 - HL7 result ingest and the results inbox (§4.1 steps 5–6, §6.3, §11, branch `hl7-results`). Facility keys
   (`apps/api/src/facility-keys/`): `api_key` rows (sha256 + `lw_` prefix), `createFacilityKey` (key shown once),
   `revokeFacilityKey`, `facilityKeys` for org admins, and `@FacilityKey()` (= `@Public()` + guard, sets
@@ -185,8 +185,8 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
   `pathways.service.spec.ts`, `test/rules-pathways.e2e-spec.ts` (HL7 → stored evaluation, RLS, append-only),
   `test/explain-result.e2e-spec.ts`, `result-evaluation-badge.test.tsx`.
 - Wise actions and tool settings (§9.4, branch `wise-actions`): migration `0020_wise_tool_settings` (additive: the
-  `wise_tool_setting` table). `@quarry/shared/wise-tools` (catalogue, defaults per facility type) and
-  `@quarry/shared/wise-actions` (action definitions); `apps/api/src/wise-tools/` (`wiseToolSettings`,
+  `wise_tool_setting` table). `@loopwise/shared/wise-tools` (catalogue, defaults per facility type) and
+  `@loopwise/shared/wise-actions` (action definitions); `apps/api/src/wise-tools/` (`wiseToolSettings`,
   `setWiseToolEnabled` for facility admins, `setMyWiseToolEnabled`); the agent drops turned-off tools each run and the
   prompt lists them; `WiseProposalService.verify` refuses a turned-off tool at Confirm. Tools `propose_vitals`,
   `propose_allergy`, `propose_remove_allergy`, `list_results_to_review`, `propose_result_review`, `propose_order`
@@ -211,19 +211,19 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
   capture barangay yet.
 - Reports in a side panel (branch `reports-charts`): the `report` tool, `clinical/reports/` (versions from the chat,
   `exportWiseReportPdf`), `feature/reports/report-panel.tsx` (side panel / overlay, version menu, Print, PDF),
-  `tool-calls/report-chip.tsx`, `@quarry/shared/report-blocks`. Tests: `tools/report.spec.ts`,
+  `tool-calls/report-chip.tsx`, `@loopwise/shared/report-blocks`. Tests: `tools/report.spec.ts`,
   `report-blocks.test.ts`, the report case of `test/analytics-security.e2e-spec.ts`, `e2e/analytics.spec.ts`.
   Save to chart: migration `0016_clinical_document` (new append-only table), `saveReportToChart` /
   `patientDocuments` / `clinicalDocument`, `feature/reports/saved-documents.tsx` (Documents on the chart overview).
   Not yet: a PDF of a saved document, and saving panel-level reports (they have no patient). Playwright
   `e2e/reports.spec.ts` now covers the patient-chart report, PDF and save.
-- All Recharts types for analytics (branch `reports-charts`): `@quarry/shared/analytics-chart` (`chartProblem`,
+- All Recharts types for analytics (branch `reports-charts`): `@loopwise/shared/analytics-chart` (`chartProblem`,
   `compatibleChartTypes`, `buildAnalyticsChart`), pathway thresholds (`thresholdReferences`), the `screening_funnel`
   metric, the card's chart-type menu, seed BMI vitals for the panel (`seedPanelVitals`). Tests:
   `analytics-chart.test.tsx` (shared, per type), `analytics-result.test.tsx` (frontend, per type),
   `analytics-chart.spec.ts`, `e2e/analytics.spec.ts` (scatter and funnel, real LLM).
 
-Flaky tests: `test/usage.e2e-spec.ts` › "rejects a range above the chart bucket limit" (inherited from quarry, now passes
+Flaky tests: `test/usage.e2e-spec.ts` › "rejects a range above the chart bucket limit" (inherited, now passes
 most runs); `project-identifier.test.tsx` and the connector's "reports halted (503) on /health" failed once each under
 full-suite load and passed on rerun; real-LLM Playwright specs (`navigation`, `patient-chart` encounter wording) can
 flake on model wording.
@@ -284,7 +284,7 @@ Everything above is on `main`. Nothing below is started. Ordered by what the dem
 - The registration form doesn't capture barangay; one hand-registered dev patient has none.
 - Break-glass access (§10.5): reason, expiry, flag; not built.
 - A read-attachment agent tool (attached PDFs are only referenced by path).
-- Cleanup: `e2e/flows.spec.ts` still tests removed quarry features (four failures); dormant quarry code (chat query
+- Cleanup: `e2e/flows.spec.ts` still tests removed base features (four failures); dormant base code (chat query
   rows, citations, query grouping in `lib/ai.ts`, MCP stand-ins, story and subagent flags, Borna fonts, sidebar
   chat-list components, community and version notices).
 - Demo data: Maria's seed visit has piled-up e2e and test data (e.g. extra HbA1c results from connector tests);

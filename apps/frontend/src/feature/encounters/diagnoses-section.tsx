@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { DIAGNOSIS_CERTAINTIES } from '@quarry/shared/encounter-record';
-import { ICD10_CODE_PATTERN, normalizeIcd10Code } from '@quarry/shared/icd10';
+import { DIAGNOSIS_CERTAINTIES } from '@loopwise/shared/encounter-record';
+import { ICD10_CODE_PATTERN, normalizeIcd10Code } from '@loopwise/shared/icd10';
 import { useState } from 'react';
 import styles from './encounter.module.css';
 import { FormField } from './form-field';

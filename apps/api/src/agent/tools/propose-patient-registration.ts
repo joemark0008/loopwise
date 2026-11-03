@@ -1,5 +1,5 @@
-import { PatientDraftSchema } from '@quarry/shared/patient-registration';
-import { proposePatientRegistration } from '@quarry/shared/tools';
+import { PatientDraftSchema } from '@loopwise/shared/patient-registration';
+import { proposePatientRegistration } from '@loopwise/shared/tools';
 
 import { createTool } from '../utils/tools.js';
 

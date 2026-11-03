@@ -1,5 +1,5 @@
+import type { ChatFilterType, ChatGroupBy } from '@loopwise/shared/types';
 import { Args, ID, Int, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import type { ChatFilterType, ChatGroupBy } from '@quarry/shared/types';
 import { GraphQLJSON } from 'graphql-type-json';
 
 import type { UIMessage } from '../agent/types/chat.js';

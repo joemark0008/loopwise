@@ -1,4 +1,4 @@
-import type { createReport } from '@quarry/shared/tools';
+import type { createReport } from '@loopwise/shared/tools';
 
 import { getBrowser } from './headless-browser.js';
 import { renderReportHtml, reportFooterTemplate } from './report-html.js';

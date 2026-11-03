@@ -1,12 +1,12 @@
-import { resolveDataKey } from '@quarry/shared';
+import { resolveDataKey } from '@loopwise/shared';
 import { ChartNoAxesColumn, Rows2, TableIcon, TriangleAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ChartDisplay } from './display-chart';
 import { TableDisplay } from './display-table';
 import styles from './chart-editor-preview.module.css';
 import type { ReactNode } from 'react';
-import type { ChartType } from '@quarry/shared/chart-types';
-import type { displayChart } from '@quarry/shared/tools';
+import type { ChartType } from '@loopwise/shared/chart-types';
+import type { displayChart } from '@loopwise/shared/tools';
 import type { IconSegmentedToggleOption } from '@/components/ui/icon-segmented-toggle';
 import type { ChartSelectionSummary } from '@/lib/chart-selection-summary';
 

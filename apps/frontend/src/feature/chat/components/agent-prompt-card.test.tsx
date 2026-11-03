@@ -20,10 +20,10 @@ afterEach(cleanup);
 
 describe('AgentPromptCard', () => {
 	it('formats the prompt and copies its complete source', () => {
-		const prompt = 'ABOUT QUARRY\n\nFirst paragraph.\n\n1. Install the skill.\n\nnpx skills add acme/skills';
+		const prompt = 'ABOUT LOOPWISE\n\nFirst paragraph.\n\n1. Install the skill.\n\nnpx skills add acme/skills';
 		render(<AgentPromptCard prompt={prompt} />);
 
-		expect(screen.getByText('ABOUT QUARRY').tagName).toBe('P');
+		expect(screen.getByText('ABOUT LOOPWISE').tagName).toBe('P');
 		expect(screen.getByText('npx skills add acme/skills').tagName).toBe('CODE');
 
 		fireEvent.click(screen.getByRole('button', { name: 'Copy prompt' }));

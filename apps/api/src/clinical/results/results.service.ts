@@ -1,6 +1,6 @@
+import type { listResultsToReview } from '@loopwise/shared/tools';
+import { wiseActionToolsFor } from '@loopwise/shared/wise-actions';
 import { Injectable } from '@nestjs/common';
-import type { listResultsToReview } from '@quarry/shared/tools';
-import { wiseActionToolsFor } from '@quarry/shared/wise-actions';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
 import type { Prisma } from '../../generated/prisma/client.js';

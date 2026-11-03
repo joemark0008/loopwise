@@ -1,25 +1,25 @@
 import { ExternalLink } from 'lucide-react';
-import styles from './open-in-quarry-button.module.css';
+import styles from './open-in-loopwise-button.module.css';
 import type { MouseEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 
-interface OpenInQuarryButtonProps {
+interface OpenInLoopwiseButtonProps {
 	url: string;
 }
 
-export function OpenInQuarryButton({ url }: OpenInQuarryButtonProps) {
+export function OpenInLoopwiseButton({ url }: OpenInLoopwiseButtonProps) {
 	return (
 		<Button
 			variant='outline'
 			size='sm'
-			className={styles.openInQuarryButtonButton}
+			className={styles.openInLoopwiseButtonButton}
 			asChild
 			title='Open in Loopwise'
 		>
 			<a href={url} target='_blank' rel='noopener noreferrer' onClick={(e) => openLinkViaHost(e, url)}>
-				<ExternalLink className={styles.openInQuarryButtonExternalLink} />
-				<span className={styles.openInQuarryButtonSpan}>Open in Loopwise</span>
+				<ExternalLink className={styles.openInLoopwiseButtonExternalLink} />
+				<span className={styles.openInLoopwiseButtonSpan}>Open in Loopwise</span>
 			</a>
 		</Button>
 	);
@@ -30,5 +30,5 @@ function openLinkViaHost(event: MouseEvent<HTMLAnchorElement>, url: string) {
 		return;
 	}
 	event.preventDefault();
-	window.parent.postMessage({ type: 'quarry-open-link', url }, '*');
+	window.parent.postMessage({ type: 'loopwise-open-link', url }, '*');
 }

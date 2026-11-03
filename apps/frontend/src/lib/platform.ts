@@ -1,8 +1,8 @@
-import { isMac } from '@quarry/shared/keyboard-shortcut';
-import type { Shortcut } from '@quarry/shared/keyboard-shortcut';
+import { isMac } from '@loopwise/shared/keyboard-shortcut';
+import type { Shortcut } from '@loopwise/shared/keyboard-shortcut';
 
-export { isMac, matchesShortcut } from '@quarry/shared/keyboard-shortcut';
-export type { Shortcut } from '@quarry/shared/keyboard-shortcut';
+export { isMac, matchesShortcut } from '@loopwise/shared/keyboard-shortcut';
+export type { Shortcut } from '@loopwise/shared/keyboard-shortcut';
 
 export function formatShortcut(shortcut: Shortcut): string[] {
 	const tokens: string[] = [];

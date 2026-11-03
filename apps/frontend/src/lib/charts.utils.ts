@@ -1,8 +1,8 @@
 import { getToolName, isToolUIPart } from './ai';
 import { hashValue } from './hash';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 
-export { labelize, sortByDateKey } from '@quarry/shared';
+export { labelize, sortByDateKey } from '@loopwise/shared';
 
 export type RangeOptions = Record<string, { label: string }>;
 

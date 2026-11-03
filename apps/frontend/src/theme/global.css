@@ -69,21 +69,21 @@ body {
 	height: 100%;
 	overflow: hidden;
 }
-html.quarry-embed {
+html.loopwise-embed {
 	color-scheme: light;
 	background-color: var(--app-bg);
 }
-html.quarry-embed:root[data-mantine-color-scheme='dark'] {
+html.loopwise-embed:root[data-mantine-color-scheme='dark'] {
 	color-scheme: dark;
 }
-html.quarry-embed,
-html.quarry-embed body {
+html.loopwise-embed,
+html.loopwise-embed body {
 	overflow: hidden;
 }
-html.quarry-embed body {
+html.loopwise-embed body {
 	background-color: var(--app-bg);
 }
-html.quarry-embed #app {
+html.loopwise-embed #app {
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
@@ -93,9 +93,9 @@ html.quarry-embed #app {
 	overflow-y: hidden;
 	background-color: var(--app-bg);
 }
-html.quarry-embed-app,
-html.quarry-embed-app body,
-html.quarry-embed-app #app {
+html.loopwise-embed-app,
+html.loopwise-embed-app body,
+html.loopwise-embed-app #app {
 	background-color: var(--app-surface);
 }
 * {
@@ -315,10 +315,10 @@ code.dollar:before {
 :root[data-mantine-color-scheme='dark'] .file-viewer-search-match {
 	background-color: rgb(250 204 21 / 20%);
 }
-::highlight(quarry-file-preview-search-match) {
+::highlight(loopwise-file-preview-search-match) {
 	background-color: rgb(245 158 11 / 18%);
 }
-:root[data-mantine-color-scheme='dark'] ::highlight(quarry-file-preview-search-match) {
+:root[data-mantine-color-scheme='dark'] ::highlight(loopwise-file-preview-search-match) {
 	background-color: rgb(250 204 21 / 20%);
 }
 .story-editor .tiptap {
@@ -413,11 +413,11 @@ code.dollar:before {
 .story-editor .tiptap [data-type='grid-block'] {
 	margin-block: 0.75rem;
 }
-.story-editor .tiptap .quarry-block-selected {
+.story-editor .tiptap .loopwise-block-selected {
 	border-radius: calc(var(--app-radius) - 2px);
 	background-color: color-mix(in oklab, var(--app-primary-bg) 10%, transparent);
 }
-:root[data-mantine-color-scheme='dark'] .story-editor .tiptap .quarry-block-selected {
+:root[data-mantine-color-scheme='dark'] .story-editor .tiptap .loopwise-block-selected {
 	background-color: color-mix(in oklab, var(--app-blue-500) 25%, transparent);
 }
 .story-editor .drag-handle {
@@ -456,12 +456,12 @@ code.dollar:before {
 .story-editor.drop-indicator-active .drop-cursor {
 	display: none;
 }
-.quarry-input .prompt-input {
+.loopwise-input .prompt-input {
 	max-height: 12.5rem;
 	overflow-y: auto;
 	overscroll-behavior: contain;
 }
-.quarry-input-resizable .prompt-input {
+.loopwise-input-resizable .prompt-input {
 	min-height: var(--prompt-min-height);
 	max-height: none;
 	resize: vertical;
@@ -673,7 +673,7 @@ code.dollar:before {
 [data-story-table-striped='true'] .story-table tbody tr:nth-child(even) {
 	background: color-mix(in srgb, var(--story-table-header-bg) 50%, var(--story-table-bg));
 }
-.chart-editor-table .quarry-table-display__scroll {
+.chart-editor-table .loopwise-table-display__scroll {
 	border-top: 0;
 }
 .chart-editor-table thead {
@@ -691,20 +691,20 @@ code.dollar:before {
 .chart-editor-table th[aria-sort='descending'] {
 	color: var(--app-text);
 }
-.chart-editor-table .quarry-table-display__index {
+.chart-editor-table .loopwise-table-display__index {
 	background: var(--app-surface);
 }
-.chart-editor-table td.quarry-table-display__index span {
+.chart-editor-table td.loopwise-table-display__index span {
 	color: var(--app-muted);
 	font-weight: 400;
 }
-.chart-editor-table .quarry-table-display__sort {
+.chart-editor-table .loopwise-table-display__sort {
 	opacity: 0;
 	transition: opacity 150ms;
 }
-.chart-editor-table th:hover .quarry-table-display__sort,
-.chart-editor-table th:focus-within .quarry-table-display__sort,
-.chart-editor-table th[aria-sort='ascending'] .quarry-table-display__sort,
-.chart-editor-table th[aria-sort='descending'] .quarry-table-display__sort {
+.chart-editor-table th:hover .loopwise-table-display__sort,
+.chart-editor-table th:focus-within .loopwise-table-display__sort,
+.chart-editor-table th[aria-sort='ascending'] .loopwise-table-display__sort,
+.chart-editor-table th[aria-sort='descending'] .loopwise-table-display__sort {
 	opacity: 1;
 }

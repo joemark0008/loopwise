@@ -1,4 +1,4 @@
-import { explainResult } from '@quarry/shared/tools';
+import { explainResult } from '@loopwise/shared/tools';
 
 import { createTool } from '../utils/tools.js';
 

@@ -21,7 +21,7 @@ import { mutation, query, runMutation, runQuery } from '@/lib/apollo-procedures'
 type WithOrigin<T> = T & { wiseOrigin: WiseOriginInput };
 
 /**
- * What the Wise action cards need beyond the record modules (`@quarry/shared/wise-actions`): a few reads, and the
+ * What the Wise action cards need beyond the record modules (`@loopwise/shared/wise-actions`): a few reads, and the
  * mutations whose arguments are positional, called with the card's `wiseOrigin`. Mutations with an input type use the
  * record module's own call (`encounterRecordApi`, `resultApi`, `orderApi`) with `wiseOrigin` in the input.
  */

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useMutation } from '@tanstack/react-query';
 import { MessageSquare, X, ThumbsDown, ThumbsUp, Check, Plug } from 'lucide-react';
 import styles from './chat-input-suggestions.module.css';
-import type { UIMessage, UIToolPart } from '@quarry/api/agent/types/chat';
+import type { UIMessage, UIToolPart } from '@loopwise/api/agent/types/chat';
 import type { FeedbackVote } from '@/feature/chat/components/chat-messages/assistant-message-actions';
 import { FeedbackDialog } from '@/feature/chat/components/chat-messages/assistant-message-actions';
 import { Button } from '@/components/ui/button';
@@ -22,8 +22,8 @@ import { chatApi } from '@/lib/chat-api';
  */
 const FEEDBACK_INACTIVITY_LADDER_MS = [10_000, 15_000, 25_000, 30_000, 45_000, 60_000];
 
-const feedbackDismissCountStorage = createLocalStorage<number>('quarry-feedback-prompt-dismiss-count', 0);
-const feedbackDismissedChatsStorage = createLocalStorage<string[]>('quarry-feedback-prompt-dismissed-chats', []);
+const feedbackDismissCountStorage = createLocalStorage<number>('loopwise-feedback-prompt-dismiss-count', 0);
+const feedbackDismissedChatsStorage = createLocalStorage<string[]>('loopwise-feedback-prompt-dismissed-chats', []);
 
 /**
  * A floating panel that sits above the chat input and surfaces a single

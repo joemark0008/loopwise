@@ -1,11 +1,11 @@
-.openInQuarryButtonButton {
+.openInLoopwiseButtonButton {
 	gap: 0.375rem;
 }
-.openInQuarryButtonExternalLink {
+.openInLoopwiseButtonExternalLink {
 	width: 0.875rem;
 	height: 0.875rem;
 }
-.openInQuarryButtonSpan {
+.openInLoopwiseButtonSpan {
 	display: none;
 	@media (width >= 40rem) {
 		display: inline;

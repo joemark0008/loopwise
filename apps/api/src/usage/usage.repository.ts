@@ -1,5 +1,5 @@
+import type { LlmProvider } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import type { LlmProvider } from '@quarry/shared/types';
 
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';

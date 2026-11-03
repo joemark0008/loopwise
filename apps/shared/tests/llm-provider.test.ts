@@ -29,7 +29,7 @@ describe('provider ids', () => {
 	});
 
 	it('accepts only kinds and named instances of the kind that allows them', () => {
-		expect(isLlmProvider('quarry')).toBe(false);
+		expect(isLlmProvider('loopwise')).toBe(false);
 		expect(isLlmProvider('openai')).toBe(true);
 		expect(isLlmProvider('openaiCompatible/my-vllm')).toBe(true);
 		expect(isLlmProvider('openaiCompatible/My vLLM')).toBe(false);

@@ -1,5 +1,5 @@
-import { parsePathwayDefinition, type PathwayDefinition } from '@quarry/shared/pathway-rules';
-import { extractCode, parseNumericValue, type RuleInput, RulesEngine } from '@quarry/shared/rules-engine';
+import { parsePathwayDefinition, type PathwayDefinition } from '@loopwise/shared/pathway-rules';
+import { extractCode, parseNumericValue, type RuleInput, RulesEngine } from '@loopwise/shared/rules-engine';
 import { describe, expect, it } from 'vitest';
 
 import { PATHWAY_DEFINITIONS } from './pathway-definitions.js';

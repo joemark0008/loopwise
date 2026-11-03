@@ -1,5 +1,5 @@
+import { type SortDirection, sortTableRows } from '@loopwise/shared/story-table-utils';
 import { Injectable } from '@nestjs/common';
-import { type SortDirection, sortTableRows } from '@quarry/shared/story-table-utils';
 
 import { AgentService } from '../agent/agent.service.js';
 import type { QueryResult } from '../agent/types/tools.js';

@@ -15,7 +15,7 @@ interface PreviewHighlightOptions {
 
 declare const Highlight: new (...ranges: Range[]) => unknown;
 
-const HIGHLIGHT_NAME = 'quarry-file-preview-search-match';
+const HIGHLIGHT_NAME = 'loopwise-file-preview-search-match';
 const MAX_HIGHLIGHT_RANGES = 2_000;
 
 export function usePreviewHighlights({ containerRef, content, filePath, searchQuery }: PreviewHighlightOptions): void {

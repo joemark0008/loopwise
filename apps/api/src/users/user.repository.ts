@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
+import type { UserPreferences } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import type { UserPreferences } from '@quarry/shared/types';
 
 import type { Prisma, User } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';

@@ -1,5 +1,5 @@
+import { EncounterDraftSchema } from '@loopwise/shared/encounter';
 import { Injectable } from '@nestjs/common';
-import { EncounterDraftSchema } from '@quarry/shared/encounter';
 
 import { ChatRepository } from '../../chats/chat.repository.js';
 import { HandlerError } from '../../common/errors/handler-error.js';

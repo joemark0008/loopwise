@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ThumbsUp, ThumbsDown, Copy, Check, Ellipsis, ClipboardCopy, FileText } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import styles from './assistant-message-actions.module.css';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import type { FormEvent, KeyboardEvent } from 'react';
 import type { Chat } from '@/queries/use-chat-query';
 import { useChatQuery } from '@/queries/use-chat-query';

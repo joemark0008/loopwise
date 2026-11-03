@@ -31,7 +31,7 @@ export const InputSchema = z.object({
 		.array(FileSchema)
 		.optional()
 		.describe(
-			'Only for "create" with format "custom": the initial draft files. Omit to start from the story-kit starter app (quarry.json, app.jsx, app.css).',
+			'Only for "create" with format "custom": the initial draft files. Omit to start from the story-kit starter app (loopwise.json, app.jsx, app.css).',
 		),
 	code: z
 		.string()

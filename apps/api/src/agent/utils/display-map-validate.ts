@@ -5,8 +5,8 @@ import {
 	MAX_MAP_POINTS,
 	normalizeRegionId,
 	resolveColumnName,
-} from '@quarry/shared';
-import { displayMap } from '@quarry/shared/tools';
+} from '@loopwise/shared';
+import { displayMap } from '@loopwise/shared/tools';
 
 import { getCachedBoundary, setCachedBoundary } from './map-boundary-cache.js';
 import { parseAndValidateGeoJson, safeFetch } from './safe-fetch.js';

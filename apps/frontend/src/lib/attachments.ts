@@ -24,7 +24,7 @@ export async function uploadAttachment(file: File): Promise<UploadedAttachmentIn
 	const response = await fetch('/api/attachments', {
 		method: 'POST',
 		body,
-		headers: projectId ? { 'x-quarry-project-id': projectId } : undefined,
+		headers: projectId ? { 'x-loopwise-project-id': projectId } : undefined,
 	});
 
 	if (!response.ok) {
@@ -38,7 +38,7 @@ export async function uploadAttachment(file: File): Promise<UploadedAttachmentIn
 export async function fetchAttachment(path: string): Promise<Blob> {
 	const projectId = getActiveProjectId();
 	const response = await fetch(`/api/attachments/file?path=${encodeURIComponent(path)}`, {
-		headers: projectId ? { 'x-quarry-project-id': projectId } : undefined,
+		headers: projectId ? { 'x-loopwise-project-id': projectId } : undefined,
 	});
 
 	if (!response.ok) {
@@ -53,7 +53,7 @@ export async function fetchAttachmentSize(path: string): Promise<number> {
 	const projectId = getActiveProjectId();
 	const response = await fetch(`/api/attachments/file?path=${encodeURIComponent(path)}`, {
 		method: 'HEAD',
-		headers: projectId ? { 'x-quarry-project-id': projectId } : undefined,
+		headers: projectId ? { 'x-loopwise-project-id': projectId } : undefined,
 	});
 
 	if (!response.ok) {
@@ -74,7 +74,7 @@ export async function downloadAttachment(path: string): Promise<void> {
 
 export const fileNameOf = (path: string): string => path.split('/').pop() ?? path;
 
-/** Permanent storage is mounted at `/home`; quarry can open nothing outside it. */
+/** Permanent storage is mounted at `/home`; loopwise can open nothing outside it. */
 export const isStoredFilePath = (path: string): boolean => /^\/home\/[^/].*$/.test(path);
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {

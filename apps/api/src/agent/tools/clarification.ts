@@ -1,4 +1,4 @@
-import { clarification } from '@quarry/shared/tools';
+import { clarification } from '@loopwise/shared/tools';
 import { tool } from 'ai';
 
 import { withToolKind } from '../utils/tools.js';

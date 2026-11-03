@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 import { createLocalStorage } from './local-storage';
 
-const ACTIVE_PROJECT_STORAGE_KEY = 'quarry.active-project-id';
+const ACTIVE_PROJECT_STORAGE_KEY = 'loopwise.active-project-id';
 const activeProjectStorage = createLocalStorage<string>(ACTIVE_PROJECT_STORAGE_KEY);
 const listeners = new Set<() => void>();
 const externalChangeListeners = new Set<() => void>();
@@ -64,5 +64,5 @@ export function useActiveProjectId(): string | null {
 export function getProjectRequestHeaders(): Record<string, string> {
 	const activeProjectId = getActiveProjectId();
 
-	return activeProjectId ? { 'x-quarry-project-id': activeProjectId } : {};
+	return activeProjectId ? { 'x-loopwise-project-id': activeProjectId } : {};
 }

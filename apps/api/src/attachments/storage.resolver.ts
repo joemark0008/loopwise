@@ -1,5 +1,5 @@
+import type { UserRole } from '@loopwise/shared/types';
 import { Query, Resolver } from '@nestjs/graphql';
-import type { UserRole } from '@quarry/shared/types';
 import { GraphQLJSON } from 'graphql-type-json';
 
 import type { AuthUser } from '../auth/auth.service.js';
@@ -32,7 +32,7 @@ export class StorageResolver {
 	}
 
 	/**
-	 * Upstream `storage.getUsage` (`advancedSettingsProtectedProcedure`). quarry has no user groups, so every User
+	 * Upstream `storage.getUsage` (`advancedSettingsProtectedProcedure`). loopwise has no user groups, so every User
 	 * sees the advanced settings, as upstream's default group does: viewers are the ones left out.
 	 */
 	@ProjectNonViewer()

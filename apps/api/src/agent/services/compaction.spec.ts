@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 	scheduleSaveMock: vi.fn(),
 }));
 
-// Upstream mocks `utils/llm`; quarry resolves models through the injected `LlmService`.
+// Upstream mocks `utils/llm`; loopwise resolves models through the injected `LlmService`.
 const llmService = {
 	resolveProviderModel: mocks.resolveProviderModelMock,
 	resolveAnnotationModelId: mocks.resolveAnnotationModelIdMock,

@@ -1,10 +1,10 @@
 import type { Response } from 'express';
 
 import type { RequestLoaders } from './dataloader/request-loaders.js';
-import type { QuarryRequest } from './request.js';
+import type { LoopwiseRequest } from './request.js';
 
 export interface GraphQLContext {
-	req: QuarryRequest;
+	req: LoopwiseRequest;
 	res: Response;
 	loaders: RequestLoaders;
 }

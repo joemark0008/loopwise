@@ -1,7 +1,7 @@
 import { memo, useState } from 'react';
 import { Streamdown } from 'streamdown';
 import styles from './assistant-compaction.module.css';
-import type { CompactionPart } from '@quarry/api/agent/types/chat';
+import type { CompactionPart } from '@loopwise/api/agent/types/chat';
 import { Conversation, ConversationContent } from '@/components/ui/conversation';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { TextShimmer } from '@/components/ui/text-shimmer';

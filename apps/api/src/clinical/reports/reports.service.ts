@@ -1,6 +1,6 @@
+import { REPORT_BLOCK_TOOLS, splitReport } from '@loopwise/shared/report-blocks';
+import { report } from '@loopwise/shared/tools';
 import { Injectable } from '@nestjs/common';
-import { REPORT_BLOCK_TOOLS, splitReport } from '@quarry/shared/report-blocks';
-import { report } from '@quarry/shared/tools';
 
 import { ChatRepository } from '../../chats/chat.repository.js';
 import { HandlerError } from '../../common/errors/handler-error.js';
@@ -15,7 +15,7 @@ import { type EmbeddedResult, renderReportDocumentHtml } from './report-document
 import { type DocumentRow, ReportsRepository } from './reports.repository.js';
 
 /**
- * Wise reports (DESIGN.md §9.2), quarry's stories for Loopwise: a report's versions are the `report` tool outputs in
+ * Wise reports (DESIGN.md §9.2), loopwise's stories for Loopwise: a report's versions are the `report` tool outputs in
  * the chat, its numbers the tool results its blocks embed. Reads are owner-only; the PDF is audited as PHI leaving.
  */
 @Injectable()

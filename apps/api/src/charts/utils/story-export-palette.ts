@@ -1,5 +1,5 @@
-import { DEFAULT_COLORS } from '@quarry/shared';
-import { type StoryTheme, type StoryThemePair, storyThemeToCssVars } from '@quarry/shared/story-theme';
+import { DEFAULT_COLORS } from '@loopwise/shared';
+import { type StoryTheme, type StoryThemePair, storyThemeToCssVars } from '@loopwise/shared/story-theme';
 
 export interface StoryExportPalette {
 	page: string;

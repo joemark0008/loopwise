@@ -1,13 +1,13 @@
-import { sanitizeConditionalFormats } from '@quarry/shared/conditional-formatting';
+import { sanitizeConditionalFormats } from '@loopwise/shared/conditional-formatting';
 import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Pencil } from 'lucide-react';
 import { ToolCallWrapper } from './tool-call-wrapper';
 import { TableFormatEditDialog } from './display-table-edit-dialog';
 import styles from './display-chart-table.module.css';
-import type { ColumnConditionalFormats } from '@quarry/shared/conditional-formatting';
-import type { displayChart } from '@quarry/shared/tools';
-import type { UIMessage, UIToolPart } from '@quarry/api/agent/types/chat';
+import type { ColumnConditionalFormats } from '@loopwise/shared/conditional-formatting';
+import type { displayChart } from '@loopwise/shared/tools';
+import type { UIMessage, UIToolPart } from '@loopwise/api/agent/types/chat';
 import { DataTableCard } from '@/components/data-table-card';
 import { Button } from '@/components/ui/button';
 import { useAgentMessagesGetter, useOptionalAgentContext } from '@/contexts/agent.provider';

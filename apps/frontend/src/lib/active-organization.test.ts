@@ -20,7 +20,7 @@ describe('active organization storage', () => {
 		setActiveOrganizationId('organization-id');
 
 		expect(getActiveOrganizationId()).toBe('organization-id');
-		expect(localStorage.getItem('quarry.active-organization-id')).toBe('"organization-id"');
+		expect(localStorage.getItem('loopwise.active-organization-id')).toBe('"organization-id"');
 	});
 
 	it('returns null when no organization is selected', () => {
@@ -28,7 +28,7 @@ describe('active organization storage', () => {
 	});
 
 	it('ignores invalid saved values', () => {
-		localStorage.setItem('quarry.active-organization-id', 'not-json');
+		localStorage.setItem('loopwise.active-organization-id', 'not-json');
 
 		expect(getActiveOrganizationId()).toBeNull();
 	});

@@ -1,15 +1,15 @@
-import { Injectable } from '@nestjs/common';
 import {
 	AllergyDraftSchema,
 	DiagnosisDraftSchema,
 	EncounterNoteSchema,
 	VoidReasonSchema,
-} from '@quarry/shared/encounter-record';
-import { searchIcd10 } from '@quarry/shared/icd10';
-import type { proposeEncounterNote } from '@quarry/shared/tools';
-import { computeBmi, VitalsDraftSchema } from '@quarry/shared/vitals';
-import { type WiseActionMutation, wiseActionToolsFor } from '@quarry/shared/wise-actions';
-import { staleEditMessage } from '@quarry/shared/wise-proposal';
+} from '@loopwise/shared/encounter-record';
+import { searchIcd10 } from '@loopwise/shared/icd10';
+import type { proposeEncounterNote } from '@loopwise/shared/tools';
+import { computeBmi, VitalsDraftSchema } from '@loopwise/shared/vitals';
+import { type WiseActionMutation, wiseActionToolsFor } from '@loopwise/shared/wise-actions';
+import { staleEditMessage } from '@loopwise/shared/wise-proposal';
+import { Injectable } from '@nestjs/common';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
 import type { Prisma } from '../../generated/prisma/client.js';

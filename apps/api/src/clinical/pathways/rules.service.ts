@@ -1,6 +1,6 @@
+import { type RuleEvaluation, RulesEngine } from '@loopwise/shared/rules-engine';
+import type { explainResult } from '@loopwise/shared/tools';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { type RuleEvaluation, RulesEngine } from '@quarry/shared/rules-engine';
-import type { explainResult } from '@quarry/shared/tools';
 
 import type { Prisma, Result } from '../../generated/prisma/client.js';
 import { ClinicalAuditRepository } from '../audit/clinical-audit.repository.js';

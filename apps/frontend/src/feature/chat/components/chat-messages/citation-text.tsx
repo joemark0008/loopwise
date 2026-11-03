@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Streamdown } from 'streamdown';
-import { normalizeCitationMarkers, stripAssistantTags } from '@quarry/shared';
+import { normalizeCitationMarkers, stripAssistantTags } from '@loopwise/shared';
 
 import { MarkdownTable } from './markdown-table';
 import { StreamingMarkdown } from './streaming-markdown';
@@ -180,7 +180,7 @@ function getFenceMarker(line: string): { marker: string; length: number; isClosi
 	};
 }
 
-/** A file the answer hands over. One quarry cannot reach stays as the text the model wrote. */
+/** A file the answer hands over. One loopwise cannot reach stays as the text the model wrote. */
 function SavedFileRenderer({ path, children }: any) {
 	const label = asText(children);
 	const filePath = asText(path);

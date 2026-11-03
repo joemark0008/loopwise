@@ -1,4 +1,4 @@
-import { WORK_FITNESS_LABELS } from '@quarry/shared/medical-certificate';
+import { WORK_FITNESS_LABELS } from '@loopwise/shared/medical-certificate';
 import type {
 	PrescriptionItemFieldsFragment,
 	VitalSignsFieldsFragment,

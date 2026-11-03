@@ -1,4 +1,4 @@
-import { chartPatientTrend, clinicalChart } from '@quarry/shared/tools';
+import { chartPatientTrend, clinicalChart } from '@loopwise/shared/tools';
 
 import { createTool, rememberToolOutput, withResultId } from '../utils/tools.js';
 

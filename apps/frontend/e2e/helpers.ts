@@ -71,7 +71,7 @@ export async function selectProjectWithWarehouse(page: Page): Promise<boolean> {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
-					...(scope && { 'x-quarry-project-id': scope }),
+					...(scope && { 'x-loopwise-project-id': scope }),
 				},
 				body: JSON.stringify({ query }),
 			});
@@ -91,7 +91,7 @@ export async function selectProjectWithWarehouse(page: Page): Promise<boolean> {
 	}
 	// Before each page load: the app could otherwise pick its own project first.
 	await page.addInitScript(
-		(activeId) => localStorage.setItem('quarry.active-project-id', JSON.stringify(activeId)),
+		(activeId) => localStorage.setItem('loopwise.active-project-id', JSON.stringify(activeId)),
 		projectId,
 	);
 	return true;

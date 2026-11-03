@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 
-import { CHART_EMBEDDED_FONT_FAMILY } from '@quarry/shared';
+import { CHART_EMBEDDED_FONT_FAMILY } from '@loopwise/shared';
 import { Resvg } from '@resvg/resvg-js';
 import { describe, expect, it } from 'vitest';
 
@@ -27,7 +27,7 @@ const CHART_INPUT = {
 	],
 };
 
-/** quarry: upstream reads `<text>` nodes with cheerio, which isn't a dependency here; a tag scan does the same. */
+/** loopwise: upstream reads `<text>` nodes with cheerio, which isn't a dependency here; a tag scan does the same. */
 function textElements(svg: string): { attributes: string; content: string }[] {
 	return [...svg.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/g)].map(([, attributes, content]) => ({
 		attributes,

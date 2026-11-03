@@ -3,10 +3,10 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { runAnalyticsSql as charts } from '@quarry/shared/tools';
+import { runAnalyticsSql as charts } from '@loopwise/shared/tools';
 import { ResultChartView, AnalyticsResultToolCall } from './analytics-result';
 import type * as Recharts from 'recharts';
-import type { runAnalyticsSql } from '@quarry/shared/tools';
+import type { runAnalyticsSql } from '@loopwise/shared/tools';
 
 // jsdom measures nothing: give the responsive container a fixed size so Recharts draws.
 vi.mock('recharts', async (importOriginal) => {

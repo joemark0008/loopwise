@@ -10,7 +10,7 @@ import {
 	Table as TableIcon,
 	UnfoldHorizontal,
 } from 'lucide-react';
-import { buildMapPoints, describeBoundarySource, MAX_MAP_POINTS, resolveMapConfig } from '@quarry/shared';
+import { buildMapPoints, describeBoundarySource, MAX_MAP_POINTS, resolveMapConfig } from '@loopwise/shared';
 import { TableDisplay } from './display-table';
 import { MapConfigEditDialog } from './display-map-edit-dialog';
 import { SqlQueryDisplay } from './sql-query-display';
@@ -19,9 +19,9 @@ import { VisualizationSkeleton } from './visualization-skeleton';
 import styles from './display-map.module.css';
 import type { ToolCallComponentProps } from '.';
 import type { ReactNode } from 'react';
-import type { UIMessage, UIToolPart } from '@quarry/api/agent/types/chat';
-import type { displayMap } from '@quarry/shared/tools';
-import type { MapPoint } from '@quarry/shared';
+import type { UIMessage, UIToolPart } from '@loopwise/api/agent/types/chat';
+import type { displayMap } from '@loopwise/shared/tools';
+import type { MapPoint } from '@loopwise/shared';
 import type { MapViewHandle } from './display-map-view';
 import type { MapStyleId } from '@/hooks/use-map-style';
 import {

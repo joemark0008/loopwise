@@ -1,7 +1,7 @@
 import styles from './usage-chart-card.module.css';
 import type { ReactNode } from 'react';
-import type { displayChart } from '@quarry/shared/tools';
-import type { TotalUsageRecord, UsageRecord } from '@quarry/shared/usage';
+import type { displayChart } from '@loopwise/shared/tools';
+import type { TotalUsageRecord, UsageRecord } from '@loopwise/shared/usage';
 import { ChartDisplay } from '@/feature/chat/components/tool-calls/display-chart';
 
 export type UsageChartData = UsageRecord[] | TotalUsageRecord[] | Record<string, string | number>[];

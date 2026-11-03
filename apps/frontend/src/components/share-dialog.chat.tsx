@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Link as LinkIcon, Loader2 } from 'lucide-react';
 import styles from './share-dialog.chat.module.css';
-import type { Visibility } from '@quarry/shared/types';
+import type { Visibility } from '@loopwise/shared/types';
 import {
 	hasAccessChanges,
 	ManageShareFooter,

@@ -1,5 +1,5 @@
-import { parsePathwayDefinition } from '@quarry/shared/pathway-rules';
-import { RulesEngine } from '@quarry/shared/rules-engine';
+import { parsePathwayDefinition } from '@loopwise/shared/pathway-rules';
+import { RulesEngine } from '@loopwise/shared/rules-engine';
 
 import { PATHWAY_DEFINITIONS, type PathwayDefinitionKey } from '../src/clinical/pathways/pathway-definitions.js';
 import { toEvaluationRow, toRuleInput } from '../src/clinical/pathways/rules.service.js';

@@ -7,7 +7,7 @@ import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
 
 /**
  * The fields of a patient being registered. The DTO only checks shapes; `PatientService` parses them with the shared
- * `PatientDraftSchema` (`@quarry/shared/patient-registration`), the same rules the form and the Wise card use.
+ * `PatientDraftSchema` (`@loopwise/shared/patient-registration`), the same rules the form and the Wise card use.
  */
 @InputType()
 export class PatientDraftInput {

@@ -1,12 +1,12 @@
-import { parseChartBlock } from '@quarry/shared/story-segments';
+import { parseChartBlock } from '@loopwise/shared/story-segments';
 import { Streamdown } from 'streamdown';
 import { ChartDisplay } from './display-chart';
 import { TableDisplay } from './display-table';
 import { McpTitle } from './mcp-title';
 import { ToolCallWrapper } from './tool-call-wrapper';
 import styles from './mcp.module.css';
-import type { UIMessage, UIToolPart } from '@quarry/api/agent/types/chat';
-import type { ChartType } from '@quarry/shared/chart-types';
+import type { UIMessage, UIToolPart } from '@loopwise/api/agent/types/chat';
+import type { ChartType } from '@loopwise/shared/chart-types';
 import type { ReactNode } from 'react';
 
 import type { ToolCallComponentProps } from '.';

@@ -181,7 +181,7 @@ export interface AnalyticsChartOptions {
 const color = (index: number) => DEFAULT_COLORS[index % DEFAULT_COLORS.length];
 
 /**
- * An analytics result as a Recharts element, in the chat, the report panel and the PDF alike: the shared quarry
+ * An analytics result as a Recharts element, in the chat, the report panel and the PDF alike: the shared loopwise
  * builder for its chart types, Recharts directly for bubble, radial bar, treemap, funnel and Sankey, and the
  * server-resolved thresholds as reference lines and bands.
  */

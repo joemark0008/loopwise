@@ -6,7 +6,7 @@ import { FollowUpSuggestions } from './follow-up-suggestions';
 import { AssistantMessage } from './assistant-message';
 import { UserMessage } from './user-message';
 import styles from './chat-messages.module.css';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import type { MessageGroup } from '@/types/ai';
 import type { Chat } from '@/queries/use-chat-query';
 import { TextShimmer } from '@/components/ui/text-shimmer';

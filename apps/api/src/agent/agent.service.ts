@@ -1,8 +1,8 @@
+import { isSkillGranted } from '@loopwise/shared';
+import { documentMediaType, type ImageUploadData } from '@loopwise/shared/attachments';
+import { markSupersededExecuteSqlParts } from '@loopwise/shared/execute-sql-parts';
+import type { LlmProvider, LlmSelectedModel } from '@loopwise/shared/types';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { isSkillGranted } from '@quarry/shared';
-import { documentMediaType, type ImageUploadData } from '@quarry/shared/attachments';
-import { markSupersededExecuteSqlParts } from '@quarry/shared/execute-sql-parts';
-import type { LlmProvider, LlmSelectedModel } from '@quarry/shared/types';
 import { convertToModelMessages, type InferUIMessageChunk, type Tool } from 'ai';
 
 import { ImageRepository } from '../attachments/image.repository.js';
@@ -37,7 +37,7 @@ import { CompactionService } from './services/compaction.js';
 import { tokenCounter } from './services/token-counter.js';
 import { readOnlyToolServices } from './services/tool-services.js';
 import { fullProjectContextAccess } from './services/user-group-context-access.service.js';
-import { getSystemPromptOverride, hasQuarryPromptPlaceholder, injectQuarryPrompt } from './system-prompts.js';
+import { getSystemPromptOverride, hasLoopwisePromptPlaceholder, injectLoopwisePrompt } from './system-prompts.js';
 import { assertToolKinds, createWebSearchTools, getTools } from './tools/index.js';
 import type { AgentSettings } from './types/agent-settings.js';
 import type {
@@ -361,7 +361,7 @@ export class AgentService {
 		};
 	}
 
-	/** `_buildProjectSystemPrompt`: the project's prompt override, or quarry's prompt (with `{{quarry}}` injection). */
+	/** `_buildProjectSystemPrompt`: the project's prompt override, or loopwise's prompt (with `{{loopwise}}` injection). */
 	private async buildProjectSystemPrompt(
 		toolContext: ToolContext,
 		toolNames: string[],
@@ -380,7 +380,7 @@ export class AgentService {
 		disabledTools: string[] = [],
 	): Promise<string> {
 		const override = getSystemPromptOverride(toolContext.projectFolder);
-		if (override && !hasQuarryPromptPlaceholder(override)) {
+		if (override && !hasLoopwisePromptPlaceholder(override)) {
 			return override;
 		}
 		const memories = await this.memory.safeGetUserMemories(
@@ -406,7 +406,7 @@ export class AgentService {
 			toolNames,
 			disabledTools,
 		});
-		return override ? injectQuarryPrompt(override, defaultPrompt) : defaultPrompt;
+		return override ? injectLoopwisePrompt(override, defaultPrompt) : defaultPrompt;
 	}
 
 	/** A chart chat needs a patient the user may see, and there is one per clinician per patient. */

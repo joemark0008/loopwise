@@ -1,5 +1,5 @@
+import type { MessageBubble } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import type { MessageBubble } from '@quarry/shared/types';
 
 import type { ForkMetadata } from '../agent/types/chat.js';
 import type { SharedChat } from '../generated/prisma/client.js';

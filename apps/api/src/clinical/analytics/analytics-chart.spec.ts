@@ -1,4 +1,4 @@
-import type { PathwayDefinition } from '@quarry/shared/pathway-rules';
+import type { PathwayDefinition } from '@loopwise/shared/pathway-rules';
 import { describe, expect, it } from 'vitest';
 
 import { checkChart, thresholdReferences } from './analytics.service.js';

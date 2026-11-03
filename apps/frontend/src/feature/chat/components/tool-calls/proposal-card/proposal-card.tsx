@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { DESTRUCTIVE_REASON_MIN_LENGTH, isStaleEditMessage } from '@quarry/shared/wise-proposal';
+import { DESTRUCTIVE_REASON_MIN_LENGTH, isStaleEditMessage } from '@loopwise/shared/wise-proposal';
 import { Check, Pencil, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { findAnswerForToolCall } from '../clarification';

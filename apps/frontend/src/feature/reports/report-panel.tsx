@@ -2,11 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Download, FilePlus2, Printer, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { createReport } from '@quarry/shared/tools';
+import { createReport } from '@loopwise/shared/tools';
 import { ReportDocument, useToolOutputs } from './report-document';
 import styles from './report-panel.module.css';
-import type { report } from '@quarry/shared/tools';
-import type { UIMessage } from '@quarry/api/agent/types/chat';
+import type { report } from '@loopwise/shared/tools';
+import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import { Button } from '@/components/ui/button';
 import { useAgentContext, useAgentMessages } from '@/contexts/agent.provider';
 import { reportApi } from '@/lib/report-api';
@@ -30,7 +30,7 @@ export function reportVersions(messages: UIMessage[], reportId: string): ReportV
 }
 
 /**
- * A Wise report in the side panel (DESIGN.md §9.2), as quarry's story viewer: the latest version follows the chat,
+ * A Wise report in the side panel (DESIGN.md §9.2), as loopwise's story viewer: the latest version follows the chat,
  * earlier versions stay one click away, and the header prints, downloads (audited) or saves it.
  */
 export function ReportPanel({ reportId, onClose }: { reportId: string; onClose: () => void }) {

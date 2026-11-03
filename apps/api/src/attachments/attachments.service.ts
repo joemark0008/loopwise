@@ -1,6 +1,6 @@
+import { documentMediaType, toSafeFileName } from '@loopwise/shared/attachments';
+import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import { documentMediaType, toSafeFileName } from '@quarry/shared/attachments';
-import type { UserRole } from '@quarry/shared/types';
 
 import { isStoragePath, toStorageRelativePath, toStorageVirtualPath } from '../agent/utils/tools.js';
 import { HandlerError } from '../common/errors/handler-error.js';

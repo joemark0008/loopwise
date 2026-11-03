@@ -1,6 +1,6 @@
 import { format, supportedDialects } from 'sql-formatter';
 
-// Only map where quarry db name differs from sql-formatter name
+// Only map where loopwise db name differs from sql-formatter name
 const dialectMap: Record<string, string> = {
 	athena: 'trino',
 	databricks: 'spark',

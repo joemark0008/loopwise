@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 	publicConfig: {
 		emailVerificationEnabled: true,
 		enableUserLogin: true,
-		quarryMode: 'cloud',
+		loopwiseMode: 'cloud',
 	},
 	push: vi.fn(),
 	searchByPath: {} as Record<string, { error?: string; redirect?: string }>,
@@ -80,8 +80,8 @@ vi.mock('@/feature/auth/components/auth-form', () => ({
 	FormTextField: () => null,
 }));
 
-vi.mock('@/hooks/use-quarry-mode', () => ({
-	useIsCloud: () => mocks.publicConfig.quarryMode === 'cloud',
+vi.mock('@/hooks/use-loopwise-mode', () => ({
+	useIsCloud: () => mocks.publicConfig.loopwiseMode === 'cloud',
 }));
 
 vi.mock('@/lib/auth-client', () => ({
@@ -99,7 +99,7 @@ describe('email verification auth routes', () => {
 		mocks.publicConfig = {
 			emailVerificationEnabled: true,
 			enableUserLogin: true,
-			quarryMode: 'cloud',
+			loopwiseMode: 'cloud',
 		};
 		mocks.searchByPath = {};
 		mocks.navigate.mockReset();

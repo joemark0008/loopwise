@@ -7,14 +7,14 @@ const PROMPTS_FOLDER = ['agent', 'prompts'];
 
 const DEFAULT_PROMPT_FILE = 'system.md';
 
-const QUARRY_PROMPT_PATTERN = '\\{\\{\\s*quarry_prompt\\s*\\}\\}';
+const LOOPWISE_PROMPT_PATTERN = '\\{\\{\\s*loopwise_prompt\\s*\\}\\}';
 
-export function hasQuarryPromptPlaceholder(content: string): boolean {
-	return new RegExp(QUARRY_PROMPT_PATTERN).test(content);
+export function hasLoopwisePromptPlaceholder(content: string): boolean {
+	return new RegExp(LOOPWISE_PROMPT_PATTERN).test(content);
 }
 
-export function injectQuarryPrompt(override: string, quarryPrompt: string): string {
-	return override.replace(new RegExp(QUARRY_PROMPT_PATTERN, 'g'), quarryPrompt);
+export function injectLoopwisePrompt(override: string, loopwisePrompt: string): string {
+	return override.replace(new RegExp(LOOPWISE_PROMPT_PATTERN, 'g'), loopwisePrompt);
 }
 
 function getPromptFileCandidates(provider?: Provider): string[] {

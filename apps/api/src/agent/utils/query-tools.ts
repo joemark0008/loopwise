@@ -1,4 +1,4 @@
-import { isQueryToolAgentName } from '@quarry/shared/query-tools';
+import { isQueryToolAgentName } from '@loopwise/shared/query-tools';
 
 /** Tool names of upstream `queries/execute-sql.queries.ts`. */
 export const EXECUTE_SQL_TOOL_NAME = 'execute_sql';

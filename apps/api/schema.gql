@@ -1297,7 +1297,7 @@ type ProjectSummary {
   name: String!
   orgId: String
 
-  """Folder holding the project context and `quarry_config.yaml`."""
+  """Folder holding the project context and `loopwise_config.yaml`."""
   path: String
   type: String!
   updatedAt: DateTime!
@@ -1316,8 +1316,8 @@ type PublicConfig {
   emailVerificationEnabled: Boolean!
   enableUserLogin: Boolean!
 
-  """Always "self-hosted": quarry has no cloud mode."""
-  quarryMode: String!
+  """Always "self-hosted": loopwise has no cloud mode."""
+  loopwiseMode: String!
   version: String!
 }
 
@@ -1366,7 +1366,7 @@ type Query {
   """The signed-in user's organization role: admin, user or viewer."""
   currentOrgRole: String!
 
-  """The selected project (`x-quarry-project-id`)."""
+  """The selected project (`x-loopwise-project-id`)."""
   currentProject: ProjectSummary
 
   """Synced warehouse tables of the selected project (`@` mentions)."""

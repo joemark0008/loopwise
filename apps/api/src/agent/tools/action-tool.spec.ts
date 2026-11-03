@@ -1,4 +1,4 @@
-import { proposeAllergy, proposeOrder, proposeVitals } from '@quarry/shared/wise-actions';
+import { proposeAllergy, proposeOrder, proposeVitals } from '@loopwise/shared/wise-actions';
 import { describe, expect, it } from 'vitest';
 
 import type { ToolContext } from '../types/tools.js';

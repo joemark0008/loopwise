@@ -1,5 +1,9 @@
-import { ALLOWED_IMAGE_MEDIA_TYPES, MAX_ATTACHMENTS_PER_MESSAGE, MAX_IMAGE_SIZE_MB } from '@quarry/shared/attachments';
-import { type CitationData, type LlmProvider } from '@quarry/shared/types';
+import {
+	ALLOWED_IMAGE_MEDIA_TYPES,
+	MAX_ATTACHMENTS_PER_MESSAGE,
+	MAX_IMAGE_SIZE_MB,
+} from '@loopwise/shared/attachments';
+import { type CitationData, type LlmProvider } from '@loopwise/shared/types';
 import {
 	DynamicToolUIPart,
 	FinishReason,
@@ -221,7 +225,7 @@ export const AgentRequestSchema = z
 		model: llmSelectedModelSchema.optional(),
 		mentions: z.array(MentionSchema).optional(),
 		timezone: z.string().optional(),
-		/** When true, the message runs in admin mode: it queries quarry's own usage database instead of the warehouse. */
+		/** When true, the message runs in admin mode: it queries loopwise's own usage database instead of the warehouse. */
 		adminMode: z.boolean().optional(),
 		mode: z.enum(['default', 'onboarding', 'example', 'query_workbench']).default('default'),
 		workbench: QueryWorkbenchContextSchema.optional(),

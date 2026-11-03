@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 /** The install wizard's one-time proof that the person completing setup can read the server log or `.env`. */
 export function deriveSetupToken(secret: string): string {
-	return createHmac('sha256', secret).update('quarry-setup-token').digest('hex').slice(0, 32);
+	return createHmac('sha256', secret).update('loopwise-setup-token').digest('hex').slice(0, 32);
 }
 
 export function isValidSetupToken(input: string, secret: string): boolean {

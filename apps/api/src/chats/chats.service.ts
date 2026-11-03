@@ -1,5 +1,5 @@
+import type { ChatFilterType, ChatGroupBy, GroupedChatListResponse, LlmProvider } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
-import type { ChatFilterType, ChatGroupBy, GroupedChatListResponse, LlmProvider } from '@quarry/shared/types';
 
 import { AgentService } from '../agent/agent.service.js';
 import type { ContextUsage, ForkMetadata, UIMessage } from '../agent/types/chat.js';

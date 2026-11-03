@@ -13,7 +13,7 @@ export class ProjectSummary {
 
 	@Field(() => String, {
 		nullable: true,
-		description: 'Folder holding the project context and `quarry_config.yaml`.',
+		description: 'Folder holding the project context and `loopwise_config.yaml`.',
 	})
 	path: string | null;
 

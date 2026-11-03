@@ -1,5 +1,5 @@
-import { APP_PAGES, parseAppPageParams } from '@quarry/shared/app-pages';
-import { openPage } from '@quarry/shared/tools';
+import { APP_PAGES, parseAppPageParams } from '@loopwise/shared/app-pages';
+import { openPage } from '@loopwise/shared/tools';
 
 import { createTool } from '../utils/tools.js';
 

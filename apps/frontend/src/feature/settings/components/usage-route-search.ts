@@ -1,7 +1,7 @@
-import { CHAT_REPLAY_FEEDBACK_STATES, CHAT_REPLAY_TOOL_STATES, providerLabels } from '@quarry/shared/types';
-import { USAGE_PERIOD_PRESET_NAMES, USAGE_SOURCES } from '@quarry/shared/usage';
-import type { UsagePeriodPreset, UsagePeriodSelection, UsageSource } from '@quarry/shared/usage';
-import type { ChatReplayFeedbackState, ChatReplayToolState, LlmProvider } from '@quarry/shared/types';
+import { CHAT_REPLAY_FEEDBACK_STATES, CHAT_REPLAY_TOOL_STATES, providerLabels } from '@loopwise/shared/types';
+import { USAGE_PERIOD_PRESET_NAMES, USAGE_SOURCES } from '@loopwise/shared/usage';
+import type { UsagePeriodPreset, UsagePeriodSelection, UsageSource } from '@loopwise/shared/usage';
+import type { ChatReplayFeedbackState, ChatReplayToolState, LlmProvider } from '@loopwise/shared/types';
 import { getActiveProjectId } from '@/lib/active-project';
 
 export type TokenChartDisplayMode = 'tokens' | 'dollars';
@@ -56,7 +56,7 @@ const periodSearchKeys = [
 	'period',
 	'granularity',
 ] as const;
-const usageFiltersStorageKey = 'quarry.usage-filters';
+const usageFiltersStorageKey = 'loopwise.usage-filters';
 
 export function validateUsageSearchWithStoredFilters(search: Record<string, unknown>): UsageRouteSearch {
 	const hasSearchFilters = [...filterSearchKeys, ...periodSearchKeys].some((key) => search[key] !== undefined);

@@ -1,4 +1,4 @@
-import type { CustomBoundarySet } from '@quarry/shared';
+import type { CustomBoundarySet } from '@loopwise/shared';
 import {
 	proposeAllergy,
 	proposeBillStep,
@@ -15,7 +15,7 @@ import {
 	proposeVoidDiagnosis,
 	proposeVoidDocument,
 	proposeVoidVitals,
-} from '@quarry/shared/wise-actions';
+} from '@loopwise/shared/wise-actions';
 
 import type { AgentSettings } from '../types/agent-settings.js';
 import { getToolKind } from '../utils/tools.js';
@@ -50,7 +50,7 @@ import suggestFollowUps from './suggest-follow-ups.js';
 export { createWebSearchTools } from './web-search.js';
 
 /**
- * Loopwise keeps quarry's conversational tools only (DESIGN.md §13). The warehouse, SQL, semantic layer, sandbox,
+ * Loopwise keeps loopwise's conversational tools only (DESIGN.md §13). The warehouse, SQL, semantic layer, sandbox,
  * story, onboarding and context-recommendation tools are gone; the clinical tools (§9.2) come with their modules.
  * `display_map` needs the map setting.
  *
@@ -80,7 +80,7 @@ export const tools = {
 	get_metric: getMetric,
 	explain_result: explainResult,
 	report: reportTool,
-	// Wise actions (DESIGN.md §9.4): one definition each in `@quarry/shared/wise-actions`, one shared card.
+	// Wise actions (DESIGN.md §9.4): one definition each in `@loopwise/shared/wise-actions`, one shared card.
 	propose_vitals: createActionTool(proposeVitals),
 	propose_allergy: createActionTool(proposeAllergy),
 	propose_remove_allergy: createActionTool(proposeRemoveAllergy),

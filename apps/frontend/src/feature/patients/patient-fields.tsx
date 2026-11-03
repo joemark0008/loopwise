@@ -1,7 +1,7 @@
-import { PATIENT_LANGUAGES, PATIENT_SEXES } from '@quarry/shared/patient-registration';
+import { PATIENT_LANGUAGES, PATIENT_SEXES } from '@loopwise/shared/patient-registration';
 import { useId } from 'react';
 import styles from './patient-fields.module.css';
-import type { PatientLanguage, PatientSex } from '@quarry/shared/patient-registration';
+import type { PatientLanguage, PatientSex } from '@loopwise/shared/patient-registration';
 import type { ReactNode } from 'react';
 import type { PatientFormErrors, PatientFormValues } from './patient-form-values';
 import { Input } from '@/components/ui/input';

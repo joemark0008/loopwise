@@ -2,7 +2,7 @@
 
 /**
  * A tool call with no output must not look the same when it is running and when its output is
- * never going to arrive. quarry's SQL/Python bodies rendered the in-flight placeholder for
+ * never going to arrive. loopwise's SQL/Python bodies rendered the in-flight placeholder for
  * both, so a dropped stream showed "Executing query..." forever and the only way out was a
  * manual reload — see the header comment in `tool-output-fallback.tsx`.
 

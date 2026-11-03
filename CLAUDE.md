@@ -1,12 +1,9 @@
 # Loopwise
 
 Closing the screening-to-care loop: every ordered test and actionable result becomes timely care, with an owner at each
-step. Built on quarry (NestJS 11 + GraphQL code-first + Prisma/PostgreSQL + React). Read [docs/DESIGN.md](docs/DESIGN.md)
+step. Built on NestJS 11 + GraphQL code-first + Prisma/PostgreSQL + React. Read [docs/DESIGN.md](docs/DESIGN.md)
 first: it holds the problem, the data model (§7), the case state machine (§8), the Wise assistant (§9), the access rules
 (§10) and the plan (§15).
-
-Loopwise was cut from quarry ([github.com/joemark0008/quarry](https://github.com/joemark0008/quarry)); the local
-`../quarry` copy has been removed. Clone it somewhere outside this repo if you need it as a read-only reference.
 
 ## Stack rules
 
@@ -16,7 +13,7 @@ Loopwise was cut from quarry ([github.com/joemark0008/quarry](https://github.com
   datasource in `main.prisma`, clinical models in `clinical-*.prisma`); migrations stay in `apps/api/prisma/migrations/`.
 - Frontend: React (TanStack Router, Mantine, CSS Modules) following [docs/frontend-design.md](docs/frontend-design.md),
   with Apollo Client + GraphQL Code Generator. Calls go through the `lib/*-api.ts` modules (`lib/apollo-procedures.ts`),
-  typed by `lib/api-types.ts`; types of `apps/api` are imported with `import type` from `@quarry/api/*`.
+  typed by `lib/api-types.ts`; types of `apps/api` are imported with `import type` from `@loopwise/api/*`.
 - Node from `.nvmrc` (`nvm use`), npm pinned by `packageManager` (`engine-strict`).
 
 ## Module conventions
@@ -62,9 +59,9 @@ npm run lint
 npm test
 ```
 
-Plus `npm run format:check`. For frontend changes also run `npm run test:e2e -w @quarry/frontend` with the local stack
+Plus `npm run format:check`. For frontend changes also run `npm run test:e2e -w @loopwise/frontend` with the local stack
 up (the chat flow makes one real LLM call). `test/usage.e2e-spec.ts` › "rejects a range above the chart bucket limit"
-fails as it did in quarry; leave it unless you are fixing it.
+is a known failure; leave it unless you are fixing it.
 
 ## Local setup
 
@@ -73,8 +70,8 @@ nvm use
 npm install
 cp .env.example .env            # fill in BETTER_AUTH_SECRET and an LLM key
 docker compose up -d --wait     # Postgres on localhost:5435, database `loopwise`
-npm run db:deploy -w @quarry/api   # apply Prisma migrations
-npm run db:seed -w @quarry/api     # synthetic demo data; test@test.test / test1234
+npm run db:deploy -w @loopwise/api   # apply Prisma migrations
+npm run db:seed -w @loopwise/api     # synthetic demo data; test@test.test / test1234
 npm run dev:api                    # apps/api on :5006
 npm run dev:frontend               # frontend on :3000, proxies the API to :5006
 ```

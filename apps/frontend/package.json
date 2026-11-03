@@ -1,5 +1,5 @@
 {
-	"name": "@quarry/frontend",
+	"name": "@loopwise/frontend",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -28,7 +28,7 @@
 		"@mantine/modals": "^9.7.4",
 		"@mantine/notifications": "^9.7.4",
 		"@monaco-editor/react": "^4.7.0",
-		"@quarry/shared": "*",
+		"@loopwise/shared": "*",
 		"@shikijs/langs": "^3.23.0",
 		"@shikijs/monaco": "^3.23.0",
 		"@shikijs/themes": "^3.23.0",

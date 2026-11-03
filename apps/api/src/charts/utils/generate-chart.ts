@@ -1,11 +1,11 @@
 import { createRequire } from 'node:module';
 
-import { CHART_EMBEDDED_FONT_FAMILY, CHART_FONT_STACK } from '@quarry/shared';
+import { CHART_EMBEDDED_FONT_FAMILY, CHART_FONT_STACK } from '@loopwise/shared';
 
 import { chartFontFiles } from './chart-fonts.js';
 
 /**
- * quarry: upstream loads Recharts' markup into cheerio (xml mode) to pick out the `<svg>` and edit its root;
+ * loopwise: upstream loads Recharts' markup into cheerio (xml mode) to pick out the `<svg>` and edit its root;
  * cheerio isn't a dependency here, so the root `<svg>` element is cut out of React's server markup by hand.
  * React escapes `<`, `>`, `&` and quotes in text and attribute values, so tags can be scanned directly.
  */
