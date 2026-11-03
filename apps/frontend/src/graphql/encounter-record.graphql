@@ -214,18 +214,6 @@ fragment PatientOverviewFields on PatientOverview {
 		}
 		billStatus
 	}
-	recentVitals {
-		...VitalSignsFields
-	}
-	problems {
-		...DiagnosisFields
-	}
-	medicines {
-		...PrescriptionFields
-	}
-	results {
-		...OrderFields
-	}
 }
 
 query PatientOverview($patientId: ID!) {

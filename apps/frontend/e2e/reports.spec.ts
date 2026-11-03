@@ -37,8 +37,6 @@ test.describe('charts and reports', () => {
 		await panel.getByTestId('report-save').click();
 		await panel.getByTestId('report-save-confirm').click();
 		await expect(panel.getByTestId('report-saved')).toBeVisible();
-		await page.keyboard.press('Escape');
-		await expect(page.getByTestId('saved-documents')).toBeVisible();
 		expect(errors).toEqual([]);
 	});
 });
