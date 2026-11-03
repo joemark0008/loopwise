@@ -11,7 +11,7 @@ import { completeSetup, markSetupComplete } from '@/lib/setup-api';
 import { validateSetupEmail, validateSetupName, validateSetupPassword } from '@/feature/auth/setup-validation';
 
 const INVALID_TOKEN_MESSAGE = 'Invalid setup token.';
-const TOKEN_COMMAND = 'docker compose -f docker-compose.prod.yml logs quarry | grep "setup token"';
+const TOKEN_COMMAND = 'docker compose -f docker-compose.prod.yml logs loopwise | grep "setup token"';
 const SIGN_IN_FAILED_MESSAGE =
 	"Your admin account was created, but signing in failed. Check that BETTER_AUTH_URL matches this site's address, then log in.";
 

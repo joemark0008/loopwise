@@ -1,4 +1,4 @@
-# quarry: apps/api serving the built frontend. Build: `docker build -t quarry .`; run with docker-compose.prod.yml.
+# Loopwise: apps/api serving the built frontend. Build: `docker build -t loopwise .`; run with docker-compose.prod.yml.
 # apps/api runs from its TypeScript sources through @swc-node/register (as in development), so the image keeps
 # the dev dependencies; the frontend is built once, at image build time.
 FROM node:22.23.4-bookworm-slim AS base

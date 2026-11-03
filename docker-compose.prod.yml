@@ -1,39 +1,42 @@
-# quarry in production: the app image (Dockerfile) and its Postgres.
+# Loopwise in production: the app image (Dockerfile) and its Postgres.
 #   cp .env.example .env    # set BETTER_AUTH_SECRET, BETTER_AUTH_URL (the public URL) and an LLM key
 #   docker compose -f docker-compose.prod.yml up -d --build
-# The app listens on ${QUARRY_PORT:-8080}. Projects (context files) and stored files live in the quarry_data volume.
+# The app listens on ${LOOPWISE_PORT:-8080}. Projects (context files) and stored files live in the loopwise_data volume.
+# Its own project name, separate from docker-compose.yml (loopwise-dev), so the two never share a database volume.
+name: loopwise
+
 services:
     postgres:
         image: postgres:16-alpine
         environment:
-            POSTGRES_USER: ${POSTGRES_USER:-quarry}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quarry}
-            POSTGRES_DB: quarry
+            POSTGRES_USER: ${POSTGRES_USER:-loopwise}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-loopwise}
+            POSTGRES_DB: loopwise
         volumes:
-            - quarry_postgres_data:/var/lib/postgresql/data
+            - loopwise_postgres_data:/var/lib/postgresql/data
         healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-quarry} -d quarry']
+            test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-loopwise} -d loopwise']
             interval: 5s
             timeout: 5s
             retries: 10
         restart: unless-stopped
 
-    quarry:
+    loopwise:
         build: .
-        image: quarry:latest
+        image: loopwise:latest
         depends_on:
             postgres:
                 condition: service_healthy
         env_file: .env
         environment:
-            DATABASE_URL: postgresql://${POSTGRES_USER:-quarry}:${POSTGRES_PASSWORD:-quarry}@postgres:5432/quarry
+            DATABASE_URL: postgresql://${POSTGRES_USER:-loopwise}:${POSTGRES_PASSWORD:-loopwise}@postgres:5432/loopwise
             PORT: 5006
             # Required: MODE=prod refuses to boot without a stable secret (it also derives the setup token).
             BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in .env}
         ports:
-            - '${QUARRY_PORT:-8080}:5006'
+            - '${LOOPWISE_PORT:-8080}:5006'
         volumes:
-            - quarry_data:/data
+            - loopwise_data:/data
         healthcheck:
             test:
                 [
@@ -47,5 +50,5 @@ services:
         restart: unless-stopped
 
 volumes:
-    quarry_postgres_data:
-    quarry_data:
+    loopwise_postgres_data:
+    loopwise_data:

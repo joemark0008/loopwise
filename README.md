@@ -85,7 +85,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 The container applies pending migrations at start. Put a TLS reverse proxy in front of it, and create the first admin at
-`/setup` with the token from `docker compose -f docker-compose.prod.yml logs quarry | grep "setup token"`.
+`/setup` with the token from `docker compose -f docker-compose.prod.yml logs loopwise | grep "setup token"`.
 
 ## Edge connector
 
