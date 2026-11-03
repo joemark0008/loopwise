@@ -1,0 +1,24 @@
+.confirmationDialogDialogDescription {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.confirmationDialogP {
+	text-align: center;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-red-500);
+}
+.confirmationDialogDiv {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.confirmationDialogButton {
+	border-radius: calc(infinity * 1px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+}
+.confirmationDialogButton2 {
+	border-radius: calc(infinity * 1px);
+}

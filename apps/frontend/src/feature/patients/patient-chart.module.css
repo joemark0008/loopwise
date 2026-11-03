@@ -1,0 +1,294 @@
+.chartPage {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	width: 100%;
+	max-width: 90rem;
+	margin: 0 auto;
+	padding: 1.25rem 1rem 1.5rem;
+}
+.chartTopRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+.chartBackLinks {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1rem;
+}
+.chartBack {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	width: fit-content;
+	font-size: 0.8125rem;
+	color: var(--app-muted);
+}
+.chartBack svg {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.chartViewSwitch {
+	display: none;
+	padding: 0.125rem;
+	border: 1px solid var(--app-line);
+	border-radius: 999px;
+}
+.chartViewTab {
+	padding: 0.25rem 0.875rem;
+	border-radius: 999px;
+	font-size: 0.8125rem;
+	color: var(--app-muted);
+}
+.chartViewTab[aria-selected='true'] {
+	background: var(--app-fill);
+	color: var(--app-text);
+}
+.chartColumns {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(22rem, 28rem);
+	gap: 1.5rem;
+	align-items: start;
+}
+.chartMain {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	min-width: 0;
+}
+.chartSide {
+	position: sticky;
+	top: 1rem;
+	height: calc(100dvh - 3.75rem - 4.5rem);
+	min-height: 28rem;
+}
+@media (max-width: 64rem) {
+	.chartViewSwitch {
+		display: inline-flex;
+	}
+	.chartColumns {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.chartColumns[data-view='chart'] .chartSide,
+	.chartColumns[data-view='wise'] .chartMain {
+		display: none;
+	}
+	.chartSide {
+		position: static;
+	}
+}
+.chartHeader {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+.chartTitle {
+	font-size: 1.5rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.chartSubtitle {
+	font-size: 0.875rem;
+	color: var(--app-muted);
+}
+.chartDetails {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.5rem 1.5rem;
+	margin: 0.75rem 0 0;
+	font-size: 0.875rem;
+}
+.chartDetails dt {
+	color: var(--app-muted);
+}
+.chartDetails dd {
+	margin: 0;
+}
+.chartDetailRow {
+	display: contents;
+}
+.chartMuted {
+	color: var(--app-muted);
+}
+.chartSection {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.chartSectionHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+.chartSectionTitle {
+	font-size: 1rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.chartSkeleton {
+	height: 8rem;
+	width: 100%;
+}
+.chartErrorRow {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+.encounterList {
+	display: flex;
+	flex-direction: column;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+}
+.encounterList li + li {
+	border-top: 1px solid var(--app-line);
+}
+.encounterRow {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.625rem;
+	width: 100%;
+	padding: 0.75rem 1rem;
+	text-align: left;
+}
+.encounterRow:hover {
+	background: var(--app-fill);
+}
+.encounterChevron {
+	width: 0.875rem;
+	height: 0.875rem;
+	color: var(--app-muted);
+	transition: transform 150ms var(--app-ease, ease);
+}
+.encounterChevron[data-open] {
+	transform: rotate(90deg);
+}
+.encounterReason {
+	overflow: hidden;
+	font-size: 0.875rem;
+	--fx-font-weight: 500;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.encounterMeta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.75rem;
+	font-size: 0.8125rem;
+	color: var(--app-muted);
+}
+.encounterBody {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0 1rem 0.875rem 2.5rem;
+}
+.encounterNotes {
+	white-space: pre-wrap;
+	font-size: 0.875rem;
+}
+.encounterSource {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+.encounterSource svg {
+	width: 0.75rem;
+	height: 0.75rem;
+}
+.chartDialog {
+	width: min(36rem, calc(100vw - 2rem));
+}
+.chartDialogForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.wisePanel {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+	overflow: hidden;
+}
+.wiseHeader {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.625rem 0.875rem;
+	border-bottom: 1px solid var(--app-line);
+	font-size: 0.8125rem;
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.wiseHeaderActions {
+	display: flex;
+	gap: 0.25rem;
+	margin-left: auto;
+}
+.wiseHeader > svg {
+	width: 0.875rem;
+	height: 0.875rem;
+	color: var(--app-accent);
+}
+.wiseConversation {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+}
+.wiseMessages {
+	position: relative;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+.wiseEmpty {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin: auto 0;
+	padding: 1rem;
+	font-size: 0.8125rem;
+	color: var(--app-muted);
+}
+.wiseSuggestions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.wiseInput {
+	padding: 0.5rem;
+}
+.encounterOpen {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	width: fit-content;
+	font-size: 0.8125rem;
+	color: var(--app-accent-text);
+}
+.encounterOpen svg {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+@media (max-width: 40rem) {
+	.encounterRow {
+		grid-template-columns: auto minmax(0, 1fr);
+	}
+	.encounterRow .encounterMeta {
+		grid-column: 2;
+	}
+}

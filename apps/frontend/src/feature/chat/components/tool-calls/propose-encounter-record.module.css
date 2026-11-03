@@ -1,0 +1,59 @@
+.recordCardSkeleton {
+	height: 8rem;
+	width: 100%;
+}
+.recordCardBody {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	font-size: var(--app-text-sm);
+}
+.recordCardMeta {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.recordCardSection {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+.recordCardLabel {
+	font-size: 0.75rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+	color: var(--app-muted);
+}
+.recordCardText {
+	white-space: pre-wrap;
+}
+.recordCardList {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin: 0;
+	padding-left: 1.125rem;
+}
+.recordCardWarning {
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--app-critical-line);
+	border-left-width: 0.25rem;
+	border-radius: 0;
+	background: var(--app-critical-bg);
+	color: var(--app-critical);
+	font-size: var(--app-text-sm);
+	font-weight: 500;
+}
+.recordCardError {
+	font-size: var(--app-text-sm);
+	color: var(--app-danger);
+}
+.recordCardFields {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+}
+.recordCardLink {
+	width: fit-content;
+	font-size: 0.75rem;
+	color: var(--app-accent-text);
+}

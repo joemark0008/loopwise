@@ -1,0 +1,34 @@
+.assistantMessageDiv {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	background-color: transparent;
+	padding-inline: 0.75rem;
+}
+.assistantMessageDiv2 {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+	font-style: italic;
+}
+.assistantMessageAssistantMessageActions {
+	transition-property: opacity;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	--fx-duration: 200ms;
+	transition-duration: 200ms;
+}
+.assistantMessageAssistantMessageActions2 {
+	display: none;
+}
+.assistantMessageAssistantMessageActions3 {
+	opacity: 100%;
+}
+.assistantMessageAssistantMessageActions4 {
+	opacity: 0%;
+	@media (hover: hover) {
+		&:is(:where([class~='group']):hover *) {
+			opacity: 100%;
+		}
+	}
+}

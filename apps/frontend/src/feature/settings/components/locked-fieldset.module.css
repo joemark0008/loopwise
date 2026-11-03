@@ -1,0 +1,13 @@
+.lockedFieldsetFieldset {
+	display: flex;
+	min-width: 0px;
+	flex-direction: column;
+	gap: 1rem;
+	border-style: var(--fx-border-style);
+	border-width: 0px;
+	padding: 0px;
+}
+.lockedFieldsetFieldset2 {
+	pointer-events: none;
+	opacity: 60%;
+}

@@ -1,0 +1,361 @@
+.storiesGridDiv {
+	margin-inline: auto;
+	display: flex;
+	width: 100%;
+	max-width: 48rem;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding-inline: 1rem;
+	padding-block: 1.5rem;
+}
+.storiesGridDiv2 {
+	display: grid;
+	column-gap: 1.25rem;
+	row-gap: 0.5rem;
+}
+.storiesGridButton {
+	height: 2.25rem;
+	border-radius: var(--app-radius);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	--fx-border-style: dashed;
+	border-style: dashed;
+	border-color: color-mix(in oklab, var(--app-muted) 20%, transparent);
+	padding-inline: 0.75rem;
+}
+.storiesGridButton2 {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	background-color: var(--app-nav-bg);
+	color: color-mix(in oklab, var(--app-muted) 50%, transparent);
+	&:is(:root[data-mantine-color-scheme='dark'] *) {
+		background-color: var(--app-surface);
+	}
+}
+.storiesGridButton3 {
+	cursor: pointer;
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	@media (hover: hover) {
+		&:hover {
+			border-color: var(--app-muted);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			border-color: color-mix(in oklab, var(--app-muted) 40%, transparent);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			color: var(--app-muted);
+		}
+	}
+}
+.storiesGridDiv3 {
+	display: flex;
+	min-width: 0px;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding-left: 0.375rem;
+}
+.storiesGridPlusIcon {
+	width: 0.75rem;
+	height: 0.75rem;
+	flex-shrink: 0;
+}
+.storiesGridSpan {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+}
+.homePageDiv {
+	position: relative;
+	display: flex;
+	height: 100%;
+	min-width: 18rem;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	overflow: hidden;
+}
+.homePageDiv2 {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	z-index: 10;
+	margin-left: -0.5rem;
+	padding-inline: 1rem;
+	padding-top: 0.75rem;
+	@media (width < 48rem) {
+		display: none;
+	}
+	@media (width >= 48rem) {
+		padding-inline: 2rem;
+	}
+	@media (width >= 48rem) {
+		padding-top: 1rem;
+	}
+}
+.homePageDiv3 {
+	position: relative;
+	display: flex;
+	width: 100%;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	padding: 1rem;
+}
+.homePageDiv4 {
+	margin-top: 7.5rem;
+}
+.homePageDiv5 {
+	margin-top: -7.5rem;
+}
+.homePageDiv6 {
+	position: relative;
+	z-index: 10;
+	margin-bottom: 1.5rem;
+	max-width: 42rem;
+	:where(& > :not(:last-child)) {
+		--fx-space-y-reverse: 0;
+		margin-block-start: calc(0.5rem * var(--fx-space-y-reverse));
+		margin-block-end: calc(0.5rem * calc(1 - var(--fx-space-y-reverse)));
+	}
+	padding-inline: 1.5rem;
+	text-align: center;
+}
+.homePageH1 {
+	font-family: var(--app-font-heading);
+	font-size: 1.25rem;
+	line-height: var(--fx-leading, calc(1.75 / 1.25));
+	--fx-tracking: -0.025em;
+	letter-spacing: -0.025em;
+	@media (width >= 48rem) {
+		font-size: 1.875rem;
+		line-height: var(--fx-leading, calc(2.25 / 1.875));
+	}
+}
+.homePageDiv7 {
+	position: relative;
+	margin-inline: auto;
+	margin-top: 1.5rem;
+	display: flex;
+	width: 100%;
+	max-width: 48rem;
+	flex-direction: column;
+	gap: 1rem;
+	@media (width >= 48rem) {
+		margin-top: 2.5rem;
+	}
+}
+.homePageImg {
+	pointer-events: none;
+	position: absolute;
+	top: -15rem;
+	left: calc(1 / 2 * 100%);
+	z-index: calc(10 * -1);
+	width: 100%;
+	max-width: 42rem;
+	--fx-translate-x: calc(calc(1 / 2 * 100%) * -1);
+	translate: var(--fx-translate-x) var(--fx-translate-y);
+	-webkit-user-select: none;
+	user-select: none;
+}
+.homePageDiv8 {
+	display: flex;
+	width: 100%;
+	max-width: 48rem;
+	justify-content: center;
+	padding-inline: 1rem;
+	padding-block: 1.5rem;
+}
+.homePageDiv9 {
+	position: relative;
+	z-index: 10;
+	margin-bottom: 1.5rem;
+	padding-inline: 1.5rem;
+	text-align: center;
+	font-family: var(--app-font-heading);
+	font-size: 1.25rem;
+	line-height: var(--fx-leading, calc(1.75 / 1.25));
+	--fx-tracking: -0.025em;
+	letter-spacing: -0.025em;
+	@media (width >= 48rem) {
+		font-size: 1.875rem;
+		line-height: var(--fx-leading, calc(2.25 / 1.875));
+	}
+}
+.homePageDiv10 {
+	position: relative;
+	margin-inline: auto;
+	display: flex;
+	width: 100%;
+	max-width: 48rem;
+	flex-direction: column;
+	gap: 1rem;
+}
+.homeLinkCardLink {
+	position: relative;
+	display: flex;
+	min-height: 9rem;
+	width: 100%;
+	max-width: 28rem;
+	align-items: flex-end;
+	gap: 1.5rem;
+	overflow: hidden;
+	border-radius: calc(var(--app-radius) + 4px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	border-color: color-mix(in oklab, var(--app-violet) 20%, transparent);
+	background-color: var(--app-surface);
+	padding: 1.25rem;
+	text-align: left;
+	--fx-shadow: 0 1px 2px 0 var(--fx-shadow-color, rgb(0 0 0 / 0.05));
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+}
+.homeLinkCardLink2 {
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	--fx-duration: 200ms;
+	transition-duration: 200ms;
+	@media (hover: hover) {
+		&:hover {
+			border-color: var(--app-violet);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			border-color: color-mix(in oklab, var(--app-violet) 40%, transparent);
+		}
+	}
+	&:focus-visible {
+		--fx-ring-shadow: var(--fx-ring-inset,) 0 0 0 calc(2px + var(--fx-ring-offset-width))
+			var(--fx-ring-color, currentcolor);
+		box-shadow:
+			var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+			var(--fx-shadow);
+	}
+	&:focus-visible {
+		--fx-ring-color: color-mix(in oklab, var(--app-primary-bg) 50%, transparent);
+	}
+	&:focus-visible {
+		--fx-outline-style: none;
+		outline-style: none;
+	}
+}
+.homeLinkCardImg {
+	pointer-events: none;
+	position: absolute;
+	top: calc(1 / 2 * 100%);
+	left: calc(1 / 2 * 100%);
+	width: 100%;
+	--fx-translate-x: calc(calc(1 / 2 * 100%) * -1);
+	translate: var(--fx-translate-x) var(--fx-translate-y);
+	--fx-translate-y: calc(calc(1 / 2 * 100%) * -1);
+	translate: var(--fx-translate-x) var(--fx-translate-y);
+	--fx-scale-x: 150%;
+	--fx-scale-y: 150%;
+	--fx-scale-z: 150%;
+	scale: var(--fx-scale-x) var(--fx-scale-y);
+	-webkit-user-select: none;
+	user-select: none;
+}
+.homeLinkCardDiv {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	min-height: 6rem;
+	min-width: 0px;
+	flex: 1;
+	flex-direction: column;
+	justify-content: space-between;
+}
+.homeLinkCardSpan {
+	display: block;
+	font-size: 0.75rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+	--fx-tracking: 0.16em;
+	letter-spacing: 0.16em;
+	color: var(--app-primary-bg);
+	text-transform: uppercase;
+}
+.homeLinkCardDiv2 {
+	max-width: 18rem;
+}
+.homeLinkCardSpan2 {
+	display: block;
+	font-family: var(--app-font-heading);
+	font-size: 1.125rem;
+	line-height: var(--fx-leading, calc(1.75 / 1.125));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	--fx-tracking: -0.025em;
+	letter-spacing: -0.025em;
+	color: var(--app-text);
+}
+.homeLinkCardSpan3 {
+	margin-top: 0.25rem;
+	display: block;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	--fx-leading: 1.625;
+	line-height: 1.625;
+	color: var(--app-muted);
+}
+.homeLinkCardDiv3 {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	width: 2.25rem;
+	height: 2.25rem;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	align-self: center;
+	border-radius: calc(infinity * 1px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	border-color: transparent;
+	color: oklch(1 0 0);
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	background:
+		var(--app-gradient-brand) padding-box,
+		var(--app-gradient-brand-border) border-box;
+	@media (hover: hover) {
+		&:is(:where([class~='group']):hover *) {
+			background:
+				var(--app-gradient-brand-hover) padding-box,
+				var(--app-gradient-brand-border) border-box;
+		}
+	}
+}
+.homeLinkCardArrowRight {
+	width: 1rem;
+	height: 1rem;
+}
+.renderStoryGroupHeadersDiv {
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}

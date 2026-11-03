@@ -1,0 +1,57 @@
+mutation ExportReportPdf($chatId: ID!, $toolCallId: String!) {
+	exportReportPdf(chatId: $chatId, toolCallId: $toolCallId) {
+		filename
+		mimeType
+		data
+	}
+}
+
+mutation ExportWiseReportPdf($chatId: ID!, $toolCallId: String!) {
+	exportWiseReportPdf(chatId: $chatId, toolCallId: $toolCallId) {
+		filename
+		mimeType
+		data
+	}
+}
+
+fragment ClinicalDocumentFields on ClinicalDocument {
+	id
+	patientId
+	kind
+	title
+	body
+	data
+	version
+	sourceToolCallId
+	createdByName
+	createdAt
+}
+
+mutation SaveReportToChart($chatId: ID!, $toolCallId: String!) {
+	saveReportToChart(chatId: $chatId, toolCallId: $toolCallId) {
+		...ClinicalDocumentFields
+	}
+}
+
+query SavedReportDocument($toolCallId: String!) {
+	savedReportDocument(toolCallId: $toolCallId) {
+		id
+		createdAt
+	}
+}
+
+query PatientDocuments($patientId: ID!) {
+	patientDocuments(patientId: $patientId) {
+		id
+		title
+		version
+		createdByName
+		createdAt
+	}
+}
+
+query ClinicalDocument($id: ID!) {
+	clinicalDocument(id: $id) {
+		...ClinicalDocumentFields
+	}
+}

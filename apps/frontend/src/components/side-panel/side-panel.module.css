@@ -1,0 +1,63 @@
+.sidePanelDiv3 {
+	height: 100%;
+	background-color: var(--app-surface);
+}
+.pANELVARIANTCLASSNAMESFloating {
+	border-top-left-radius: calc(var(--app-radius) + 12px);
+	border-bottom-left-radius: calc(var(--app-radius) + 12px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	background-color: var(--app-bg);
+	--fx-shadow:
+		0 10px 15px -3px var(--fx-shadow-color, rgb(0 0 0 / 0.1)),
+		0 4px 6px -4px var(--fx-shadow-color, rgb(0 0 0 / 0.1));
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+}
+.pANELVARIANTCLASSNAMESDocked {
+	border-left-style: var(--fx-border-style);
+	border-left-width: 1px;
+}
+.sidePanelDiv {
+	position: fixed;
+	inset: 0px;
+	z-index: 40;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--app-surface);
+}
+.sidePanelDiv2 {
+	min-height: 0px;
+	flex: 1;
+	overflow: hidden;
+}
+.sidePanelDiv4 {
+	position: relative;
+	display: flex;
+	height: 100%;
+	min-width: 18rem;
+}
+.sidePanelDiv5 {
+	position: relative;
+	z-index: 20;
+	display: flex;
+	height: 100%;
+	width: 1px;
+	cursor: ew-resize;
+	align-items: center;
+	justify-content: center;
+}
+.sidePanelResizableHandle {
+	position: absolute;
+}
+.sidePanelDiv6 {
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+.sidePanelDiv7 {
+	height: 100%;
+	overflow: hidden;
+	background-color: var(--app-surface);
+}

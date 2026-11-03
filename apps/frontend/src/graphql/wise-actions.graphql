@@ -1,0 +1,69 @@
+query WiseResultEvaluation($resultId: ID!) {
+	resultEvaluation(resultId: $resultId) {
+		id
+		pathwayName
+		classification
+		urgency
+		reason
+		guideline
+		slaHours
+	}
+}
+
+mutation WiseIssuePrescription($id: ID!, $wiseOrigin: WiseOriginInput) {
+	issuePrescription(id: $id, wiseOrigin: $wiseOrigin) {
+		id
+	}
+}
+
+mutation WiseIssueMedicalCertificate($id: ID!, $wiseOrigin: WiseOriginInput) {
+	issueMedicalCertificate(id: $id, wiseOrigin: $wiseOrigin) {
+		id
+	}
+}
+
+mutation WiseFinalizeEncounterBill($id: ID!, $wiseOrigin: WiseOriginInput) {
+	finalizeEncounterBill(id: $id, wiseOrigin: $wiseOrigin) {
+		id
+	}
+}
+
+mutation WiseAcceptOrder($orderId: ID!, $wiseOrigin: WiseOriginInput) {
+	acceptOrder(orderId: $orderId, wiseOrigin: $wiseOrigin) {
+		id
+		status
+	}
+}
+
+mutation WiseMarkOrderCollected($orderId: ID!, $wiseOrigin: WiseOriginInput) {
+	markOrderCollected(orderId: $orderId, wiseOrigin: $wiseOrigin) {
+		id
+		status
+	}
+}
+
+mutation WiseSaveReportToChart($chatId: ID!, $toolCallId: String!, $wiseOrigin: WiseOriginInput) {
+	saveReportToChart(chatId: $chatId, toolCallId: $toolCallId, wiseOrigin: $wiseOrigin) {
+		id
+	}
+}
+
+mutation UpdatePatient($input: UpdatePatientInput!) {
+	updatePatient(input: $input) {
+		id
+		phone
+		preferredLanguage
+		barangay
+	}
+}
+
+query WisePatientContact($id: ID!) {
+	patient(id: $id) {
+		id
+		givenName
+		familyName
+		phone
+		preferredLanguage
+		barangay
+	}
+}

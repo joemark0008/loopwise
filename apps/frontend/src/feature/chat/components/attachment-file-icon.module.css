@@ -1,0 +1,15 @@
+.cOLORSCsv {
+	color: var(--app-emerald-500);
+}
+.cOLORSJson {
+	color: var(--app-amber-500);
+}
+.cOLORSPdf {
+	color: var(--app-red-500);
+}
+.cOLORSDocx {
+	color: var(--app-blue-500);
+}
+.color {
+	color: var(--app-muted);
+}

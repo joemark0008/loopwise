@@ -1,0 +1,45 @@
+fragment ResultItemFields on ResultItem {
+	id
+	code
+	display
+	value
+	unit
+	refRange
+	flag
+	urgency
+	resultedAt
+	receivedAt
+	reviewedAt
+	orderId
+	orderStatus
+	orderPriority
+	patient {
+		id
+		givenName
+		familyName
+		birthDate
+		sex
+	}
+	sourceFacility {
+		id
+		name
+	}
+}
+
+query ResultsToReview {
+	resultsToReview {
+		...ResultItemFields
+	}
+}
+
+query PatientResults($patientId: ID!) {
+	patientResults(patientId: $patientId) {
+		...ResultItemFields
+	}
+}
+
+mutation ReviewResult($input: ReviewResultInput!) {
+	reviewResult(input: $input) {
+		...ResultItemFields
+	}
+}

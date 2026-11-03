@@ -1,0 +1,91 @@
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+.header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 1rem;
+}
+.title {
+	font-family: var(--app-font-heading);
+	font-size: 1.625rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	line-height: 1.2;
+	color: var(--app-text);
+}
+.lead {
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: var(--app-muted);
+}
+.confirmNote {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+	font-size: 0.875rem;
+	color: var(--app-text);
+}
+.confirmNote svg {
+	flex: none;
+	width: 1.125rem;
+	height: 1.125rem;
+}
+.facilitySelect {
+	min-width: 14rem;
+}
+.skeleton {
+	height: 20rem;
+}
+.description {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.375rem;
+}
+.kind {
+	font-size: 0.6875rem;
+}
+.state {
+	width: 100%;
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.switches {
+	display: flex;
+	flex: none;
+	gap: 1rem;
+}
+.switchLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.muted {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.muted svg {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.off {
+	opacity: 0.75;
+}
+.link {
+	color: var(--app-accent-text);
+	text-decoration: underline;
+}

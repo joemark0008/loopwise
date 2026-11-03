@@ -1,0 +1,28 @@
+.commandMenuDiv {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	overflow: hidden;
+}
+.commandMenuSpan {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.commandMenuSpan2 {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-muted);
+}
+.commandMenuDiv2 {
+	padding-inline: 1rem;
+	padding-block: 0.75rem;
+}
+.highlightMatchSpan {
+	--fx-font-weight: 600;
+	font-weight: 600;
+	color: var(--app-text);
+}

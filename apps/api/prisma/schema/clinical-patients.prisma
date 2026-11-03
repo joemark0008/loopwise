@@ -1,0 +1,114 @@
+// Patients, their facility identifiers, care relationships (who may see them) and encounters.
+// Every clinical row names the organization (tenant) it belongs to, so row-level security can filter on it.
+
+/// The patient index entry: one row per person across facilities. Identifiers are per facility (`PatientIdentifier`).
+model Patient {
+  id                String               @id @default(uuid())
+  givenName         String               @map("given_name")
+  familyName        String               @map("family_name")
+  birthDate         DateTime             @map("birth_date") @db.Date
+  sex               Sex
+  phone             String?
+  preferredLanguage String               @default("en") @map("preferred_language")
+  /// Barangay of residence (analytics breakdowns); not captured by the registration form yet.
+  barangay          String?
+  consentAt         DateTime?            @map("consent_at") @db.Timestamp(6)
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  identifiers       PatientIdentifier[]
+  careRelationships CareRelationship[]
+  encounters        Encounter[]
+  orders            ClinicalOrder[]
+  results           Result[]
+  hl7Messages       Hl7Message[]
+  cases             CareCase[]
+  messages          PatientMessage[]
+  chats             Chat[]
+  vitalSigns        VitalSigns[]
+  diagnoses         EncounterDiagnosis[]
+  allergies         PatientAllergy[]
+  documents         ClinicalDocument[]
+  prescriptions     Prescription[]
+  certificates      MedicalCertificate[]
+  bills             EncounterBill[]
+
+  @@index([familyName, givenName, birthDate], map: "patient_name_birth_date_idx")
+  @@map("patient")
+}
+
+model PatientIdentifier {
+  id           String       @id @default(uuid())
+  patientId    String       @map("patient_id")
+  orgId        String       @map("org_id")
+  /// The identifier system, e.g. `MRN` or `PhilHealth`.
+  system       String
+  value        String
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "patient_identifier_patient_id_patient_id_fk")
+  organization Organization @relation(fields: [orgId], references: [id], onUpdate: NoAction, map: "patient_identifier_org_id_organization_id_fk")
+
+  @@unique([orgId, system, value], map: "patient_identifier_org_system_value_unique")
+  @@index([patientId], map: "patient_identifier_patientId_idx")
+  @@map("patient_identifier")
+}
+
+/// Why a user may see a patient (deny by default, DESIGN.md §10). `break_glass` rows carry a reason and expire.
+model CareRelationship {
+  id           String                 @id @default(uuid())
+  patientId    String                 @map("patient_id")
+  userId       String                 @map("user_id")
+  orgId        String                 @map("org_id")
+  reason       CareRelationshipReason
+  note         String?
+  expiresAt    DateTime?              @map("expires_at") @db.Timestamp(6)
+  createdAt    DateTime               @default(now()) @map("created_at") @db.Timestamp(6)
+  patient      Patient                @relation(fields: [patientId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "care_relationship_patient_id_patient_id_fk")
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "care_relationship_user_id_user_id_fk")
+  organization Organization           @relation(fields: [orgId], references: [id], onUpdate: NoAction, map: "care_relationship_org_id_organization_id_fk")
+
+  @@index([userId, patientId], map: "care_relationship_userId_patientId_idx")
+  @@index([patientId], map: "care_relationship_patientId_idx")
+  @@map("care_relationship")
+}
+
+/// A visit, and its record: the SOAP note and plan here, vitals, diagnoses, orders, documents and the bill beside it.
+model Encounter {
+  id                  String               @id @default(uuid())
+  patientId           String               @map("patient_id")
+  doctorId            String               @map("doctor_id")
+  orgId               String               @map("org_id")
+  /// The chief complaint.
+  reason              String?
+  notes               String?
+  /// History of present illness (subjective).
+  history             String?
+  /// Physical examination findings (objective).
+  physicalExam        String?              @map("physical_exam")
+  assessment          String?
+  plan                String?
+  /// What the patient is told to do, in plain words.
+  patientInstructions String?              @map("patient_instructions")
+  followUpOn          DateTime?            @map("follow_up_on") @db.Date
+  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  /// Bumped by a trigger on every update; a Wise card confirms against the version it drafted from.
+  version             Int                  @default(1)
+  /// The chart chat Wise drafted the encounter in (`propose_encounter`); a plain id, so the chat can be deleted.
+  sourceChatId        String?              @map("source_chat_id")
+  startedAt           DateTime             @default(now()) @map("started_at") @db.Timestamp(6)
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamp(6)
+  patient             Patient              @relation(fields: [patientId], references: [id], onUpdate: NoAction, map: "encounter_patient_id_patient_id_fk")
+  doctor              User                 @relation(fields: [doctorId], references: [id], onUpdate: NoAction, map: "encounter_doctor_id_user_id_fk")
+  organization        Organization         @relation(fields: [orgId], references: [id], onUpdate: NoAction, map: "encounter_org_id_organization_id_fk")
+  orders              ClinicalOrder[]
+  vitalSigns          VitalSigns[]
+  diagnoses           EncounterDiagnosis[]
+  prescriptions       Prescription[]
+  certificates        MedicalCertificate[]
+  bills               EncounterBill[]
+
+  /// The target of the (encounter_id, patient_id) foreign keys of the encounter's record rows.
+  @@unique([id, patientId], map: "encounter_id_patient_id_unique")
+  @@index([patientId], map: "encounter_patientId_idx")
+  @@index([doctorId, startedAt], map: "encounter_doctorId_startedAt_idx")
+  @@map("encounter")
+}

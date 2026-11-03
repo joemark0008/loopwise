@@ -1,0 +1,311 @@
+.record {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1rem;
+	border: 1px solid var(--app-line);
+	border-radius: 0.75rem;
+	background-color: var(--app-surface);
+	box-shadow: var(--app-shadow-1);
+}
+.recordSkeleton {
+	height: 12rem;
+	width: 100%;
+}
+.recordError {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+.backToChart {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	width: fit-content;
+	min-height: 2.25rem;
+	font-size: var(--app-text-sm);
+	color: var(--app-muted);
+
+	&:hover {
+		color: var(--app-text);
+	}
+
+	& svg {
+		width: 1rem;
+		height: 1rem;
+	}
+}
+.encounterHeader {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+.encounterTitle {
+	margin: 0;
+	font-family: var(--app-font-heading);
+	font-size: var(--app-text-xl);
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.encounterSubtitle {
+	font-size: 0.875rem;
+	color: var(--app-muted);
+}
+.chipRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.375rem;
+}
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.125rem 0.5rem;
+	border: 1px solid var(--app-line);
+	border-radius: 999px;
+	font-size: 0.75rem;
+	color: var(--app-text);
+	background: var(--app-inset);
+}
+.chipAllergy {
+	border-color: color-mix(in oklab, var(--app-danger) 40%, transparent);
+	color: var(--app-danger);
+	background: color-mix(in oklab, var(--app-danger) 8%, transparent);
+}
+.chipLabel {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.tabPanel {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	padding-top: 1rem;
+}
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.sectionHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+.sectionTitle {
+	font-size: 0.9375rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.muted {
+	color: var(--app-muted);
+	font-size: var(--app-text-sm);
+}
+.fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	gap: 0.75rem 1rem;
+}
+.field {
+	display: grid;
+	gap: 0.3125rem;
+	align-content: start;
+}
+.field[data-wide] {
+	grid-column: 1 / -1;
+}
+.fieldLabel {
+	font-size: 0.8125rem;
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.fieldUnit {
+	font-weight: 400;
+	color: var(--app-muted);
+}
+.fieldError {
+	font-size: 0.75rem;
+	color: var(--app-danger);
+}
+.control {
+	width: 100%;
+}
+/* A form's actions: the primary one last, on the right (docs/design-system.md). */
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.actionsEnd {
+	justify-content: flex-end;
+}
+.list {
+	display: flex;
+	flex-direction: column;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+}
+.list > li + li {
+	border-top: 1px solid var(--app-line);
+}
+.listRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.75rem;
+	padding: 0.625rem 0.75rem;
+	font-size: 0.875rem;
+}
+.listRow[data-voided] {
+	color: var(--app-muted);
+}
+.listRow[data-voided] .listMain {
+	text-decoration: line-through;
+}
+.listMain {
+	flex: 1 1 14rem;
+	min-width: 0;
+}
+.code {
+	font-family: var(--app-font-mono, ui-monospace, monospace);
+	font-size: 0.8125rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--app-text-sm);
+	font-variant-numeric: tabular-nums;
+}
+.table th,
+.table td {
+	height: var(--app-row-height);
+	padding: 0.375rem 0.625rem;
+	border-bottom: 1px solid var(--app-line);
+	text-align: left;
+	white-space: nowrap;
+}
+.table th {
+	height: auto;
+	font-size: var(--app-text-xs);
+	--fx-font-weight: 600;
+	font-weight: 600;
+	color: var(--app-muted);
+}
+.table [data-numeric] {
+	text-align: right;
+}
+.unit {
+	font-weight: 400;
+}
+.table tr[data-voided] td {
+	color: var(--app-muted);
+	text-decoration: line-through;
+}
+.tableScroll {
+	overflow-x: auto;
+}
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 0.875rem 1rem;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+	background: var(--app-surface);
+}
+.cardHeader {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.cardTitle {
+	font-size: 0.875rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.itemRows {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.itemRow {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	padding: 0.75rem;
+	border: 1px dashed var(--app-line-strong);
+	border-radius: var(--app-radius);
+}
+.rxLines {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	margin: 0;
+	padding-left: 1.25rem;
+	font-size: 0.875rem;
+}
+/* An allergy warning stops the clinician: critical, with its sign, and the override inside it. */
+.warning {
+	padding: 0.625rem 0.75rem 0.625rem 2.25rem;
+	position: relative;
+	border: 1px solid var(--app-critical-line);
+	border-radius: var(--app-radius);
+	background: var(--app-critical-bg);
+	color: var(--app-critical);
+	font-size: var(--app-text-sm);
+}
+.warningIcon {
+	position: absolute;
+	top: 0.6875rem;
+	left: 0.75rem;
+	width: 1rem;
+	height: 1rem;
+}
+.suggestions {
+	display: flex;
+	flex-direction: column;
+	max-height: 14rem;
+	overflow-y: auto;
+	margin: 0;
+	padding: 0.25rem;
+	list-style: none;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+	background: var(--app-surface);
+}
+.suggestion {
+	display: flex;
+	gap: 0.5rem;
+	width: 100%;
+	padding: 0.375rem 0.5rem;
+	border-radius: calc(var(--app-radius) - 0.125rem);
+	font-size: 0.8125rem;
+	text-align: left;
+}
+.suggestion:hover,
+.suggestion:focus-visible {
+	background: var(--app-fill);
+}
+.checkboxRow {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.8125rem;
+}
+
+.inlineLabel {
+	font-size: var(--app-text-sm);
+	font-weight: 500;
+	color: var(--app-text);
+}

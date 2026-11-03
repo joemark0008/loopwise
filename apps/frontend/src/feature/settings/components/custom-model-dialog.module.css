@@ -1,0 +1,88 @@
+.customModelDialogDialogContent {
+	@media (width >= 40rem) {
+		max-width: 28rem;
+	}
+}
+.customModelDialogDialogDescription {
+	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	word-break: break-all;
+}
+.customModelDialogDiv {
+	display: grid;
+	gap: 1rem;
+}
+.customModelDialogDiv2 {
+	display: grid;
+	gap: 0.5rem;
+}
+.customModelDialogLabel {
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.customModelDialogSpan {
+	margin-left: 0.25rem;
+	--fx-font-weight: 400;
+	font-weight: 400;
+	color: var(--app-muted);
+}
+.customModelDialogDiv3 {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+}
+.customModelDialogSpan2 {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-muted);
+}
+.customModelDialogDiv4 {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+.customModelDialogDiv5 {
+	display: grid;
+	gap: 0.25rem;
+}
+.customModelDialogLabel2 {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-muted);
+}
+.customModelDialogDiv6 {
+	position: relative;
+}
+.customModelDialogSpan3 {
+	position: absolute;
+	top: calc(1 / 2 * 100%);
+	left: 0.625rem;
+	--fx-translate-y: calc(calc(1 / 2 * 100%) * -1);
+	translate: var(--fx-translate-x) var(--fx-translate-y);
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-muted);
+}
+.customModelDialogInput {
+	padding-left: 1.5rem;
+}
+.customModelDialogDiv7 {
+	display: grid;
+	gap: 0.5rem;
+	border-top-style: var(--fx-border-style);
+	border-top-width: 1px;
+	border-color: var(--app-line);
+	padding-top: 1rem;
+}
+.customModelDialogDiv8 {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	padding-top: 0.5rem;
+}

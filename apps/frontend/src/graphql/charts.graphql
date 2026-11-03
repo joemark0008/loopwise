@@ -1,0 +1,22 @@
+query ChartDownload($toolCallId: String!) {
+	chartDownload(toolCallId: $toolCallId)
+}
+
+mutation UpdateChartConfig($toolCallId: String!, $config: JSON!) {
+	updateChartConfig(toolCallId: $toolCallId, config: $config)
+}
+
+mutation UpdateMapConfig($mapId: String!, $config: JSON!) {
+	updateMapConfig(mapId: $mapId, config: $config)
+}
+
+query ChartPlugins {
+	chartPlugins
+}
+
+query ChartPluginSource($type: String!, $version: String!) {
+	chartPluginSource(type: $type, version: $version) {
+		source
+		version
+	}
+}

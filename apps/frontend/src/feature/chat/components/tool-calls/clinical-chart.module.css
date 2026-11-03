@@ -1,0 +1,59 @@
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.75rem 0.875rem;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+	background: var(--app-surface);
+}
+.header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+.header svg {
+	width: 0.9375rem;
+	height: 0.9375rem;
+	color: var(--app-muted);
+}
+.title {
+	font-family: var(--app-font-heading);
+	font-size: 0.875rem;
+	font-weight: 700;
+}
+.meta {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.toggle {
+	margin-left: auto;
+}
+.chart {
+	min-height: 15rem;
+}
+.empty {
+	margin: 0;
+	padding: 1.5rem 0;
+	text-align: center;
+	font-size: 0.8125rem;
+	color: var(--app-muted);
+}
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+}
+.table th {
+	padding: 0.25rem 0.5rem;
+	border-bottom: 1px solid var(--app-line-strong);
+	text-align: left;
+	font-weight: 600;
+	color: var(--app-muted);
+}
+.table td {
+	padding: 0.25rem 0.5rem;
+	border-bottom: 1px solid var(--app-line);
+}

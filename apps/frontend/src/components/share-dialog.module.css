@@ -1,0 +1,297 @@
+.shareLoadingDialogDiv {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-block: 1.5rem;
+}
+.shareLoadingDialogLoader2 {
+	width: 1rem;
+	height: 1rem;
+	animation: var(--animate-spin);
+	color: var(--app-muted);
+}
+.shareErrorDialogDialogContent {
+	@media (width >= 40rem) {
+		max-width: 28rem;
+	}
+}
+.shareErrorDialogDialogDescription {
+	color: var(--app-danger);
+}
+.visibilityPickerDiv {
+	display: flex;
+	gap: 0.75rem;
+}
+.visibilityPickerGlobe {
+	width: 1.25rem;
+	height: 1.25rem;
+}
+.notifyPeopleToggleDiv {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	border-radius: var(--app-radius);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	padding: 0.75rem;
+}
+.notifyPeopleToggleDiv2 {
+	display: flex;
+	flex-direction: column;
+}
+.notifyPeopleToggleLabel {
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.notifyPeopleToggleP {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-muted);
+}
+.visibilitySummaryDiv {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	border-radius: var(--app-radius);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	padding: 0.75rem;
+}
+.visibilitySummaryDiv2 {
+	display: flex;
+	width: 2rem;
+	height: 2rem;
+	align-items: center;
+	justify-content: center;
+	border-radius: calc(infinity * 1px);
+}
+.visibilitySummaryGlobe {
+	width: 1rem;
+	height: 1rem;
+}
+.visibilitySummaryDiv3 {
+	min-width: 0px;
+	flex: 1;
+}
+.manageShareFooterDialogFooter {
+	flex-direction: row;
+	@media (width >= 40rem) {
+		justify-content: space-between;
+	}
+}
+.manageShareFooterButton {
+	gap: 0.375rem;
+	border-radius: calc(infinity * 1px);
+	color: var(--app-danger);
+	@media (hover: hover) {
+		&:hover {
+			color: var(--app-danger);
+		}
+	}
+}
+.manageShareFooterLoader2 {
+	width: 0.875rem;
+	height: 0.875rem;
+	animation: var(--animate-spin);
+}
+.manageShareFooterUnlink {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.manageShareFooterDiv {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.manageShareFooterButton2 {
+	gap: 0.375rem;
+	border-radius: calc(infinity * 1px);
+}
+.visibilityOptionButton {
+	display: flex;
+	flex: 1;
+	cursor: pointer;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.375rem;
+	border-radius: var(--app-radius);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	padding-top: 0.75rem;
+	padding-bottom: 0.75rem;
+	--fx-shadow: 0 1px 2px 0 var(--fx-shadow-color, rgb(0 0 0 / 0.05));
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+}
+.visibilityOptionButton2 {
+	border-color: var(--app-primary-bg);
+}
+.visibilityOptionButton3 {
+	border-color: var(--app-line);
+	@media (hover: hover) {
+		&:hover {
+			border-color: var(--app-muted);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			border-color: color-mix(in oklab, var(--app-muted) 30%, transparent);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-fill);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-fill) 50%, transparent);
+		}
+	}
+}
+.visibilityOptionDiv {
+	color: var(--app-text);
+}
+.visibilityOptionSpan {
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.memberPickerDiv {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.memberPickerSearchIcon {
+	position: absolute;
+	width: 1rem;
+	height: 1rem;
+	--fx-translate-x: 0.5rem;
+	translate: var(--fx-translate-x) var(--fx-translate-y);
+	--fx-translate-y: 0.5rem;
+	translate: var(--fx-translate-x) var(--fx-translate-y);
+}
+.memberPickerInput {
+	height: 2rem;
+	background-color: var(--app-bg);
+	padding-left: 2rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+}
+.memberPickerDiv2 {
+	max-height: 12rem;
+	overflow-y: auto;
+}
+.memberPickerDiv3 {
+	padding-block: 1.5rem;
+	text-align: center;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.memberRowDiv {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.memberRowDiv2 {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-muted);
+}
+.groupRowDiv {
+	display: flex;
+	width: 1.5rem;
+	height: 1.5rem;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-radius: calc(infinity * 1px);
+	background-color: var(--app-fill);
+}
+.pickerRowButton {
+	display: flex;
+	width: 100%;
+	cursor: pointer;
+	align-items: center;
+	gap: 0.75rem;
+	border-radius: var(--app-radius);
+	padding-inline: 0.75rem;
+	padding-block: 0.5rem;
+	text-align: left;
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+}
+.pickerRowButton2 {
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-fill);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-fill) 50%, transparent);
+		}
+	}
+}
+.pickerRowDiv {
+	display: flex;
+	width: 1.25rem;
+	height: 1.25rem;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-radius: calc(infinity * 1px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+}
+.pickerRowDiv2 {
+	border-color: var(--app-primary-bg);
+	background-color: var(--app-primary-bg);
+	color: var(--app-white);
+}
+.pickerRowDiv3 {
+	border-color: color-mix(in oklab, var(--app-muted) 30%, transparent);
+}
+.pickerRowCheck {
+	width: 0.75rem;
+	height: 0.75rem;
+}
+.pickerSectionLabelDiv {
+	padding-inline: 0.75rem;
+	padding-top: 0.5rem;
+	padding-bottom: 0.25rem;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-muted);
+}
+.state100 {
+	@media (width >= 40rem) {
+		max-width: 28rem;
+	}
+}

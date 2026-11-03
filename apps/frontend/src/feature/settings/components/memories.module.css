@@ -1,0 +1,42 @@
+.settingsMemoriesDiv {
+	:where(& > :not(:last-child)) {
+		--fx-space-y-reverse: 0;
+		margin-block-start: calc(0.25rem * var(--fx-space-y-reverse));
+		margin-block-end: calc(0.25rem * calc(1 - var(--fx-space-y-reverse)));
+	}
+}
+.settingsMemoriesDiv2 {
+	display: flex;
+	flex-direction: column;
+	:where(& > :not(:last-child)) {
+		--fx-divide-y-reverse: 0;
+		border-bottom-style: var(--fx-border-style);
+		border-top-style: var(--fx-border-style);
+		border-top-width: calc(1px * var(--fx-divide-y-reverse));
+		border-bottom-width: calc(1px * calc(1 - var(--fx-divide-y-reverse)));
+	}
+}
+.settingsMemoriesSettingsMemorySkeleton {
+	padding-top: 0px;
+}
+.settingsMemoriesSettingsMemorySkeleton2 {
+	padding-bottom: 0px;
+}
+.settingsMemoriesSettingsMemoryItem {
+	&:first-child {
+		padding-top: 0px;
+	}
+	&:last-child {
+		padding-bottom: 0px;
+	}
+}
+.settingsMemoriesDialogContent {
+	padding: 1.5rem;
+}
+.settingsMemoriesDiv3 {
+	:where(& > :not(:last-child)) {
+		--fx-space-y-reverse: 0;
+		margin-block-start: calc(1rem * var(--fx-space-y-reverse));
+		margin-block-end: calc(1rem * calc(1 - var(--fx-space-y-reverse)));
+	}
+}

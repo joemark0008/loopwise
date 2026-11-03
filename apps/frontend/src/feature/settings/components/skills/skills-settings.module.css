@@ -1,0 +1,68 @@
+.skillDialog {
+	max-width: 40rem;
+}
+.skillForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.skillField {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+.skillLabel {
+	font-size: 0.75rem;
+	font-weight: 500;
+}
+.skillHint {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.skillMono {
+	font-family: var(--app-font-mono);
+}
+.skillActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.skillNotice {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	font-size: 0.8125rem;
+	color: var(--app-muted);
+}
+.skillSkeleton {
+	height: 6rem;
+	width: 100%;
+}
+.skillList {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.skillRow {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+.skillIcon {
+	width: 1rem;
+	height: 1rem;
+	flex-shrink: 0;
+	color: var(--app-muted);
+}
+.skillText {
+	flex: 1;
+	min-width: 0;
+}
+.skillName {
+	font-family: var(--app-font-mono);
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: var(--app-text);
+}

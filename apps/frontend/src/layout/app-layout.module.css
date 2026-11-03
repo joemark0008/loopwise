@@ -1,0 +1,58 @@
+.shell {
+	min-width: 0;
+	flex: 1;
+}
+
+.main {
+	display: flex;
+	height: 100dvh;
+	min-height: 0;
+	flex-direction: column;
+	overflow: hidden;
+	background-color: var(--app-surface);
+}
+
+.page {
+	display: flex;
+	min-width: 0;
+	min-height: 0;
+	flex: 1;
+}
+
+.backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	border: 0;
+	background-color: rgb(0 0 0 / 50%);
+	cursor: default;
+}
+
+.skipLink {
+	position: fixed;
+	top: 0.5rem;
+	left: 0.5rem;
+	z-index: 1000;
+	padding: 0.625rem 1rem;
+	border-radius: 0.5rem;
+	background-color: var(--app-primary-bg);
+	color: var(--app-primary-fg);
+	font-weight: 600;
+	transform: translateY(-200%);
+
+	&:focus {
+		transform: none;
+	}
+}
+
+.main:focus {
+	outline: none;
+}
+
+.navbar {
+	border-inline-end: 0;
+
+	@mixin smaller-than $mantine-breakpoint-sm {
+		width: 15rem;
+	}
+}

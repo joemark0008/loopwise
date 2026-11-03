@@ -1,0 +1,59 @@
+.imageLightboxDiv {
+	position: fixed;
+	inset: 0px;
+	z-index: 50;
+	display: flex;
+	animation: enter var(--fx-animation-duration, var(--fx-duration, 0.15s)) var(--fx-ease, ease)
+		var(--fx-animation-delay, 0s) var(--fx-animation-iteration-count, 1) var(--fx-animation-direction, normal)
+		var(--fx-animation-fill-mode, none);
+	align-items: center;
+	justify-content: center;
+	background-color: color-mix(in oklab, var(--app-black) 80%, transparent);
+	--fx-duration: 150ms;
+	transition-duration: 150ms;
+	--fx-enter-opacity: 0;
+}
+.imageLightboxButton {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	z-index: 10;
+	display: flex;
+	width: 2.25rem;
+	height: 2.25rem;
+	cursor: pointer;
+	align-items: center;
+	justify-content: center;
+	border-radius: calc(infinity * 1px);
+	background-color: color-mix(in oklab, var(--app-white) 10%, transparent);
+	color: var(--app-white);
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in srgb, var(--app-white) 20%, transparent);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-white) 20%, transparent);
+		}
+	}
+}
+.imageLightboxX {
+	width: 1.25rem;
+	height: 1.25rem;
+}
+.imageLightboxImg {
+	max-height: 90vh;
+	max-width: 90vw;
+	border-radius: var(--app-radius);
+	object-fit: contain;
+	--fx-shadow: 0 25px 50px -12px var(--fx-shadow-color, rgb(0 0 0 / 0.25));
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+}

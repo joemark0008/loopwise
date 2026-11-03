@@ -1,0 +1,78 @@
+.savedPromptsButton {
+	margin-left: auto;
+}
+.savedPromptsPlus {
+	width: 1rem;
+	height: 1rem;
+}
+.savedPromptsSavedPromptSkeleton {
+	padding-top: 0px;
+}
+.savedPromptsSavedPromptSkeleton2 {
+	padding-bottom: 0px;
+}
+.savedPromptsSavedPromptItem {
+	&:first-child {
+		padding-top: 0px;
+	}
+	&:last-child {
+		padding-bottom: 0px;
+	}
+}
+.promptDialogDialogContent {
+	padding: 1.5rem;
+}
+.promptDialogForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.promptDialogDialogHeader {
+	margin-bottom: -1rem;
+	border-bottom-style: var(--fx-border-style);
+	border-bottom-width: 1px;
+	padding-bottom: 1rem;
+}
+.promptDialogDialogTitle {
+	width: 100%;
+	font-size: 1rem;
+	line-height: var(--fx-leading, calc(1.5 / 1));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.promptDialogNakedInput {
+	width: 100%;
+}
+.promptDialogTextarea {
+	field-sizing: fixed;
+	width: 100%;
+	border-radius: 0;
+	--fx-border-style: none;
+	border-style: none;
+	background-color: transparent;
+	padding: 0px;
+	padding-top: 1rem;
+	--fx-shadow: 0 0 #0000;
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+	&::placeholder {
+		--fx-font-weight: 400;
+		font-weight: 400;
+	}
+	&:focus-visible {
+		--fx-ring-shadow: var(--fx-ring-inset,) 0 0 0 calc(0px + var(--fx-ring-offset-width))
+			var(--fx-ring-color, currentcolor);
+		box-shadow:
+			var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+			var(--fx-shadow);
+	}
+	&:focus-visible {
+		--fx-ring-offset-width: 0px;
+		--fx-ring-offset-shadow: var(--fx-ring-inset,) 0 0 0 var(--fx-ring-offset-width) var(--fx-ring-offset-color);
+	}
+}
+.deletePromptDialogAlertDialogHeader {
+	padding: 0.5rem;
+}

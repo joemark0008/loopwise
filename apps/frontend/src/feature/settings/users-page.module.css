@@ -1,0 +1,106 @@
+.usersPageHeader {
+	margin-bottom: 1.5rem;
+}
+.usersPageH1 {
+	font-size: 1.5rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.usersPageP {
+	margin-top: 0.25rem;
+	font-size: 0.875rem;
+	color: var(--app-muted);
+}
+.usersPageIcon {
+	width: 1rem;
+	height: 1rem;
+}
+.usersPageSkeleton {
+	height: 6rem;
+	margin: 1rem;
+}
+.usersPageError {
+	margin-top: 0.75rem;
+	font-size: 0.8125rem;
+	color: var(--app-danger);
+}
+.userRow {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 1rem;
+}
+.userRowIdentity {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+.userRowName {
+	font-size: 0.875rem;
+	--fx-font-weight: 500;
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.userRowYou {
+	color: var(--app-muted);
+	--fx-font-weight: 400;
+	font-weight: 400;
+}
+.userRowEmail {
+	font-size: 0.8125rem;
+	color: var(--app-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.userRowStatus {
+	flex-shrink: 0;
+}
+.userRowRole {
+	width: 7rem;
+	flex-shrink: 0;
+}
+.userRowActionsPlaceholder {
+	width: 2rem;
+	flex-shrink: 0;
+}
+.createUserForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.createUserRole {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+.createUserLabel {
+	font-size: 0.875rem;
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.createUserHint {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.linkRow {
+	display: flex;
+	gap: 0.5rem;
+}
+.linkInput {
+	flex: 1;
+	font-family: var(--app-font-mono);
+	font-size: 0.75rem;
+}
+
+@container (max-width: 36rem) {
+	.userRow {
+		flex-wrap: wrap;
+	}
+	.userRowIdentity {
+		flex-basis: 100%;
+	}
+}

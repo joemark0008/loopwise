@@ -1,0 +1,72 @@
+fragment PatientFields on Patient {
+	id
+	givenName
+	familyName
+	birthDate
+	sex
+	phone
+	preferredLanguage
+	consentAt
+	createdAt
+	identifiers {
+		system
+		value
+		facility {
+			id
+			name
+		}
+	}
+}
+
+fragment PatientDuplicateFields on PatientDuplicate {
+	patientId
+	match
+	visible
+	matchedOn
+	displayName
+	birthYear
+	facilityNames
+}
+
+query MyFacilities {
+	myFacilities {
+		id
+		name
+		type
+	}
+}
+
+query SearchPatients($input: SearchPatientsInput!) {
+	searchPatients(input: $input) {
+		...PatientFields
+	}
+}
+
+query Patient($id: ID!) {
+	patient(id: $id) {
+		...PatientFields
+	}
+}
+
+query CheckPatientDuplicates($input: PatientDraftInput!) {
+	checkPatientDuplicates(input: $input) {
+		...PatientDuplicateFields
+	}
+}
+
+mutation RegisterPatient($input: RegisterPatientInput!) {
+	registerPatient(input: $input) {
+		patient {
+			...PatientFields
+		}
+		duplicates {
+			...PatientDuplicateFields
+		}
+	}
+}
+
+mutation LinkExistingPatient($input: LinkExistingPatientInput!) {
+	linkExistingPatient(input: $input) {
+		...PatientFields
+	}
+}

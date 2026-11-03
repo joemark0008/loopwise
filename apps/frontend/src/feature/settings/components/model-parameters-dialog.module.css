@@ -1,0 +1,17 @@
+.modelParametersDialogDialogContent {
+	@media (width >= 40rem) {
+		max-width: 28rem;
+	}
+}
+.modelParametersDialogDialogDescription {
+	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	word-break: break-all;
+}
+.modelParametersDialogDiv {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	padding-top: 0.5rem;
+}

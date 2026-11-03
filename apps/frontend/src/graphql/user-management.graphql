@@ -1,0 +1,62 @@
+fragment ManagedUserFields on ManagedUser {
+	id
+	name
+	email
+	role
+	status
+	createdAt
+}
+
+query CurrentOrgRole {
+	currentOrgRole
+}
+
+query ManagedUsers {
+	managedUsers {
+		...ManagedUserFields
+	}
+}
+
+mutation CreateUser($input: CreateUserInput!) {
+	createUser(input: $input) {
+		url
+		expiresAt
+		user {
+			...ManagedUserFields
+		}
+	}
+}
+
+mutation CreatePasswordLink($userId: ID!) {
+	createPasswordLink(userId: $userId) {
+		url
+		expiresAt
+		user {
+			...ManagedUserFields
+		}
+	}
+}
+
+mutation UpdateUserRole($input: UpdateUserRoleInput!) {
+	updateUserRole(input: $input) {
+		...ManagedUserFields
+	}
+}
+
+mutation SetUserActive($userId: ID!, $active: Boolean!) {
+	setUserActive(userId: $userId, active: $active) {
+		...ManagedUserFields
+	}
+}
+
+query PasswordLink($token: String!) {
+	passwordLink(token: $token) {
+		name
+		email
+		isInvite
+	}
+}
+
+mutation SetPasswordWithLink($input: SetPasswordWithLinkInput!) {
+	setPasswordWithLink(input: $input)
+}

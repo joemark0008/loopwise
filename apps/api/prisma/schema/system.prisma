@@ -1,0 +1,161 @@
+// Platform plumbing carried over from quarry: logs, activity, analytics events, notifications, locks and automations.
+
+model Activity {
+  id            String      @id @default(uuid())
+  projectId     String      @map("project_id")
+  userId        String?     @map("user_id")
+  type          String
+  status        String      @default("completed")
+  trigger       String      @default("system")
+  storyId       String?     @map("story_id")
+  chatId        String?     @map("chat_id")
+  sharedStoryId String?     @map("shared_story_id")
+  sharedChatId  String?     @map("shared_chat_id")
+  payload       Json?
+  errorMessage  String?     @map("error_message")
+  startedAt     DateTime    @default(now()) @map("started_at") @db.Timestamp(6)
+  completedAt   DateTime?   @map("completed_at") @db.Timestamp(6)
+  chat          Chat?       @relation(fields: [chatId], references: [id], onUpdate: NoAction, map: "activity_chat_id_chat_id_fk")
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "activity_project_id_project_id_fk")
+  sharedChat    SharedChat? @relation(fields: [sharedChatId], references: [id], onUpdate: NoAction, map: "activity_shared_chat_id_shared_chat_id_fk")
+  user          User?       @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "activity_user_id_user_id_fk")
+
+  @@index([chatId], map: "activity_chatId_idx")
+  @@index([projectId], map: "activity_projectId_idx")
+  @@index([sharedChatId], map: "activity_sharedChatId_idx")
+  @@index([sharedStoryId], map: "activity_sharedStoryId_idx")
+  @@index([startedAt], map: "activity_startedAt_idx")
+  @@index([storyId], map: "activity_storyId_idx")
+  @@index([type])
+  @@index([userId], map: "activity_userId_idx")
+  @@map("activity")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model AnalyticsEvent {
+  id            String      @id @default(uuid())
+  projectId     String      @map("project_id")
+  type          String
+  assetType     String      @map("asset_type")
+  actorUserId   String?     @map("actor_user_id")
+  chatId        String?     @map("chat_id")
+  storyId       String?     @map("story_id")
+  sharedChatId  String?     @map("shared_chat_id")
+  sharedStoryId String?     @map("shared_story_id")
+  metadata      Json?
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  user          User?       @relation(fields: [actorUserId], references: [id], onUpdate: NoAction, map: "analytics_event_actor_user_id_user_id_fk")
+  chat          Chat?       @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "analytics_event_chat_id_chat_id_fk")
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "analytics_event_project_id_project_id_fk")
+  sharedChat    SharedChat? @relation(fields: [sharedChatId], references: [id], onUpdate: NoAction, map: "analytics_event_shared_chat_id_shared_chat_id_fk")
+
+  @@index([actorUserId], map: "analytics_event_actorUserId_idx")
+  @@index([chatId], map: "analytics_event_chatId_idx")
+  @@index([projectId], map: "analytics_event_projectId_idx")
+  @@index([projectId, type, assetType, storyId], map: "analytics_event_project_type_asset_story_idx")
+  @@index([sharedChatId], map: "analytics_event_sharedChatId_idx")
+  @@index([sharedStoryId], map: "analytics_event_sharedStoryId_idx")
+  @@index([storyId], map: "analytics_event_storyId_idx")
+  @@index([type, createdAt], map: "analytics_event_type_createdAt_idx")
+  @@map("analytics_event")
+}
+
+model Automation {
+  id                  String          @id @default(uuid())
+  projectId           String          @map("project_id")
+  userId              String          @map("user_id")
+  title               String
+  prompt              String
+  scheduleDescription String?         @map("schedule_description")
+  timezone            String?
+  modelProvider       String?         @map("model_provider")
+  modelId             String?         @map("model_id")
+  mcpEnabled          Boolean         @default(true) @map("mcp_enabled")
+  mcpServers          Json?           @map("mcp_servers")
+  integrations        Json            @default("{}")
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  webhookEnabled      Boolean         @default(false) @map("webhook_enabled")
+  project             Project         @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "automation_project_id_project_id_fk")
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "automation_user_id_user_id_fk")
+  automationRuns      AutomationRun[]
+
+  @@index([projectId], map: "automation_projectId_idx")
+  @@index([userId], map: "automation_userId_idx")
+  @@map("automation")
+}
+
+model AutomationRun {
+  id                 String     @id @default(uuid())
+  automationId       String     @map("automation_id")
+  chatId             String?    @map("chat_id")
+  status             String     @default("running")
+  startedAt          DateTime   @default(now()) @map("started_at") @db.Timestamp(6)
+  completedAt        DateTime?  @map("completed_at") @db.Timestamp(6)
+  errorMessage       String?    @map("error_message")
+  integrationResults Json       @default("[]") @map("integration_results")
+  readAt             DateTime?  @map("read_at") @db.Timestamp(6)
+  automation         Automation @relation(fields: [automationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "automation_run_automation_id_automation_id_fk")
+  chat               Chat?      @relation(fields: [chatId], references: [id], onUpdate: NoAction, map: "automation_run_chat_id_chat_id_fk")
+
+  @@index([automationId], map: "automation_run_automationId_idx")
+  @@index([chatId], map: "automation_run_chatId_idx")
+  @@index([status])
+  @@map("automation_run")
+}
+
+model KeyedLock {
+  key       String   @id
+  owner     String
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+
+  @@map("keyed_lock")
+}
+
+model Log {
+  id        String   @id @default(uuid())
+  level     String
+  message   String
+  context   Json?
+  source    String
+  projectId String?  @map("project_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "log_project_id_project_id_fk")
+
+  @@index([createdAt], map: "log_createdAt_idx")
+  @@index([level])
+  @@index([projectId], map: "log_projectId_idx")
+  @@map("log")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  projectId String    @map("project_id")
+  category  String
+  title     String
+  body      String?
+  linkUrl   String?   @map("link_url")
+  payload   Json?
+  readAt    DateTime? @map("read_at") @db.Timestamp(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "notification_project_id_project_id_fk")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "notification_user_id_user_id_fk")
+
+  @@index([createdAt], map: "notification_createdAt_idx")
+  @@index([userId, projectId, readAt], map: "notification_user_project_read_idx")
+  @@index([userId, readAt], map: "notification_user_read_idx")
+  @@map("notification")
+}
+
+model NotificationUnsubscribe {
+  userId    String   @map("user_id")
+  scope     String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "notification_unsubscribe_user_id_user_id_fk")
+
+  @@id([userId, scope], map: "notification_unsubscribe_user_id_scope_pk")
+  @@index([scope])
+  @@index([userId], map: "notification_unsubscribe_userId_idx")
+  @@map("notification_unsubscribe")
+}

@@ -1,0 +1,8 @@
+.errorMessageDiv {
+	border-radius: calc(var(--app-radius) - 2px);
+	background-color: color-mix(in oklab, var(--app-danger) 10%, transparent);
+	padding: 0.75rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-danger);
+}

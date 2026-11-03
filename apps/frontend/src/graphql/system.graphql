@@ -1,0 +1,35 @@
+query PublicConfig {
+	publicConfig {
+		quarryMode
+		enableUserLogin
+		emailVerificationEnabled
+		betaAutomationsEnabled
+		betaContextRecommendationsEnabled
+		betaStoryFiltersEnabled
+		betaSubagentsEnabled
+		betaCustomStoriesEnabled
+		version
+		authProviders {
+			google
+			github
+			gitlab
+			smtp
+		}
+	}
+}
+
+query AppVersion {
+	version {
+		version
+		commit
+		buildDate
+	}
+}
+
+query CheckUpdate {
+	checkUpdate {
+		currentVersion
+		latestVersion
+		updateAvailable
+	}
+}

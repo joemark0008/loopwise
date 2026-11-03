@@ -1,0 +1,32 @@
+.chip {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--app-line);
+	border-radius: 0.75rem;
+	background: var(--app-surface);
+}
+.icon {
+	flex: none;
+	width: 1.125rem;
+	height: 1.125rem;
+	color: var(--app-accent);
+}
+.text {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+.title {
+	overflow: hidden;
+	font-size: 0.875rem;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.meta {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}

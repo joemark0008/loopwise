@@ -1,0 +1,33 @@
+.createShareDialogDialogContent {
+	@media (width >= 40rem) {
+		max-width: 28rem;
+	}
+}
+.createShareDialogDiv {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.createShareDialogDiv2 {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.createShareDialogButton {
+	border-radius: calc(infinity * 1px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+}
+.createShareDialogButton2 {
+	gap: 0.375rem;
+	border-radius: calc(infinity * 1px);
+}
+.createShareDialogLoader2 {
+	width: 0.875rem;
+	height: 0.875rem;
+	animation: var(--animate-spin);
+}
+.createShareDialogCheck {
+	width: 0.875rem;
+	height: 0.875rem;
+}

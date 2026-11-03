@@ -1,0 +1,55 @@
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	container-type: inline-size;
+}
+.title {
+	font-family: var(--app-font-heading);
+	font-size: 1.625rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	line-height: 1.2;
+	color: var(--app-text);
+}
+.description {
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.overview {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.charts {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0.5rem;
+}
+.chartCaption {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.tokenViewTrigger {
+	margin-top: 0;
+	height: 1rem;
+	padding-inline: 0;
+	font-size: 0.75rem;
+}
+@container (min-width: 48rem) {
+	.charts {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.kpi {
+		grid-column: span 2;
+	}
+}
+@container (min-width: 72rem) {
+	.charts {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 3fr);
+	}
+	.kpi {
+		grid-column: auto;
+	}
+}

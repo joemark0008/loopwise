@@ -1,0 +1,137 @@
+// Care pathways and the cases that follow an actionable result to care: events, referrals, tasks, evidence (DESIGN.md §8).
+// Every clinical row names the organization (tenant) it belongs to, so row-level security can filter on it.
+
+/// A guideline-based care pathway (diabetes, CKD, breast screening): rules, steps, SLAs and closure requirements.
+model Pathway {
+  id                  String             @id @default(uuid())
+  key                 String             @unique(map: "pathway_key_unique")
+  name                String
+  version             Int                @default(1)
+  rules               Json
+  steps               Json
+  slas                Json
+  closureRequirements Json               @map("closure_requirements")
+  active              Boolean            @default(true)
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  cases               CareCase[]
+  evaluations         ResultEvaluation[]
+
+  @@map("pathway")
+}
+
+/// An actionable result followed through to care (DESIGN.md §8). `case` is an SQL keyword, hence the table name.
+model CareCase {
+  id                    String           @id @default(uuid())
+  patientId             String           @map("patient_id")
+  pathwayId             String           @map("pathway_id")
+  triggerResultId       String?          @map("trigger_result_id")
+  state                 CaseState        @default(open)
+  /// The state an escalated case returns to once the escalation is resolved.
+  stateBeforeEscalation CaseState?       @map("state_before_escalation")
+  urgency               Urgency          @default(routine)
+  ownerUserId           String?          @map("owner_user_id")
+  ownerOrgId            String           @map("owner_org_id")
+  dueAt                 DateTime?        @map("due_at") @db.Timestamp(6)
+  closedAt              DateTime?        @map("closed_at") @db.Timestamp(6)
+  closeReason           String?          @map("close_reason")
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  patient               Patient          @relation(fields: [patientId], references: [id], onUpdate: NoAction, map: "care_case_patient_id_patient_id_fk")
+  pathway               Pathway          @relation(fields: [pathwayId], references: [id], onUpdate: NoAction, map: "care_case_pathway_id_pathway_id_fk")
+  triggerResult         Result?          @relation(fields: [triggerResultId], references: [id], onUpdate: NoAction, map: "care_case_trigger_result_id_result_id_fk")
+  ownerUser             User?            @relation(fields: [ownerUserId], references: [id], onUpdate: NoAction, map: "care_case_owner_user_id_user_id_fk")
+  ownerOrg              Organization     @relation(fields: [ownerOrgId], references: [id], onUpdate: NoAction, map: "care_case_owner_org_id_organization_id_fk")
+  events                CaseEvent[]
+  referrals             Referral[]
+  tasks                 Task[]
+  evidence              Evidence[]
+  messages              PatientMessage[]
+
+  @@index([ownerUserId, state, dueAt], map: "care_case_ownerUserId_state_dueAt_idx")
+  @@index([ownerOrgId, state], map: "care_case_ownerOrgId_state_idx")
+  @@index([patientId], map: "care_case_patientId_idx")
+  @@map("care_case")
+}
+
+/// Append-only history of a case. Actor ids are plain columns so the record outlives the user or facility.
+model CaseEvent {
+  id          String     @id @default(uuid())
+  caseId      String     @map("case_id")
+  type        String
+  fromState   CaseState? @map("from_state")
+  toState     CaseState? @map("to_state")
+  actorType   ActorType  @map("actor_type")
+  actorUserId String?    @map("actor_user_id")
+  actorOrgId  String?    @map("actor_org_id")
+  payload     Json?
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+  case        CareCase   @relation(fields: [caseId], references: [id], onUpdate: NoAction, map: "case_event_case_id_care_case_id_fk")
+
+  @@index([caseId, createdAt], map: "case_event_caseId_createdAt_idx")
+  @@map("case_event")
+}
+
+model Referral {
+  id              String         @id @default(uuid())
+  caseId          String         @map("case_id")
+  fromOrgId       String         @map("from_org_id")
+  toOrgId         String         @map("to_org_id")
+  toUserId        String?        @map("to_user_id")
+  status          ReferralStatus @default(sent)
+  reason          String?
+  rejectionReason String?        @map("rejection_reason")
+  appointmentAt   DateTime?      @map("appointment_at") @db.Timestamp(6)
+  respondedAt     DateTime?      @map("responded_at") @db.Timestamp(6)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  case            CareCase       @relation(fields: [caseId], references: [id], onUpdate: NoAction, map: "referral_case_id_care_case_id_fk")
+  fromOrg         Organization   @relation("referral_from_org", fields: [fromOrgId], references: [id], onUpdate: NoAction, map: "referral_from_org_id_organization_id_fk")
+  toOrg           Organization   @relation("referral_to_org", fields: [toOrgId], references: [id], onUpdate: NoAction, map: "referral_to_org_id_organization_id_fk")
+  toUser          User?          @relation(fields: [toUserId], references: [id], onUpdate: NoAction, map: "referral_to_user_id_user_id_fk")
+
+  @@index([caseId], map: "referral_caseId_idx")
+  @@index([toOrgId, status], map: "referral_toOrgId_status_idx")
+  @@map("referral")
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  caseId      String       @map("case_id")
+  title       String
+  description String?
+  ownerUserId String?      @map("owner_user_id")
+  ownerOrgId  String       @map("owner_org_id")
+  dueAt       DateTime?    @map("due_at") @db.Timestamp(6)
+  status      TaskStatus   @default(open)
+  completedAt DateTime?    @map("completed_at") @db.Timestamp(6)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  case        CareCase     @relation(fields: [caseId], references: [id], onUpdate: NoAction, map: "task_case_id_care_case_id_fk")
+  ownerUser   User?        @relation(fields: [ownerUserId], references: [id], onUpdate: NoAction, map: "task_owner_user_id_user_id_fk")
+  ownerOrg    Organization @relation(fields: [ownerOrgId], references: [id], onUpdate: NoAction, map: "task_owner_org_id_organization_id_fk")
+
+  @@index([caseId], map: "task_caseId_idx")
+  @@index([ownerUserId, status, dueAt], map: "task_ownerUserId_status_dueAt_idx")
+  @@index([ownerOrgId, status], map: "task_ownerOrgId_status_idx")
+  @@map("task")
+}
+
+/// What justifies closing a case: a result, a visit note, a dispense, or a clinician sign-off with a reason.
+model Evidence {
+  id              String       @id @default(uuid())
+  caseId          String       @map("case_id")
+  type            EvidenceType
+  /// The record this evidence points at (a result, visit note or dispense id); null for a sign-off.
+  refId           String?      @map("ref_id")
+  note            String?
+  recordedById    String?      @map("recorded_by_id")
+  recordedByOrgId String       @map("recorded_by_org_id")
+  recordedAt      DateTime     @default(now()) @map("recorded_at") @db.Timestamp(6)
+  case            CareCase     @relation(fields: [caseId], references: [id], onUpdate: NoAction, map: "evidence_case_id_care_case_id_fk")
+  recordedBy      User?        @relation(fields: [recordedById], references: [id], onUpdate: NoAction, map: "evidence_recorded_by_id_user_id_fk")
+  recordedByOrg   Organization @relation(fields: [recordedByOrgId], references: [id], onUpdate: NoAction, map: "evidence_recorded_by_org_id_organization_id_fk")
+
+  @@index([caseId], map: "evidence_caseId_idx")
+  @@map("evidence")
+}

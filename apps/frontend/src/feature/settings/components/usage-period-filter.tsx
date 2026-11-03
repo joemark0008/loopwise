@@ -1,0 +1,230 @@
+import { useRef, useState } from 'react';
+import { CheckIcon, ChevronDownIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { MAX_SAVED_USAGE_PERIODS } from '@quarry/shared/usage';
+import styles from './usage-period-filter.module.css';
+import type {
+	Granularity,
+	SavedUsagePeriod,
+	SavedUsagePeriodInput,
+	UsagePeriodMode,
+	UsagePeriodSelection,
+} from '@quarry/shared/usage';
+import { SavedUsagePeriodDialog } from '@/feature/settings/components/saved-usage-period-dialog';
+import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+interface UsagePeriodFilterProps {
+	value: UsagePeriodSelection;
+	savedPeriods: SavedUsagePeriod[];
+	isLoading?: boolean;
+	error?: string;
+	onRetry?: () => void;
+	onChange: (value: UsagePeriodSelection) => void | Promise<void>;
+	onCreateSavedPeriod: (value: SavedUsagePeriodInput) => void | Promise<void>;
+	onUpdateSavedPeriod: (value: SavedUsagePeriod) => void | Promise<void>;
+	onDeleteSavedPeriod: (id: string) => void | Promise<void>;
+}
+
+const periodOptions: { value: Exclude<UsagePeriodMode, 'saved'>; label: string }[] = [
+	{ value: '24h', label: 'Last 24 hours' },
+	{ value: '15d', label: 'Last 15 days' },
+	{ value: '6m', label: 'Last 6 months' },
+];
+
+const granularityLabels: Record<Granularity, string> = {
+	hour: 'Hourly',
+	day: 'Daily',
+	month: 'Monthly',
+};
+
+export function UsagePeriodFilter({
+	value,
+	savedPeriods,
+	isLoading = false,
+	error,
+	onRetry,
+	onChange,
+	onCreateSavedPeriod,
+	onUpdateSavedPeriod,
+	onDeleteSavedPeriod,
+}: UsagePeriodFilterProps) {
+	const [isOpen, setIsOpen] = useState(false);
+	const [editingSavedPeriod, setEditingSavedPeriod] = useState<SavedUsagePeriod>();
+	const [isSavedPeriodDialogOpen, setIsSavedPeriodDialogOpen] = useState(false);
+	const [savedPeriodToDelete, setSavedPeriodToDelete] = useState<SavedUsagePeriod>();
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [deleteError, setDeleteError] = useState<string>();
+	const deletingRef = useRef(false);
+	const isSavedPeriodLimitReached = savedPeriods.length >= MAX_SAVED_USAGE_PERIODS;
+
+	const openSavedPeriodDialog = (savedPeriod?: SavedUsagePeriod) => {
+		setEditingSavedPeriod(savedPeriod);
+		setIsOpen(false);
+		setIsSavedPeriodDialogOpen(true);
+	};
+
+	const selectPeriod = async (selection: UsagePeriodSelection) => {
+		setIsOpen(false);
+		try {
+			await onChange(selection);
+		} catch {
+			return;
+		}
+	};
+
+	const deleteSavedPeriod = async () => {
+		if (!savedPeriodToDelete || deletingRef.current) {
+			return;
+		}
+		deletingRef.current = true;
+		setIsDeleting(true);
+		setDeleteError(undefined);
+		try {
+			await onDeleteSavedPeriod(savedPeriodToDelete.id);
+			setSavedPeriodToDelete(undefined);
+		} catch (cause) {
+			setDeleteError(cause instanceof Error ? cause.message : 'Unable to delete this period.');
+		} finally {
+			deletingRef.current = false;
+			setIsDeleting(false);
+		}
+	};
+
+	return (
+		<>
+			<Popover open={isOpen} onOpenChange={setIsOpen}>
+				<PopoverTrigger asChild>
+					<Button type='button' variant='outline' size='sm' className={styles.trigger} disabled={isLoading}>
+						<span>
+							{isLoading && value.mode === 'saved'
+								? 'Loading…'
+								: formatPeriodSelection(value, savedPeriods)}
+						</span>
+						<ChevronDownIcon size={16} className={styles.chevron} />
+					</Button>
+				</PopoverTrigger>
+				<PopoverContent align='start' className={styles.content}>
+					<div className={styles.list}>
+						{periodOptions.map((option) => (
+							<button
+								key={option.value}
+								type='button'
+								className={styles.option}
+								onClick={() => void selectPeriod({ mode: option.value })}
+							>
+								<span className={styles.label}>{option.label}</span>
+								<span className={styles.check}>
+									{value.mode === option.value && <CheckIcon size={16} />}
+								</span>
+							</button>
+						))}
+						{savedPeriods.length > 0 && <div className={styles.separator} />}
+						<div className={styles.savedPeriods}>
+							{savedPeriods.map((savedPeriod) => (
+								<div key={savedPeriod.id} className={styles.savedPeriod}>
+									<button
+										type='button'
+										className={styles.savedPeriodSelect}
+										onClick={() =>
+											void selectPeriod({ mode: 'saved', savedPeriodId: savedPeriod.id })
+										}
+									>
+										<span className={styles.label}>{formatSavedPeriod(savedPeriod)}</span>
+										<span className={styles.check}>
+											{value.mode === 'saved' && value.savedPeriodId === savedPeriod.id && (
+												<CheckIcon size={16} />
+											)}
+										</span>
+									</button>
+									<button
+										type='button'
+										className={styles.iconButton}
+										aria-label={`Edit ${formatSavedPeriod(savedPeriod)}`}
+										onClick={() => openSavedPeriodDialog(savedPeriod)}
+									>
+										<PencilIcon size={14} />
+									</button>
+									<button
+										type='button'
+										className={styles.deleteButton}
+										aria-label={`Delete ${formatSavedPeriod(savedPeriod)}`}
+										onClick={() => {
+											setIsOpen(false);
+											setDeleteError(undefined);
+											setSavedPeriodToDelete(savedPeriod);
+										}}
+									>
+										<Trash2Icon size={14} />
+									</button>
+								</div>
+							))}
+						</div>
+						<div className={styles.footer}>
+							<button
+								type='button'
+								className={styles.option}
+								disabled={isSavedPeriodLimitReached}
+								onClick={() => openSavedPeriodDialog()}
+							>
+								<PlusIcon size={16} />
+								{isSavedPeriodLimitReached
+									? `Saved period limit reached (${MAX_SAVED_USAGE_PERIODS})`
+									: 'Create filter'}
+							</button>
+						</div>
+					</div>
+				</PopoverContent>
+			</Popover>
+			{error && (
+				<span className={styles.error} role='alert'>
+					{error}
+					{onRetry && (
+						<button type='button' className={styles.retry} onClick={onRetry}>
+							Retry
+						</button>
+					)}
+				</span>
+			)}
+			<SavedUsagePeriodDialog
+				open={isSavedPeriodDialogOpen}
+				onOpenChange={setIsSavedPeriodDialogOpen}
+				savedPeriod={editingSavedPeriod}
+				onSave={(savedPeriod) =>
+					editingSavedPeriod
+						? onUpdateSavedPeriod({ ...savedPeriod, id: editingSavedPeriod.id })
+						: onCreateSavedPeriod(savedPeriod)
+				}
+			/>
+			<ConfirmationDialog
+				open={savedPeriodToDelete !== undefined}
+				onOpenChange={(open) => {
+					if (!open && !isDeleting) {
+						setSavedPeriodToDelete(undefined);
+						setDeleteError(undefined);
+					}
+				}}
+				title='Remove filter?'
+				description={`“${savedPeriodToDelete ? formatSavedPeriod(savedPeriodToDelete) : ''}” will no longer be available in the period menu.`}
+				confirmLabel='Remove'
+				onConfirm={deleteSavedPeriod}
+				isPending={isDeleting}
+				error={deleteError}
+				preventCloseWhilePending
+			/>
+		</>
+	);
+}
+
+function formatPeriodSelection(selection: UsagePeriodSelection, savedPeriods: SavedUsagePeriod[]): string {
+	if (selection.mode === 'saved') {
+		const savedPeriod = savedPeriods.find(({ id }) => id === selection.savedPeriodId);
+		return savedPeriod ? formatSavedPeriod(savedPeriod) : 'Last 15 days';
+	}
+	return periodOptions.find((option) => option.value === selection.mode)?.label ?? 'Period';
+}
+
+function formatSavedPeriod(savedPeriod: SavedUsagePeriod): string {
+	const dayLabel = savedPeriod.days === 1 ? 'day' : 'days';
+	return `Last ${savedPeriod.days} ${dayLabel} - ${granularityLabels[savedPeriod.granularity]}`;
+}

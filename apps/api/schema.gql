@@ -1,0 +1,2297 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input AddAllergyInput {
+  """The facility recording it (`myFacilities`)."""
+  facilityId: ID!
+  kind: AllergyKind
+  patientId: ID!
+  reaction: String
+  severity: AllergySeverity
+  substance: String!
+
+  """Set by a Wise card (`propose_allergy`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+input AddDiagnosisInput {
+  certainty: DiagnosisCertainty
+
+  """The diagnosis as written, normally the ICD-10 title."""
+  display: String!
+  encounterId: ID!
+
+  """ICD-10 (WHO 2010), e.g. `I10` or `E11.9`."""
+  icd10Code: String!
+
+  """Makes it the primary diagnosis (the previous one stops being)."""
+  isPrimary: Boolean
+  notes: String
+
+  """
+  Set when completing a confirmed `propose_encounter` card (its drafted vitals and diagnoses).
+  """
+  wiseOrigin: WiseOriginInput
+}
+
+enum AllergyKind {
+  drug
+  environment
+  food
+  other
+}
+
+enum AllergySeverity {
+  mild
+  moderate
+  severe
+}
+
+type AppVersion {
+  buildDate: String!
+  commit: String!
+  version: String!
+}
+
+"""Sign-in methods available on the login page."""
+type AuthProviders {
+  github: Boolean!
+  gitlab: Boolean!
+  google: Boolean!
+
+  """Whether SMTP is configured (password reset and invitation emails)."""
+  smtp: Boolean!
+}
+
+"""The 20% senior citizen / PWD discount."""
+enum BillDiscountKind {
+  pwd
+  senior_citizen
+}
+
+"""Draft (editable), finalized (locked), paid, voided."""
+enum BillStatus {
+  draft
+  finalized
+  paid
+  voided
+}
+
+type CancelChatResult {
+  chatDeleted: Boolean!
+
+  """deleted or kept."""
+  outcome: String!
+}
+
+enum CaseState {
+  accepted
+  acknowledged
+  closed
+  confirming
+  escalated
+  lost_to_follow_up
+  notified
+  open
+  referred
+  seen
+  treatment_started
+}
+
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}
+
+input ChargeInput {
+  code: String
+  description: String!
+  kind: ChargeKind!
+  quantity: Int!
+
+  """Pesos."""
+  unitPrice: Float!
+}
+
+enum ChargeKind {
+  consultation
+  imaging
+  laboratory
+  medicine
+  other
+  procedure
+  supply
+}
+
+"""Source of a project chart plugin (upstream `chartPlugin.source`)."""
+type ChartPluginSource {
+  source: String!
+  version: String!
+}
+
+"""
+A chat (upstream `chat.get`'s `UIChat`). Dates are epoch milliseconds, as upstream.
+"""
+type Chat {
+  author: ChatAuthor
+
+  """The automation run behind the chat (Phase 5)."""
+  automationRun: JSON
+  createdAt: Float!
+
+  """Where the chat was forked from (`ForkMetadata`)."""
+  forkMetadata: JSON
+  id: ID!
+  isOnboarding: Boolean!
+  isStarred: Boolean!
+
+  """Active messages (`UIMessage[]`), query results cut to a preview."""
+  messages: [JSON!]!
+  projectId: String!
+  title: String!
+  updatedAt: Float!
+}
+
+"""Who wrote a chat: shown on shared chats and forks."""
+type ChatAuthor {
+  id: ID!
+  image: String
+  name: String!
+}
+
+input ChatContextUsageInput {
+  chatId: ID!
+  model: ModelSelectionInput
+}
+
+type ChatGroup {
+  chats: [ChatListItem!]!
+  label: String
+}
+
+type ChatIdResult {
+  chatId: ID!
+}
+
+input ChatListInput {
+  """all, mine, starred, shared, shared_with_me."""
+  filters: [String!]! = ["all"]
+
+  """star, date, project, ownership, sourcePlatform or none."""
+  groupBy: String! = "none"
+}
+
+"""A chat in the sidebar list (`GroupedChatItem`)."""
+type ChatListItem {
+  createdAt: Float!
+  id: ID!
+  isOnboarding: Boolean!
+  isStarred: Boolean!
+
+  """own or shared."""
+  kind: String!
+  ownerName: String!
+  projectId: String!
+  shareId: String
+  title: String!
+  updatedAt: Float!
+}
+
+type ChatSearchResult {
+  createdAt: Float!
+  id: ID!
+  matchedText: String
+  title: String!
+  updatedAt: Float!
+}
+
+"""How a chat is shared (upstream `sharedChat.getShareOptionsByChatId`)."""
+type ChatShareOptions {
+  allowedUserIds: [String!]!
+  shareId: String
+  visibility: String
+}
+
+type ClinicalDocument {
+  """The report's markdown with its <chart>/<table>/<sections> blocks."""
+  body: String!
+  createdAt: DateTime!
+  createdByName: String!
+
+  """The embedded tool results by result id, as saved."""
+  data: JSON!
+  id: ID!
+  kind: String!
+  patientId: ID!
+  sourceToolCallId: String!
+  title: String!
+  version: Int!
+}
+
+"""
+A test ordered for the patient (FHIR ServiceRequest), with its results.
+"""
+type ClinicalOrder {
+  acceptedAt: DateTime
+
+  """When it was rejected or cancelled."""
+  closedAt: DateTime
+  code: String!
+  codeSystem: String!
+  collectedAt: DateTime
+  createdAt: DateTime!
+  display: String
+  encounterId: ID
+  id: ID!
+  notes: String
+  priority: OrderPriority!
+  resultedAt: DateTime
+  results: [OrderResult!]!
+  reviewedAt: DateTime
+  sentAt: DateTime
+  status: OrderStatus!
+
+  """Why it was rejected or cancelled."""
+  statusReason: String
+  targetFacility: Facility
+}
+
+"""What prescriptions and certificates print about a clinician."""
+type ClinicianProfile {
+  credentials: String
+  prcLicenseNumber: String
+  ptrNumber: String
+  specialty: String
+}
+
+input CompleteSetupInput {
+  email: String!
+  name: String!
+  password: String!
+  token: String!
+}
+
+type ContextUsage {
+  contextWindow: Int
+  tokensUsed: Int!
+}
+
+input CreateEncounterInput {
+  """The facility of the visit (`myFacilities`)."""
+  facilityId: ID!
+  notes: String
+  patientId: ID!
+  reason: String!
+
+  """The patient's chart chat, when Wise drafted the encounter."""
+  sourceChatId: ID
+
+  """ISO 8601; now when left out."""
+  startedAt: String
+
+  """Set by the Wise card (`propose_encounter`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+"""A test ordered from an encounter, sent to a lab or imaging facility."""
+input CreateEncounterOrderInput {
+  """LOINC code from the test list (`orderableTests`)."""
+  code: String!
+  encounterId: ID!
+  notes: String
+  priority: OrderPriority
+
+  """The lab, imaging center or hospital (`orderTargets`)."""
+  targetOrgId: ID!
+}
+
+"""
+Several tests ordered from one encounter, sent to one facility, in one transaction.
+"""
+input CreateEncounterOrdersInput {
+  """LOINC codes from the test list (`orderableTests`)."""
+  codes: [String!]!
+  encounterId: ID!
+  notes: String
+  priority: OrderPriority
+
+  """The lab, imaging center or hospital (`orderTargets`)."""
+  targetOrgId: ID!
+
+  """Set by a Wise card (`propose_order`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+input CreateFacilityKeyInput {
+  """What the key is for, e.g. "LIS edge connector"."""
+  name: String!
+}
+
+input CreateProjectInput {
+  name: String!
+}
+
+input CreateSharedChatInput {
+  allowedUserIds: [String!]
+  chatId: ID!
+
+  """Also notify recipients outside the app (Phase 5 notifications)."""
+  notify: Boolean! = false
+
+  """project or specific."""
+  visibility: String! = "project"
+}
+
+input CreateSkillInput {
+  body: String!
+  description: String!
+  name: String!
+}
+
+input CreateUserInput {
+  email: String!
+  name: String!
+
+  """admin, user or viewer."""
+  role: String!
+}
+
+"""A newly issued facility key."""
+type CreatedFacilityKey {
+  facilityKey: FacilityKey!
+
+  """Shown once: only a hash of it is stored."""
+  key: String!
+}
+
+type CreatedSkill {
+  location: String!
+  name: String!
+}
+
+"""A synced warehouse table (upstream `project.getDatabaseObjects`)."""
+type DatabaseObject {
+  database: String!
+  fqdn: String!
+  schema: String!
+  table: String!
+  type: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input DeleteSkillInput {
+  expectedHash: String!
+  name: String!
+}
+
+type DeletedSavedUsagePeriod {
+  id: ID!
+
+  """The selection after the delete."""
+  selection: UsagePeriodSelection
+}
+
+enum DiagnosisCertainty {
+  confirmed
+  provisional
+}
+
+"""
+The clinician and facility printed on a document: the issue-time snapshot, or today's values for a draft.
+"""
+type DocumentSignatory {
+  credentials: String
+  facilityAddress: String
+  facilityName: String!
+  facilityPhone: String
+  licenseNumber: String
+  name: String!
+  ptrNumber: String
+}
+
+"""Draft (editable), issued (locked), voided."""
+enum DocumentStatus {
+  draft
+  issued
+  voided
+}
+
+enum DuplicateMatch {
+  EXACT_IDENTIFIER
+  NAME_BIRTH_SEX
+}
+
+input EditMemoryInput {
+  content: String!
+  memoryId: ID!
+}
+
+"""A visit of a patient at a facility (DESIGN.md §7)."""
+type Encounter {
+  assessment: String
+  doctor: EncounterDoctor
+  facility: Facility
+
+  """YYYY-MM-DD."""
+  followUpOn: String
+
+  """History of present illness (subjective)."""
+  history: String
+  id: ID!
+  notes: String
+  patientId: ID!
+  patientInstructions: String
+
+  """Physical examination findings (objective)."""
+  physicalExam: String
+  plan: String
+
+  """The chief complaint."""
+  reason: String
+
+  """The chart chat Wise drafted it in, if any."""
+  sourceChatId: ID
+  startedAt: DateTime!
+
+  """
+  Moves on every change; pass it back as `expectedVersion` to refuse a stale edit.
+  """
+  version: Int!
+}
+
+"""The bill of an encounter (DESIGN.md §7). Amounts in pesos."""
+type EncounterBill {
+  charges: [EncounterCharge!]!
+  createdAt: DateTime!
+  discountAmount: Float!
+  discountKind: BillDiscountKind
+  encounterId: ID!
+  finalizedAt: DateTime
+  id: ID!
+
+  """Official receipt number."""
+  orNumber: String
+  paidAt: DateTime
+  philhealthCoverage: Float!
+  philhealthPackageCode: String
+  status: BillStatus!
+  subtotal: Float!
+
+  """What the patient pays."""
+  total: Float!
+
+  """Moves on every change; pass it back as `expectedVersion`."""
+  version: Int!
+  voidReason: String
+  voidedAt: DateTime
+}
+
+type EncounterCharge {
+  """Pesos: quantity × unit price."""
+  amount: Float!
+  code: String
+  description: String!
+  id: ID!
+  kind: ChargeKind!
+  position: Int!
+  quantity: Int!
+
+  """Pesos."""
+  unitPrice: Float!
+}
+
+"""An ICD-10 coded diagnosis of the encounter."""
+type EncounterDiagnosis {
+  certainty: DiagnosisCertainty!
+  createdAt: DateTime!
+  display: String!
+  icd10Code: String!
+  id: ID!
+  isPrimary: Boolean!
+  notes: String
+  voidReason: String
+  voidedAt: DateTime
+}
+
+type EncounterDoctor {
+  id: ID!
+  name: String!
+}
+
+"""
+An encounter and everything recorded in it, read as the user (row-level security).
+"""
+type EncounterRecord {
+  """The patient's allergies (not voided)."""
+  allergies: [PatientAllergy!]!
+
+  """Newest first: at most one is not voided."""
+  bills: [EncounterBill!]!
+
+  """The user works at the encounter’s facility, so may add to its record."""
+  canEdit: Boolean!
+
+  """Primary first, voided included."""
+  diagnoses: [EncounterDiagnosis!]!
+  encounter: Encounter!
+
+  """Newest first."""
+  medicalCertificates: [MedicalCertificate!]!
+  orders: [ClinicalOrder!]!
+
+  """Newest first."""
+  prescriptions: [Prescription!]!
+
+  """Newest first, voided included."""
+  vitals: [VitalSigns!]!
+}
+
+type EvaluatedRule {
+  """The band's range or codes; null when the value was not recognised."""
+  band: String
+  code: String!
+  comparedUnit: String
+
+  """The value in the band's unit, after conversion."""
+  comparedValue: Float
+  display: String!
+
+  """The value as received, with its unit."""
+  received: String!
+}
+
+enum EvidenceType {
+  dispense
+  result
+  signoff
+  visit_note
+}
+
+"""A facility (organization) the user works at."""
+type Facility {
+  id: ID!
+  name: String!
+  slug: String!
+
+  """
+  `clinic`, `lab`, `imaging`, `hospital`, `pharmacy` or `program`: picks the staff role on screen.
+  """
+  type: String
+}
+
+"""
+A facility's machine key for the HL7 / edge-connector ingest. The key itself is never shown again.
+"""
+type FacilityKey {
+  createdAt: DateTime!
+  id: ID!
+
+  """The first characters of the key, to tell keys apart."""
+  keyPrefix: String!
+  lastUsedAt: DateTime
+  name: String!
+}
+
+input ForkSharedChatInput {
+  selection: SelectionInput
+  shareId: ID!
+}
+
+"""Upstream `chat.listGrouped`."""
+type GroupedChatList {
+  groups: [ChatGroup!]!
+}
+
+"""An ICD-10 code and its WHO title."""
+type Icd10Code {
+  code: String!
+  title: String!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+"""
+An order on the receiving facility's worklist (DESIGN.md §4.1 steps 2–4).
+"""
+type LabOrder {
+  acceptedAt: DateTime
+  code: String!
+  collectedAt: DateTime
+  createdAt: DateTime!
+  display: String
+  id: ID!
+  notes: String
+  orderingDoctorName: String!
+  orderingFacilityName: String!
+  patient: LabOrderPatient!
+  priority: OrderPriority!
+  resultedAt: DateTime
+  sentAt: DateTime
+  status: OrderStatus!
+  targetOrgId: ID!
+}
+
+"""How many orders the facility has in one status (the worklist tabs)."""
+type LabOrderCount {
+  count: Int!
+  status: OrderStatus!
+}
+
+"""The patient as the lab sees them on its worklist."""
+type LabOrderPatient {
+  birthDate: String!
+  familyName: String!
+  givenName: String!
+  id: ID!
+  sex: String!
+}
+
+"""
+Use an existing patient that `checkPatientDuplicates` matched, instead of a new one.
+"""
+input LinkExistingPatientInput {
+  """YYYY-MM-DD."""
+  birthDate: String!
+  consentGiven: Boolean!
+
+  """The facility registering the patient (`myFacilities`)."""
+  facilityId: ID!
+  familyName: String!
+  givenName: String!
+  mrn: String
+  patientId: ID!
+  philHealthId: String
+  phone: String
+  preferredLanguage: String
+  sex: Sex!
+
+  """Set by the Wise card (`propose_patient_registration`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+"""A member of the organization, as the admin users page lists them."""
+type ManagedUser {
+  createdAt: DateTime!
+  email: String!
+  id: ID!
+  name: String!
+
+  """Organization role: admin, user or viewer. Projects fall back to it."""
+  role: String!
+  status: ManagedUserStatus!
+}
+
+enum ManagedUserStatus {
+  ACTIVE
+  DEACTIVATED
+  INVITED
+}
+
+input MarkBillPaidInput {
+  id: ID!
+
+  """Official receipt number."""
+  orNumber: String!
+
+  """Set by a Wise card (`propose_bill_step`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+"""A medical certificate issued from an encounter (DESIGN.md §7)."""
+type MedicalCertificate {
+  certificateNumber: String
+  createdAt: DateTime!
+  diagnosisText: String!
+  encounterId: ID!
+
+  """YYYY-MM-DD."""
+  examinedOn: String!
+  fitness: WorkFitness!
+  id: ID!
+  issuedAt: DateTime
+  issuedById: ID!
+  patientId: ID!
+  purpose: String
+  remarks: String
+  restDays: Int
+
+  """YYYY-MM-DD."""
+  restFrom: String
+  signatory: DocumentSignatory
+  status: DocumentStatus!
+
+  """Moves on every change; pass it back as `expectedVersion`."""
+  version: Int!
+  voidReason: String
+  voidedAt: DateTime
+}
+
+enum MedicationRoute {
+  inhalation
+  intramuscular
+  intravenous
+  nasal
+  ophthalmic
+  oral
+  other
+  otic
+  rectal
+  subcutaneous
+  sublingual
+  topical
+  vaginal
+}
+
+"""
+A memory the agent extracted from (or the user edited after) a conversation.
+"""
+type Memory {
+  """`global_rule` (an instruction) or `personal_fact` (about the user)."""
+  category: String!
+  chatId: String
+  content: String!
+  createdAt: DateTime!
+  id: ID!
+  supersededBy: String
+  updatedAt: DateTime!
+}
+
+type MemorySettings {
+  memoryEnabled: Boolean!
+}
+
+type MessageBubble {
+  charCount: Int!
+  role: String!
+}
+
+type MessageFeedback {
+  createdAt: DateTime!
+  explanation: String
+  messageId: ID!
+  vote: String!
+}
+
+input MessageFeedbackInput {
+  chatId: ID!
+  explanation: String
+  messageId: ID!
+
+  """up or down."""
+  vote: String!
+}
+
+input ModelSelectionInput {
+  modelId: String!
+  provider: String!
+}
+
+input ModifyPasswordInput {
+  confirmPassword: String!
+  newPassword: String!
+}
+
+type Mutation {
+  """The receiving facility accepts the order."""
+  acceptOrder(orderId: ID!, wiseOrigin: WiseOriginInput): ClinicalOrder!
+  addAllergy(input: AddAllergyInput!): PatientAllergy!
+  addDiagnosis(input: AddDiagnosisInput!): EncounterDiagnosis!
+
+  """Upstream `project.addMapBoundary`: the updated boundary sets."""
+  addMapBoundary(input: JSON!): JSON!
+
+  """A quick question about a shared chat, kept out of the chat history."""
+  askSharedChat(input: ForkSharedChatInput!): ChatIdResult!
+  cancelChat(chatId: ID!): CancelChatResult!
+
+  """The ordering doctor withdraws the order before collection."""
+  cancelOrder(input: OrderReasonInput!): ClinicalOrder!
+
+  """Cancels a Wise card, so it can no longer be confirmed."""
+  cancelWiseProposal(input: WiseOriginInput!): WiseProposalOutcome!
+
+  """
+  Changes your own password (needs the current one) and signs out your other sessions.
+  """
+  changePassword(input: ChangePasswordInput!): Boolean!
+
+  """Creates the first admin; needs the setup token from the server log."""
+  completeSetup(input: CompleteSetupInput!): Boolean!
+  createEncounter(input: CreateEncounterInput!): Encounter!
+
+  """Orders a test from the encounter and sends it to the facility."""
+  createEncounterOrder(input: CreateEncounterOrderInput!): ClinicalOrder!
+
+  """
+  Orders several tests from the encounter to one facility, all or none (a Wise `propose_order` card).
+  """
+  createEncounterOrders(input: CreateEncounterOrdersInput!): [ClinicalOrder!]!
+
+  """Issues a facility key; the key is shown only in this reply."""
+  createFacilityKey(input: CreateFacilityKeyInput!): CreatedFacilityKey!
+
+  """
+  A new set-password link for the user (an invite or a reset); the user's earlier links stop working.
+  """
+  createPasswordLink(userId: ID!): PasswordLink!
+  createProject(input: CreateProjectInput!): ProjectSummary!
+  createSavedPrompt(input: SavedPromptInput!): SavedPrompt!
+
+  """Saves a period and selects it."""
+  createSavedUsagePeriod(projectId: ID!, savedPeriod: SavedUsagePeriodInput!): SavedUsagePeriod!
+  createSharedChat(input: CreateSharedChatInput!): SharedChat!
+  createSkill(input: CreateSkillInput!): CreatedSkill!
+
+  """Creates a user and returns the link they set their password with."""
+  createUser(input: CreateUserInput!): PasswordLink!
+
+  """Deletes every chat that is not starred; returns how many."""
+  deleteAllNonStarredChats: Int!
+  deleteChat(chatId: ID!): Boolean!
+  deleteLlmConfig(provider: String!): Boolean!
+
+  """Upstream `project.deleteMapBoundary`: the updated boundary sets."""
+  deleteMapBoundary(key: String!): JSON!
+  deleteMemory(memoryId: ID!): Boolean!
+  deleteProject(projectId: ID!): Boolean!
+  deleteSavedPrompt(promptId: ID!): Boolean!
+  deleteSavedUsagePeriod(id: ID!, projectId: ID!): DeletedSavedUsagePeriod!
+  deleteSharedChat(shareId: ID!): Boolean!
+  deleteSkill(input: DeleteSkillInput!): Boolean!
+  editMemory(input: EditMemoryInput!): Memory!
+
+  """
+  Prints a report Wise built in your own chat to PDF; audited as `report.export`.
+  """
+  exportReportPdf(chatId: ID!, toolCallId: String!): ReportPdf!
+
+  """
+  Prints one version of a Wise report in your own chat to PDF; audited as `report.export`.
+  """
+  exportWiseReportPdf(chatId: ID!, toolCallId: String!): ReportPdf!
+
+  """Locks the bill; it can then only be paid or voided."""
+  finalizeEncounterBill(id: ID!, wiseOrigin: WiseOriginInput): EncounterBill!
+
+  """Forks a shared chat, or a selection of it (upstream `chatFork.fork`)."""
+  forkSharedChat(input: ForkSharedChatInput!): ChatIdResult!
+
+  """Issues the draft as you; it is locked from then on."""
+  issueMedicalCertificate(id: ID!, wiseOrigin: WiseOriginInput): MedicalCertificate!
+
+  """Issues the draft as you; it is locked from then on."""
+  issuePrescription(id: ID!, overrideAllergyWarning: Boolean! = false, wiseOrigin: WiseOriginInput): Prescription!
+
+  """Uses a matched existing patient at this facility instead of a new one."""
+  linkExistingPatient(input: LinkExistingPatientInput!): Patient!
+  markEncounterBillPaid(input: MarkBillPaidInput!): EncounterBill!
+
+  """The receiving facility took the specimen."""
+  markOrderCollected(orderId: ID!, wiseOrigin: WiseOriginInput): ClinicalOrder!
+  modifyPassword(input: ModifyPasswordInput!): Boolean!
+  recordVitals(input: RecordVitalsInput!): VitalSigns!
+
+  """
+  Registers a patient at the facility, unless duplicates stop it (then `patient` is null).
+  """
+  registerPatient(input: RegisterPatientInput!): RegisterPatientPayload!
+
+  """The receiving facility refuses the order, with a reason."""
+  rejectOrder(input: OrderReasonInput!): ClinicalOrder!
+  renameChat(input: RenameChatInput!): Boolean!
+  renameProject(input: RenameProjectInput!): ProjectSummary!
+
+  """Marks a result reviewed (audited, with the optional note)."""
+  reviewResult(input: ReviewResultInput!): ResultItem!
+
+  """Revokes a facility key: requests with it get 401 from now on."""
+  revokeFacilityKey(id: ID!): Boolean!
+
+  """Creates or replaces the encounter's draft bill."""
+  saveEncounterBill(input: SaveEncounterBillInput!): EncounterBill!
+
+  """Creates a draft, or replaces the draft `id`."""
+  saveMedicalCertificate(input: SaveMedicalCertificateInput!): MedicalCertificate!
+
+  """Creates a draft, or replaces the draft `id`."""
+  savePrescription(input: SavePrescriptionInput!): Prescription!
+
+  """
+  Saves one version of a Wise report about one patient to that patient's chart (once per version).
+  """
+  saveReportToChart(chatId: ID!, toolCallId: String!, wiseOrigin: WiseOriginInput): ClinicalDocument!
+  setChatStarred(chatId: ID!, isStarred: Boolean!): Boolean!
+  setMemoryEnabled(memoryEnabled: Boolean!): MemorySettings!
+
+  """
+  Turns a Wise tool off for yourself, or back on (as far as your facilities allow).
+  """
+  setMyWiseToolEnabled(enabled: Boolean!, toolName: String!): Boolean!
+
+  """Sets the password from a link and returns the email to sign in with."""
+  setPasswordWithLink(input: SetPasswordWithLinkInput!): String!
+
+  """Deactivating signs the user out and voids their password links."""
+  setUserActive(active: Boolean!, userId: ID!): ManagedUser!
+
+  """
+  Turns a Wise tool on or off at a facility (the facility's admins only).
+  """
+  setWiseToolEnabled(enabled: Boolean!, facilityId: ID!, toolName: String!): Boolean!
+
+  """Stops the running agent of a chat (the Stop button)."""
+  stopChat(chatId: ID!): Boolean!
+
+  """Upstream `feedback.submit`."""
+  submitMessageFeedback(input: MessageFeedbackInput!): MessageFeedback!
+  switchMessageVersion(chatId: ID!, messageId: ID!): Boolean!
+
+  """Upstream `project.updateAgentSettings`: merges each section."""
+  updateAgentSettings(input: JSON!): JSON!
+
+  """Upstream `chart.updateConfig`: the chat owner edits a `display_chart`."""
+  updateChartConfig(config: JSON!, toolCallId: String!): Boolean!
+
+  """Upstream `project.updateDefaultModels`."""
+  updateDefaultModels(settings: JSON!): JSON!
+  updateDiagnosis(input: UpdateDiagnosisInput!): EncounterDiagnosis!
+
+  """Upstream `project.updateDisplaySettings`."""
+  updateDisplaySettings(input: JSON!): JSON!
+  updateEncounterNote(input: UpdateEncounterNoteInput!): Encounter!
+
+  """Upstream `project.updateMapBoundary`: the updated boundary sets."""
+  updateMapBoundary(input: JSON!): JSON!
+
+  """Upstream `map.updateConfig`: the chat owner edits a `display_map`."""
+  updateMapConfig(config: JSON!, mapId: String!): Boolean!
+  updateMyClinicianProfile(input: UpdateClinicianProfileInput!): ClinicianProfile!
+
+  """Changes a patient's contact details (phone, language, barangay)."""
+  updatePatient(input: UpdatePatientInput!): Patient!
+  updateProfile(input: UpdateProfileInput!): User!
+  updateSavedPrompt(input: UpdateSavedPromptInput!): SavedPrompt!
+  updateSavedUsagePeriod(projectId: ID!, savedPeriod: UpdateSavedUsagePeriodInput!): SavedUsagePeriod!
+  updateSharedChatAccess(allowedUserIds: [String!]!, shareId: ID!): Boolean!
+  updateSkill(input: UpdateSkillInput!): UpdatedSkill!
+  updateUsagePeriodSelection(projectId: ID!, selection: UsagePeriodSelectionInput!): UsagePeriodSelection
+
+  """Upstream `user.updatePreferences`."""
+  updateUserPreferences(input: UpdateUserPreferencesInput!): JSON!
+  updateUserRole(input: UpdateUserRoleInput!): ManagedUser!
+
+  """Upstream `project.upsertLlmConfig`."""
+  upsertLlmConfig(input: JSON!): JSON!
+
+  """Upstream `project.validateMapBoundaryUrl`: keys, count, GeoJSON."""
+  validateMapBoundaryUrl(url: String!): JSON!
+  voidAllergy(input: VoidAllergyInput!): PatientAllergy!
+  voidDiagnosis(input: VoidEntryInput!): EncounterDiagnosis!
+  voidEncounterBill(input: VoidEntryInput!): EncounterBill!
+  voidMedicalCertificate(input: VoidEntryInput!): MedicalCertificate!
+  voidPrescription(input: VoidEntryInput!): Prescription!
+  voidVitals(input: VoidEntryInput!): VitalSigns!
+}
+
+enum OrderPriority {
+  routine
+  stat
+  urgent
+}
+
+"""Rejecting or cancelling an order: the reason the other side sees."""
+input OrderReasonInput {
+  orderId: ID!
+  reason: String!
+
+  """Set by a Wise card (`propose_lab_order_step`, `propose_cancel_order`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+"""A lab or imaging result (DESIGN.md §7)."""
+type OrderResult {
+  code: String!
+  display: String
+  flag: ResultFlag
+  id: ID!
+  refRange: String
+  resultedAt: DateTime!
+  reviewedAt: DateTime
+  unit: String
+  value: String!
+}
+
+enum OrderStatus {
+  accepted
+  cancelled
+  collected
+  draft
+  rejected
+  resulted
+  reviewed
+  sent
+}
+
+"""A test that can be ordered from an encounter (LOINC)."""
+type OrderableTest {
+  code: String!
+  display: String!
+
+  """`lab` or `imaging`."""
+  kind: String!
+}
+
+"""
+A one-time link the admin hands to a user so they can choose a password.
+"""
+type PasswordLink {
+  expiresAt: DateTime!
+
+  """Shown once: only a hash of its token is stored."""
+  url: String!
+  user: ManagedUser!
+}
+
+"""What the set-password page shows about a valid link."""
+type PasswordLinkInfo {
+  email: String!
+
+  """True for a new account (first password), false for a reset."""
+  isInvite: Boolean!
+  name: String!
+}
+
+type Pathway {
+  closureDescription: String!
+
+  """Closing needs one of these."""
+  closureEvidence: [EvidenceType!]!
+
+  """A critical value must reach a clinician within this many hours."""
+  criticalAlertHours: Float!
+
+  """
+  Where a result the lab flagged critical goes when its band is less urgent.
+  """
+  criticalFlagNextState: CaseState!
+  key: String!
+  name: String!
+
+  """A result must be reviewed within this many hours."""
+  resultReviewHours: Float!
+
+  """The guidelines the pathway follows."""
+  source: String!
+  steps: [PathwayStep!]!
+  triggers: [PathwayTrigger!]!
+  version: Int!
+}
+
+type PathwayBand {
+  """Upper bound, exclusive (numeric bands)."""
+  below: Float
+  classification: ResultClassification!
+  guideline: String!
+
+  """The range ("6.5 – < 10 %") or the codes ("BI-RADS 4") the band covers."""
+  label: String!
+
+  """Lower bound, inclusive (numeric bands)."""
+  min: Float
+  nextState: CaseState!
+  reason: String!
+
+  """Hours allowed in the next state: the band's own or the step's."""
+  slaHours: Float
+  urgency: Urgency!
+
+  """The codes of a coded band."""
+  values: [String!]
+}
+
+type PathwayStep {
+  label: String!
+  slaHours: Float
+  state: CaseState!
+}
+
+type PathwayTrigger {
+  bands: [PathwayBand!]!
+  code: String!
+  codeSystem: String!
+  conversions: [PathwayUnitConversion!]!
+  display: String!
+
+  """`numeric` (thresholds) or `coded` (code lists, e.g. BI-RADS)."""
+  type: String!
+
+  """The unit numeric bands are written in."""
+  unit: String
+}
+
+type PathwayUnitConversion {
+  factor: Float!
+  from: [String!]!
+  note: String
+  offset: Float!
+}
+
+"""A patient the signed-in user may see (row-level security)."""
+type Patient {
+  """Barangay of residence."""
+  barangay: String
+
+  """YYYY-MM-DD."""
+  birthDate: String!
+  consentAt: DateTime
+  createdAt: DateTime!
+  familyName: String!
+  givenName: String!
+  id: ID!
+  identifiers: [PatientIdentifier!]!
+  phone: String
+  preferredLanguage: String!
+  sex: Sex!
+}
+
+"""A known allergy of the patient."""
+type PatientAllergy {
+  createdAt: DateTime!
+  id: ID!
+  kind: AllergyKind!
+  reaction: String
+  severity: AllergySeverity
+  substance: String!
+}
+
+input PatientDraftInput {
+  """YYYY-MM-DD."""
+  birthDate: String!
+
+  """The facility registering the patient (`myFacilities`)."""
+  facilityId: ID!
+  familyName: String!
+  givenName: String!
+  mrn: String
+  philHealthId: String
+  phone: String
+  preferredLanguage: String
+  sex: Sex!
+}
+
+"""
+An existing patient a registration may duplicate. Masked when the user cannot see them.
+"""
+type PatientDuplicate {
+  birthYear: Int!
+
+  """The full name when visible, else initials ("M. S.")."""
+  displayName: String!
+
+  """Facilities the patient is registered at."""
+  facilityNames: [String!]!
+  match: DuplicateMatch!
+
+  """What matched, e.g. `MRN THC-0001` or `name, birth date and sex`."""
+  matchedOn: String!
+  patientId: ID!
+
+  """Whether the user can already open this patient."""
+  visible: Boolean!
+}
+
+type PatientIdentifier {
+  facility: Facility
+
+  """`MRN` or `PhilHealth`."""
+  system: String!
+  value: String!
+}
+
+"""
+The patient chart's overview, read as the user (row-level security): recent visits and summaries.
+"""
+type PatientOverview {
+  """The latest prescriptions that are not voided (up to 3)."""
+  medicines: [Prescription!]!
+
+  """Recent diagnoses, one per ICD-10 code, newest first."""
+  problems: [EncounterDiagnosis!]!
+
+  """The latest sets across visits, newest first (up to 6), for trends."""
+  recentVitals: [VitalSigns!]!
+
+  """Orders with results, newest first (up to 6)."""
+  results: [ClinicalOrder!]!
+
+  """Newest first (the latest 20)."""
+  visits: [PatientVisit!]!
+}
+
+"""One visit as the chart lists it: the encounter and what came of it."""
+type PatientVisit {
+  """The bill that is not voided, if any."""
+  billStatus: BillStatus
+
+  """Not voided, primary first."""
+  diagnoses: [EncounterDiagnosis!]!
+  encounter: Encounter!
+  orders: [ClinicalOrder!]!
+
+  """Not voided, newest first."""
+  prescriptions: [Prescription!]!
+}
+
+"""A prescription (℞) of an encounter (DESIGN.md §7)."""
+type Prescription {
+  createdAt: DateTime!
+  encounterId: ID!
+  id: ID!
+  issuedAt: DateTime
+  items: [PrescriptionItem!]!
+  notes: String
+  patientId: ID!
+  prescriberId: ID!
+  rxNumber: String
+  signatory: DocumentSignatory
+  status: DocumentStatus!
+
+  """Moves on every change; pass it back as `expectedVersion`."""
+  version: Int!
+  voidReason: String
+  voidedAt: DateTime
+}
+
+type PrescriptionItem {
+  brandName: String
+  dose: String!
+  durationDays: Int
+  form: String
+  frequency: String!
+  genericName: String!
+  id: ID!
+  instructions: String
+  position: Int!
+  quantity: Int!
+  quantityUnit: String
+  refills: Int!
+  route: MedicationRoute!
+  strength: String
+}
+
+input PrescriptionItemInput {
+  brandName: String
+  dose: String!
+  durationDays: Int
+  form: String
+  frequency: String!
+  genericName: String!
+  instructions: String
+  quantity: Int!
+  quantityUnit: String
+  refills: Int
+  route: MedicationRoute
+  strength: String
+}
+
+"""A project the user can access, with their role in it."""
+type ProjectSummary {
+  createdAt: DateTime!
+  id: ID!
+  name: String!
+  orgId: String
+
+  """Folder holding the project context and `quarry_config.yaml`."""
+  path: String
+  type: String!
+  updatedAt: DateTime!
+
+  """The user's role: admin, user, viewer or context_admin."""
+  userRole: String!
+}
+
+type PublicConfig {
+  authProviders: AuthProviders!
+  betaAutomationsEnabled: Boolean!
+  betaContextRecommendationsEnabled: Boolean!
+  betaCustomStoriesEnabled: Boolean!
+  betaStoryFiltersEnabled: Boolean!
+  betaSubagentsEnabled: Boolean!
+  emailVerificationEnabled: Boolean!
+  enableUserLogin: Boolean!
+
+  """Always "self-hosted": quarry has no cloud mode."""
+  quarryMode: String!
+  version: String!
+}
+
+type Query {
+  """Upstream `project.getAgentSettings`, with the instance capabilities."""
+  agentSettings: JSON!
+
+  """
+  Models the project can use (upstream `project.listAvailableTranscribeModels`, despite its name).
+  """
+  availableModels: JSON!
+
+  """Upstream `chart.download`: the chart rendered as a base64 PNG."""
+  chartDownload(toolCallId: String!): String!
+
+  """Upstream `chartPlugin.source`."""
+  chartPluginSource(type: String!, version: String!): ChartPluginSource!
+
+  """Upstream `chartPlugin.list`: the project `charts/` plugins."""
+  chartPlugins: JSON!
+
+  """The user's own chat (upstream `chat.get`)."""
+  chat(chatId: ID!): Chat!
+
+  """Upstream `chat.getContextUsage`."""
+  chatContextUsage(input: ChatContextUsageInput!): ContextUsage!
+
+  """Upstream `chat.getForkMetadata`."""
+  chatForkMetadata(chatId: ID!): JSON
+
+  """Upstream `chat.listGrouped`."""
+  chatList(input: ChatListInput): GroupedChatList!
+  chatShareMembers(chatId: ID!): [ShareableMember!]!
+  chatShareOptions(chatId: ID!): ChatShareOptions!
+
+  """Existing patients a registration would duplicate."""
+  checkPatientDuplicates(input: PatientDraftInput!): [PatientDuplicate!]!
+  checkUpdate: UpdateCheck!
+
+  """SQL and column lineage behind a cited value (upstream `citation.get`)."""
+  citation(column: String!, queryId: String!): JSON!
+
+  """One saved document; audited as `document.view`."""
+  clinicalDocument(id: ID!): ClinicalDocument
+
+  """The signed-in user's organization role: admin, user or viewer."""
+  currentOrgRole: String!
+
+  """The selected project (`x-quarry-project-id`)."""
+  currentProject: ProjectSummary
+
+  """Synced warehouse tables of the selected project (`@` mentions)."""
+  databaseObjects: [DatabaseObject!]!
+
+  """Upstream `project.getDefaultChatModel`."""
+  defaultChatModel: JSON
+
+  """Upstream `project.getDefaultModels`."""
+  defaultModels: JSON!
+
+  """Upstream `project.getDisplaySettings`: the date format."""
+  displaySettings: JSON!
+
+  """Null when the encounter is not in your care."""
+  encounterRecord(encounterId: ID!): EncounterRecord
+
+  """The patient's encounters, newest first (empty if not in your care)."""
+  encounters(patientId: ID!): [Encounter!]!
+
+  """The organization's facility keys (admins only)."""
+  facilityKeys: [FacilityKey!]!
+
+  """
+  Whether any user exists yet (when none does, the app sends visitors to the /setup wizard).
+  """
+  hasUsers: Boolean!
+
+  """Models known per provider (upstream `project.getKnownModels`)."""
+  knownModels: JSON!
+
+  """
+  Transcription models per provider and whether a key is set (upstream `getKnownTranscribeModels`).
+  """
+  knownTranscribeModels: JSON!
+
+  """How many orders each worklist tab holds."""
+  labOrderCounts: [LabOrderCount!]!
+
+  """Orders sent to the user's facilities in one status, oldest first."""
+  labOrders(status: OrderStatus!): [LabOrder!]!
+
+  """Upstream `project.getLlmConfigs`: provider configs, keys previewed."""
+  llmConfigs: JSON!
+
+  """Every user of the organization (admins only)."""
+  managedUsers: [ManagedUser!]!
+
+  """Upstream `project.getMapBoundaries`."""
+  mapBoundaries: JSON!
+
+  """The signed-in user."""
+  me: User!
+
+  """For printing; null when not in your care."""
+  medicalCertificate(id: ID!): MedicalCertificate
+
+  """The signed-in user's active memories."""
+  memories: [Memory!]!
+
+  """Whether the signed-in user has memory turned on."""
+  memorySettings: MemorySettings!
+
+  """Your PRC license, PTR and credentials (empty until set)."""
+  myClinicianProfile: ClinicianProfile!
+
+  """The facilities the signed-in user works at."""
+  myFacilities: [Facility!]!
+
+  """Labs, imaging centers and hospitals that receive orders."""
+  orderTargets: [Facility!]!
+
+  """The tests that can be ordered from an encounter."""
+  orderableTests: [OrderableTest!]!
+
+  """Null when the link is invalid or expired."""
+  passwordLink(token: String!): PasswordLinkInfo
+
+  """The active clinical pathways and their rules: bands, steps, SLAs."""
+  pathways: [Pathway!]!
+
+  """Null when the user may not see the patient."""
+  patient(id: ID!): Patient
+
+  """The patient's active allergies (empty if not in your care)."""
+  patientAllergies(patientId: ID!): [PatientAllergy!]!
+
+  """Your Wise chat about the patient (the chart's Ask Wise panel)."""
+  patientChat(patientId: ID!): ID
+
+  """A patient's saved documents, newest first."""
+  patientDocuments(patientId: ID!): [ClinicalDocument!]!
+
+  """
+  The patient chart's overview: recent visits, vitals, problems, medicines and results.
+  """
+  patientOverview(patientId: ID!): PatientOverview!
+
+  """The patient's results you can see, newest first."""
+  patientResults(patientId: ID!): [ResultItem!]!
+
+  """For printing; null when not in your care."""
+  prescription(id: ID!): Prescription
+
+  """Whether the project allows memory (admin agent setting)."""
+  projectMemorySettings: MemorySettings!
+
+  """A project's saved prompts; empty when the user is not in it."""
+  projectSavedPrompts(projectId: ID!): [SavedPrompt!]!
+
+  """Projects the signed-in user can access."""
+  projects: [ProjectSummary!]!
+  publicConfig: PublicConfig!
+
+  """Upstream `chat.getQueryRows`."""
+  queryRows(input: QueryRowsInput!): QueryRowsPage!
+
+  """Upstream `feedback.getRecent`."""
+  recentFeedbacks(limit: Int): [RecentFeedback!]!
+
+  """
+  Why a result is normal, actionable or critical. Null when none is stored or the user can’t see it.
+  """
+  resultEvaluation(resultId: ID!): ResultEvaluation
+
+  """Results waiting for your review: critical first, then abnormal."""
+  resultsToReview: [ResultItem!]!
+  savedPrompts: [SavedPrompt!]!
+
+  """The chart document a report version was saved as."""
+  savedReportDocument(toolCallId: String!): ClinicalDocument
+  searchChats(limit: Int, query: String!): [ChatSearchResult!]!
+
+  """Common ICD-10 codes by code prefix or title words."""
+  searchIcd10(query: String!): [Icd10Code!]!
+
+  """Patients the user may see, by name words, identifier or birth date."""
+  searchPatients(input: SearchPatientsInput!): [Patient!]!
+  sharedChat(shareId: ID!): SharedChatView!
+  sharedChatQuickQuestions(shareId: ID!): [QuickQuestionChat!]!
+
+  """Chats shared in the projects the user can access."""
+  sharedChats: [SharedChat!]!
+
+  """Every project skill, for the admin settings."""
+  skillCatalog: [Skill!]!
+  skillDetail(name: String!): SkillDetail!
+  skillLoadErrors: [SkillLoadError!]!
+  skillSaveStatus: SkillSaveStatus!
+
+  """The project skills the signed-in user may use (the `/` picker)."""
+  skills: [Skill!]!
+
+  """Upstream `storage.getConfig`: the storage backend, secrets masked."""
+  storageConfig: JSON!
+
+  """Upstream `storage.getHealth`."""
+  storageHealth: JSON!
+
+  """Upstream `storage.getUploadLimits`."""
+  storageUploadLimits: JSON!
+
+  """Upstream `storage.getUsage`."""
+  storageUsage: JSON!
+
+  """Messages, tokens and cost per user and chart bucket."""
+  usageByUser(filter: UsageFilterInput!): [UsageByUserRecord!]!
+
+  """Messages, tokens and cost per chart bucket."""
+  usageMessages(filter: UsageFilterInput!): [UsageRecord!]!
+  usagePeriodSettings(projectId: ID!): UsagePeriodSettings!
+
+  """Providers that appear in the usage."""
+  usageProviders: [String!]!
+  usageTotal(filter: UsageFilterInput!): TotalUsage!
+
+  """Users with chats in the project and their chat count."""
+  usageUserFacets: [UsageUserFacet!]!
+
+  """The signed-in user's preferences (upstream `user.getPreferences`)."""
+  userPreferences: JSON!
+  version: AppVersion!
+
+  """The settled Wise cards of one of your chats."""
+  wiseProposalOutcomes(chatId: ID!): [WiseProposalOutcome!]!
+
+  """
+  Every Wise tool with its state at one of the user's facilities (default: one they administer).
+  """
+  wiseToolSettings(facilityId: ID): WiseToolSettings!
+}
+
+input QueryRowsInput {
+  chatId: ID!
+
+  """Every row from `offset` when omitted."""
+  limit: Int
+  offset: Int! = 0
+  queryId: String!
+  sort: QuerySortInput
+  toolCallId: String!
+}
+
+"""A page of a stored query result (upstream `chat.getQueryRows`)."""
+type QueryRowsPage {
+  columns: [String!]!
+  rows: [JSON!]!
+  totalRows: Int!
+}
+
+input QuerySortInput {
+  column: String!
+
+  """asc or desc."""
+  direction: String!
+}
+
+type QuickQuestionChat {
+  chatId: ID!
+  title: String!
+  updatedAt: DateTime!
+}
+
+type RecentFeedback {
+  createdAt: DateTime!
+  explanation: String
+  messageId: ID!
+  messageText: String
+  userName: String!
+  vote: String!
+}
+
+input RecordVitalsInput {
+  bloodGlucoseMgDl: Int
+  diastolicMmHg: Int
+  encounterId: ID!
+  heartRateBpm: Int
+  heightCm: Float
+  painScore: Int
+  respiratoryRate: Int
+  spo2Pct: Int
+  systolicMmHg: Int
+  temperatureC: Float
+  weightKg: Float
+
+  """
+  Set when completing a confirmed `propose_encounter` card (its drafted vitals and diagnoses).
+  """
+  wiseOrigin: WiseOriginInput
+}
+
+input RegisterPatientInput {
+  """
+  Register although a patient with the same name, birth date and sex exists (never for an identifier match).
+  """
+  acknowledgeDuplicates: Boolean! = false
+
+  """YYYY-MM-DD."""
+  birthDate: String!
+
+  """
+  The patient agreed to be registered; sets `consentAt`. Registration needs it.
+  """
+  consentGiven: Boolean!
+
+  """The facility registering the patient (`myFacilities`)."""
+  facilityId: ID!
+  familyName: String!
+  givenName: String!
+  mrn: String
+  philHealthId: String
+  phone: String
+  preferredLanguage: String
+  sex: Sex!
+
+  """Set by the Wise card (`propose_patient_registration`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+type RegisterPatientPayload {
+  duplicates: [PatientDuplicate!]!
+
+  """The new patient; null when duplicates stopped it."""
+  patient: Patient
+}
+
+input RenameChatInput {
+  chatId: ID!
+  title: String!
+}
+
+input RenameProjectInput {
+  name: String!
+  projectId: ID!
+}
+
+type ReportPdf {
+  """The PDF, base64."""
+  data: String!
+  filename: String!
+  mimeType: String!
+}
+
+enum ResultClassification {
+  actionable
+  critical
+  normal
+}
+
+type ResultEvaluation {
+  """
+  `band`, `critical_flag` (the lab flag raised it) or `unrecognised` (review by hand).
+  """
+  basis: String!
+  classification: ResultClassification!
+  evaluatedAt: DateTime!
+  guideline: String!
+  id: ID!
+
+  """The case state the case engine should aim for."""
+  nextState: CaseState!
+  pathwayKey: String!
+  pathwayName: String!
+  reason: String!
+  resultId: ID!
+  rule: EvaluatedRule!
+
+  """The pathway version the rule came from."""
+  ruleVersion: Int!
+  slaHours: Float
+  urgency: Urgency!
+}
+
+enum ResultFlag {
+  abnormal
+  critical_high
+  critical_low
+  high
+  low
+  normal
+}
+
+"""
+A lab or imaging result with its patient, source and order (DESIGN.md §4.1 steps 5–6).
+"""
+type ResultItem {
+  code: String!
+  codeSystem: String!
+  display: String
+  flag: ResultFlag
+  id: ID!
+  orderId: ID
+  orderPriority: OrderPriority
+  orderStatus: OrderStatus
+  patient: ResultPatient!
+  receivedAt: DateTime!
+  refRange: String
+  resultedAt: DateTime!
+  reviewedAt: DateTime
+
+  """The lab or imaging facility that sent it."""
+  sourceFacility: Facility!
+  unit: String
+  urgency: ResultUrgency!
+
+  """The value as sent; a report text for radiology."""
+  value: String!
+}
+
+"""The patient a result belongs to, as the inbox shows them."""
+type ResultPatient {
+  """`YYYY-MM-DD`."""
+  birthDate: String!
+  familyName: String!
+  givenName: String!
+  id: ID!
+  sex: Sex!
+}
+
+enum ResultUrgency {
+  abnormal
+  critical
+  normal
+  unflagged
+}
+
+input ReviewResultInput {
+  """The reviewer's note, kept in the audit row."""
+  note: String
+  resultId: ID!
+
+  """Set by a Wise card (`propose_result_review`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+input SaveEncounterBillInput {
+  charges: [ChargeInput!]!
+  discountKind: BillDiscountKind
+  encounterId: ID!
+
+  """
+  The bill's `version` the draft was made from; refused with CONFLICT if it changed since.
+  """
+  expectedVersion: Int
+
+  """Pesos PhilHealth covers."""
+  philhealthCoverage: Float
+  philhealthPackageCode: String
+
+  """Set by the Wise card (`propose_charges`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+input SaveMedicalCertificateInput {
+  diagnosisText: String!
+  encounterId: ID!
+
+  """YYYY-MM-DD."""
+  examinedOn: String!
+
+  """
+  The certificate's `version` the draft was made from; refused with CONFLICT if it changed since.
+  """
+  expectedVersion: Int
+  fitness: WorkFitness
+
+  """The draft to replace; a new draft when left out."""
+  id: ID
+  purpose: String
+  remarks: String
+  restDays: Int
+
+  """YYYY-MM-DD."""
+  restFrom: String
+
+  """Set by the Wise card (`propose_medical_certificate`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+input SavePrescriptionInput {
+  encounterId: ID!
+
+  """
+  The prescription's `version` the draft was made from; refused with CONFLICT if it changed since.
+  """
+  expectedVersion: Int
+
+  """The draft to replace; a new draft when left out."""
+  id: ID
+  items: [PrescriptionItemInput!]!
+  notes: String
+
+  """Set by the Wise card (`propose_prescription`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+type SavedPrompt {
+  createdAt: DateTime!
+  id: ID!
+  prompt: String!
+  title: String!
+  updatedAt: DateTime!
+}
+
+input SavedPromptInput {
+  prompt: String!
+  title: String!
+}
+
+type SavedUsagePeriod {
+  days: Int!
+
+  """hour, day or month."""
+  granularity: String!
+  id: ID!
+}
+
+input SavedUsagePeriodInput {
+  days: Int!
+
+  """hour, day or month."""
+  granularity: String!
+}
+
+input SearchPatientsInput {
+  """YYYY-MM-DD."""
+  birthDate: String
+
+  """Name words, or an exact MRN / PhilHealth number."""
+  query: String
+}
+
+input SelectionInput {
+  end: Int!
+  start: Int!
+  text: String!
+}
+
+input SetPasswordWithLinkInput {
+  password: String!
+  token: String!
+}
+
+enum Sex {
+  female
+  male
+  other
+  unknown
+}
+
+"""
+A project member a chat can be shared with (upstream `project.getProjectMembersByChatId`).
+"""
+type ShareableMember {
+  email: String!
+  id: ID!
+  name: String!
+  role: String!
+}
+
+"""A shared chat (upstream `SharedChatWithDetails`)."""
+type SharedChat {
+  authorName: String!
+  chatId: String!
+  createdAt: DateTime!
+  forkMetadata: JSON
+  id: ID!
+  messageBubbles: [MessageBubble!]
+  projectId: String!
+  title: String!
+  userId: String!
+
+  """project or specific."""
+  visibility: String!
+}
+
+type SharedChatView {
+  chat: Chat!
+  share: SharedChat!
+  userRole: String
+}
+
+"""A project skill: a Markdown playbook in `agent/skills/`."""
+type Skill {
+  description: String!
+
+  """Project path of the skill file, e.g. `/agent/skills/churn.md`."""
+  location: String!
+  name: String!
+}
+
+"""A skill with its instructions, for editing."""
+type SkillDetail {
+  body: String!
+  description: String!
+  hash: String!
+  name: String!
+}
+
+"""A skill file that could not be loaded."""
+type SkillLoadError {
+  location: String!
+  message: String!
+}
+
+"""How this project saves skills written in the app."""
+type SkillSaveStatus {
+  """Why saving is blocked, when `disabled`."""
+  message: String
+
+  """`direct` or `disabled`."""
+  mode: String!
+}
+
+type TotalUsage {
+  totalMessages: Int!
+  uniqueUsers: Int!
+}
+
+type UpdateCheck {
+  currentVersion: String!
+  latestVersion: String
+  updateAvailable: Boolean!
+}
+
+input UpdateClinicianProfileInput {
+  """e.g. "MD"."""
+  credentials: String
+
+  """PRC license number."""
+  prcLicenseNumber: String
+
+  """Professional tax receipt number."""
+  ptrNumber: String
+  specialty: String
+}
+
+input UpdateDiagnosisInput {
+  certainty: DiagnosisCertainty
+  id: ID!
+  isPrimary: Boolean
+  notes: String
+
+  """Set by a Wise card (`propose_diagnosis`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+input UpdateEncounterNoteInput {
+  assessment: String
+  encounterId: ID!
+
+  """
+  The encounter's `version` the edit was made from; refused with CONFLICT if it changed since.
+  """
+  expectedVersion: Int
+
+  """YYYY-MM-DD."""
+  followUpOn: String
+  history: String
+  notes: String
+  patientInstructions: String
+  physicalExam: String
+  plan: String
+
+  """The chief complaint."""
+  reason: String!
+
+  """Set by a Wise card (`propose_encounter_note`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+"""
+Changes a patient's contact details; names, birth date, sex and identifiers stay.
+"""
+input UpdatePatientInput {
+  barangay: String
+  patientId: ID!
+  phone: String
+  preferredLanguage: String
+
+  """Set by a Wise card (`propose_patient_update`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+input UpdateProfileInput {
+  name: String!
+}
+
+input UpdateSavedPromptInput {
+  prompt: String
+  promptId: ID!
+  title: String
+}
+
+input UpdateSavedUsagePeriodInput {
+  days: Int!
+
+  """hour, day or month."""
+  granularity: String!
+  id: ID!
+}
+
+input UpdateSkillInput {
+  body: String!
+  description: String!
+
+  """
+  Hash from `skillDetail`, so an edit never overwrites a newer version of the file.
+  """
+  expectedHash: String!
+  name: String!
+}
+
+input UpdateUserPreferencesInput {
+  """compact or detailed"""
+  toolCallDensity: String
+}
+
+input UpdateUserRoleInput {
+  """admin, user or viewer."""
+  role: String!
+  userId: ID!
+}
+
+type UpdatedSkill {
+  hash: String!
+  name: String!
+}
+
+enum Urgency {
+  critical
+  routine
+  soon
+  urgent
+}
+
+type UsageByUserRecord {
+  date: String!
+  users: [UserUsageBreakdown!]!
+}
+
+input UsageFilterInput {
+  """hour, day or month; defaults to the coarsest that fits the chart."""
+  granularity: String
+  period: UsagePeriodRangeInput!
+  provider: String
+
+  """Message sources (web, admin, contextRecommendations…)."""
+  sources: [String!]
+  userNames: [String!]
+}
+
+input UsagePeriodRangeInput {
+  """hour, day or month."""
+  unit: String!
+  value: Int!
+}
+
+type UsagePeriodSelection {
+  """24h, 15d, 6m or saved."""
+  mode: String!
+  savedPeriodId: String
+}
+
+input UsagePeriodSelectionInput {
+  """24h, 15d, 6m or saved."""
+  mode: String!
+  savedPeriodId: String
+}
+
+"""
+The usage period the user picked in the project, and the periods they saved.
+"""
+type UsagePeriodSettings {
+  savedPeriods: [SavedUsagePeriod!]!
+  selection: UsagePeriodSelection
+}
+
+"""Messages, tokens and cost (USD) of one chart bucket."""
+type UsageRecord {
+  adminMessageCount: Int!
+  contextRecommendationsMessageCount: Int!
+
+  """The bucket: YYYY-MM-DD HH:00, YYYY-MM-DD or YYYY-MM (UTC)."""
+  date: String!
+  discordMessageCount: Int!
+  inputCacheReadCost: Float!
+  inputCacheReadTokens: Float!
+  inputCacheWriteCost: Float!
+  inputCacheWriteTokens: Float!
+  inputNoCacheCost: Float!
+  inputNoCacheTokens: Float!
+  mattermostMessageCount: Int!
+  mcpMessageCount: Int!
+  messageCount: Int!
+  outputCost: Float!
+  outputTotalTokens: Float!
+  slackMessageCount: Int!
+  teamsMessageCount: Int!
+  telegramMessageCount: Int!
+  totalCost: Float!
+  totalTokens: Float!
+  webMessageCount: Int!
+  whatsappMessageCount: Int!
+}
+
+"""A user with chats in the project, for the usage filters."""
+type UsageUserFacet {
+  chatCount: Int!
+  userName: String!
+}
+
+type User {
+  createdAt: DateTime!
+  email: String!
+  emailVerified: Boolean!
+  id: ID!
+  image: String
+
+  """Whether the account is active (not deactivated by an admin)."""
+  isActive: Boolean!
+  name: String!
+
+  """Set for invited users until they choose their own password."""
+  requiresPasswordReset: Boolean!
+}
+
+type UserUsageBreakdown {
+  messageCount: Int!
+  totalCost: Float!
+  totalTokens: Float!
+  userName: String!
+}
+
+"""One set of vital signs. Units: mmHg, bpm, /min, °C, %, kg, cm, mg/dL."""
+type VitalSigns {
+  bloodGlucoseMgDl: Int
+
+  """Computed from weight and height."""
+  bmi: Float
+  diastolicMmHg: Int
+  heartRateBpm: Int
+  heightCm: Float
+  id: ID!
+  painScore: Int
+  recordedAt: DateTime!
+  recordedById: ID!
+  respiratoryRate: Int
+  spo2Pct: Int
+  systolicMmHg: Int
+  temperatureC: Float
+  voidReason: String
+  voidedAt: DateTime
+  weightKg: Float
+}
+
+"""
+Voids an allergy recorded in error; it stays in the record, struck through.
+"""
+input VoidAllergyInput {
+  id: ID!
+  reason: String!
+
+  """
+  Set by a Wise card (`propose_void_*`, `propose_bill_step`): verified and settled with the void.
+  """
+  wiseOrigin: WiseOriginInput
+}
+
+"""
+Voids a record entry entered in error; it stays in the record, struck through.
+"""
+input VoidEntryInput {
+  id: ID!
+  reason: String!
+
+  """
+  Set by a Wise card (`propose_void_*`, `propose_bill_step`): verified and settled with the void.
+  """
+  wiseOrigin: WiseOriginInput
+}
+
+input WiseOriginInput {
+  chatId: ID!
+
+  """Whether the clinician changed Wise's draft before confirming."""
+  edited: Boolean!
+  toolCallId: ID!
+
+  """The proposal tool, e.g. `propose_encounter_note`."""
+  toolName: String!
+}
+
+type WiseProposalOutcome {
+  resourceId: String
+
+  """`confirmed` or `cancelled`."""
+  status: String!
+  toolCallId: ID!
+  toolName: String!
+}
+
+"""
+A facility whose Wise tools the user sees, and whether they administer it.
+"""
+type WiseToolFacility {
+  id: ID!
+  isAdmin: Boolean!
+  name: String!
+
+  """The facility type (clinic, lab, …), which sets the defaults."""
+  type: String!
+}
+
+type WiseToolSettings {
+  facilities: [WiseToolFacility!]!
+
+  """The facility the `facility*` fields are about."""
+  facilityId: ID
+  tools: [WiseToolView!]!
+}
+
+"""One Wise tool in Settings → Wise tools (DESIGN.md §9.4)."""
+type WiseToolView {
+  category: String!
+
+  """Not a tool yet; no switch."""
+  comingSoon: Boolean!
+
+  """Whether Wise offers it to the user now."""
+  enabled: Boolean!
+
+  """The facility type's default at the selected facility."""
+  facilityDefault: Boolean!
+
+  """On at the selected facility (its override, else the default)."""
+  facilityEnabled: Boolean!
+
+  """read, navigate, display or propose."""
+  kind: String!
+  label: String!
+
+  """Always on; no switch."""
+  locked: Boolean!
+
+  """False when the user turned it off for themselves."""
+  myEnabled: Boolean!
+  name: String!
+  summary: String!
+}
+
+enum WorkFitness {
+  fit_to_work
+  fit_with_restrictions
+  unfit
+}

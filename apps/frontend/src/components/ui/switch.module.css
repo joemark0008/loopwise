@@ -1,0 +1,68 @@
+.trackClassName {
+	position: relative;
+	display: inline-flex;
+	height: 1.25rem;
+	width: 2rem;
+	flex-shrink: 0;
+	align-items: center;
+	border-radius: calc(infinity * 1px);
+	background-color: var(--app-fill);
+	padding-inline: 0.125rem;
+	--fx-shadow: inset 0 0 0 1px var(--fx-shadow-color, rgba(0, 0, 0, 0.06));
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+	&:is(:root[data-mantine-color-scheme='dark'] *) {
+		--fx-shadow: inset 0 0 0 1px var(--fx-shadow-color, rgba(255, 255, 255, 0.07));
+		box-shadow:
+			var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+			var(--fx-shadow);
+	}
+}
+.switchThumbSpan {
+	pointer-events: none;
+	position: absolute;
+	inset: 0px;
+	border-radius: calc(infinity * 1px);
+	transition-property: opacity;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	background: var(--app-gradient-brand), var(--app-gradient-brand-border);
+}
+.switchThumbSpan2 {
+	opacity: 100%;
+}
+.switchThumbSpan3 {
+	opacity: 0%;
+}
+.switchThumbSpan4 {
+	pointer-events: none;
+	position: relative;
+	display: block;
+	height: 1rem;
+	width: 1rem;
+	border-radius: calc(infinity * 1px);
+	background-color: var(--app-surface);
+	--fx-shadow:
+		0 10px 15px -3px var(--fx-shadow-color, rgb(0 0 0 / 0.1)),
+		0 4px 6px -4px var(--fx-shadow-color, rgb(0 0 0 / 0.1));
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+	--fx-ring-shadow: var(--fx-ring-inset,) 0 0 0 calc(0px + var(--fx-ring-offset-width))
+		var(--fx-ring-color, currentcolor);
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+	transition-property: transform, translate, scale, rotate;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+}
+.switchThumbSpan5 {
+	--fx-translate-x: 0.75rem;
+	translate: var(--fx-translate-x) var(--fx-translate-y);
+}
+.switchThumbSpan6 {
+	--fx-translate-x: 0px;
+	translate: var(--fx-translate-x) var(--fx-translate-y);
+}

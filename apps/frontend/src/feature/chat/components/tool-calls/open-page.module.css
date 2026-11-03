@@ -1,0 +1,40 @@
+.openPageCard {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	border: 1px solid var(--app-line);
+	border-radius: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	font-size: var(--app-text-sm);
+}
+.openPageIcon {
+	flex-shrink: 0;
+	width: 0.875rem;
+	height: 0.875rem;
+	color: var(--app-muted);
+}
+.openPageLabel {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.openPageLink {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	color: var(--app-accent);
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.openPageLink svg {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.openPageHere {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}

@@ -1,0 +1,43 @@
+fragment MemoryFields on Memory {
+	id
+	chatId
+	content
+	category
+	supersededBy
+	createdAt
+	updatedAt
+}
+
+query Memories {
+	memories {
+		...MemoryFields
+	}
+}
+
+query MemorySettings {
+	memorySettings {
+		memoryEnabled
+	}
+}
+
+query ProjectMemorySettings {
+	projectMemorySettings {
+		memoryEnabled
+	}
+}
+
+mutation SetMemoryEnabled($memoryEnabled: Boolean!) {
+	setMemoryEnabled(memoryEnabled: $memoryEnabled) {
+		memoryEnabled
+	}
+}
+
+mutation EditMemory($input: EditMemoryInput!) {
+	editMemory(input: $input) {
+		...MemoryFields
+	}
+}
+
+mutation DeleteMemory($memoryId: ID!) {
+	deleteMemory(memoryId: $memoryId)
+}

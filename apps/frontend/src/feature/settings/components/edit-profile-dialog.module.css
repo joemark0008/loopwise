@@ -1,0 +1,29 @@
+.editProfileDialogForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.editProfileDialogDiv {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.editProfileDialogLabel {
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.editProfileDialogP {
+	text-align: center;
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-red-500);
+}
+.editProfileDialogDiv2 {
+	display: flex;
+	justify-content: flex-end;
+}
+.editProfileDialogButton {
+	border-radius: calc(infinity * 1px);
+}

@@ -1,0 +1,100 @@
+fragment ProjectSummaryFields on ProjectSummary {
+	id
+	name
+	type
+	path
+	orgId
+	userRole
+	createdAt
+	updatedAt
+}
+
+query CurrentProject {
+	currentProject {
+		...ProjectSummaryFields
+	}
+}
+
+query Projects {
+	projects {
+		...ProjectSummaryFields
+	}
+}
+
+mutation CreateProject($input: CreateProjectInput!) {
+	createProject(input: $input) {
+		...ProjectSummaryFields
+	}
+}
+
+mutation RenameProject($input: RenameProjectInput!) {
+	renameProject(input: $input) {
+		...ProjectSummaryFields
+	}
+}
+
+mutation DeleteProject($projectId: ID!) {
+	deleteProject(projectId: $projectId)
+}
+
+query SavedPrompts {
+	savedPrompts {
+		id
+		title
+		prompt
+		createdAt
+		updatedAt
+	}
+}
+
+mutation CreateSavedPrompt($input: SavedPromptInput!) {
+	createSavedPrompt(input: $input) {
+		id
+		title
+		prompt
+		createdAt
+		updatedAt
+	}
+}
+
+mutation UpdateSavedPrompt($input: UpdateSavedPromptInput!) {
+	updateSavedPrompt(input: $input) {
+		id
+		title
+		prompt
+		createdAt
+		updatedAt
+	}
+}
+
+mutation DeleteSavedPrompt($promptId: ID!) {
+	deleteSavedPrompt(promptId: $promptId)
+}
+
+query ProjectSavedPrompts($projectId: ID!) {
+	projectSavedPrompts(projectId: $projectId) {
+		id
+		title
+		prompt
+		createdAt
+		updatedAt
+	}
+}
+
+query DatabaseObjects {
+	databaseObjects {
+		type
+		database
+		schema
+		table
+		fqdn
+	}
+}
+
+query DisplaySettings {
+	displaySettings
+}
+
+mutation UpdateDisplaySettings($input: JSON!) {
+	updateDisplaySettings(input: $input)
+}

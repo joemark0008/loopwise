@@ -1,0 +1,15 @@
+query StorageConfig {
+	storageConfig
+}
+
+query StorageHealth {
+	storageHealth
+}
+
+query StorageUploadLimits {
+	storageUploadLimits
+}
+
+query StorageUsage {
+	storageUsage
+}

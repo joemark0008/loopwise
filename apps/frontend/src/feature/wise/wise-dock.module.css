@@ -1,0 +1,40 @@
+/* Over the page from the right, under the top bar; a sheet from the bottom on a phone. */
+.dock {
+	position: fixed;
+	top: 3.75rem;
+	right: 0;
+	bottom: 0;
+	z-index: var(--app-z-overlay);
+	display: flex;
+	flex-direction: column;
+	width: min(27.5rem, 100vw);
+	padding: 0.5rem;
+	border-left: 1px solid var(--app-wise-line);
+	background-color: var(--app-surface);
+	box-shadow: var(--app-shadow-3);
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.expand {
+	margin-left: auto;
+}
+
+/* Expanded: Wise covers most of the page, for long answers and tables. */
+.dock[data-expanded] {
+	width: min(64rem, calc(100vw - 4.5rem));
+}
+
+@media (max-width: 40rem) {
+	.dock {
+		top: auto;
+		left: 0;
+		width: 100vw;
+		height: 85dvh;
+		border-left: 0;
+		border-top: 1px solid var(--app-wise-line);
+		border-radius: 1rem 1rem 0 0;
+	}
+}

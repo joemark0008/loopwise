@@ -1,0 +1,16 @@
+{
+	"name": "@quarry/connector",
+	"private": true,
+	"type": "module",
+	"description": "Loopwise edge connector: HL7 v2 over MLLP in, HTTPS to the hub out, with a local SQLite retry queue.",
+	"scripts": {
+		"start": "node --disable-warning=ExperimentalWarning src/main.ts",
+		"send-mllp": "node --disable-warning=ExperimentalWarning scripts/send-mllp.ts",
+		"test": "vitest run",
+		"lint": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.0",
+		"vitest": "^4.0.18"
+	}
+}

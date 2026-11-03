@@ -1,0 +1,107 @@
+.dataTableCardDiv {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	border-radius: var(--app-radius);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	padding-top: 0.5rem;
+}
+.dataTableCardDiv2 {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding-inline: 0.75rem;
+}
+.dataTableCardDiv3 {
+	justify-content: space-between;
+}
+.dataTableCardDiv4 {
+	justify-content: flex-end;
+}
+.dataTableCardDiv5 {
+	display: flex;
+	min-width: 0px;
+	align-items: center;
+	gap: 0.25rem;
+}
+.dataTableCardSpan {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.dataTableCardDiv6 {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+.dataTableCardButton {
+	@media (hover: hover) {
+		&:hover {
+			border-radius: calc(infinity * 1px);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-fill);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-fill) 70%, transparent);
+		}
+	}
+}
+.dataTableCardCopy {
+	width: 0.75rem;
+	height: 0.75rem;
+	color: color-mix(in oklab, var(--app-muted) 70%, transparent);
+}
+.dataTableCardDialogContent {
+	display: flex;
+	max-height: 90vh;
+	width: fit-content;
+	max-width: 95vw;
+	min-width: 32rem;
+	flex-direction: column;
+	gap: 0.5rem;
+	@media (width >= 40rem) {
+		max-width: 95vw;
+	}
+}
+.dataTableCardDiv7 {
+	margin-block: -0.25rem;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+	gap: 0.25rem;
+	padding-inline: 1.25rem;
+}
+.dataTableCardButton2 {
+	@media (hover: hover) {
+		&:hover {
+			border-radius: calc(infinity * 1px);
+		}
+	}
+}
+.dataTableCardCopy2 {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.dataTableCardTableDisplay {
+	min-height: 0px;
+	min-width: 0px;
+	overflow: hidden;
+	border-radius: var(--app-radius);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+}
+.dataTableCardTableDisplay2 {
+	max-height: 75vh;
+	border-top-style: var(--fx-border-style);
+	border-top-width: 0px;
+}

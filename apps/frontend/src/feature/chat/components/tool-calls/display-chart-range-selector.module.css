@@ -1,0 +1,19 @@
+.chartRangeSelectorSelectTrigger {
+	--fx-border-style: none;
+	border-style: none;
+	&:is(:root[data-mantine-color-scheme='dark'] *) {
+		background-color: transparent;
+	}
+	@media (hover: hover) {
+		&:is(:root[data-mantine-color-scheme='dark'] *):hover {
+			background-color: transparent;
+		}
+	}
+}
+.chartRangeSelectorSelectContent {
+	--fx-border-style: none;
+	border-style: none;
+	&:is(:root[data-mantine-color-scheme='dark'] *) {
+		background-color: var(--app-surface);
+	}
+}

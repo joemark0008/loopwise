@@ -1,0 +1,129 @@
+.displayMapToolCallDiv {
+	padding: 1rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-red-400);
+}
+.displayMapToolCallDiv2 {
+	margin-block: 0.5rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: color-mix(in oklab, var(--app-text) 50%, transparent);
+}
+.displayMapToolCallDiv3 {
+	margin-inline: -0.75rem;
+	margin-block: 1rem;
+}
+.displayMapToolCallDiv4 {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	transition-property: margin, width;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	--fx-duration: 200ms;
+	transition-duration: 200ms;
+	--fx-ease: cubic-bezier(0, 0, 0.2, 1);
+	transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.displayMapToolCallDiv5 {
+	overflow: hidden;
+	border-radius: var(--app-radius);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+}
+.displayMapToolCallDiv6 {
+	border-color: transparent;
+	@media (hover: hover) {
+		&:is(:where([class~='group']):hover *) {
+			border-color: var(--app-line);
+		}
+	}
+}
+.displayMapToolCallDiv7 {
+	border-color: var(--app-line);
+}
+.displayMapToolCallDiv8 {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding-inline: 0.75rem;
+	padding-top: 0.5rem;
+	padding-bottom: 0.25rem;
+}
+.displayMapToolCallSpan {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.displayMapToolCallDiv9 {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+.displayMapToolCallFoldHorizontal {
+	width: 0.75rem;
+	height: 0.75rem;
+	color: color-mix(in oklab, var(--app-muted) 70%, transparent);
+}
+.displayMapToolCallButton {
+	@media (hover: hover) {
+		&:hover {
+			border-radius: calc(infinity * 1px);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-fill);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-fill) 70%, transparent);
+		}
+	}
+}
+.displayMapToolCallDiv10 {
+	padding-inline: 0.75rem;
+	padding-bottom: 0.75rem;
+}
+.displayMapToolCallDiv11 {
+	display: none;
+}
+.displayMapToolCallSkeleton {
+	aspect-ratio: 3/2;
+	width: 100%;
+	border-radius: var(--app-radius);
+}
+.displayMapToolCallTableDisplay {
+	max-height: 28rem;
+}
+.displayMapToolCallDiv12 {
+	border-top-style: var(--fx-border-style);
+	border-top-width: 1px;
+}
+.displayMapToolCallSpan2 {
+	padding-inline: 0.75rem;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: color-mix(in oklab, var(--app-text) 50%, transparent);
+}
+.mapStyleSelectDropdownMenuContent {
+	width: 9rem;
+}
+.viewToggleButtonButton {
+	border-radius: calc(infinity * 1px);
+	background-color: color-mix(in oklab, var(--app-fill) 70%, transparent);
+}

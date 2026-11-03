@@ -1,0 +1,9 @@
+.projectAgentPageTabBar {
+	border-bottom-style: var(--fx-border-style);
+	border-bottom-width: 1px;
+}
+.projectAgentPageTabPanel {
+	display: flex;
+	flex-direction: column;
+	gap: 3rem;
+}

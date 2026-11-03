@@ -1,0 +1,9 @@
+.mcpTitleSpan {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+}
+.mcpTitleMcpServerIcon {
+	width: 1rem;
+	height: 1rem;
+}

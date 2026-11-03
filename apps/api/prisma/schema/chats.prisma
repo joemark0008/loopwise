@@ -1,0 +1,185 @@
+// The Wise assistant: chats, messages and their parts, feedback, shared chats, memories and chart images.
+
+model ChartImage {
+  id         String   @id @default(uuid())
+  toolCallId String   @unique(map: "chart_image_tool_call_id_unique") @map("tool_call_id")
+  data       String
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("chart_image")
+}
+
+model Chat {
+  id                 String           @id @default(uuid())
+  userId             String           @map("user_id")
+  title              String           @default("New Conversation")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  slackThreadId      String?          @map("slack_thread_id")
+  projectId          String           @map("project_id")
+  teamsThreadId      String?          @map("teams_thread_id")
+  isStarred          Boolean          @default(false) @map("is_starred")
+  telegramThreadId   String?          @map("telegram_thread_id")
+  whatsappThreadId   String?          @map("whatsapp_thread_id")
+  deletedAt          DateTime?        @map("deleted_at") @db.Timestamp(6)
+  forkMetadata       Json?            @map("fork_metadata")
+  surface            String           @default("chat")
+  mattermostThreadId String?          @map("mattermost_thread_id")
+  discordThreadId    String?          @map("discord_thread_id")
+  /// The patient a chart chat is about (`surface = 'patient'`): one per clinician per patient.
+  patientId          String?          @map("patient_id")
+  patient            Patient?         @relation(fields: [patientId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "chat_patient_id_patient_id_fk")
+  activities         Activity[]
+  analyticsEvents    AnalyticsEvent[]
+  automationRuns     AutomationRun[]
+  project            Project          @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "chat_project_id_project_id_fk")
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "chat_user_id_user_id_fk")
+  chatMessages       ChatMessage[]
+  llmInferences      LlmInference[]
+  memories           Memory[]
+  sharedChat         SharedChat?
+
+  @@unique([userId, patientId], map: "chat_user_patient_unique", where: raw("((patient_id IS NOT NULL) AND (deleted_at IS NULL))"))
+  @@index([discordThreadId], map: "chat_discord_thread_idx")
+  @@index([mattermostThreadId], map: "chat_mattermost_thread_idx")
+  @@index([projectId], map: "chat_projectId_idx")
+  @@index([slackThreadId], map: "chat_slack_thread_idx")
+  @@index([teamsThreadId], map: "chat_teams_thread_idx")
+  @@index([telegramThreadId], map: "chat_telegram_thread_idx")
+  @@index([userId], map: "chat_userId_idx")
+  @@index([whatsappThreadId], map: "chat_whatsapp_thread_idx")
+  @@map("chat")
+}
+
+model ChatMessage {
+  id                    String           @id @default(uuid())
+  chatId                String           @map("chat_id")
+  role                  String
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  stopReason            String?          @map("stop_reason")
+  errorMessage          String?          @map("error_message")
+  llmProvider           String?          @map("llm_provider")
+  llmModelId            String?          @map("llm_model_id")
+  inputTotalTokens      Int?             @map("input_total_tokens")
+  inputNoCacheTokens    Int?             @map("input_no_cache_tokens")
+  inputCacheReadTokens  Int?             @map("input_cache_read_tokens")
+  inputCacheWriteTokens Int?             @map("input_cache_write_tokens")
+  outputTotalTokens     Int?             @map("output_total_tokens")
+  outputTextTokens      Int?             @map("output_text_tokens")
+  outputReasoningTokens Int?             @map("output_reasoning_tokens")
+  totalTokens           Int?             @map("total_tokens")
+  supersededAt          DateTime?        @map("superseded_at") @db.Timestamp(6)
+  source                String?
+  isForked              Boolean?
+  citation              Json?
+  versionGroupId        String?          @map("version_group_id")
+  senderUserId          String?          @map("sender_user_id")
+  discordMessageId      String?          @map("discord_message_id")
+  chat                  Chat             @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "chat_message_chat_id_chat_id_fk")
+  user                  User?            @relation(fields: [senderUserId], references: [id], onUpdate: NoAction, map: "chat_message_sender_user_id_user_id_fk")
+  messageFeedback       MessageFeedback?
+  messageParts          MessagePart[]
+
+  @@index([chatId, createdAt], map: "chat_message_chatId_createdAt_idx")
+  @@index([chatId], map: "chat_message_chatId_idx")
+  @@index([createdAt], map: "chat_message_createdAt_idx")
+  @@index([discordMessageId], map: "chat_message_discordMessageId_idx")
+  @@index([senderUserId], map: "chat_message_senderUserId_idx")
+  @@index([versionGroupId], map: "chat_message_versionGroupId_idx")
+  @@map("chat_message")
+}
+
+model Memory {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  content      String
+  category     String
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  chatId       String?  @map("chat_id")
+  supersededBy String?  @map("superseded_by")
+  chat         Chat?    @relation(fields: [chatId], references: [id], onUpdate: NoAction, map: "memories_chat_id_chat_id_fk")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "memories_user_id_user_id_fk")
+
+  @@index([chatId], map: "memories_chatId_idx")
+  @@index([supersededBy], map: "memories_supersededBy_idx")
+  @@index([userId], map: "memories_userId_idx")
+  @@map("memories")
+}
+
+model MessageFeedback {
+  messageId   String      @id @map("message_id")
+  vote        String
+  explanation String?
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  chatMessage ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "message_feedback_message_id_chat_message_id_fk")
+
+  @@map("message_feedback")
+}
+
+model MessageImage {
+  id           String        @id @default(uuid())
+  data         String
+  mediaType    String        @map("media_type")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  messageParts MessagePart[]
+
+  @@map("message_image")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model MessagePart {
+  id                   String        @id @default(uuid())
+  messageId            String        @map("message_id")
+  order                Int
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  type                 String
+  text                 String?
+  reasoningText        String?       @map("reasoning_text")
+  toolCallId           String?       @unique(map: "message_part_tool_call_id_unique") @map("tool_call_id")
+  toolName             String?       @map("tool_name")
+  toolState            String?       @map("tool_state")
+  toolErrorText        String?       @map("tool_error_text")
+  toolInput            Json?         @map("tool_input")
+  toolOutput           Json?         @map("tool_output")
+  toolApprovalId       String?       @map("tool_approval_id")
+  toolApprovalApproved Boolean?      @map("tool_approval_approved")
+  toolApprovalReason   String?       @map("tool_approval_reason")
+  toolRawInput         Json?         @map("tool_raw_input")
+  toolProviderMetadata Json?         @map("tool_provider_metadata")
+  providerMetadata     Json?         @map("provider_metadata")
+  mediaType            String?       @map("media_type")
+  imageId              String?       @map("image_id")
+  storagePath          String?       @map("storage_path")
+  filename             String?
+  messageImage         MessageImage? @relation(fields: [imageId], references: [id], onUpdate: NoAction, map: "message_part_image_id_message_image_id_fk")
+  chatMessage          ChatMessage   @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "message_part_message_id_chat_message_id_fk")
+
+  @@index([messageId], map: "parts_message_id_idx")
+  @@index([messageId, order], map: "parts_message_id_order_idx")
+  @@map("message_part")
+}
+
+model SharedChat {
+  id               String             @id @default(uuid())
+  chatId           String             @unique(map: "shared_chat_chatId_unique") @map("chat_id")
+  visibility       String             @default("project")
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  activities       Activity[]
+  analyticsEvents  AnalyticsEvent[]
+  chat             Chat               @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shared_chat_chat_id_chat_id_fk")
+  sharedChatAccess SharedChatAccess[]
+
+  @@map("shared_chat")
+}
+
+model SharedChatAccess {
+  sharedChatId String     @map("shared_chat_id")
+  userId       String     @map("user_id")
+  sharedChat   SharedChat @relation(fields: [sharedChatId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shared_chat_access_shared_chat_id_shared_chat_id_fk")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shared_chat_access_user_id_user_id_fk")
+
+  @@id([sharedChatId, userId], map: "shared_chat_access_shared_chat_id_user_id_pk")
+  @@map("shared_chat_access")
+}

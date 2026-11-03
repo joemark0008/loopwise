@@ -1,0 +1,422 @@
+.authFormH1 {
+	text-align: center;
+	font-family: var(--app-font-heading);
+	font-size: 1.5rem;
+	line-height: var(--fx-leading, calc(2 / 1.5));
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.formTextFieldDiv {
+	display: grid;
+}
+.formTextFieldDiv2 {
+	gap: 0.375rem;
+}
+.formTextFieldDiv3 {
+	gap: 0.5rem;
+}
+.authFormDiv {
+	display: flex;
+	height: 100dvh;
+	width: 100%;
+}
+.authFormDiv2 {
+	display: flex;
+	width: 100%;
+	justify-content: center;
+	overflow-y: auto;
+	@media (width >= 64rem) {
+		width: calc(1 / 2 * 100%);
+	}
+}
+.authFormDiv3 {
+	margin-inline: auto;
+	margin-block: auto;
+	width: 100%;
+	max-width: 28rem;
+	gap: 1rem;
+	padding: 2rem;
+}
+.authFormDiv4 {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-bottom: 0.5rem;
+}
+.authFormDiv5 {
+	margin-bottom: 1.75rem;
+	gap: 1.5rem;
+}
+.authFormDiv6 {
+	margin-bottom: 2.5rem;
+	gap: 2rem;
+}
+.authFormLoopwiseLogo {
+	height: auto;
+	width: 5rem;
+	color: var(--app-text);
+}
+.authFormDiv7 {
+	margin-bottom: 1.5rem;
+}
+.authFormDiv8 {
+	margin-bottom: 1.5rem;
+	display: grid;
+	grid-template-columns: repeat(1, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+.authFormDiv9 {
+	position: relative;
+}
+.authFormDiv10 {
+	position: absolute;
+	inset: 0px;
+	display: flex;
+	align-items: center;
+}
+.authFormDiv11 {
+	width: 100%;
+	border-top-style: var(--fx-border-style);
+	border-top-width: 1px;
+}
+.authFormDiv12 {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	text-transform: uppercase;
+}
+.authFormSpan {
+	background-color: var(--app-surface);
+	padding-inline: 0.5rem;
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.authFormButton {
+	margin-top: 1.5rem;
+	display: flex;
+	width: 100%;
+	cursor: pointer;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.authFormSpan2 {
+	text-decoration-line: underline;
+	text-underline-offset: 0.125rem;
+}
+.authFormP {
+	margin-bottom: 1rem;
+	text-align: center;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-red-500);
+}
+.authFormButton2 {
+	width: 100%;
+	border-radius: calc(infinity * 1px);
+}
+.authFormButton3 {
+	height: 2.5rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+}
+.authFormButton4 {
+	height: 2.75rem;
+}
+.authFormButton5 {
+	background-color: color-mix(in oklab, var(--app-muted) 20%, transparent);
+	color: var(--app-text);
+}
+.authFormP2 {
+	text-align: center;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.authFormDiv13 {
+	margin-top: 1.5rem;
+	text-align: center;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.authSidePanelDiv {
+	position: relative;
+	margin: 1rem;
+	display: flex;
+	display: none;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-radius: var(--app-radius);
+	@media (width >= 64rem) {
+		display: flex;
+	}
+	@media (width >= 64rem) {
+		width: calc(1 / 2 * 100%);
+	}
+}
+.authSidePanelBrandGradientBackdrop {
+	position: absolute;
+	inset: 0px;
+	height: 100%;
+	width: 100%;
+}
+.authSidePanelDiv2 {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	margin-inline: auto;
+	width: 100%;
+	max-width: 28rem;
+	padding: 2rem;
+	color: var(--app-white);
+}
+.authSidePanelLogo {
+	width: 11rem;
+	height: auto;
+	color: var(--app-white);
+}
+.authSidePanelTagline {
+	margin: 0;
+	font-family: var(--app-font-heading);
+	font-size: var(--app-text-3xl);
+	font-weight: 600;
+	line-height: 1.2;
+}
+.authSidePanelList {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin: 0;
+	padding-left: 1.25rem;
+	font-size: var(--app-text-md);
+	line-height: 1.5;
+}
+.authSidePanelInputGroup {
+	position: relative;
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	border-radius: var(--app-radius);
+	padding-inline: 1rem;
+	padding-block: 1.5rem;
+	--fx-shadow: 0 1px 2px 0 var(--fx-shadow-color, rgb(0 0 0 / 0.05));
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+	@media (width >= 48rem) {
+		gap: 1rem;
+	}
+}
+.authSidePanelInputGroup2 {
+	--fx-ring-shadow: var(--fx-ring-inset,) 0 0 0 calc(6px + var(--fx-ring-offset-width))
+		var(--fx-ring-color, currentcolor);
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+	--fx-ring-color: color-mix(in oklab, var(--app-fill) 50%, transparent);
+	&:is(:root[data-mantine-color-scheme='dark'] *) {
+		background-color: var(--app-fill);
+	}
+	&:is(:root[data-mantine-color-scheme='dark'] *) {
+		--fx-ring-color: color-mix(in oklab, var(--app-fill) 50%, transparent);
+	}
+}
+.authSidePanelInputGroup3 {
+	&::before {
+		content: var(--fx-content);
+		pointer-events: none;
+	}
+	&::before {
+		content: var(--fx-content);
+		position: absolute;
+	}
+	&::before {
+		content: var(--fx-content);
+		inset: calc(0.4375rem * -1);
+	}
+	&::before {
+		content: var(--fx-content);
+		border-radius: 15px;
+	}
+	&::before {
+		content: var(--fx-content);
+		padding: 0.5px;
+	}
+}
+.authSidePanelInputGroup4 {
+	&::before {
+		content: var(--fx-content);
+		background: linear-gradient(
+			135deg,
+			rgba(255, 255, 255, 0.95),
+			rgba(255, 255, 255, 0) 40%,
+			rgba(255, 255, 255, 0) 60%,
+			rgba(255, 255, 255, 0.55)
+		);
+	}
+}
+.authSidePanelInputGroup5 {
+	&:is(:root[data-mantine-color-scheme='dark'] *)::before {
+		content: var(--fx-content);
+		background: linear-gradient(
+			135deg,
+			color-mix(in srgb, var(--app-primary-fg) 90%, transparent),
+			transparent 40%,
+			transparent 60%,
+			color-mix(in srgb, var(--app-primary-fg) 50%, transparent)
+		);
+	}
+}
+.authSidePanelInputGroup6 {
+	&::before {
+		content: var(--fx-content);
+		mask-image: linear-gradient(var(--app-white) 0 0), linear-gradient(var(--app-white) 0 0);
+	}
+	&::before {
+		content: var(--fx-content);
+		-webkit-mask-image: linear-gradient(var(--app-white) 0 0), linear-gradient(var(--app-white) 0 0);
+	}
+}
+.authSidePanelInputGroup7 {
+	&::before {
+		content: var(--fx-content);
+		mask-clip: content-box, border-box;
+	}
+	&::before {
+		content: var(--fx-content);
+		-webkit-mask-clip: content-box, border-box;
+	}
+}
+.authSidePanelInputGroup8 {
+	&::before {
+		content: var(--fx-content);
+		mask-composite: exclude;
+	}
+	&::before {
+		content: var(--fx-content);
+		-webkit-mask-composite: xor;
+	}
+}
+.authSidePanelNakedInput {
+	flex: 1;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 400;
+	font-weight: 400;
+	caret-color: var(--app-primary-bg);
+	&::placeholder {
+		--fx-font-weight: 500;
+		font-weight: 500;
+	}
+	&::placeholder {
+		color: var(--app-muted);
+	}
+}
+.formTextFieldLabel {
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.formTextFieldLabel2 {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+}
+.formTextFieldLabel3 {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+}
+input.formTextFieldNakedInput {
+	width: 100%;
+	border: 1px solid var(--app-line-strong);
+	border-radius: var(--app-radius);
+	background-color: var(--app-surface);
+	transition-property: border-color, box-shadow;
+	transition-duration: var(--fx-duration, 150ms);
+	&:focus-visible {
+		border-color: var(--app-primary-muted);
+		box-shadow: 0 0 0 3px color-mix(in oklab, var(--app-primary-muted) 20%, transparent);
+	}
+	&[aria-invalid='true'] {
+		border-color: var(--app-red-500);
+	}
+}
+input.formTextFieldNakedInput2 {
+	height: 2.5rem;
+	padding-inline: 0.75rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+}
+input.formTextFieldNakedInput3 {
+	height: 3rem;
+	padding: 1rem;
+	font-size: 1rem;
+	line-height: var(--fx-leading, calc(1.5 / 1));
+}
+input.formTextFieldNakedInput4 {
+	padding-right: 2.5rem;
+}
+input.formTextFieldNakedInput5 {
+	padding-right: 3rem;
+}
+.formTextFieldLastUsedPill {
+	position: absolute;
+	top: -0.5rem;
+	right: 0.75rem;
+}
+.formTextFieldButton {
+	position: absolute;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.75rem;
+	min-height: 1.75rem;
+	border-radius: 0.375rem;
+	top: calc(1 / 2 * 100%);
+	--fx-translate-y: calc(calc(1 / 2 * 100%) * -1);
+	translate: var(--fx-translate-x) var(--fx-translate-y);
+	color: var(--app-text);
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+}
+.formTextFieldButton2 {
+	right: 0.75rem;
+}
+.formTextFieldButton3 {
+	right: 1rem;
+}
+.formTextFieldEye {
+	& circle {
+		fill: var(--app-text);
+	}
+	& circle {
+		stroke: var(--app-text);
+	}
+}
+.formTextFieldDescription {
+	margin-top: 0.375rem;
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.formTextFieldError {
+	margin-top: 0.375rem;
+	font-size: 0.75rem;
+	color: var(--app-red-500);
+}

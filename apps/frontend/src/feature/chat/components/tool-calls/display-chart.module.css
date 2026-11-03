@@ -1,0 +1,234 @@
+.chartDisplayDiv {
+	display: flex;
+	width: 100%;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.5rem;
+}
+.chartDisplayDiv2 {
+	height: 100%;
+}
+.chartDisplayChartContainer {
+	height: 100%;
+	width: 100%;
+}
+.chartDisplayChartContainer2 {
+	width: 100%;
+}
+.chartDisplayChartContainer3 {
+	aspect-ratio: auto;
+	min-height: 0px;
+	flex: 1;
+}
+.displayChartToolCallDiv {
+	padding: 1rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-red-400);
+}
+.displayChartToolCallDiv2 {
+	margin-block: 0.5rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: color-mix(in oklab, var(--app-text) 50%, transparent);
+}
+.displayChartToolCallDiv3 {
+	position: relative;
+	margin-inline: -0.75rem;
+	margin-block: 1rem;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+}
+.displayChartToolCallDiv4 {
+	overflow: hidden;
+	border-radius: var(--app-radius);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	--fx-duration: 150ms;
+	transition-duration: 150ms;
+}
+.displayChartToolCallDiv5 {
+	border-color: transparent;
+	@media (hover: hover) {
+		&:hover {
+			border-color: var(--app-line);
+		}
+	}
+}
+.displayChartToolCallDiv6 {
+	border-color: var(--app-line);
+}
+.displayChartToolCallDiv7 {
+	gap: 0.5rem;
+	padding-inline: 0.75rem;
+}
+.displayChartToolCallDiv8 {
+	gap: 0px;
+}
+.displayChartToolCallDiv9 {
+	padding-block: 0.75rem;
+}
+.displayChartToolCallDiv10 {
+	aspect-ratio: 3/2;
+}
+.displayChartToolCallDiv11 {
+	display: flex;
+	align-items: center;
+	padding-block: 0.5rem;
+}
+.displayChartToolCallDiv12 {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	z-index: 10;
+	gap: 0.25rem;
+	padding-inline: 0.75rem;
+}
+.displayChartToolCallDiv13 {
+	position: absolute;
+	inset-inline: 0px;
+	top: 0px;
+	z-index: 10;
+	width: 100%;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding-inline: 0.75rem;
+}
+.displayChartToolCallDiv14 {
+	width: 100%;
+	justify-content: space-between;
+}
+.displayChartToolCallDiv15 {
+	gap: 0.5rem;
+}
+.displayChartToolCallDiv16 {
+	gap: 0px;
+	border-bottom-style: var(--fx-border-style);
+	border-bottom-width: 1px;
+	border-color: var(--app-line);
+	padding-inline: 0.75rem;
+}
+.displayChartToolCallDiv17 {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+.displayChartToolCallSpan {
+	flex: 1;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.displayChartToolCallDiv18 {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 0.25rem;
+}
+.displayChartToolCallDiv19 {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	opacity: 0%;
+	transition-property: opacity;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	--fx-duration: 150ms;
+	transition-duration: 150ms;
+	@media (hover: hover) {
+		&:is(:where([class~='group/chart']):hover *) {
+			opacity: 100%;
+		}
+	}
+	&:focus-within {
+		opacity: 100%;
+	}
+}
+.displayChartToolCallButton {
+	border-radius: calc(infinity * 1px);
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-fill);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-fill) 70%, transparent);
+		}
+	}
+}
+.displayChartToolCallButton2 {
+	background-color: color-mix(in oklab, var(--app-fill) 70%, transparent);
+}
+.displayChartToolCallChartNoAxesColumn {
+	width: 0.75rem;
+	height: 0.75rem;
+	color: color-mix(in oklab, var(--app-muted) 70%, transparent);
+}
+.displayChartToolCallChartDisplay {
+	flex: 1;
+	justify-content: center;
+}
+.displayChartToolCallChartDisplay2 {
+	aspect-ratio: 4/3;
+}
+.pieCenteringClass {
+	margin-inline: auto;
+	max-width: 30rem;
+}
+.chartElementChartLegendContent {
+	flex-wrap: wrap;
+}
+.inlineHeaderDiv {
+	margin-bottom: 1.5rem;
+	display: flex;
+	width: 100%;
+	min-width: 0px;
+	align-items: center;
+	gap: 0.75rem;
+}
+.inlineHeaderDiv2 {
+	min-height: 2.75rem;
+	flex-shrink: 0;
+}
+.inlineHeaderDiv3 {
+	flex-shrink: 0;
+}
+.inlineHeaderSpan {
+	display: block;
+	font-size: 0.9375rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.inlineHeaderChevronLeft {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.inlineHeaderDiv4 {
+	min-width: 0px;
+	flex: 1;
+	scrollbar-width: none;
+	overflow-x: auto;
+	padding-left: 0.25rem;
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+.inlineHeaderChartLegendContent {
+	width: max-content;
+	min-width: 100%;
+	gap: 0.75rem;
+	padding: 0px;
+	font-size: 0.625rem;
+	& > * {
+		flex-shrink: 0;
+	}
+}

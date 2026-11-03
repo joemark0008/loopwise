@@ -1,0 +1,80 @@
+.emailVerificationPendingDiv {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+.emailVerificationPendingDiv2 {
+	max-width: 24rem;
+}
+.emailVerificationPendingP {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.emailVerificationPendingP2 {
+	margin-top: 0.25rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 600;
+	font-weight: 600;
+	word-break: break-all;
+	color: var(--app-text);
+}
+.emailVerificationPendingP3 {
+	margin-top: 0.75rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-leading: 1.5rem;
+	line-height: 1.5rem;
+	color: var(--app-muted);
+}
+.emailVerificationPendingButton {
+	margin-top: 1.5rem;
+	height: 2.75rem;
+	width: 100%;
+	border-radius: calc(infinity * 1px);
+}
+.emailVerificationPendingDiv3 {
+	margin-top: 1rem;
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	text-align: left;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	--fx-leading: 1.25rem;
+	line-height: 1.25rem;
+	color: var(--app-muted);
+}
+.emailVerificationPendingCheckCircle2 {
+	margin-top: 0.125rem;
+	width: 0.875rem;
+	height: 0.875rem;
+	flex-shrink: 0;
+	color: var(--app-emerald-600);
+	&:is(:root[data-mantine-color-scheme='dark'] *) {
+		color: var(--app-emerald-400);
+	}
+}
+.emailVerificationPendingCircleAlert {
+	margin-top: 0.125rem;
+	width: 0.875rem;
+	height: 0.875rem;
+	flex-shrink: 0;
+	color: var(--app-danger);
+}
+.emailVerificationPendingP4 {
+	margin-top: 1.25rem;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-muted);
+}
+.emailVerificationPendingButton2 {
+	cursor: pointer;
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+	text-decoration-line: underline;
+	text-underline-offset: 0.125rem;
+}

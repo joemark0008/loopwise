@@ -1,0 +1,26 @@
+# Local Postgres for development: the `loopwise` app database (Prisma).
+# Host port 5435, so it runs next to quarry's dev Postgres (5434) and a local Postgres on 5432.
+# Its own project name: without it this file and docker-compose.prod.yml share a project and a database volume,
+# so `docker compose -f docker-compose.prod.yml down -v` would also delete the development database.
+name: loopwise-dev
+
+services:
+    postgres:
+        image: postgres:16-alpine
+        container_name: loopwise_postgres
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-loopwise}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-loopwise}
+            POSTGRES_DB: loopwise
+        ports:
+            - '${POSTGRES_PORT:-5435}:5432'
+        volumes:
+            - loopwise_postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-loopwise} -d loopwise']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+volumes:
+    loopwise_postgres_data:

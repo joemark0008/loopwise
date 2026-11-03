@@ -1,0 +1,35 @@
+// HL7 v2 ingest (DESIGN.md §6.3, §11; migration 0017_hl7_ingest).
+
+enum Hl7MessageStatus {
+  /// ACK AA: results stored.
+  accepted
+  /// ACK AE: a valid message that could not be stored (e.g. no matching patient); kept for review.
+  error
+  /// ACK AR: not a message Loopwise takes (unparsable, wrong type).
+  rejected
+
+  @@map("hl7_message_status")
+}
+
+/// Every HL7 message a facility posted, with the ACK it got. Unique per (org, MSH-10): resends are answered from here.
+model Hl7Message {
+  id          String           @id @default(uuid())
+  orgId       String           @map("org_id")
+  /// MSH-10; null when the message could not be parsed.
+  controlId   String?          @map("control_id")
+  messageType String?          @map("message_type")
+  raw         String
+  status      Hl7MessageStatus
+  ackCode     String           @map("ack_code")
+  ack         String
+  error       String?
+  patientId   String?          @map("patient_id")
+  resultIds   String[]         @default([]) @map("result_ids")
+  receivedAt  DateTime         @default(now()) @map("received_at") @db.Timestamp(6)
+  org         Organization     @relation(fields: [orgId], references: [id], onUpdate: NoAction, map: "hl7_message_org_id_organization_id_fk")
+  patient     Patient?         @relation(fields: [patientId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "hl7_message_patient_id_patient_id_fk")
+
+  @@unique([orgId, controlId], map: "hl7_message_org_control_id_unique")
+  @@index([status, receivedAt], map: "hl7_message_status_receivedAt_idx")
+  @@map("hl7_message")
+}

@@ -1,0 +1,32 @@
+fragment EncounterFields on Encounter {
+	id
+	patientId
+	reason
+	notes
+	startedAt
+	sourceChatId
+	facility {
+		id
+		name
+	}
+	doctor {
+		id
+		name
+	}
+}
+
+query Encounters($patientId: ID!) {
+	encounters(patientId: $patientId) {
+		...EncounterFields
+	}
+}
+
+mutation CreateEncounter($input: CreateEncounterInput!) {
+	createEncounter(input: $input) {
+		...EncounterFields
+	}
+}
+
+query PatientChat($patientId: ID!) {
+	patientChat(patientId: $patientId)
+}

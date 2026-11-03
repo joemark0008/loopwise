@@ -1,0 +1,18 @@
+fragment WiseProposalOutcomeFields on WiseProposalOutcome {
+	toolCallId
+	toolName
+	status
+	resourceId
+}
+
+query WiseProposalOutcomes($chatId: ID!) {
+	wiseProposalOutcomes(chatId: $chatId) {
+		...WiseProposalOutcomeFields
+	}
+}
+
+mutation CancelWiseProposal($input: WiseOriginInput!) {
+	cancelWiseProposal(input: $input) {
+		...WiseProposalOutcomeFields
+	}
+}

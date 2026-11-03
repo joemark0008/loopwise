@@ -1,0 +1,19 @@
+query MapBoundaries {
+	mapBoundaries
+}
+
+mutation ValidateMapBoundaryUrl($url: String!) {
+	validateMapBoundaryUrl(url: $url)
+}
+
+mutation AddMapBoundary($input: JSON!) {
+	addMapBoundary(input: $input)
+}
+
+mutation UpdateMapBoundary($input: JSON!) {
+	updateMapBoundary(input: $input)
+}
+
+mutation DeleteMapBoundary($key: String!) {
+	deleteMapBoundary(key: $key)
+}

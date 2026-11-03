@@ -1,0 +1,11 @@
+.className {
+	color: var(--app-text);
+	opacity: 50%;
+}
+.llmProviderIconFavicon {
+	flex-shrink: 0;
+	border-radius: 3px;
+	--fx-grayscale: grayscale(100%);
+	filter: var(--fx-blur,) var(--fx-brightness,) var(--fx-contrast,) var(--fx-grayscale,) var(--fx-hue-rotate,)
+		var(--fx-invert,) var(--fx-saturate,) var(--fx-sepia,) var(--fx-drop-shadow,);
+}

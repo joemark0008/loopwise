@@ -1,0 +1,49 @@
+.patientFields {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: 0.875rem 1rem;
+}
+.patientField {
+	display: grid;
+	gap: 0.375rem;
+	align-content: start;
+}
+.patientField[data-wide] {
+	grid-column: 1 / -1;
+}
+.patientFieldGroups {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+.patientFieldset {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+.patientLegend {
+	margin-bottom: 0.75rem;
+	padding: 0;
+	font-size: var(--app-text-sm);
+	font-weight: 600;
+	color: var(--app-text);
+}
+/* The required marker; the control itself carries aria-required. */
+.patientFieldLabel[data-required]::after {
+	content: ' *';
+	color: var(--app-critical);
+}
+.patientFieldLabel {
+	font-size: var(--app-text-sm);
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.patientFieldError {
+	font-size: var(--app-text-sm);
+	color: var(--app-danger);
+}
+.patientFieldControl {
+	width: 100%;
+}

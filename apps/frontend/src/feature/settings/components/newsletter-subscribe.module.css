@@ -1,0 +1,44 @@
+.newsletterSubscribeFormDiv {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.isInline {
+	display: inline;
+}
+.newsletterSubscribeFormDiv2 {
+	align-items: flex-end;
+	gap: 0.25rem;
+}
+.newsletterSubscribeFormForm {
+	display: flex;
+	gap: 0.5rem;
+}
+.newsletterSubscribeFormForm2 {
+	align-items: center;
+}
+.newsletterSubscribeFormForm3 {
+	flex-direction: column;
+	@media (width >= 40rem) {
+		flex-direction: row;
+	}
+}
+.newsletterSubscribeFormInput {
+	height: 2rem;
+	width: 13rem;
+}
+.newsletterSubscribeFormInput2 {
+	@media (width >= 40rem) {
+		flex: 1;
+	}
+}
+.newsletterSubscribeFormP {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+}
+.newsletterSubscribeFormP2 {
+	color: var(--app-danger);
+}
+.newsletterSubscribeFormP3 {
+	color: var(--app-muted);
+}

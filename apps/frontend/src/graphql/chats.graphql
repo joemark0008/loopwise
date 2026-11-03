@@ -1,0 +1,196 @@
+fragment ChatFields on Chat {
+	id
+	projectId
+	title
+	isStarred
+	isOnboarding
+	createdAt
+	updatedAt
+	forkMetadata
+	automationRun
+	messages
+}
+
+fragment SharedChatFields on SharedChat {
+	id
+	chatId
+	projectId
+	userId
+	visibility
+	createdAt
+	authorName
+	title
+	forkMetadata
+	messageBubbles {
+		role
+		charCount
+	}
+}
+
+query Chat($chatId: ID!) {
+	chat(chatId: $chatId) {
+		...ChatFields
+	}
+}
+
+query ChatList($input: ChatListInput) {
+	chatList(input: $input) {
+		groups {
+			label
+			chats {
+				id
+				projectId
+				title
+				isStarred
+				isOnboarding
+				createdAt
+				updatedAt
+				kind
+				shareId
+				ownerName
+			}
+		}
+	}
+}
+
+query SearchChats($query: String!, $limit: Int) {
+	searchChats(query: $query, limit: $limit) {
+		id
+		title
+		createdAt
+		updatedAt
+		matchedText
+	}
+}
+
+query ChatForkMetadata($chatId: ID!) {
+	chatForkMetadata(chatId: $chatId)
+}
+
+query ChatContextUsage($input: ChatContextUsageInput!) {
+	chatContextUsage(input: $input) {
+		tokensUsed
+		contextWindow
+	}
+}
+
+query QueryRows($input: QueryRowsInput!) {
+	queryRows(input: $input) {
+		columns
+		rows
+		totalRows
+	}
+}
+
+query Citation($queryId: String!, $column: String!) {
+	citation(queryId: $queryId, column: $column)
+}
+
+mutation DeleteChat($chatId: ID!) {
+	deleteChat(chatId: $chatId)
+}
+
+mutation StopChat($chatId: ID!) {
+	stopChat(chatId: $chatId)
+}
+
+mutation CancelChat($chatId: ID!) {
+	cancelChat(chatId: $chatId) {
+		outcome
+		chatDeleted
+	}
+}
+
+mutation RenameChat($input: RenameChatInput!) {
+	renameChat(input: $input)
+}
+
+mutation DeleteAllNonStarredChats {
+	deleteAllNonStarredChats
+}
+
+mutation SetChatStarred($chatId: ID!, $isStarred: Boolean!) {
+	setChatStarred(chatId: $chatId, isStarred: $isStarred)
+}
+
+mutation SwitchMessageVersion($chatId: ID!, $messageId: ID!) {
+	switchMessageVersion(chatId: $chatId, messageId: $messageId)
+}
+
+mutation SubmitMessageFeedback($input: MessageFeedbackInput!) {
+	submitMessageFeedback(input: $input) {
+		messageId
+		vote
+		explanation
+		createdAt
+	}
+}
+
+query SharedChats {
+	sharedChats {
+		...SharedChatFields
+	}
+}
+
+query SharedChat($shareId: ID!) {
+	sharedChat(shareId: $shareId) {
+		share {
+			...SharedChatFields
+		}
+		chat {
+			...ChatFields
+		}
+		userRole
+	}
+}
+
+query ChatShareOptions($chatId: ID!) {
+	chatShareOptions(chatId: $chatId) {
+		shareId
+		visibility
+		allowedUserIds
+	}
+}
+
+mutation CreateSharedChat($input: CreateSharedChatInput!) {
+	createSharedChat(input: $input) {
+		...SharedChatFields
+	}
+}
+
+mutation UpdateSharedChatAccess($shareId: ID!, $allowedUserIds: [String!]!) {
+	updateSharedChatAccess(shareId: $shareId, allowedUserIds: $allowedUserIds)
+}
+
+mutation DeleteSharedChat($shareId: ID!) {
+	deleteSharedChat(shareId: $shareId)
+}
+
+mutation ForkSharedChat($input: ForkSharedChatInput!) {
+	forkSharedChat(input: $input) {
+		chatId
+	}
+}
+
+mutation AskSharedChat($input: ForkSharedChatInput!) {
+	askSharedChat(input: $input) {
+		chatId
+	}
+}
+
+query SharedChatQuickQuestions($shareId: ID!) {
+	sharedChatQuickQuestions(shareId: $shareId) {
+		chatId
+		title
+		updatedAt
+	}
+}
+
+query ChatShareMembers($chatId: ID!) {
+	chatShareMembers(chatId: $chatId) {
+		id
+		name
+		email
+		role
+	}
+}

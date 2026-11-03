@@ -1,0 +1,43 @@
+query LlmConfigs {
+	llmConfigs
+}
+
+mutation UpsertLlmConfig($input: JSON!) {
+	upsertLlmConfig(input: $input)
+}
+
+mutation DeleteLlmConfig($provider: String!) {
+	deleteLlmConfig(provider: $provider)
+}
+
+query KnownModels {
+	knownModels
+}
+
+query DefaultModels {
+	defaultModels
+}
+
+mutation UpdateDefaultModels($settings: JSON!) {
+	updateDefaultModels(settings: $settings)
+}
+
+query DefaultChatModel {
+	defaultChatModel
+}
+
+query AgentSettings {
+	agentSettings
+}
+
+mutation UpdateAgentSettings($input: JSON!) {
+	updateAgentSettings(input: $input)
+}
+
+query AvailableModels {
+	availableModels
+}
+
+query KnownTranscribeModels {
+	knownTranscribeModels
+}

@@ -1,0 +1,32 @@
+query WiseToolSettings($facilityId: ID) {
+	wiseToolSettings(facilityId: $facilityId) {
+		facilityId
+		facilities {
+			id
+			name
+			type
+			isAdmin
+		}
+		tools {
+			name
+			label
+			summary
+			kind
+			category
+			locked
+			comingSoon
+			facilityDefault
+			facilityEnabled
+			myEnabled
+			enabled
+		}
+	}
+}
+
+mutation SetWiseToolEnabled($facilityId: ID!, $toolName: String!, $enabled: Boolean!) {
+	setWiseToolEnabled(facilityId: $facilityId, toolName: $toolName, enabled: $enabled)
+}
+
+mutation SetMyWiseToolEnabled($toolName: String!, $enabled: Boolean!) {
+	setMyWiseToolEnabled(toolName: $toolName, enabled: $enabled)
+}

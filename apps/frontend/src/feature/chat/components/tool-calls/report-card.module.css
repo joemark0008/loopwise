@@ -1,0 +1,86 @@
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	padding: 0.875rem 1rem;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+	background: var(--app-surface);
+}
+.header {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.625rem;
+}
+.icon {
+	flex: none;
+	width: 1.125rem;
+	height: 1.125rem;
+	margin-top: 0.125rem;
+	color: var(--app-accent);
+}
+.heading {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 0.125rem;
+	min-width: 0;
+}
+.title {
+	font-family: var(--app-font-heading);
+	font-size: 0.9375rem;
+	font-weight: 700;
+}
+.subject {
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+.meta {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.actions {
+	display: flex;
+	flex: none;
+	gap: 0.375rem;
+}
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+}
+.chip {
+	padding: 0.125rem 0.5rem;
+	border-radius: 999px;
+	background: var(--app-fill);
+	font-size: 0.6875rem;
+	color: var(--app-muted);
+	font-variant-numeric: tabular-nums;
+}
+.synthetic {
+	background: color-mix(in srgb, var(--app-danger) 12%, transparent);
+	color: var(--app-danger);
+	font-weight: 600;
+}
+.narrative {
+	padding: 0.5rem 0.75rem;
+	border-left: 3px solid var(--app-accent);
+	border-radius: 0.25rem;
+	background: var(--app-fill);
+}
+.narrativeLabel {
+	font-size: 0.6875rem;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--app-muted);
+}
+.narrativeText {
+	margin: 0.25rem 0 0;
+	font-size: 0.8125rem;
+	line-height: 1.5;
+}
+.error {
+	font-size: 0.75rem;
+	color: var(--app-danger);
+}

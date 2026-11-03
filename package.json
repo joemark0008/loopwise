@@ -1,0 +1,54 @@
+{
+	"name": "quarry",
+	"license": "Apache-2.0",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"apps/*"
+	],
+	"packageManager": "npm@11.10.1",
+	"engines": {
+		"node": ">=22.23.4 <23",
+		"npm": "11.10.1"
+	},
+	"scripts": {
+		"lint": "eslint . && npm run lint --workspaces --if-present",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "npm run test --workspaces --if-present",
+		"db:up": "docker compose up -d --wait",
+		"db:down": "docker compose stop",
+		"db:reset": "docker compose down -v",
+		"prepare": "husky",
+		"dev:api": "npm run dev -w @quarry/api",
+		"dev:frontend": "npm run dev -w @quarry/frontend",
+		"dev:studio": "npm run db:studio -w @quarry/api",
+		"codegen": "npm run codegen -w @quarry/frontend",
+		"test:e2e:setup": "./scripts/e2e-setup-wizard.sh",
+		"hl7:sample": "./scripts/send-hl7-sample.sh"
+	},
+	"lint-staged": {
+		"*.{ts,tsx,js,mjs,cjs}": [
+			"eslint --fix",
+			"prettier --write"
+		],
+		"*.{json,md,yml,yaml,css}": "prettier --write"
+	},
+	"devDependencies": {
+		"@apollo/server": "^5.5.1",
+		"@eslint/js": "^9.39.5",
+		"eslint": "^9.39.5",
+		"eslint-plugin-simple-import-sort": "^12.1.1",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.6.0",
+		"prettier": "^3.9.10",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.72.1"
+	},
+	"overrides": {
+		"@apollo/server-plugin-landing-page-graphql-playground": {
+			"@apollo/server": "$@apollo/server"
+		}
+	}
+}

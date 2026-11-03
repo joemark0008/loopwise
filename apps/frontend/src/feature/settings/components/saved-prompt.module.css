@@ -1,0 +1,68 @@
+.savedPromptItemDiv {
+	display: flex;
+	cursor: pointer;
+	align-items: center;
+	gap: 1rem;
+}
+.savedPromptSkeletonDiv {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+}
+.savedPromptItemDiv2 {
+	min-width: 0px;
+	flex: 1;
+}
+.savedPromptItemDiv3 {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.savedPromptItemSpan {
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.savedPromptItemDiv4 {
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.savedPromptItemDiv5 {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	opacity: 0%;
+	transition-property: opacity;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	@media (hover: hover) {
+		&:is(:where([class~='group']):hover *) {
+			opacity: 100%;
+		}
+	}
+}
+.savedPromptSkeletonDiv2 {
+	min-width: 0px;
+	flex: 1;
+	:where(& > :not(:last-child)) {
+		--fx-space-y-reverse: 0;
+		margin-block-start: calc(0.5rem * var(--fx-space-y-reverse));
+		margin-block-end: calc(0.5rem * calc(1 - var(--fx-space-y-reverse)));
+	}
+}
+.savedPromptSkeletonSkeleton {
+	height: 0.75rem;
+	width: 8rem;
+}
+.savedPromptSkeletonSkeleton2 {
+	height: 0.75rem;
+	width: 100%;
+	max-width: 20rem;
+}

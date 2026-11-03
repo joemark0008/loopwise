@@ -1,0 +1,47 @@
+.chartAppViewDiv {
+	display: flex;
+	min-height: 10rem;
+	align-items: center;
+	justify-content: center;
+	padding-inline: 1rem;
+	padding-block: 2.5rem;
+	text-align: center;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.chartAppViewDiv2 {
+	min-height: 14rem;
+	width: 100%;
+}
+.chartAppViewDiv3 {
+	display: flex;
+	min-height: 0px;
+	width: 100%;
+	min-width: 0px;
+	flex: 1;
+	flex-direction: column;
+	overflow: hidden;
+	background-color: var(--app-surface);
+	color: var(--app-text);
+}
+.chartAppViewDiv4 {
+	min-height: 0px;
+	flex: 1;
+	overflow: auto;
+}
+.chartAppViewDiv5 {
+	margin-inline: auto;
+	display: flex;
+	width: 100%;
+	max-width: 64rem;
+	min-width: 0px;
+	flex-direction: column;
+	padding: 1rem;
+	@media (width >= 48rem) {
+		padding: 2rem;
+	}
+}
+.state100 {
+	aspect-ratio: 3/2;
+}

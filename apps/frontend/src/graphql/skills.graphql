@@ -1,0 +1,58 @@
+fragment SkillFields on Skill {
+	name
+	description
+	location
+}
+
+query Skills {
+	skills {
+		...SkillFields
+	}
+}
+
+query SkillCatalog {
+	skillCatalog {
+		...SkillFields
+	}
+}
+
+query SkillLoadErrors {
+	skillLoadErrors {
+		location
+		message
+	}
+}
+
+query SkillSaveStatus {
+	skillSaveStatus {
+		mode
+		message
+	}
+}
+
+query SkillDetail($name: String!) {
+	skillDetail(name: $name) {
+		name
+		description
+		body
+		hash
+	}
+}
+
+mutation CreateSkill($input: CreateSkillInput!) {
+	createSkill(input: $input) {
+		name
+		location
+	}
+}
+
+mutation UpdateSkill($input: UpdateSkillInput!) {
+	updateSkill(input: $input) {
+		name
+		hash
+	}
+}
+
+mutation DeleteSkill($input: DeleteSkillInput!) {
+	deleteSkill(input: $input)
+}

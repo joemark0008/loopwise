@@ -1,0 +1,24 @@
+.assistantReasoningDiv {
+	:is(& *) {
+		font-size: 0.875rem !important;
+		line-height: var(--fx-leading, calc(1.25 / 0.875)) !important;
+	}
+	:is(& *) {
+		&:is(code) {
+			font-size: 0.75rem !important;
+		}
+	}
+	:is(& *) {
+		&:is(pre) {
+			font-size: 0.75rem !important;
+		}
+	}
+	--spacing: 1px;
+	color: var(--app-muted);
+}
+.assistantReasoningConversation {
+	padding: 0px;
+}
+.assistantReasoningConversationContent {
+	max-height: 12.5rem;
+}

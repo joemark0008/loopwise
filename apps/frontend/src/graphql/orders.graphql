@@ -1,0 +1,63 @@
+fragment LabOrderFields on LabOrder {
+	id
+	code
+	display
+	priority
+	status
+	notes
+	sentAt
+	acceptedAt
+	collectedAt
+	resultedAt
+	createdAt
+	orderingDoctorName
+	orderingFacilityName
+	patient {
+		id
+		givenName
+		familyName
+		birthDate
+		sex
+	}
+}
+
+query LabOrders($status: OrderStatus!) {
+	labOrders(status: $status) {
+		...LabOrderFields
+	}
+}
+
+query LabOrderCounts {
+	labOrderCounts {
+		status
+		count
+	}
+}
+
+mutation AcceptOrder($orderId: ID!) {
+	acceptOrder(orderId: $orderId) {
+		id
+		status
+	}
+}
+
+mutation MarkOrderCollected($orderId: ID!) {
+	markOrderCollected(orderId: $orderId) {
+		id
+		status
+	}
+}
+
+mutation RejectOrder($input: OrderReasonInput!) {
+	rejectOrder(input: $input) {
+		id
+		status
+	}
+}
+
+mutation CancelOrder($input: OrderReasonInput!) {
+	cancelOrder(input: $input) {
+		id
+		status
+	}
+}

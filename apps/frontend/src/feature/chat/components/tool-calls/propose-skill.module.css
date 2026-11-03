@@ -1,0 +1,60 @@
+.proposeSkillSkeleton {
+	height: 8rem;
+	width: 100%;
+}
+.proposeSkillCard {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	border: 1px solid var(--app-line);
+	border-radius: 0.5rem;
+	padding: 0.75rem;
+}
+.proposeSkillHeader,
+.proposeSkillResolved {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.proposeSkillHeader svg,
+.proposeSkillResolved svg {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.proposeSkillName {
+	font-family: var(--app-font-mono);
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.proposeSkillDescription {
+	font-size: 0.8125rem;
+	color: var(--app-text);
+}
+.proposeSkillBody {
+	max-height: 18rem;
+	overflow: auto;
+	white-space: pre-wrap;
+	font-family: var(--app-font-mono);
+	font-size: 0.75rem;
+	color: var(--app-text);
+}
+.proposeSkillFields {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.proposeSkillMono {
+	font-family: var(--app-font-mono);
+}
+.proposeSkillNote {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.proposeSkillActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}

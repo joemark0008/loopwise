@@ -1,0 +1,28 @@
+.chatMessagesCitationChipButton {
+	margin-bottom: 0.5rem;
+	width: 100%;
+	cursor: pointer;
+	border-radius: var(--app-radius);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	border-color: color-mix(in oklab, var(--app-line) 50%, transparent);
+	background-color: color-mix(in oklab, var(--app-surface) 50%, transparent);
+	padding-inline: 0.75rem;
+	padding-block: 0.5rem;
+	text-align: left;
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-fill);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-fill) 50%, transparent);
+		}
+	}
+}

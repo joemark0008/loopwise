@@ -1,0 +1,462 @@
+.chartConfigEditFormForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.clearableInputInput {
+	padding-right: 1.75rem;
+}
+.chartConfigEditDialogDialogContent {
+	display: flex;
+	height: min(92vh, 60rem);
+	width: min(96vw, 100rem);
+	flex-direction: column;
+	gap: 0px;
+	overflow: hidden;
+	padding: 0px;
+	@media (width >= 40rem) {
+		max-width: 100rem;
+	}
+}
+.chartConfigEditDialogDialogHeader {
+	flex-shrink: 0;
+	border-bottom-style: var(--fx-border-style);
+	border-bottom-width: 1px;
+	padding-inline: 1.5rem;
+	padding-block: 1rem;
+}
+.chartConfigEditDialogDialogDescription {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-muted);
+}
+.chartConfigEditDialogResizablePanelGroup {
+	min-height: 0px;
+	flex: 1;
+}
+.chartConfigEditDialogResizablePanel {
+	display: flex;
+	flex-direction: column;
+}
+.chartConfigEditDialogChartEditorDataPanel {
+	display: flex;
+	height: 100%;
+}
+.chartConfigEditDialogChartEditorQueryPane {
+	display: none;
+}
+.chartConfigEditDialogDiv {
+	display: flex;
+	min-height: 0px;
+	flex: 1;
+}
+.chartConfigEditDialogResizablePanel2 {
+	-webkit-user-select: none;
+	user-select: none;
+}
+.chartConfigEditDialogChartConfigEditForm {
+	padding: 1.5rem;
+}
+.chartConfigEditDialogChartConfigEditActions {
+	flex-shrink: 0;
+	border-top-style: var(--fx-border-style);
+	border-top-width: 1px;
+	padding-inline: 1.5rem;
+	padding-block: 0.75rem;
+}
+.chartConfigEditFormDiv {
+	display: grid;
+	gap: 0.5rem;
+}
+.chartConfigEditFormLabel {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 600;
+	font-weight: 600;
+	color: var(--app-text);
+}
+.chartConfigEditFormInput {
+	height: 2rem;
+	background-color: var(--app-bg);
+}
+.chartConfigEditFormDiv2 {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.chartConfigEditFormSpan {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-muted);
+}
+.chartConfigEditFormDiv3 {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+.chartConfigEditFormDiv4 {
+	display: grid;
+	gap: 0.125rem;
+}
+.chartConfigEditFormDiv5 {
+	display: grid;
+	gap: 0.75rem;
+	padding-block: 0.5rem;
+}
+.chartConfigEditFormDiv6 {
+	display: grid;
+	align-items: flex-end;
+	gap: 0.75rem;
+}
+.chartConfigEditFormDiv7 {
+	display: grid;
+	gap: 0.25rem;
+}
+.chartConfigEditFormSelectTrigger {
+	width: 100%;
+	background-color: var(--app-bg);
+	& svg {
+		color: var(--app-text) !important;
+	}
+	& svg {
+		opacity: 100% !important;
+	}
+}
+.chartConfigEditFormSelectContent {
+	--fx-border-style: none;
+	border-style: none;
+	background-color: var(--app-bg);
+	& svg {
+		color: var(--app-text) !important;
+	}
+	& svg {
+		opacity: 100% !important;
+	}
+}
+.chartConfigEditFormDiv8 {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-block: 0.5rem;
+}
+.chartConfigEditFormButton {
+	border-radius: calc(infinity * 1px);
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+}
+.chartConfigEditFormPlus {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.chartConfigEditFormDiv9 {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.rowDiv {
+	display: grid;
+}
+.rowDiv2 {
+	align-items: center;
+	gap: 0.5rem;
+}
+.rowInput {
+	height: 2rem;
+	border-radius: var(--app-radius);
+	background-color: var(--app-bg);
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+}
+.rowInput2 {
+	height: 2rem;
+	width: 2rem;
+	cursor: pointer;
+	overflow: hidden;
+	border-radius: var(--app-radius);
+	--fx-border-style: none;
+	border-style: none;
+	background-color: transparent;
+	padding: 0px;
+	&::-moz-color-swatch {
+		border-radius: var(--app-radius);
+	}
+	&::-moz-color-swatch {
+		--fx-border-style: none;
+		border-style: none;
+	}
+	&::-webkit-color-swatch {
+		border-radius: var(--app-radius);
+	}
+	&::-webkit-color-swatch {
+		--fx-border-style: none;
+		border-style: none;
+	}
+	&::-webkit-color-swatch-wrapper {
+		padding: 0px;
+	}
+}
+.rowButton {
+	width: 2rem;
+	height: 2rem;
+}
+.rowTrash2 {
+	width: 1rem;
+	height: 1rem;
+}
+.chartConfigEditFormDiv10 {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	border-radius: calc(var(--app-radius) - 2px);
+}
+.chartConfigEditFormFieldset {
+	border-radius: calc(var(--app-radius) - 2px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	border-color: var(--app-line);
+	padding-inline: 0.75rem;
+	padding-top: 0.25rem;
+	padding-bottom: 0.75rem;
+}
+.chartConfigEditFormLegend {
+	margin-left: 0.25rem;
+}
+.chartConfigEditFormDiv11 {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.chartConfigEditFormDiv12 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	align-items: flex-end;
+	gap: 0.75rem;
+}
+.chartConfigEditFormDiv13 {
+	display: flex;
+	height: 2rem;
+	align-items: center;
+	justify-content: space-between;
+}
+.chartConfigEditFormLabel2 {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-text);
+}
+.chartConfigEditFormP {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-danger);
+}
+.chartConfigEditActionsButton {
+	border-radius: calc(infinity * 1px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+}
+.chartConfigEditActionsButton2 {
+	border-radius: calc(infinity * 1px);
+}
+.columnSelectDiv {
+	border-radius: calc(var(--app-radius) - 2px);
+}
+.columnSelectDiv2 {
+	outline-style: var(--fx-outline-style);
+	outline-width: 2px;
+	outline-offset: 2px;
+	outline-color: color-mix(in oklab, var(--app-primary-bg) 40%, transparent);
+	--fx-outline-style: dashed;
+	outline-style: dashed;
+}
+.columnSelectDiv3 {
+	outline-color: var(--app-primary-bg);
+	--fx-outline-style: solid;
+	outline-style: solid;
+}
+.columnSelectSelectTrigger {
+	width: 100%;
+	background-color: var(--app-bg);
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	& svg {
+		color: var(--app-text) !important;
+	}
+	& svg {
+		opacity: 100% !important;
+	}
+}
+.columnSelectSelectContent {
+	background-color: var(--app-bg);
+	& svg {
+		color: var(--app-text) !important;
+	}
+	& svg {
+		opacity: 100% !important;
+	}
+}
+.seriesDropZoneDiv {
+	display: flex;
+	height: 2.5rem;
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	border-radius: calc(var(--app-radius) - 2px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	--fx-border-style: dashed;
+	border-style: dashed;
+	border-color: color-mix(in oklab, var(--app-primary-bg) 40%, transparent);
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-muted);
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+}
+.seriesDropZoneDiv2 {
+	border-color: var(--app-primary-bg);
+	background-color: var(--app-fill);
+	color: var(--app-text);
+}
+.clearableInputDiv {
+	position: relative;
+}
+.clearableInputButton {
+	position: absolute;
+	inset-block: 0px;
+	right: 0.375rem;
+	display: flex;
+	align-items: center;
+	color: var(--app-muted);
+	@media (hover: hover) {
+		&:hover {
+			color: var(--app-text);
+		}
+	}
+}
+.seriesTypeSelectSelectTrigger {
+	height: auto;
+	gap: 0.25rem;
+	padding-inline: 0.25rem;
+	padding-block: 0px;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	& svg {
+		width: 0.875rem;
+		height: 0.875rem;
+	}
+}
+.seriesValueFormatFieldsDiv {
+	display: grid;
+	grid-template-columns: 1fr 1fr 8rem;
+	gap: 0.5rem;
+}
+.seriesValueFormatFieldsDiv2 {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.seriesValueFormatFieldsA {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-blue-500);
+	@media (hover: hover) {
+		&:hover {
+			color: var(--app-blue-400);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			text-decoration-line: underline;
+		}
+	}
+}
+.seriesValueFormatFieldsSelectTrigger {
+	height: 2rem;
+	width: 100%;
+	background-color: var(--app-bg);
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	&:disabled {
+		cursor: not-allowed;
+	}
+	&:disabled {
+		opacity: 50%;
+	}
+	& svg {
+		color: var(--app-text) !important;
+	}
+	& svg {
+		opacity: 100% !important;
+	}
+}
+.seriesValueFormatFieldsSelectContent {
+	background-color: var(--app-bg);
+}
+.valueFormatToggleButton {
+	width: 2rem;
+	height: 2rem;
+	overflow: hidden;
+	background-color: var(--app-bg);
+}
+.valueFormatToggleSpan {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding-inline: 0.125rem;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.valueFormatToggleSpan2 {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding-inline: 0.125rem;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	--fx-font-weight: 600;
+	font-weight: 600;
+	color: var(--app-muted);
+}
+.yAxisSideToggleButton {
+	width: 2rem;
+	height: 2rem;
+	background-color: var(--app-bg);
+}
+.yAxisSideToggleIcon {
+	width: 1rem;
+	height: 1rem;
+	transition-property: transform, translate, scale, rotate;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+}
+.state100 {
+	grid-template-columns: 1fr 1fr 1fr;
+}
+.state101 {
+	grid-template-columns: 1fr 1fr;
+}
+.state102 {
+	grid-template-columns: 1fr 1fr auto auto auto auto;
+}
+.state103 {
+	grid-template-columns: 1fr 1fr auto auto auto;
+}
+.state104 {
+	grid-template-columns: 2fr 1fr 1fr;
+}
+.state105 {
+	grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.state106 {
+	rotate: calc(90deg * -1);
+}

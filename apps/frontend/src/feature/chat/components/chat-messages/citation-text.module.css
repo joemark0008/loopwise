@@ -1,0 +1,8 @@
+.savedFileRendererFileChip {
+	margin-inline: 0.125rem;
+}
+.citationNumberRendererSpan {
+	margin-inline: 0.25rem;
+	display: inline-block;
+	vertical-align: baseline;
+}

@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+.env.*
+!.env.example
+coverage/
+.husky/_
+apps/api/src/generated/
+
+# Project folders created by apps/api (QUARRY_PROJECTS_DIR)
+apps/api/projects/
+
+# Permanent storage of apps/api (QUARRY_STORAGE_LOCAL_PATH)
+apps/api/storage/
+
+# Playwright
+test-results/

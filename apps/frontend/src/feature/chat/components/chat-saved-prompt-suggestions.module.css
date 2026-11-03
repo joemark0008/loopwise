@@ -1,0 +1,56 @@
+.savedPromptSuggestionsDiv {
+	margin-inline: auto;
+	display: flex;
+	width: 100%;
+	max-width: 48rem;
+	flex-direction: column;
+	padding-inline: 0.25rem;
+}
+.savedPromptSuggestionsSpan {
+	margin-bottom: 0.5rem;
+	padding-inline: 0.75rem;
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.savedPromptSuggestionsButton {
+	height: auto;
+	justify-content: flex-start;
+	border-radius: var(--app-radius);
+	padding-inline: 0.75rem;
+	padding-block: 0.25rem;
+	text-align: left;
+	@media (hover: hover) {
+		&:hover {
+			background-color: transparent;
+		}
+	}
+	@media (hover: hover) {
+		&:is(:root[data-mantine-color-scheme='dark'] *):hover {
+			background-color: transparent;
+		}
+	}
+}
+.savedPromptSuggestionsButton2 {
+	animation: fade-out 0.2s cubic-bezier(0.7, 0, 0, 0.7) both;
+}
+.savedPromptSuggestionsButton3 {
+	animation: fade-in 0.2s cubic-bezier(0.7, 0, 0, 0.7) both;
+}
+.savedPromptSuggestionsCornerDownRight {
+	color: var(--app-text);
+}
+.savedPromptSuggestionsSpan2 {
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	--fx-font-weight: 400;
+	font-weight: 400;
+	color: var(--app-muted);
+	@media (hover: hover) {
+		&:is(:where([class~='group']):hover *) {
+			color: var(--app-text);
+		}
+	}
+}

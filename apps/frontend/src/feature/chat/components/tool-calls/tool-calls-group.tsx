@@ -1,0 +1,63 @@
+import { useState, useEffect, memo, useMemo } from 'react';
+import { McpToolCallsSubGroup } from './mcp-sub-group';
+import styles from './tool-calls-group.module.css';
+import { ToolCall } from './index';
+import type { GroupablePart } from '@/types/ai';
+import { Expandable } from '@/components/ui/expandable';
+import { AssistantReasoning } from '@/feature/chat/components/chat-messages/assistant-reasoning';
+import { useChatView } from '@/contexts/chat-view';
+import { ToolGroupProvider } from '@/contexts/tool-group';
+import { isReasoningPart } from '@/lib/ai';
+import { groupMcpToolCalls } from '@/lib/mcp';
+import { useToolGroupSummaryTitle } from '@/hooks/use-tool-group-summary-title';
+
+interface Props {
+	parts: GroupablePart[];
+	isSettled: boolean;
+}
+
+export const ToolCallsGroup = memo(({ parts, isSettled }: Props) => {
+	const isLoading = !isSettled;
+	const hasError = parts.some((p) => !isReasoningPart(p) && p.state === 'output-error');
+	const { expandOnError } = useChatView();
+	const [isExpanded, setIsExpanded] = useState(expandOnError && hasError);
+
+	useEffect(() => {
+		if (expandOnError && hasError) {
+			setIsExpanded(true);
+		}
+	}, [expandOnError, hasError]);
+
+	const title = useToolGroupSummaryTitle({ parts, isLoading, isExpanded });
+	const groupedParts = useMemo(() => groupMcpToolCalls(parts), [parts]);
+
+	return (
+		<Expandable
+			title={title}
+			expanded={isExpanded}
+			onExpandedChange={setIsExpanded}
+			isLoading={isLoading}
+			variant='inline'
+		>
+			<ToolGroupProvider>
+				<div className={styles.toolCallsGroupDiv}>
+					{groupedParts.map((part, index) => {
+						if (part.type === 'mcp-sub-group') {
+							return <McpToolCallsSubGroup key={part.id} group={part} isSettled={isSettled} />;
+						}
+						if (isReasoningPart(part)) {
+							return (
+								<AssistantReasoning
+									key={index}
+									text={part.text}
+									isStreaming={part.state === 'streaming'}
+								/>
+							);
+						}
+						return <ToolCall key={index} toolPart={part} />;
+					})}
+				</div>
+			</ToolGroupProvider>
+		</Expandable>
+	);
+});

@@ -1,0 +1,42 @@
+.chatListSectionDropdownMenuLabel {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-top: 0.375rem;
+	font-size: 0.75rem;
+	--fx-tracking: 0.025em;
+	letter-spacing: 0.025em;
+	text-transform: uppercase;
+}
+.chatListSectionSpan {
+	--fx-numeric-spacing: tabular-nums;
+	font-variant-numeric: var(--fx-ordinal,) var(--fx-slashed-zero,) var(--fx-numeric-figure,)
+		var(--fx-numeric-spacing,) var(--fx-numeric-fraction,);
+}
+.chatListSectionDropdownMenuItem {
+	gap: 0.75rem;
+	padding-right: 0.5rem;
+}
+.chatListSectionSpan2 {
+	min-width: 0px;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	--fx-font-weight: 400;
+	font-weight: 400;
+}
+.chatListSectionSpan3 {
+	flex-shrink: 0;
+	--fx-font-weight: 400;
+	font-weight: 400;
+	color: var(--app-muted);
+	--fx-numeric-spacing: tabular-nums;
+	font-variant-numeric: var(--fx-ordinal,) var(--fx-slashed-zero,) var(--fx-numeric-figure,)
+		var(--fx-numeric-spacing,) var(--fx-numeric-fraction,);
+}
+.chatListSectionDropdownMenuItem2 {
+	--fx-font-weight: 400;
+	font-weight: 400;
+	color: var(--app-muted);
+}

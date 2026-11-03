@@ -1,0 +1,45 @@
+.findPatient {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+.findPatientHeader {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.findPatientHeader svg {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.findPatientList {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--app-line);
+	border-radius: 0.5rem;
+	overflow: hidden;
+}
+.findPatientList li + li {
+	border-top: 1px solid var(--app-line);
+}
+.findPatientRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	column-gap: 0.75rem;
+	padding: 0.4375rem 0.75rem;
+	font-size: var(--app-text-sm);
+}
+.findPatientRow:hover {
+	background: var(--app-fill);
+}
+.findPatientName {
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.findPatientMeta {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}

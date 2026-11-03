@@ -1,0 +1,46 @@
+.contextWindowRingViewSvg {
+	rotate: calc(90deg * -1);
+}
+.contextWindowRingViewSpan {
+	display: inline-flex;
+	flex-shrink: 0;
+	border-radius: calc(var(--app-radius) - 4px);
+	--fx-outline-style: none;
+	outline-style: none;
+	&:focus-visible {
+		--fx-ring-shadow: var(--fx-ring-inset,) 0 0 0 calc(2px + var(--fx-ring-offset-width))
+			var(--fx-ring-color, currentcolor);
+		box-shadow:
+			var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+			var(--fx-shadow);
+	}
+	&:focus-visible {
+		--fx-ring-color: color-mix(in oklab, var(--app-line-strong) 50%, transparent);
+	}
+	&:focus-visible {
+		--fx-ring-offset-width: 2px;
+		--fx-ring-offset-shadow: var(--fx-ring-inset,) 0 0 0 var(--fx-ring-offset-width) var(--fx-ring-offset-color);
+	}
+	&:focus-visible {
+		--fx-ring-offset-color: var(--app-surface);
+	}
+}
+.contextWindowRingViewCircle {
+	stroke: color-mix(in oklab, var(--app-muted) 20%, transparent);
+}
+.contextWindowRingViewCircle2 {
+	transition-property: stroke-dashoffset, stroke;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+	--fx-duration: 700ms;
+	transition-duration: 700ms;
+}
+.ringColor {
+	stroke: var(--app-danger);
+}
+.ringColor2 {
+	stroke: var(--app-amber-500);
+}
+.ringColor3 {
+	stroke: var(--app-primary-bg);
+}

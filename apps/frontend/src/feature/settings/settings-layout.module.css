@@ -1,0 +1,8 @@
+.settingsLayoutDiv {
+	display: flex;
+	min-width: 0px;
+	flex: 1;
+	flex-direction: column;
+	overflow: hidden;
+	background-color: var(--app-bg);
+}

@@ -1,0 +1,76 @@
+.projectSelectorDiv {
+	@media (width < 48rem) {
+		display: none;
+	}
+}
+.standaloneProjectSelectorDiv {
+	margin-left: -0.5rem;
+	padding-inline: 1rem;
+	padding-top: 0.75rem;
+	@media (width < 48rem) {
+		display: none;
+	}
+	@media (width >= 48rem) {
+		padding-inline: 2rem;
+	}
+	@media (width >= 48rem) {
+		padding-top: 1rem;
+	}
+}
+.viewerHomeDiv {
+	display: flex;
+	min-width: 18rem;
+	flex: 1;
+	flex-direction: column;
+	overflow: hidden;
+}
+.viewerHomeDiv2 {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+.viewerHomeDiv3 {
+	display: flex;
+	height: 100%;
+	min-width: 18rem;
+	flex: 1;
+	flex-direction: column;
+	overflow: auto;
+}
+.viewerHomeDiv4 {
+	width: 100%;
+	padding-inline: 1rem;
+	padding-block: 1.5rem;
+	@media (width >= 48rem) {
+		padding-inline: 2rem;
+	}
+	@media (width >= 48rem) {
+		padding-block: 2.5rem;
+	}
+}
+.viewerHomeDiv5 {
+	margin-bottom: 1.5rem;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	@media (width >= 48rem) {
+		margin-bottom: 2rem;
+	}
+}
+.viewerHomeH1 {
+	font-size: 1.25rem;
+	line-height: var(--fx-leading, calc(1.75 / 1.25));
+	--fx-font-weight: 600;
+	font-weight: 600;
+	--fx-tracking: -0.025em;
+	letter-spacing: -0.025em;
+}
+.viewerHomeDiv6 {
+	display: flex;
+	min-width: 0px;
+	align-items: center;
+	gap: 0.75rem;
+}

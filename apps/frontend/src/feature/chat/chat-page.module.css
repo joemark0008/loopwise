@@ -1,0 +1,207 @@
+.chatPageDiv {
+	display: flex;
+	min-width: 0px;
+	flex: 1;
+	background-color: var(--app-surface);
+}
+.chatPageDiv2 {
+	position: relative;
+	display: flex;
+	height: 100%;
+	min-width: 0px;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	overflow: hidden;
+}
+.chatPageDiv3 {
+	position: absolute;
+	inset-inline: 1rem;
+	top: 0.75rem;
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	@media (width < 48rem) {
+		display: none;
+	}
+}
+.chatPageDiv4 {
+	display: flex;
+	max-width: 60%;
+	min-width: 0px;
+	flex-direction: row;
+	gap: 1rem;
+}
+.chatPageEditableChatTitle {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.chatPageBadge {
+	width: fit-content;
+	gap: 0.25rem;
+	color: var(--app-muted);
+}
+.chatPageSpan {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.chatPageSpan2 {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	color: var(--app-text);
+}
+.chatPageDiv5 {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.chatPageButton {
+	width: auto;
+	border-radius: calc(infinity * 1px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	padding-inline: 0.5rem;
+	@media (hover: hover) {
+		&:hover {
+			border-radius: calc(infinity * 1px);
+		}
+	}
+}
+.chatPageGlobe {
+	width: 0.75rem;
+	height: 0.75rem;
+	color: var(--app-primary-bg);
+}
+.chatPageSpan3 {
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+}
+.chatPageUpload {
+	width: 0.75rem;
+	height: 0.75rem;
+}
+.chatPageChatArtifactsMenu {
+	right: 0px;
+	margin-top: 0.5rem;
+}
+.chatPageDiv6 {
+	pointer-events: none;
+	position: absolute;
+	inset-inline: 0px;
+	top: 0px;
+	z-index: 5;
+	@media (width < 48rem) {
+		display: none;
+	}
+}
+.chatPageDiv7 {
+	height: 2.5rem;
+	background-color: var(--app-surface);
+}
+.chatPageDiv8 {
+	height: 0.75rem;
+	--fx-gradient-position: to bottom in oklab;
+	background-image: linear-gradient(var(--fx-gradient-stops));
+	--fx-gradient-from: var(--app-surface);
+	--fx-gradient-stops: var(
+		--fx-gradient-via-stops,
+		var(--fx-gradient-position),
+		var(--fx-gradient-from) var(--fx-gradient-from-position),
+		var(--fx-gradient-to) var(--fx-gradient-to-position)
+	);
+	--fx-gradient-to: transparent;
+	--fx-gradient-stops: var(
+		--fx-gradient-via-stops,
+		var(--fx-gradient-position),
+		var(--fx-gradient-from) var(--fx-gradient-from-position),
+		var(--fx-gradient-to) var(--fx-gradient-to-position)
+	);
+}
+.chatPageDiv9 {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+.chatPageDiv10 {
+	pointer-events: none;
+	position: absolute;
+	inset-inline: 0px;
+	bottom: 0px;
+	z-index: 10;
+	padding-top: 2rem;
+}
+.chatPageDiv11 {
+	pointer-events: auto;
+	--fx-gradient-position: to top in oklab;
+	background-image: linear-gradient(var(--fx-gradient-stops));
+	--fx-gradient-from: var(--app-surface);
+	--fx-gradient-stops: var(
+		--fx-gradient-via-stops,
+		var(--fx-gradient-position),
+		var(--fx-gradient-from) var(--fx-gradient-from-position),
+		var(--fx-gradient-to) var(--fx-gradient-to-position)
+	);
+	--fx-gradient-via: var(--app-surface);
+	--fx-gradient-via-stops:
+		var(--fx-gradient-position), var(--fx-gradient-from) var(--fx-gradient-from-position),
+		var(--fx-gradient-via) var(--fx-gradient-via-position), var(--fx-gradient-to) var(--fx-gradient-to-position);
+	--fx-gradient-stops: var(--fx-gradient-via-stops);
+	--fx-gradient-via-position: 70%;
+	--fx-gradient-to: transparent;
+	--fx-gradient-stops: var(
+		--fx-gradient-via-stops,
+		var(--fx-gradient-position),
+		var(--fx-gradient-from) var(--fx-gradient-from-position),
+		var(--fx-gradient-to) var(--fx-gradient-to-position)
+	);
+}
+.chatPageDiv12 {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding-bottom: 1rem;
+}
+.chatPageP {
+	text-align: center;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-font-weight: 500;
+	font-weight: 500;
+	color: var(--app-violet);
+}
+.chatPageButton2 {
+	border-radius: calc(infinity * 1px);
+	background-color: var(--app-violet);
+	color: var(--app-white);
+	--fx-shadow:
+		0 1px 3px 0 var(--fx-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--fx-shadow-color, rgb(0 0 0 / 0.1));
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-violet);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-violet) 90%, transparent);
+		}
+	}
+}
+.chatPageArrowRight {
+	width: 1rem;
+	height: 1rem;
+}
+.chatPageP2 {
+	text-align: center;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}

@@ -1,0 +1,63 @@
+.sharedChatPageDiv {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+.sharedChatPageP {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.sharedChatPageDiv2 {
+	display: flex;
+	min-width: 0px;
+	flex: 1;
+	flex-direction: column;
+	background-color: var(--app-surface);
+}
+.sharedChatPageHeader {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 0.5rem;
+	border-bottom-style: var(--fx-border-style);
+	border-bottom-width: 1px;
+	background-color: var(--app-surface);
+	padding-inline: 1rem;
+	padding-block: 0.625rem;
+	@media (width >= 48rem) {
+		padding-inline: 1.5rem;
+	}
+}
+.sharedChatPageH1 {
+	font-family: var(--app-font-heading);
+	font-size: 1.625rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	line-height: 1.2;
+	color: var(--app-text);
+}
+.sharedChatPageSpan {
+	flex-shrink: 0;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.sharedChatPageDiv3 {
+	display: flex;
+	min-height: 0px;
+	min-width: 0px;
+	flex: 1;
+}
+.sharedChatPageDiv4 {
+	position: relative;
+	min-width: 0px;
+	flex: 1;
+}
+.sharedChatPageChatMessagesReadonly {
+	height: 100%;
+}
+.sharedChatPageChatMessagesReadonly2 {
+	padding-bottom: 7rem;
+}

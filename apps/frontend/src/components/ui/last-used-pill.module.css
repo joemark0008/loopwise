@@ -1,0 +1,20 @@
+.lastUsedPillSpan {
+	border-radius: calc(infinity * 1px);
+	padding-inline: 0.5rem;
+	padding-block: 0.125rem;
+	font-size: 0.75rem;
+	--fx-leading: 1;
+	line-height: 1;
+	--fx-font-weight: 500;
+	font-weight: 500;
+	--fx-ring-shadow: var(--fx-ring-inset,) 0 0 0 calc(2px + var(--fx-ring-offset-width))
+		var(--fx-ring-color, currentcolor);
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+	--fx-ring-color: var(--app-surface);
+}
+.lastUsedPillSpan2 {
+	background-color: var(--last-used-pill-bg, var(--app-primary-bg));
+	color: var(--last-used-pill-fg, var(--app-primary-fg));
+}

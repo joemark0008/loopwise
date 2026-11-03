@@ -1,0 +1,109 @@
+fragment UsageRecordFields on UsageRecord {
+	date
+	messageCount
+	webMessageCount
+	slackMessageCount
+	teamsMessageCount
+	telegramMessageCount
+	mattermostMessageCount
+	discordMessageCount
+	whatsappMessageCount
+	adminMessageCount
+	mcpMessageCount
+	contextRecommendationsMessageCount
+	inputNoCacheTokens
+	inputCacheReadTokens
+	inputCacheWriteTokens
+	outputTotalTokens
+	totalTokens
+	inputNoCacheCost
+	inputCacheReadCost
+	inputCacheWriteCost
+	outputCost
+	totalCost
+}
+
+fragment UsagePeriodSelectionFields on UsagePeriodSelection {
+	mode
+	savedPeriodId
+}
+
+fragment SavedUsagePeriodFields on SavedUsagePeriod {
+	id
+	days
+	granularity
+}
+
+query UsageMessages($filter: UsageFilterInput!) {
+	usageMessages(filter: $filter) {
+		...UsageRecordFields
+	}
+}
+
+query UsageByUser($filter: UsageFilterInput!) {
+	usageByUser(filter: $filter) {
+		date
+		users {
+			userName
+			messageCount
+			totalTokens
+			totalCost
+		}
+	}
+}
+
+query UsageTotal($filter: UsageFilterInput!) {
+	usageTotal(filter: $filter) {
+		totalMessages
+		uniqueUsers
+	}
+}
+
+query UsageProviders {
+	usageProviders
+}
+
+query UsageUserFacets {
+	usageUserFacets {
+		userName
+		chatCount
+	}
+}
+
+query UsagePeriodSettings($projectId: ID!) {
+	usagePeriodSettings(projectId: $projectId) {
+		selection {
+			...UsagePeriodSelectionFields
+		}
+		savedPeriods {
+			...SavedUsagePeriodFields
+		}
+	}
+}
+
+mutation UpdateUsagePeriodSelection($projectId: ID!, $selection: UsagePeriodSelectionInput!) {
+	updateUsagePeriodSelection(projectId: $projectId, selection: $selection) {
+		...UsagePeriodSelectionFields
+	}
+}
+
+mutation CreateSavedUsagePeriod($projectId: ID!, $savedPeriod: SavedUsagePeriodInput!) {
+	createSavedUsagePeriod(projectId: $projectId, savedPeriod: $savedPeriod) {
+		...SavedUsagePeriodFields
+	}
+}
+
+mutation UpdateSavedUsagePeriod($projectId: ID!, $savedPeriod: UpdateSavedUsagePeriodInput!) {
+	updateSavedUsagePeriod(projectId: $projectId, savedPeriod: $savedPeriod) {
+		...SavedUsagePeriodFields
+	}
+}
+
+mutation DeleteSavedUsagePeriod($projectId: ID!, $id: ID!) {
+	deleteSavedUsagePeriod(projectId: $projectId, id: $id) {
+		id
+		selection {
+			...UsagePeriodSelectionFields
+		}
+	}
+}

@@ -1,0 +1,21 @@
+.confettiBurstDiv {
+	pointer-events: none;
+	position: absolute;
+	top: calc(1 / 2 * 100%);
+	left: calc(1 / 2 * 100%);
+}
+.confettiBurstSpan {
+	position: absolute;
+}
+.confettiBurstSpan2 {
+	border-radius: calc(infinity * 1px);
+}
+.confettiBurstSpan3 {
+	border-radius: 0.125rem;
+}
+.state100 {
+	margin-top: -0.25rem;
+	margin-left: -0.25rem;
+	width: 0.5rem;
+	height: 0.5rem;
+}

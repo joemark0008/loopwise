@@ -1,0 +1,51 @@
+# quarry in production: the app image (Dockerfile) and its Postgres.
+#   cp .env.example .env    # set BETTER_AUTH_SECRET, BETTER_AUTH_URL (the public URL) and an LLM key
+#   docker compose -f docker-compose.prod.yml up -d --build
+# The app listens on ${QUARRY_PORT:-8080}. Projects (context files) and stored files live in the quarry_data volume.
+services:
+    postgres:
+        image: postgres:16-alpine
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-quarry}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quarry}
+            POSTGRES_DB: quarry
+        volumes:
+            - quarry_postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-quarry} -d quarry']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+        restart: unless-stopped
+
+    quarry:
+        build: .
+        image: quarry:latest
+        depends_on:
+            postgres:
+                condition: service_healthy
+        env_file: .env
+        environment:
+            DATABASE_URL: postgresql://${POSTGRES_USER:-quarry}:${POSTGRES_PASSWORD:-quarry}@postgres:5432/quarry
+            PORT: 5006
+            # Required: MODE=prod refuses to boot without a stable secret (it also derives the setup token).
+            BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in .env}
+        ports:
+            - '${QUARRY_PORT:-8080}:5006'
+        volumes:
+            - quarry_data:/data
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'node -e "fetch(\"http://localhost:5006/health\").then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"',
+                ]
+            interval: 10s
+            timeout: 5s
+            start_period: 60s
+            retries: 5
+        restart: unless-stopped
+
+volumes:
+    quarry_postgres_data:
+    quarry_data:

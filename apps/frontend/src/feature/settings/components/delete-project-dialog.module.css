@@ -1,0 +1,22 @@
+.deleteProjectDialogForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.deleteProjectDialogLabel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.deleteProjectDialogLabel strong {
+	color: var(--app-text);
+	word-break: break-all;
+}
+.deleteProjectDialogP {
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-danger);
+}

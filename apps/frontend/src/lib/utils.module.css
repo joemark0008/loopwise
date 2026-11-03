@@ -1,0 +1,9 @@
+.hidden {
+	visibility: hidden;
+	opacity: 0;
+}
+
+.shown {
+	visibility: visible;
+	opacity: 1;
+}

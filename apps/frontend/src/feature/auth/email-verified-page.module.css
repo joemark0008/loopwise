@@ -1,0 +1,59 @@
+.emailVerifiedDiv {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+.emailVerifiedDiv2 {
+	margin-bottom: 1.25rem;
+	display: flex;
+	width: 3.5rem;
+	height: 3.5rem;
+	align-items: center;
+	justify-content: center;
+	border-radius: calc(var(--app-radius) + 8px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	border-color: color-mix(in oklab, var(--app-danger) 20%, transparent);
+	background-color: color-mix(in oklab, var(--app-danger) 5%, transparent);
+}
+.emailVerifiedCircleAlert {
+	width: 1.5rem;
+	height: 1.5rem;
+	color: var(--app-danger);
+}
+.emailVerifiedP {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-leading: 1.5rem;
+	line-height: 1.5rem;
+	color: var(--app-muted);
+}
+.emailVerifiedButton {
+	margin-top: 1.5rem;
+	height: 2.75rem;
+	width: 100%;
+	border-radius: calc(infinity * 1px);
+}
+.emailVerifiedAuthForm {
+	color: var(--app-emerald-600);
+	&:is(:root[data-mantine-color-scheme='dark'] *) {
+		color: var(--app-emerald-400);
+	}
+}
+.emailVerifiedDiv3 {
+	max-width: 24rem;
+}
+.emailVerifiedP2 {
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.emailVerifiedP3 {
+	margin-top: 0.75rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	--fx-leading: 1.5rem;
+	line-height: 1.5rem;
+	color: var(--app-muted);
+}

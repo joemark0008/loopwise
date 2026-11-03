@@ -1,0 +1,29 @@
+// LLM usage: one row per inference, for token and cost accounting.
+
+model LlmInference {
+  id                    String   @id @default(uuid())
+  projectId             String   @map("project_id")
+  userId                String   @map("user_id")
+  chatId                String?  @map("chat_id")
+  type                  String
+  llmProvider           String   @map("llm_provider")
+  llmModelId            String   @map("llm_model_id")
+  inputTotalTokens      Int?     @map("input_total_tokens")
+  inputNoCacheTokens    Int?     @map("input_no_cache_tokens")
+  inputCacheReadTokens  Int?     @map("input_cache_read_tokens")
+  inputCacheWriteTokens Int?     @map("input_cache_write_tokens")
+  outputTotalTokens     Int?     @map("output_total_tokens")
+  outputTextTokens      Int?     @map("output_text_tokens")
+  outputReasoningTokens Int?     @map("output_reasoning_tokens")
+  totalTokens           Int?     @map("total_tokens")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  chat                  Chat?    @relation(fields: [chatId], references: [id], onUpdate: NoAction, map: "llm_inference_chat_id_chat_id_fk")
+  project               Project  @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "llm_inference_project_id_project_id_fk")
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "llm_inference_user_id_user_id_fk")
+
+  @@index([createdAt], map: "llm_inference_createdAt_idx")
+  @@index([projectId], map: "llm_inference_projectId_idx")
+  @@index([type])
+  @@index([userId], map: "llm_inference_userId_idx")
+  @@map("llm_inference")
+}

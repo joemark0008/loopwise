@@ -1,0 +1,64 @@
+.followUpSuggestionsDiv {
+	display: flex;
+	animation: fade-in-up 0.2s cubic-bezier(0.7, 0, 0, 0.7) both;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+.followUpSuggestionsDiv2 {
+	display: flex;
+	height: 2.25rem;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 0.5rem;
+	border-radius: var(--app-radius);
+	padding-inline: 0.75rem;
+	padding-block: 0.5rem;
+	text-align: left;
+}
+.followUpSuggestionsCornerDownRight {
+	flex-shrink: 0;
+	color: var(--app-muted);
+	opacity: 50%;
+}
+.followUpSuggestionsSkeleton {
+	height: 1rem;
+	width: 100%;
+	border-radius: var(--app-radius);
+}
+.followUpSuggestionsDiv3 {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+.followUpSuggestionsDiv4 {
+	animation: fade-in-up 0.2s cubic-bezier(0.7, 0, 0, 0.7) both;
+	transition-delay: 100ms;
+	animation-delay: calc(100 * 1ms);
+	animation-delay: 0.1s;
+	--fx-animation-delay: calc(100 * 1ms);
+	--fx-animation-delay: 0.1s;
+}
+.followUpSuggestionsP {
+	padding-inline: 0.75rem;
+	padding-bottom: 0.25rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.followUpSuggestionsButton {
+	justify-content: flex-start;
+	gap: 0.5rem;
+	border-radius: var(--app-radius);
+	padding-inline: 0.75rem;
+	padding-block: 0.5rem;
+	text-align: left;
+}
+.followUpSuggestionsCornerDownRight2 {
+	color: var(--app-muted);
+	opacity: 50%;
+}
+.followUpSuggestionsSpan {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

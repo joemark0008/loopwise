@@ -1,0 +1,31 @@
+# Example: an edge connector service for one facility. Not part of the default docker-compose.yml.
+#   docker compose -f apps/connector/docker-compose.example.yml up --build
+# Set HUB_URL and FACILITY_KEY (the facility API key issued by the hub) in the environment or an .env file.
+name: loopwise-connector
+
+services:
+    connector:
+        build:
+            context: ../..
+            dockerfile: apps/connector/Dockerfile
+        restart: unless-stopped
+        stop_grace_period: 20s
+        environment:
+            HUB_URL: ${HUB_URL:-http://host.docker.internal:5006}
+            FACILITY_KEY: ${FACILITY_KEY:?set FACILITY_KEY to the facility API key}
+            MLLP_PORT: 2575
+            QUEUE_PATH: /data/connector.db
+            # Hub orders → the facility LIS (leave LIS_HOST empty to disable the outbox poller).
+            LIS_HOST: ${LIS_HOST:-}
+            LIS_PORT: ${LIS_PORT:-2575}
+            OUTBOX_POLL_MS: ${OUTBOX_POLL_MS:-5000}
+        ports:
+            - '${CONNECTOR_MLLP_PORT:-2575}:2575'
+            - '${CONNECTOR_HEALTH_PORT:-8081}:8081'
+        volumes:
+            - connector_queue:/data
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+
+volumes:
+    connector_queue:

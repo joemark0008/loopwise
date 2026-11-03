@@ -1,0 +1,29 @@
+.selectionCitationBannerDiv {
+	position: relative;
+	margin-bottom: 0.5rem;
+	animation: enter var(--fx-animation-duration, var(--fx-duration, 0.15s)) var(--fx-ease, ease)
+		var(--fx-animation-delay, 0s) var(--fx-animation-iteration-count, 1) var(--fx-animation-direction, normal)
+		var(--fx-animation-fill-mode, none);
+	border-radius: calc(var(--app-radius) + 4px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	border-color: var(--app-line);
+	background-color: var(--app-surface);
+	padding-inline: 1rem;
+	padding-block: 0.75rem;
+	--fx-duration: 200ms;
+	transition-duration: 200ms;
+	--fx-enter-opacity: 0;
+	--fx-enter-translate-y: calc(2 * 0.25rem);
+}
+.selectionCitationBannerButton {
+	position: absolute;
+	top: 0.375rem;
+	right: 0.375rem;
+	border-radius: calc(infinity * 1px);
+	color: var(--app-muted);
+}
+.selectionCitationBannerX {
+	width: 0.75rem;
+	height: 0.75rem;
+}

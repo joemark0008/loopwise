@@ -1,0 +1,37 @@
+/* The lab worklist: the tab bar above the table, the row actions on the right. */
+
+.tabs {
+	margin-bottom: 0.25rem;
+}
+
+.main {
+	font-weight: 600;
+	color: var(--app-text);
+}
+
+.muted {
+	font-size: var(--app-text-xs);
+	color: var(--app-muted);
+}
+
+.nowrap {
+	white-space: nowrap;
+}
+
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+
+/* Phone: a multi-line cell stays one block on the right of its label; a row without actions has no Actions line. */
+.stack {
+	min-width: 0;
+}
+
+@media (max-width: 40rem) {
+	.actionsCell:empty {
+		display: none;
+	}
+}

@@ -1,0 +1,13 @@
+.sidebarLayoutContentDiv {
+	display: flex;
+	min-height: 0px;
+	min-width: 0px;
+	flex: 1;
+	flex-direction: column;
+}
+.sidebarLayoutContentDiv2 {
+	display: flex;
+	min-height: 0px;
+	min-width: 0px;
+	flex: 1;
+}

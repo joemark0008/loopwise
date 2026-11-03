@@ -1,0 +1,277 @@
+/*
+ * The patient context: the banner across the top (it never scrolls away), then the chart and the patient's Wise side
+ * by side on a resizable split (`--wise-width`, 380px and up). Wise can also take the main area (expanded) or shrink to
+ * a rail (collapsed). Below 75rem Wise opens over the page from the banner, and on a phone as a full-screen sheet.
+ */
+
+.shell {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+	background-color: var(--app-bg);
+}
+
+.header {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding: 0.5rem 1rem 0.75rem;
+	border-bottom: 1px solid var(--app-line);
+	background-color: var(--app-bg);
+}
+
+@media (min-width: 48rem) {
+	.header {
+		padding-inline: 1.5rem;
+	}
+}
+
+.body {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+}
+
+.main {
+	flex: 1;
+	min-width: 0;
+	overflow-y: auto;
+}
+
+.inner {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	width: 100%;
+	max-width: 90rem;
+	margin: 0 auto;
+	padding: 0.75rem 1rem 2rem;
+}
+
+@media (min-width: 48rem) {
+	.inner {
+		padding-inline: 1.5rem;
+	}
+}
+
+.backLinks {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.25rem 1rem;
+}
+
+.back {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	min-height: 2rem;
+	font-size: var(--app-text-sm);
+	color: var(--app-muted);
+
+	&:hover {
+		color: var(--app-text);
+	}
+
+	& svg {
+		width: 1rem;
+		height: 1rem;
+	}
+}
+
+.tabs {
+	display: flex;
+	gap: 0.25rem;
+	overflow-x: auto;
+	border-bottom: 1px solid var(--app-line);
+	scrollbar-width: none;
+}
+
+.tab {
+	display: inline-flex;
+	align-items: center;
+	min-height: var(--app-control-height);
+	padding-inline: 0.75rem;
+	border-bottom: 2px solid transparent;
+	font-size: var(--app-text-sm);
+	font-weight: 500;
+	color: var(--app-muted);
+	white-space: nowrap;
+
+	&:hover {
+		color: var(--app-text);
+	}
+
+	&[aria-current='page'] {
+		border-bottom-color: var(--app-accent);
+		color: var(--app-text);
+		font-weight: 600;
+	}
+}
+
+.askWise {
+	color: var(--app-wise);
+	border-color: var(--app-wise-line);
+
+	& svg {
+		color: var(--app-wise);
+	}
+}
+
+.wise {
+	display: flex;
+	flex-direction: column;
+	width: var(--wise-width, 27.5rem);
+	min-width: 23.75rem;
+	flex-shrink: 0;
+	padding: 0.75rem 0.75rem 0.75rem 0;
+}
+
+.wiseClose {
+	display: none;
+}
+
+.wiseModeActions {
+	display: flex;
+	gap: 0.125rem;
+}
+
+/* The drag handle: a thin line that thickens on hover and focus. */
+.splitter {
+	position: relative;
+	flex: 0 0 0.75rem;
+	cursor: col-resize;
+	touch-action: none;
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 0.25rem;
+		height: 2.5rem;
+		border-radius: 0.125rem;
+		background-color: var(--app-line-strong);
+		transform: translate(-50%, -50%);
+		transition: background-color 120ms var(--app-ease);
+	}
+
+	&:hover::after,
+	&:focus-visible::after {
+		background-color: var(--app-wise);
+	}
+}
+
+.wiseRail {
+	display: flex;
+	flex: 0 0 3rem;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding-top: 1rem;
+	border-left: 1px solid var(--app-wise-line);
+	background-color: var(--app-wise-bg);
+	color: var(--app-wise);
+	font-size: var(--app-text-xs);
+	font-weight: 600;
+	cursor: pointer;
+
+	& svg {
+		width: 1.25rem;
+		height: 1.25rem;
+	}
+
+	& span {
+		writing-mode: vertical-rl;
+	}
+}
+
+.shell[data-wise-mode='collapsed'] .wise {
+	display: none;
+}
+
+/* Expanded: Wise takes the main area; the banner stays pinned above it. */
+.shell[data-wise-mode='expanded'] {
+	& .main {
+		display: none;
+	}
+
+	& .wise {
+		flex: 1;
+		width: auto;
+		max-width: 64rem;
+		margin: 0 auto;
+		padding: 0.75rem 1rem;
+	}
+}
+
+.state {
+	padding: 1.5rem 1rem;
+}
+
+.skeleton {
+	height: 8rem;
+	width: 100%;
+}
+
+/* Below 75rem: Wise is a panel over the page, opened from the banner's Ask Wise; no split, no rail. */
+@media (max-width: 75rem) {
+	.splitter,
+	.wiseRail,
+	.wiseModeActions {
+		display: none;
+	}
+
+	.shell[data-wise-mode] .main {
+		display: block;
+	}
+
+	.shell[data-wise-mode] .wise {
+		position: fixed;
+		top: 3.75rem;
+		right: 0;
+		bottom: 0;
+		z-index: var(--app-z-overlay);
+		display: flex;
+		width: min(30rem, 100vw);
+		min-width: 0;
+		max-width: none;
+		margin: 0;
+		padding: 0.5rem;
+		border-left: 1px solid var(--app-line);
+		background-color: var(--app-surface);
+		box-shadow: var(--app-shadow-3);
+	}
+
+	.shell:not([data-wise-open]) .wise {
+		display: none;
+	}
+
+	.wiseClose {
+		display: flex;
+		justify-content: flex-end;
+		padding-bottom: 0.25rem;
+	}
+}
+
+@media (min-width: 75.0625rem) {
+	.askWise {
+		display: none;
+	}
+
+	.shell[data-wise-mode='collapsed'] .askWise {
+		display: inline-flex;
+	}
+}
+
+/* Phone: a full-screen sheet. */
+@media (max-width: 40rem) {
+	.shell[data-wise-mode] .wise {
+		inset: 0;
+		width: 100vw;
+		border-left: 0;
+	}
+}

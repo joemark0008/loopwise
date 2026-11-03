@@ -1,0 +1,419 @@
+fragment VitalSignsFields on VitalSigns {
+	id
+	systolicMmHg
+	diastolicMmHg
+	heartRateBpm
+	respiratoryRate
+	temperatureC
+	spo2Pct
+	weightKg
+	heightCm
+	bmi
+	bloodGlucoseMgDl
+	painScore
+	recordedAt
+	voidedAt
+	voidReason
+}
+
+fragment DiagnosisFields on EncounterDiagnosis {
+	id
+	icd10Code
+	display
+	certainty
+	isPrimary
+	notes
+	voidedAt
+	voidReason
+}
+
+fragment AllergyFields on PatientAllergy {
+	id
+	substance
+	kind
+	reaction
+	severity
+}
+
+fragment OrderFields on ClinicalOrder {
+	id
+	code
+	display
+	priority
+	status
+	notes
+	sentAt
+	acceptedAt
+	collectedAt
+	resultedAt
+	closedAt
+	statusReason
+	createdAt
+	targetFacility {
+		id
+		name
+	}
+	results {
+		id
+		display
+		value
+		unit
+		refRange
+		flag
+		resultedAt
+		reviewedAt
+	}
+}
+
+fragment PrescriptionItemFields on PrescriptionItem {
+	id
+	position
+	genericName
+	brandName
+	strength
+	form
+	dose
+	route
+	frequency
+	durationDays
+	quantity
+	quantityUnit
+	refills
+	instructions
+}
+
+fragment PrescriptionFields on Prescription {
+	id
+	version
+	encounterId
+	patientId
+	status
+	rxNumber
+	notes
+	issuedAt
+	voidedAt
+	voidReason
+	createdAt
+	items {
+		...PrescriptionItemFields
+	}
+}
+
+fragment MedicalCertificateFields on MedicalCertificate {
+	id
+	version
+	encounterId
+	patientId
+	status
+	certificateNumber
+	examinedOn
+	diagnosisText
+	fitness
+	restFrom
+	restDays
+	remarks
+	purpose
+	issuedAt
+	voidedAt
+	voidReason
+	createdAt
+}
+
+fragment SignatoryFields on DocumentSignatory {
+	name
+	credentials
+	licenseNumber
+	ptrNumber
+	facilityName
+	facilityAddress
+	facilityPhone
+}
+
+fragment EncounterBillFields on EncounterBill {
+	id
+	version
+	encounterId
+	status
+	charges {
+		id
+		position
+		kind
+		description
+		code
+		quantity
+		unitPrice
+		amount
+	}
+	subtotal
+	discountKind
+	discountAmount
+	philhealthPackageCode
+	philhealthCoverage
+	total
+	finalizedAt
+	paidAt
+	orNumber
+	voidedAt
+	voidReason
+	createdAt
+}
+
+fragment EncounterRecordFields on EncounterRecord {
+	canEdit
+	encounter {
+		...EncounterFields
+		history
+		physicalExam
+		assessment
+		plan
+		patientInstructions
+		followUpOn
+	}
+	vitals {
+		...VitalSignsFields
+	}
+	diagnoses {
+		...DiagnosisFields
+	}
+	allergies {
+		...AllergyFields
+	}
+	orders {
+		...OrderFields
+	}
+	prescriptions {
+		...PrescriptionFields
+	}
+	medicalCertificates {
+		...MedicalCertificateFields
+	}
+	bills {
+		...EncounterBillFields
+	}
+}
+
+query EncounterRecord($encounterId: ID!) {
+	encounterRecord(encounterId: $encounterId) {
+		...EncounterRecordFields
+	}
+}
+
+fragment PatientOverviewFields on PatientOverview {
+	visits {
+		encounter {
+			...EncounterFields
+		}
+		diagnoses {
+			...DiagnosisFields
+		}
+		prescriptions {
+			...PrescriptionFields
+		}
+		orders {
+			...OrderFields
+		}
+		billStatus
+	}
+	recentVitals {
+		...VitalSignsFields
+	}
+	problems {
+		...DiagnosisFields
+	}
+	medicines {
+		...PrescriptionFields
+	}
+	results {
+		...OrderFields
+	}
+}
+
+query PatientOverview($patientId: ID!) {
+	patientOverview(patientId: $patientId) {
+		...PatientOverviewFields
+	}
+}
+
+query PatientAllergies($patientId: ID!) {
+	patientAllergies(patientId: $patientId) {
+		...AllergyFields
+	}
+}
+
+query SearchIcd10($query: String!) {
+	searchIcd10(query: $query) {
+		code
+		title
+	}
+}
+
+query OrderOptions {
+	orderableTests {
+		code
+		display
+		kind
+	}
+	orderTargets {
+		id
+		name
+	}
+}
+
+query PrescriptionPrint($id: ID!) {
+	prescription(id: $id) {
+		...PrescriptionFields
+		signatory {
+			...SignatoryFields
+		}
+	}
+}
+
+query MedicalCertificatePrint($id: ID!) {
+	medicalCertificate(id: $id) {
+		...MedicalCertificateFields
+		signatory {
+			...SignatoryFields
+		}
+	}
+}
+
+query MyClinicianProfile {
+	myClinicianProfile {
+		credentials
+		specialty
+		prcLicenseNumber
+		ptrNumber
+	}
+}
+
+mutation UpdateMyClinicianProfile($input: UpdateClinicianProfileInput!) {
+	updateMyClinicianProfile(input: $input) {
+		credentials
+		specialty
+		prcLicenseNumber
+		ptrNumber
+	}
+}
+
+mutation UpdateEncounterNote($input: UpdateEncounterNoteInput!) {
+	updateEncounterNote(input: $input) {
+		id
+		version
+	}
+}
+
+mutation RecordVitals($input: RecordVitalsInput!) {
+	recordVitals(input: $input) {
+		id
+	}
+}
+
+mutation VoidVitals($input: VoidEntryInput!) {
+	voidVitals(input: $input) {
+		id
+	}
+}
+
+mutation AddDiagnosis($input: AddDiagnosisInput!) {
+	addDiagnosis(input: $input) {
+		id
+	}
+}
+
+mutation UpdateDiagnosis($input: UpdateDiagnosisInput!) {
+	updateDiagnosis(input: $input) {
+		id
+	}
+}
+
+mutation VoidDiagnosis($input: VoidEntryInput!) {
+	voidDiagnosis(input: $input) {
+		id
+	}
+}
+
+mutation AddAllergy($input: AddAllergyInput!) {
+	addAllergy(input: $input) {
+		id
+	}
+}
+
+mutation VoidAllergy($input: VoidAllergyInput!) {
+	voidAllergy(input: $input) {
+		id
+	}
+}
+
+mutation CreateEncounterOrder($input: CreateEncounterOrderInput!) {
+	createEncounterOrder(input: $input) {
+		id
+	}
+}
+
+mutation SavePrescription($input: SavePrescriptionInput!) {
+	savePrescription(input: $input) {
+		id
+	}
+}
+
+mutation IssuePrescription($id: ID!, $overrideAllergyWarning: Boolean) {
+	issuePrescription(id: $id, overrideAllergyWarning: $overrideAllergyWarning) {
+		id
+	}
+}
+
+mutation VoidPrescription($input: VoidEntryInput!) {
+	voidPrescription(input: $input) {
+		id
+	}
+}
+
+mutation SaveMedicalCertificate($input: SaveMedicalCertificateInput!) {
+	saveMedicalCertificate(input: $input) {
+		id
+	}
+}
+
+mutation IssueMedicalCertificate($id: ID!) {
+	issueMedicalCertificate(id: $id) {
+		id
+	}
+}
+
+mutation VoidMedicalCertificate($input: VoidEntryInput!) {
+	voidMedicalCertificate(input: $input) {
+		id
+	}
+}
+
+mutation SaveEncounterBill($input: SaveEncounterBillInput!) {
+	saveEncounterBill(input: $input) {
+		id
+	}
+}
+
+mutation FinalizeEncounterBill($id: ID!) {
+	finalizeEncounterBill(id: $id) {
+		id
+	}
+}
+
+mutation MarkEncounterBillPaid($input: MarkBillPaidInput!) {
+	markEncounterBillPaid(input: $input) {
+		id
+	}
+}
+
+mutation VoidEncounterBill($input: VoidEntryInput!) {
+	voidEncounterBill(input: $input) {
+		id
+	}
+}
+
+mutation CreateEncounterOrders($input: CreateEncounterOrdersInput!) {
+	createEncounterOrders(input: $input) {
+		id
+		code
+		display
+	}
+}

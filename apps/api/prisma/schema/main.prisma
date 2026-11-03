@@ -1,0 +1,11 @@
+// Prisma client generator and the PostgreSQL datasource (the URL comes from prisma.config.ts).
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}

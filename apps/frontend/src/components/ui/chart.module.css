@@ -1,0 +1,64 @@
+.chartContainerDiv {
+	display: flex;
+	width: 100%;
+	flex-direction: column;
+}
+.chartContainerDiv2 {
+	display: flex;
+	aspect-ratio: 16 / 9;
+	min-height: 0px;
+	justify-content: center;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+	& .recharts-cartesian-axis-tick text {
+		fill: var(--app-muted);
+	}
+	& .recharts-cartesian-grid line[stroke='#ccc'] {
+		stroke: color-mix(in oklab, var(--app-line) 50%, transparent);
+	}
+	& .recharts-curve.recharts-tooltip-cursor {
+		stroke: var(--app-line);
+	}
+	& .recharts-dot[stroke='#fff'] {
+		stroke: transparent;
+	}
+	& .recharts-layer {
+		--fx-outline-style: none;
+		outline-style: none;
+		@media (forced-colors: active) {
+			outline: 2px solid transparent;
+			outline-offset: 2px;
+		}
+	}
+	& .recharts-polar-grid [stroke='#ccc'] {
+		stroke: var(--app-line);
+	}
+	& .recharts-radial-bar-background-sector {
+		fill: var(--app-fill);
+	}
+	& .recharts-rectangle.recharts-tooltip-cursor {
+		fill: var(--app-fill);
+	}
+	& .recharts-reference-line [stroke='#ccc'] {
+		stroke: var(--app-line);
+	}
+	& .recharts-sector {
+		--fx-outline-style: none;
+		outline-style: none;
+		@media (forced-colors: active) {
+			outline: 2px solid transparent;
+			outline-offset: 2px;
+		}
+	}
+	& .recharts-sector[stroke='#fff'] {
+		stroke: transparent;
+	}
+	& .recharts-surface {
+		--fx-outline-style: none;
+		outline-style: none;
+		@media (forced-colors: active) {
+			outline: 2px solid transparent;
+			outline-offset: 2px;
+		}
+	}
+}

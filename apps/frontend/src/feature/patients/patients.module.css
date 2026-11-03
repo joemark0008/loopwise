@@ -1,0 +1,83 @@
+.patientsPage {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	width: 100%;
+	max-width: 52rem;
+	margin: 0 auto;
+	padding: 1.5rem 1rem 3rem;
+}
+.patientsHeader {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.75rem 1rem;
+}
+.patientsTitle {
+	font-size: 1.5rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.patientsSubtitle {
+	margin-top: 0.25rem;
+	font-size: 0.875rem;
+	color: var(--app-muted);
+}
+.patientsBack {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	width: fit-content;
+	font-size: 0.8125rem;
+	color: var(--app-muted);
+}
+.patientsBack svg {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.patientsSkeleton {
+	height: 8rem;
+}
+.patientsForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.patientsConsent {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.625rem;
+	font-size: 0.875rem;
+}
+.patientsFieldError {
+	font-size: var(--app-text-sm);
+	color: var(--app-danger);
+}
+.patientsRequiredNote {
+	margin: 0;
+	font-size: var(--app-text-sm);
+	color: var(--app-muted);
+}
+.patientsErrorSummary {
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--app-critical-line);
+	border-radius: 0.5rem;
+	background-color: var(--app-critical-bg);
+	color: var(--app-critical);
+	font-size: var(--app-text-sm);
+
+	& ul {
+		margin: 0.25rem 0 0;
+		padding-left: 1.25rem;
+	}
+}
+.patientsErrorSummaryTitle {
+	margin: 0;
+	font-weight: 600;
+}
+.patientsActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}

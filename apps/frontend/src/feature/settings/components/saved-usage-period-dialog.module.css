@@ -1,0 +1,30 @@
+.content {
+	width: min(28rem, calc(100vw - 2rem));
+}
+.form {
+	display: grid;
+	gap: 1rem;
+}
+.fields {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+.field {
+	display: grid;
+	gap: 0.5rem;
+}
+.label {
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--app-text);
+}
+.error {
+	font-size: 0.875rem;
+	color: var(--app-danger);
+}
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}

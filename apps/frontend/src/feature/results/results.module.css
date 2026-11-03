@@ -1,0 +1,52 @@
+.reviewForm {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.reviewFlag {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: var(--app-text-sm);
+	color: var(--app-muted);
+}
+
+.noteLabel {
+	font-size: var(--app-text-sm);
+	font-weight: 600;
+	color: var(--app-text);
+}
+
+.report {
+	margin: 0;
+	padding: 0.75rem;
+	border-radius: 0.5rem;
+	background-color: var(--app-fill);
+	font-family: inherit;
+	font-size: var(--app-text-sm);
+	color: var(--app-body);
+	white-space: pre-wrap;
+}
+
+.groupHeading {
+	padding-top: 1rem;
+}
+
+.patientLink {
+	font-weight: 600;
+	color: var(--app-text);
+}
+
+.nowrap {
+	white-space: nowrap;
+}
+
+.muted {
+	color: var(--app-muted);
+}
+
+.skeleton {
+	height: 8rem;
+}

@@ -1,0 +1,60 @@
+/* A failed tool call says so in words, with its sign: not a coloured dot. */
+.statusIconDiv {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: var(--app-text-xs);
+	font-weight: 600;
+	color: var(--app-critical);
+
+	& svg {
+		width: 0.875rem;
+		height: 0.875rem;
+	}
+}
+.statusIconSpinner {
+	width: 0.75rem;
+	height: 0.75rem;
+	opacity: 50%;
+}
+.actionsContentDiv {
+	margin-block: -0.25rem;
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 0.25rem;
+}
+.actionsContentButton {
+	border-radius: calc(infinity * 1px);
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-fill);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-fill) 70%, transparent);
+		}
+	}
+}
+.actionsContentButton2 {
+	background-color: color-mix(in oklab, var(--app-fill) 70%, transparent);
+}
+.errorContentPre {
+	margin: 0px;
+	max-height: 20rem;
+	overflow: auto;
+	padding: 0.75rem;
+	overflow-wrap: break-word;
+	white-space: pre-wrap;
+	color: var(--app-red-400);
+}
+.errorContentPre2 {
+	margin: 0px;
+	max-height: 20rem;
+	overflow: auto;
+	padding: 0.5rem;
+}
+.toolCallWrapperDiv {
+	margin-inline: -0.75rem;
+}

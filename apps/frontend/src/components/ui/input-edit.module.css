@@ -1,0 +1,52 @@
+.inputEditInput {
+	min-width: 0px;
+	--fx-border-style: none;
+	border-style: none;
+	background-color: transparent;
+	padding: 0px;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: inherit;
+	--fx-outline-style: none;
+	outline-style: none;
+	grid-area: 1/1;
+	&::placeholder {
+		--fx-font-weight: 400;
+		font-weight: 400;
+	}
+	&:focus {
+		--fx-outline-style: none;
+		outline-style: none;
+	}
+}
+.inputEditDiv {
+	display: inline-grid;
+	width: 100%;
+	min-width: 1px;
+	overflow: hidden;
+	&::after {
+		content: var(--fx-content);
+		visibility: hidden;
+	}
+	&::after {
+		content: var(--fx-content);
+		padding: 0px;
+	}
+	&::after {
+		content: var(--fx-content);
+		font-size: 0.875rem;
+		line-height: var(--fx-leading, calc(1.25 / 0.875));
+	}
+	&::after {
+		content: var(--fx-content);
+		white-space: pre;
+	}
+	&::after {
+		--fx-content: attr(data-value);
+		content: var(--fx-content);
+	}
+	&::after {
+		content: var(--fx-content);
+		grid-area: 1/1;
+	}
+}

@@ -1,0 +1,40 @@
+.headerActionsButton {
+	@media (hover: hover) {
+		&:hover {
+			border-radius: calc(infinity * 1px);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-fill);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-fill) 70%, transparent);
+		}
+	}
+}
+.headerActionsFilePlus {
+	width: 0.75rem;
+	height: 0.75rem;
+	color: color-mix(in oklab, var(--app-muted) 70%, transparent);
+}
+.displayChartTableDiv {
+	padding: 1rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-red-400);
+}
+.displayChartTableDiv2 {
+	margin-block: 0.5rem;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: color-mix(in oklab, var(--app-text) 50%, transparent);
+}
+.displayChartTableDiv3 {
+	margin-block: 0.5rem;
+}
+.displayChartTableDataTableCard {
+	margin-inline: -0.75rem;
+}

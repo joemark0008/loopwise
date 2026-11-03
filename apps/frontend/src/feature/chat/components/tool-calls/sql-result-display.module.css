@@ -1,0 +1,7 @@
+.sqlResultDisplayTableDisplay {
+	max-height: 20rem;
+	border-radius: 0;
+	border-style: var(--fx-border-style);
+	border-width: 0px;
+	background-color: transparent;
+}

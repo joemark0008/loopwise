@@ -1,0 +1,13 @@
+.openInQuarryButtonButton {
+	gap: 0.375rem;
+}
+.openInQuarryButtonExternalLink {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.openInQuarryButtonSpan {
+	display: none;
+	@media (width >= 40rem) {
+		display: inline;
+	}
+}

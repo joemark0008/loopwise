@@ -1,0 +1,44 @@
+.editableChatTitleInput {
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	background-color: transparent;
+	color: inherit;
+	--fx-outline-style: none;
+	outline-style: none;
+}
+.editableChatTitleInput2 {
+	margin-inline: -0.5rem;
+	margin-block: -0.25rem;
+	border-radius: calc(infinity * 1px);
+	border-style: var(--fx-border-style);
+	border-width: 1px;
+	border-color: transparent;
+	padding-inline: 0.5rem;
+	padding-block: 0.25rem;
+}
+.editableChatTitleInput3 {
+	cursor: default;
+	transition-property:
+		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fx-gradient-from,
+		--fx-gradient-via, --fx-gradient-to;
+	transition-timing-function: var(--fx-ease, cubic-bezier(0.4, 0, 0.2, 1));
+	transition-duration: var(--fx-duration, 150ms);
+}
+.editableChatTitleInput4 {
+	@media (hover: hover) {
+		&:hover {
+			cursor: text;
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			border-color: var(--app-line);
+		}
+	}
+}
+.editableChatTitleInput5 {
+	cursor: text;
+	border-color: var(--app-line);
+}

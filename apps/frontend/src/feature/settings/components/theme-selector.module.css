@@ -1,0 +1,34 @@
+.themeSelectorDiv {
+	display: flex;
+	gap: 0.25rem;
+}
+.themeSelectorButton {
+	border-radius: calc(infinity * 1px);
+	padding-inline: 0.625rem;
+}
+.themeSelectorButton2 {
+	background-color: var(--app-fill);
+	color: var(--app-text);
+}
+.themeSelectorButton3 {
+	color: var(--app-muted);
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--app-fill);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			background-color: color-mix(in oklab, var(--app-fill) 60%, transparent);
+		}
+	}
+	@media (hover: hover) {
+		&:hover {
+			color: var(--app-text);
+		}
+	}
+}
+.themeSelectorIcon {
+	width: 0.875rem;
+	height: 0.875rem;
+}

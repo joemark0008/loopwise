@@ -1,0 +1,35 @@
+.card {
+	height: 100%;
+	min-width: 0;
+	border-radius: 0.75rem;
+	padding: 1rem;
+}
+.state {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-block: 3rem;
+}
+.stateText {
+	color: var(--app-muted);
+}
+.fetching {
+	opacity: 0.5;
+}
+.chartContainer {
+	height: 20rem;
+	max-height: 20rem;
+}
+.chartContent {
+	min-height: 0;
+}
+@container (max-width: 64rem) {
+	.chartContainer {
+		height: 12.5rem;
+		max-height: 12.5rem;
+	}
+	.chartContent {
+		flex: 1;
+		aspect-ratio: auto;
+	}
+}

@@ -1,0 +1,27 @@
+.setupIntro {
+	margin-bottom: 1.5rem;
+	font-size: 0.875rem;
+	color: var(--app-muted);
+	text-align: center;
+}
+.setupFormTextField {
+	margin-bottom: 1rem;
+}
+.setupFormTextField2 {
+	margin-bottom: 2rem;
+}
+form input.setupTokenInput {
+	font-family: var(--app-font-mono);
+	font-size: 0.875rem;
+}
+.setupCommand {
+	display: block;
+	margin-top: 0.25rem;
+	padding: 0.5rem 0.625rem;
+	border-radius: var(--app-radius);
+	background-color: var(--app-fill);
+	font-family: var(--app-font-mono);
+	font-size: 0.75rem;
+	color: var(--app-text);
+	overflow-wrap: anywhere;
+}

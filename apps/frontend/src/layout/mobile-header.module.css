@@ -1,0 +1,59 @@
+.mobileHeaderDiv {
+	position: relative;
+	z-index: 20;
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 0.5rem;
+	border-bottom-style: var(--fx-border-style);
+	border-bottom-width: 1px;
+	border-color: color-mix(in oklab, var(--app-line) 60%, transparent);
+	background-color: color-mix(in oklab, var(--app-bg) 95%, transparent);
+	padding-inline: 0.75rem;
+	padding-block: 0.5rem;
+	--fx-backdrop-blur: blur(0.5rem);
+	-webkit-backdrop-filter: var(--fx-backdrop-blur,) var(--fx-backdrop-brightness,) var(--fx-backdrop-contrast,)
+		var(--fx-backdrop-grayscale,) var(--fx-backdrop-hue-rotate,) var(--fx-backdrop-invert,)
+		var(--fx-backdrop-opacity,) var(--fx-backdrop-saturate,) var(--fx-backdrop-sepia,);
+	backdrop-filter: var(--fx-backdrop-blur,) var(--fx-backdrop-brightness,) var(--fx-backdrop-contrast,)
+		var(--fx-backdrop-grayscale,) var(--fx-backdrop-hue-rotate,) var(--fx-backdrop-invert,)
+		var(--fx-backdrop-opacity,) var(--fx-backdrop-saturate,) var(--fx-backdrop-sepia,);
+	@supports (backdrop-filter: var(--tw)) {
+		background-color: var(--app-bg);
+	}
+	@supports (backdrop-filter: var(--tw)) {
+		background-color: color-mix(in oklab, var(--app-bg) 80%, transparent);
+	}
+}
+.mobileHeaderButton {
+	gap: 0.5rem;
+	border-radius: calc(infinity * 1px);
+	padding-inline: 0.75rem;
+	--fx-shadow: 0 0 #0000;
+	box-shadow:
+		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
+		var(--fx-shadow);
+}
+.mobileHeaderPanelLeft {
+	width: 1rem;
+	height: 1rem;
+	flex-shrink: 0;
+}
+.mobileHeaderEditableChatTitle {
+	min-width: 0px;
+	flex: 1;
+	font-size: 0.875rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.mobileHeaderDiv2 {
+	margin-left: auto;
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 0.25rem;
+}
+.mobileHeaderChatArtifactsMenu {
+	right: 0.75rem;
+	margin-top: 0.25rem;
+}
