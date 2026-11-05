@@ -1,5 +1,7 @@
 .tabBarDiv {
 	display: flex;
+	/* Its overflow makes its flex min-height 0: in a page's flex column a long page would squash it to nothing. */
+	flex-shrink: 0;
 	overflow-x: auto;
 	border-bottom: 1px solid var(--app-line);
 	scrollbar-width: none;
