@@ -61,6 +61,33 @@ test.describe('patient registration', () => {
 		await expect(page.getByTestId('duplicate-alert')).toContainText(`Same patient no. ${MARIA_PATIENT_NO}`);
 	});
 
+	test('the form registers at the active clinic when the organization has several', async ({ page }) => {
+		// A second clinic of the organization (synthetic), removed again at the end.
+		const graphql = async (query: string, variables: object, clinicId?: string) => {
+			const response = await page.request.post('/graphql', {
+				data: { query, variables },
+				headers: clinicId ? { 'x-loopwise-clinic-id': clinicId } : {},
+			});
+			const body = await response.json();
+			expect(body.errors).toBeUndefined();
+			return body.data;
+		};
+		const created = await graphql('mutation ($input: CreateClinicInput!) { createClinic(input: $input) { id } }', {
+			input: { name: `E2E Panglao annex ${Date.now().toString(36)}` },
+		});
+		const secondClinicId: string = created.createClinic.id;
+		try {
+			await page.goto('/patients/new');
+			await expect(page.getByRole('combobox', { name: 'Clinic' })).toHaveText('Tagbilaran City Health Center');
+		} finally {
+			await graphql(
+				'mutation ($clinicId: ID!) { deleteClinic(clinicId: $clinicId) }',
+				{ clinicId: secondClinicId },
+				secondClinicId,
+			);
+		}
+	});
+
 	test('Wise drafts the registration and the clinician confirms it (real LLM call)', async ({ page }) => {
 		test.setTimeout(180_000);
 		const patient = uniquePatient();

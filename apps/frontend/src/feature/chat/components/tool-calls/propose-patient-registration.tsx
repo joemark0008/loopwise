@@ -15,6 +15,7 @@ import { languageLabel } from '@/feature/patients/patient-format';
 import { PatientFields } from '@/feature/patients/patient-fields';
 import { emptyPatientForm, validatePatientForm } from '@/feature/patients/patient-form-values';
 import { usePatientRegistration } from '@/feature/patients/use-patient-registration';
+import { defaultClinicId, getActiveClinicId } from '@/lib/active-clinic';
 
 const REGISTERED_ANSWER = /^I (registered|used the existing record of) /;
 const TOOL_NAME = 'propose_patient_registration';
@@ -181,7 +182,7 @@ function fromDraft(
 	draft: proposePatientRegistration.Input,
 	clinics: proposePatientRegistration.Clinic[],
 ): PatientFormValues {
-	const empty = emptyPatientForm(clinics[0]?.id ?? '');
+	const empty = emptyPatientForm(defaultClinicId(clinics, getActiveClinicId()));
 	return {
 		...empty,
 		givenName: draft.givenName ?? '',

@@ -36,11 +36,6 @@ export function draftStartToLocalInput(value: string | undefined, now = new Date
 	return value && !Number.isNaN(Date.parse(value)) ? toLocalInput(new Date(value)) : toLocalInput(now);
 }
 
-/** The clinic a new visit starts at: the active clinic (the clinic selector) when it is offered, else the first. */
-export function defaultEncounterClinicId(clinics: { id: string }[], activeClinicId: string | null): string {
-	return clinics.find((clinic) => clinic.id === activeClinicId)?.id ?? clinics[0]?.id ?? '';
-}
-
 export const emptyEncounterForm = (clinicId = '', now = new Date()): EncounterFormValues => ({
 	clinicId,
 	type: 'CONSULTATION',

@@ -66,3 +66,11 @@ export function getClinicRequestHeaders(): Record<string, string> {
 
 	return activeClinicId ? { 'x-loopwise-clinic-id': activeClinicId } : {};
 }
+
+/**
+ * The clinic a new record (a visit, a patient registration) starts at: the active clinic (the clinic selector) when it
+ * is offered, else the first.
+ */
+export function defaultClinicId(clinics: { id: string }[], activeClinicId: string | null): string {
+	return clinics.find((clinic) => clinic.id === activeClinicId)?.id ?? clinics[0]?.id ?? '';
+}

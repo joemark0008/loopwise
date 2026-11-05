@@ -1,7 +1,7 @@
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, UserPlus } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { DuplicateAlert } from './duplicate-alert';
 import { emptyPatientForm, validatePatientForm } from './patient-form-values';
 import { PatientFields } from './patient-fields';
@@ -12,25 +12,23 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
+import { defaultClinicId, useActiveClinicId } from '@/lib/active-clinic';
 import { patientApi } from '@/lib/patient-api';
 
 /** Registers a patient at one of the user's clinics (DESIGN.md §5): fields, consent, then duplicate checks. */
 export function RegisterPatientPage() {
 	const navigate = useNavigate();
 	const clinics = useQuery(patientApi.patient.clinics.queryOptions());
-	const [values, setValues] = useState<PatientFormValues>(emptyPatientForm());
+	const activeClinicId = useActiveClinicId();
+	const [draft, setValues] = useState<PatientFormValues>(emptyPatientForm());
+	// With several clinics the patient registers at the active clinic (the clinic selector) until the user picks one.
+	const values = { ...draft, clinicId: draft.clinicId || defaultClinicId(clinics.data ?? [], activeClinicId) };
 	const [consentGiven, setConsentGiven] = useState(false);
 	const [showErrors, setShowErrors] = useState(false);
 	const registration = usePatientRegistration({
 		onDone: (patient) => void navigate({ to: '/patients/$patientId', params: { patientId: patient.id } }),
 	});
 
-	const onlyClinic = clinics.data?.length === 1 ? clinics.data[0].id : undefined;
-	useEffect(() => {
-		if (onlyClinic) {
-			setValues((current) => (current.clinicId ? current : { ...current, clinicId: onlyClinic }));
-		}
-	}, [onlyClinic]);
 	const cityMunicipalityCode = clinics.data?.find((clinic) => clinic.id === values.clinicId)?.cityMunicipalityCode;
 	const barangays = useQuery(
 		patientApi.patient.barangays.queryOptions(cityMunicipalityCode ? { cityMunicipalityCode } : skipToken),
