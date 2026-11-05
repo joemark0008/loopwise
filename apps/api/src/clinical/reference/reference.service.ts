@@ -3,9 +3,9 @@ import { Injectable } from '@nestjs/common';
 
 import type { Barangay as BarangayRow } from '../../generated/prisma/client.js';
 import { ClinicalDbService, type ClinicalTx } from '../rls/clinical-db.service.js';
-import type { Barangay, Icd10Code } from './models/reference.model.js';
-import { UnknownBarangayError, UnknownIcd10CodeError } from './reference.errors.js';
-import { ReferenceRepository } from './reference.repository.js';
+import type { Barangay, CityMunicipality, Icd10Code } from './models/reference.model.js';
+import { UnknownBarangayError, UnknownCityMunicipalityError, UnknownIcd10CodeError } from './reference.errors.js';
+import { type CityMunicipalityRow, ReferenceRepository } from './reference.repository.js';
 
 /**
  * Reference data shared by the clinical modules: ICD-10 codes (`icd10_codes`, the code list of PhilHealth claims) and
@@ -61,8 +61,45 @@ export class ReferenceService {
 			(await this.reference.listBarangays(tx, cityMunicipalityCode)).map(toBarangay),
 		);
 	}
+
+	/** Cities and municipalities by name (or PSGC code), at most 20. */
+	searchCityMunicipalities(userId: string, query: string): Promise<CityMunicipality[]> {
+		return this.db.asUser(userId, async (tx) =>
+			(await this.reference.searchCityMunicipalities(tx, query, 20)).map(toCityMunicipality),
+		);
+	}
+
+	/**
+	 * A PSGC address on the caller's transaction: the city or municipality must be on the list, and the barangay (when
+	 * given) one of its barangays. Both may be null (no address yet); a barangay needs its city.
+	 */
+	async requireAddress(
+		tx: ClinicalTx,
+		cityMunicipalityCode: string | null,
+		barangayCode: string | null,
+	): Promise<{ cityMunicipality: CityMunicipality | null; barangay: Barangay | null }> {
+		const city = cityMunicipalityCode ? await this.reference.findCityMunicipality(tx, cityMunicipalityCode) : null;
+		if (cityMunicipalityCode && !city) {
+			throw new UnknownCityMunicipalityError(cityMunicipalityCode);
+		}
+		const barangay = barangayCode ? await this.reference.findBarangay(tx, barangayCode) : null;
+		if (barangayCode && (!barangay || barangay.cityMunicipalityCode !== city?.code)) {
+			throw new UnknownBarangayError(barangayCode);
+		}
+		return { cityMunicipality: city && toCityMunicipality(city), barangay: barangay && toBarangay(barangay) };
+	}
 }
 
 function toBarangay(row: BarangayRow): Barangay {
 	return { code: row.code, name: row.name, cityMunicipalityCode: row.cityMunicipalityCode };
+}
+
+function toCityMunicipality(row: CityMunicipalityRow): CityMunicipality {
+	return {
+		code: row.code,
+		name: row.name,
+		provinceName: row.province?.name ?? null,
+		isCity: row.isCity,
+		zipCode: row.zipCode,
+	};
 }

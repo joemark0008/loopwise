@@ -26,6 +26,36 @@ export class PractitionerProfileRequiredError extends DomainError {
 	}
 }
 
+/** A user signs in as one practitioner at most (`practitioners.user_id` is unique). */
+export class PractitionerUserTakenError extends DomainError {
+	constructor() {
+		super('CONFLICT', 'PRACTITIONER_USER_TAKEN', 'This user already has a practitioner profile.');
+	}
+}
+
+/** A practitioner's sign-in must be a user of the clinic (a role there). */
+export class PractitionerUserNotAtClinicError extends DomainError {
+	constructor() {
+		super(
+			'BAD_REQUEST',
+			'PRACTITIONER_USER_NOT_AT_CLINIC',
+			'Give the user a role at this clinic first (Settings → Clinic → Staff).',
+		);
+	}
+}
+
+/** A practitioner is in one place at a time: their weekly sessions on a day don't overlap, at any clinic. */
+export class ScheduleOverlapError extends DomainError {
+	constructor(dayOfWeek: number, startTime: string, endTime: string) {
+		super(
+			'CONFLICT',
+			'SCHEDULE_OVERLAP',
+			`The practitioner already holds clinic from ${startTime} to ${endTime} that day.`,
+			{ dayOfWeek, startTime, endTime },
+		);
+	}
+}
+
 /** A weekly session or a leave that can't be: end before start, an unknown day, a bad date. */
 export class InvalidScheduleError extends DomainError {
 	constructor(message: string) {

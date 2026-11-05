@@ -56,3 +56,24 @@ export class WrongClinicError extends DomainError {
 		super('FORBIDDEN', 'WRONG_CLINIC', 'This visit is at another clinic. Switch to that clinic to bill it.');
 	}
 }
+
+/** A service item's code is unique in the organization's catalog. */
+export class ServiceItemCodeTakenError extends DomainError {
+	constructor(code: string) {
+		super('CONFLICT', 'SERVICE_ITEM_CODE_TAKEN', `Another service already has the code ${code}.`, { code });
+	}
+}
+
+/** A lab test or an inventory item is billed by one service item. */
+export class ServiceItemLinkTakenError extends DomainError {
+	constructor(field: 'diagnosticTestId' | 'inventoryItemId') {
+		super(
+			'CONFLICT',
+			'SERVICE_ITEM_LINK_TAKEN',
+			field === 'diagnosticTestId'
+				? 'Another service already bills this test.'
+				: 'Another service already bills this inventory item.',
+			{ field },
+		);
+	}
+}

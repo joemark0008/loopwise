@@ -12,6 +12,9 @@ import { InvoiceTotalsService } from './invoices/invoice-totals.service.js';
 import { PaymentRepository } from './payments/payment.repository.js';
 import { PaymentResolver } from './payments/payment.resolver.js';
 import { PaymentService } from './payments/payment.service.js';
+import { ServiceCatalogRepository } from './service-items/service-catalog.repository.js';
+import { ServiceCatalogResolver } from './service-items/service-catalog.resolver.js';
+import { ServiceCatalogService } from './service-items/service-catalog.service.js';
 import { ServiceItemRepository } from './service-items/service-item.repository.js';
 import { ServiceItemService } from './service-items/service-item.service.js';
 
@@ -24,6 +27,9 @@ import { ServiceItemService } from './service-items/service-item.service.js';
 	providers: [
 		ServiceItemRepository,
 		ServiceItemService,
+		ServiceCatalogRepository,
+		ServiceCatalogService,
+		ServiceCatalogResolver,
 		InvoiceRepository,
 		InvoiceTotalsService,
 		InvoiceService,

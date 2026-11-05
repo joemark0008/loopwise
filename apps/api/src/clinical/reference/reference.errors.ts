@@ -9,6 +9,15 @@ export class UnknownIcd10CodeError extends DomainError {
 	}
 }
 
+/** A city or municipality must be one of the PSGC list (`city_municipalities`). */
+export class UnknownCityMunicipalityError extends DomainError {
+	constructor(code: string) {
+		super('BAD_REQUEST', 'UNKNOWN_CITY_MUNICIPALITY', `${code} is not a city or municipality on the list.`, {
+			code,
+		});
+	}
+}
+
 /** A barangay must be one of the PSGC list (`barangays`). */
 export class UnknownBarangayError extends DomainError {
 	constructor(value: string) {

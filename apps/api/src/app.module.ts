@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { ChartsModule } from './charts/charts.module.js';
 import { ChatsModule } from './chats/chats.module.js';
 import { BillingModule } from './clinical/billing/billing.module.js';
+import { ClinicSetupModule } from './clinical/clinics/clinic-setup.module.js';
 import { ClinicsModule } from './clinical/clinics/clinics/clinics.module.js';
 import { DiagnosticsModule } from './clinical/diagnostics/diagnostics.module.js';
 import { DocumentsModule } from './clinical/documents/documents.module.js';
@@ -89,6 +90,7 @@ export const SCHEMA_FILE = path.join(import.meta.dirname, '..', 'schema.gql');
 		InsightsModule,
 		EncountersModule,
 		PractitionersModule,
+		ClinicSetupModule,
 		ReferenceModule,
 		DiagnosticsModule,
 		PrescriptionsModule,

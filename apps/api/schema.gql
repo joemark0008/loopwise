@@ -39,6 +39,24 @@ input AddDiagnosisInput {
   wiseOrigin: WiseOriginInput
 }
 
+input AddPractitionerLeaveInput {
+  """YYYY-MM-DD, inclusive."""
+  endDate: String!
+
+  """HH:MM on the end date; empty for the whole day."""
+  endTime: String
+  practitionerId: ID!
+
+  """Conference, holiday, sick …"""
+  reason: String
+
+  """YYYY-MM-DD."""
+  startDate: String!
+
+  """HH:MM on the start date; empty for the whole day."""
+  startTime: String
+}
+
 enum AllergyType {
   DRUG
   ENVIRONMENTAL
@@ -231,6 +249,18 @@ type ChatShareOptions {
   visibility: String
 }
 
+"""A city or municipality of the PSGC."""
+type CityMunicipality {
+  """PSGC code."""
+  code: String!
+  isCity: Boolean!
+  name: String!
+
+  """Its province (none for NCR cities and some HUCs)."""
+  provinceName: String
+  zipCode: String
+}
+
 input ClinicEncountersInput {
   clinicId: ID!
 
@@ -239,6 +269,66 @@ input ClinicEncountersInput {
 
   """Default: every status but CANCELLED."""
   statuses: [EncounterStatus!]
+}
+
+"""
+A practitioner at the selected clinic: room, fee, weekly hours and upcoming leaves.
+"""
+type ClinicPractitioner {
+  """Consultation fee at this clinic (pesos); else the default."""
+  consultFee: Float
+
+  """Holds clinic here now."""
+  isActive: Boolean!
+
+  """Leaves that have not ended yet."""
+  leaves: [PractitionerLeave!]!
+  practitioner: Practitioner!
+
+  """"Room 203"."""
+  roomName: String
+  schedules: [PractitionerScheduleEntry!]!
+}
+
+"""
+A clinic (branch): its code, registrations (BIR, DOH, PhilHealth), address and contact.
+"""
+type ClinicProfile {
+  """Street, building."""
+  addressLine: String
+
+  """PSGC code."""
+  barangayCode: String
+  barangayName: String
+
+  """BIR branch code (last digits of the TIN), e.g. 00000."""
+  birBranchCode: String
+
+  """PSGC code."""
+  cityMunicipalityCode: String
+  cityMunicipalityName: String
+
+  """Short code printed in document numbers, e.g. TAG."""
+  code: String!
+  contactNo: String
+
+  """YYYY-MM-DD."""
+  dohLicenseExpiry: String
+
+  """DOH License to Operate number."""
+  dohLicenseNo: String
+  email: String
+  id: ID!
+  isActive: Boolean!
+  name: String!
+
+  """YYYY-MM-DD."""
+  philhealthAccreditExp: String
+
+  """PhilHealth facility accreditation number."""
+  philhealthAccreditNo: String
+  provinceName: String
+  zipCode: String
 }
 
 """
@@ -253,6 +343,16 @@ type ClinicRef {
   id: ID!
   name: String!
   organizationId: ID!
+}
+
+"""Settings → Clinic → Profile: the organization and the selected clinic."""
+type ClinicSetupProfile {
+  """
+  The user may change the organization's legal details (its ADMIN, or a SUPER_ADMIN).
+  """
+  canEditOrganization: Boolean!
+  clinic: ClinicProfile!
+  organization: OrganizationProfile!
 }
 
 """A clinic the user can access, with their role in it."""
@@ -421,6 +521,17 @@ input CreateUserInput {
 type CreatedSkill {
   location: String!
   name: String!
+}
+
+"""
+PRC license, S2 license, PhilHealth PAN (practitioners); DOH License to Operate, PhilHealth accreditation (clinics).
+"""
+enum CredentialKind {
+  DOH_LICENSE
+  PHILHEALTH_ACCREDITATION
+  PHILHEALTH_PAN
+  PRC_LICENSE
+  S2_LICENSE
 }
 
 """A synced warehouse table (upstream `clinic.getDatabaseObjects`)."""
@@ -741,6 +852,33 @@ enum Disposition {
 }
 
 """
+How the clinic numbers one kind of document this year (Philippine calendar year).
+"""
+type DocumentSequenceSetting {
+  """
+  False until the first number of the year is issued or the format is set.
+  """
+  isStarted: Boolean!
+
+  """PATIENT, ENCOUNTER, LAB_ORDER, RX, MED_CERT, INVOICE or PAYMENT."""
+  key: String!
+  label: String!
+
+  """The value the next document gets."""
+  nextValue: Int!
+
+  """Digits of the number, zero-padded."""
+  padLength: Int!
+
+  """Printed before the number, e.g. TAG-RX-2026-."""
+  prefix: String!
+
+  """What the next number looks like."""
+  preview: String!
+  year: Int!
+}
+
+"""
 The practitioner and clinic printed on a document: the issue-time snapshot, or today's for a draft.
 """
 type DocumentSignatory {
@@ -943,6 +1081,25 @@ input EnterDiagnosticResultInput {
   """For a correction: what changed and why."""
   remarks: String
   values: [DiagnosticResultValueInput!]! = []
+}
+
+"""A license or accreditation that expires soon (or has expired)."""
+type ExpiringCredential {
+  """Days left (negative once expired)."""
+  daysLeft: Int!
+
+  """YYYY-MM-DD."""
+  expiresOn: String!
+  kind: CredentialKind!
+
+  """e.g. "PRC license"."""
+  label: String!
+  number: String
+  subjectId: ID!
+  subjectName: String!
+
+  """PRACTITIONER or CLINIC."""
+  subjectType: String!
 }
 
 input ForkSharedChatInput {
@@ -1339,6 +1496,9 @@ type Mutation {
   """Upstream `clinic.addMapBoundary`: the updated boundary sets."""
   addMapBoundary(input: JSON!): JSON!
 
+  """Adds a leave of a practitioner who holds clinic here."""
+  addPractitionerLeave(input: AddPractitionerLeaveInput!): PractitionerLeave!
+
   """A quick question about a shared chat, kept out of the chat history."""
   askSharedChat(input: ForkSharedChatInput!): ChatIdResult!
   cancelChat(chatId: ID!): CancelChatResult!
@@ -1448,6 +1608,15 @@ type Mutation {
 
   """Releases the entered result to the requesting doctor's inbox."""
   releaseDiagnosticResult(input: DiagnosticItemStepInput!): LabWorklistItem!
+
+  """Removes the clinic's own price: the default applies again."""
+  removeClinicServicePrice(serviceItemId: ID!): ServiceCatalogItem!
+
+  """Removes a leave."""
+  removePractitionerLeave(id: ID!): Boolean!
+
+  """Removes a weekly session of the clinic."""
+  removePractitionerSchedule(id: ID!): Boolean!
   renameChat(input: RenameChatInput!): Boolean!
   renameClinic(input: RenameClinicInput!): ClinicSummary!
 
@@ -1463,6 +1632,12 @@ type Mutation {
   """Creates or updates your practitioner profile."""
   saveMyPractitioner(input: SaveMyPractitionerInput!): Practitioner!
 
+  """Adds a practitioner to the selected clinic, or updates one there."""
+  savePractitioner(input: SavePractitionerInput!): Practitioner!
+
+  """Adds or changes a weekly session at the clinic."""
+  savePractitionerSchedule(input: PractitionerScheduleInput!): PractitionerScheduleEntry!
+
   """Creates a draft, or replaces the draft `id`."""
   savePrescription(input: SavePrescriptionInput!): Prescription!
 
@@ -1470,7 +1645,16 @@ type Mutation {
   Saves one version of a Wise report about one patient to that patient's chart (once per version).
   """
   saveReportToChart(chatId: ID!, toolCallId: String!, wiseOrigin: WiseOriginInput): ClinicalDocument!
+
+  """Adds or changes a service of the catalog (audited)."""
+  saveServiceItem(input: SaveServiceItemInput!): ServiceCatalogItem!
   setChatStarred(chatId: ID!, isStarred: Boolean!): Boolean!
+
+  """Sets the selected clinic's price and HMO rate of a service."""
+  setClinicServicePrice(input: SetClinicServicePriceInput!): ServiceCatalogItem!
+
+  """Sets a document's prefix and padding (audited)."""
+  setDocumentSequence(input: SetDocumentSequenceInput!): DocumentSequenceSetting!
   setMemoryEnabled(memoryEnabled: Boolean!): MemorySettings!
 
   """
@@ -1480,6 +1664,9 @@ type Mutation {
 
   """Sets the password from a link and returns the email to sign in with."""
   setPasswordWithLink(input: SetPasswordWithLinkInput!): String!
+
+  """Sets a practitioner's room, fee and status at the clinic."""
+  setPractitionerClinic(input: SetPractitionerClinicInput!): ClinicPractitioner!
 
   """Deactivating signs the user out and voids their password links."""
   setUserActive(active: Boolean!, userId: ID!): ManagedUser!
@@ -1511,6 +1698,9 @@ type Mutation {
   """Upstream `chart.updateConfig`: the chat owner edits a `display_chart`."""
   updateChartConfig(config: JSON!, toolCallId: String!): Boolean!
 
+  """Updates the selected clinic's profile (clinic admins; audited)."""
+  updateClinicProfile(input: UpdateClinicProfileInput!): ClinicSetupProfile!
+
   """Upstream `clinic.updateDefaultModels`."""
   updateDefaultModels(settings: JSON!): JSON!
   updateDiagnosis(input: UpdateDiagnosisInput!): EncounterDiagnosis!
@@ -1524,6 +1714,11 @@ type Mutation {
 
   """Upstream `map.updateConfig`: the chat owner edits a `display_map`."""
   updateMapConfig(config: JSON!, mapId: String!): Boolean!
+
+  """
+  Updates the organization's legal details (its ADMIN or a SUPER_ADMIN; audited).
+  """
+  updateOrganizationProfile(input: UpdateOrganizationProfileInput!): ClinicSetupProfile!
 
   """Changes a patient's contact details (mobile, language, address)."""
   updatePatient(input: UpdatePatientInput!): Patient!
@@ -1563,6 +1758,23 @@ enum OrderPriority {
   ROUTINE
   STAT
   URGENT
+}
+
+"""The organization's legal details (the clinic group; BIR, SEC / DTI)."""
+type OrganizationProfile {
+  id: ID!
+  logoUrl: String
+
+  """Registered business name (DTI / SEC)."""
+  name: String!
+
+  """SEC or DTI registration number."""
+  secOrDtiNo: String
+
+  """BIR TIN, e.g. 123-456-789-000."""
+  tin: String
+  tradeName: String
+  vatRegistration: VatRegistration!
 }
 
 """
@@ -1767,6 +1979,11 @@ type Practitioner {
   email: String
   firstName: String!
   id: ID!
+
+  """
+  False once the practitioner no longer practises (kept for the records they signed).
+  """
+  isActive: Boolean!
   lastName: String!
   middleName: String
   mobileNo: String
@@ -1800,9 +2017,16 @@ type Practitioner {
 
   """PDEA S2 license, needed to prescribe dangerous drugs."""
   s2LicenseNo: String
+  sex: Sex
+
+  """Image URL of the e-signature printed on documents."""
+  signatureUrl: String
   specialty: String
   subspecialty: String
   suffix: String
+
+  """TIN, for the withholding tax on professional fees."""
+  tin: String
 
   """
   "Dr.", "Dra."
@@ -1858,6 +2082,45 @@ type PractitionerLeave {
   startAt: DateTime!
 }
 
+"""A weekly clinic session of a practitioner (Philippine time)."""
+type PractitionerScheduleEntry {
+  """0 = Sunday … 6 = Saturday."""
+  dayOfWeek: Int!
+
+  """HH:MM."""
+  endTime: String!
+  id: ID!
+
+  """Cap of patients for the session; null = no cap."""
+  maxPatients: Int
+  practitionerId: ID!
+  slotMinutes: Int!
+
+  """HH:MM."""
+  startTime: String!
+}
+
+input PractitionerScheduleInput {
+  """0 = Sunday … 6 = Saturday."""
+  dayOfWeek: Int!
+
+  """HH:MM, Philippine time."""
+  endTime: String!
+
+  """The session to change; empty to add one."""
+  id: ID
+
+  """Cap of patients for the session; empty for none."""
+  maxPatients: Int
+  practitionerId: ID!
+
+  """5–240 minutes."""
+  slotMinutes: Int!
+
+  """HH:MM, Philippine time."""
+  startTime: String!
+}
+
 enum PractitionerType {
   DENTIST
   MIDWIFE
@@ -1868,6 +2131,17 @@ enum PractitionerType {
   PHYSICAL_THERAPIST
   PHYSICIAN
   PSYCHOLOGIST
+}
+
+"""
+A user of the clinic who could sign in as a new practitioner (no profile yet).
+"""
+type PractitionerUserOption {
+  email: String!
+  firstName: String!
+  id: ID!
+  lastName: String!
+  name: String!
 }
 
 """A prescription (℞) of an encounter (DESIGN.md §5)."""
@@ -2036,14 +2310,25 @@ type Query {
   """SQL and column lineage behind a cited value (upstream `citation.get`)."""
   citation(column: String!, queryId: String!): JSON!
 
+  """Cities and municipalities by name or PSGC code (at most 20)."""
+  cityMunicipalities(query: String!): [CityMunicipality!]!
+
   """The visits at one of your clinics, oldest first (the queue)."""
   clinicEncounters(input: ClinicEncountersInput!): [Encounter!]!
 
   """Whether the clinic allows memory (admin agent setting)."""
   clinicMemorySettings: MemorySettings!
 
+  """
+  Every practitioner linked to the selected clinic, with room, fee, weekly hours and leaves.
+  """
+  clinicPractitionerSetup: [ClinicPractitioner!]!
+
   """The practitioners holding clinic at a clinic, by name."""
   clinicPractitioners(clinicId: ID!): [Practitioner!]!
+
+  """The selected clinic's profile and its organization's."""
+  clinicProfile: ClinicSetupProfile!
 
   """A clinic's saved prompts; empty when the user is not in it."""
   clinicSavedPrompts(clinicId: ID!): [SavedPrompt!]!
@@ -2077,6 +2362,9 @@ type Query {
   """Upstream `clinic.getDisplaySettings`: the date format."""
   displaySettings: JSON!
 
+  """The selected clinic's document numbering this year."""
+  documentSequences: [DocumentSequenceSetting!]!
+
   """A visit's invoices, price list and suggested lines."""
   encounterBilling(encounterId: ID!): EncounterBilling!
 
@@ -2088,6 +2376,11 @@ type Query {
 
   """The patient's encounters, newest first (empty if not in your care)."""
   encounters(patientId: ID!): [Encounter!]!
+
+  """
+  Licenses and accreditations of the selected clinic and its practitioners expiring soon.
+  """
+  expiringCredentials(withinDays: Int! = 60): [ExpiringCredential!]!
 
   """
   Whether any user exists yet (when none does, the app sends visitors to the /setup wizard).
@@ -2172,6 +2465,11 @@ type Query {
   """
   practitionerAvailability(date: String!, practitionerId: ID!): PractitionerAvailability!
 
+  """
+  Users of the selected clinic without a practitioner profile (who a new one can sign in as).
+  """
+  practitionerUserOptions: [PractitionerUserOption!]!
+
   """For printing (audited); null when not in your care."""
   prescription(id: ID!): Prescription
   publicConfig: PublicConfig!
@@ -2192,6 +2490,12 @@ type Query {
 
   """Patients you may see, by name words, patient no. / ID or birth date."""
   searchPatients(input: SearchPatientsInput!): [Patient!]!
+
+  """The organization's services at the selected clinic's prices."""
+  serviceCatalog(includeInactive: Boolean! = false): [ServiceCatalogItem!]!
+
+  """The tests and inventory items a service can bill."""
+  serviceLinkOptions: ServiceLinkOptions!
   sharedChat(shareId: ID!): SharedChatView!
   sharedChatQuickQuestions(shareId: ID!): [QuickQuestionChat!]!
 
@@ -2569,6 +2873,63 @@ input SaveMyPractitionerInput {
   type: PractitionerType
 }
 
+input SavePractitionerInput {
+  email: String
+  firstName: String!
+
+  """The practitioner to update; empty to add one."""
+  id: ID
+
+  """Default true."""
+  isActive: Boolean
+  lastName: String!
+  middleName: String
+  mobileNo: String
+  philhealthPan: String
+
+  """YYYY-MM-DD."""
+  philhealthPanExpiry: String
+
+  """e.g. "MD, FPCP"."""
+  postNominals: String
+
+  """YYYY-MM-DD."""
+  prcLicenseExpiry: String
+
+  """PRC license number (required, unique)."""
+  prcLicenseNo: String!
+  ptrIssuedAt: String
+
+  """YYYY-MM-DD."""
+  ptrIssuedDate: String
+  ptrNo: String
+
+  """YYYY-MM-DD."""
+  s2LicenseExpiry: String
+  s2LicenseNo: String
+  sex: Sex
+
+  """https URL of the e-signature image."""
+  signatureUrl: String
+  specialty: String
+  subspecialty: String
+  suffix: String
+
+  """TIN, for the withholding tax on professional fees."""
+  tin: String
+
+  """
+  "Dr.", "Dra."
+  """
+  title: String
+
+  """Default PHYSICIAN."""
+  type: PractitionerType
+
+  """The user who signs in as this practitioner (none: visiting)."""
+  userId: ID
+}
+
 input SavePrescriptionInput {
   encounterId: ID!
 
@@ -2590,6 +2951,29 @@ input SavePrescriptionInput {
 
   """Set by the Wise card (`propose_prescription`)."""
   wiseOrigin: WiseOriginInput
+}
+
+input SaveServiceItemInput {
+  category: ServiceCategory!
+
+  """
+  Unique in the organization: capital letters, digits and '-', e.g. CONSULT-FU.
+  """
+  code: String!
+
+  """Pesos (VAT included when VATABLE)."""
+  defaultPrice: Float!
+
+  """The lab or imaging test this item bills."""
+  diagnosticTestId: ID
+  id: ID
+
+  """The medicine or supply this item bills."""
+  inventoryItemId: ID
+  isActive: Boolean!
+  isPfShareable: Boolean!
+  name: String!
+  taxType: TaxType!
 }
 
 type SavedPrompt {
@@ -2634,6 +3018,37 @@ input SelectionInput {
   text: String!
 }
 
+"""
+An item of the organization's catalog with the selected clinic's own prices (Settings → Services).
+"""
+type ServiceCatalogItem {
+  category: ServiceCategory!
+
+  """The clinic's own price; null: the default applies."""
+  clinicPrice: Float
+  code: String!
+
+  """The organization's default price (pesos)."""
+  defaultPrice: Float!
+  diagnosticTestId: ID
+  diagnosticTestName: String
+
+  """The clinic's HMO contracted rate, when different."""
+  hmoPrice: Float
+  id: ID!
+  inventoryItemId: ID
+  inventoryItemName: String
+  isActive: Boolean!
+
+  """Part of the fee goes to the practitioner (professional fee)."""
+  isPfShareable: Boolean!
+  name: String!
+
+  """What the clinic charges: its own price, else the default."""
+  price: Float!
+  taxType: TaxType!
+}
+
 enum ServiceCategory {
   CERTIFICATE
   CONSULTATION
@@ -2665,9 +3080,54 @@ type ServiceItemPrice {
   taxType: TaxType!
 }
 
+"""
+Something a service item can bill: a lab / imaging test or an inventory item.
+"""
+type ServiceLinkOption {
+  """Its code (test code or SKU)."""
+  code: String!
+  id: ID!
+
+  """The service item that already bills it."""
+  linkedServiceItemId: ID
+  name: String!
+}
+
+type ServiceLinkOptions {
+  diagnosticTests: [ServiceLinkOption!]!
+  inventoryItems: [ServiceLinkOption!]!
+}
+
+input SetClinicServicePriceInput {
+  """HMO contracted rate; empty when the same."""
+  hmoPrice: Float
+  price: Float!
+  serviceItemId: ID!
+}
+
+input SetDocumentSequenceInput {
+  key: String!
+
+  """3 to 10 digits."""
+  padLength: Int!
+
+  """
+  Letters, digits, '-' and '/', with this year in it (numbers restart every year).
+  """
+  prefix: String!
+}
+
 input SetPasswordWithLinkInput {
   password: String!
   token: String!
+}
+
+input SetPractitionerClinicInput {
+  """Pesos."""
+  consultFee: Float
+  isActive: Boolean!
+  practitionerId: ID!
+  roomName: String
 }
 
 input SetUserStaffRolesInput {
@@ -2816,6 +3276,37 @@ type UpdateCheck {
   updateAvailable: Boolean!
 }
 
+input UpdateClinicProfileInput {
+  addressLine: String
+
+  """PSGC code of a barangay of that city or municipality."""
+  barangayCode: String
+
+  """BIR branch code, 3–5 digits (00000 for the head office)."""
+  birBranchCode: String
+
+  """PSGC code of the city or municipality."""
+  cityMunicipalityCode: String
+
+  """
+  Short code printed in document numbers (2–8 capital letters or digits).
+  """
+  code: String!
+  contactNo: String
+
+  """YYYY-MM-DD."""
+  dohLicenseExpiry: String
+  dohLicenseNo: String
+  email: String
+  isActive: Boolean!
+  name: String!
+
+  """YYYY-MM-DD."""
+  philhealthAccreditExp: String
+  philhealthAccreditNo: String
+  zipCode: String
+}
+
 input UpdateDiagnosisInput {
   id: ID!
   isFinal: Boolean
@@ -2853,6 +3344,20 @@ input UpdateEncounterNoteInput {
 
   """Set by a Wise card (`propose_encounter_note`)."""
   wiseOrigin: WiseOriginInput
+}
+
+input UpdateOrganizationProfileInput {
+  """https URL of the logo printed on documents."""
+  logoUrl: String
+
+  """Registered business name (DTI / SEC)."""
+  name: String!
+  secOrDtiNo: String
+
+  """BIR TIN, e.g. 123-456-789-000."""
+  tin: String
+  tradeName: String
+  vatRegistration: VatRegistration!
 }
 
 """
@@ -3015,6 +3520,12 @@ type UserUsageBreakdown {
   totalCost: Float!
   totalTokens: Float!
   userName: String!
+}
+
+"""BIR registration: VAT or NON_VAT."""
+enum VatRegistration {
+  NON_VAT
+  VAT
 }
 
 """One set of vital signs. Units: mmHg, bpm, /min, °C, %, kg, cm, mg/dL."""

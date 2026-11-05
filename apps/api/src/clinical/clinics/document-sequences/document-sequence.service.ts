@@ -19,7 +19,17 @@ export const DOCUMENT_SEQUENCE_KEYS = {
 
 export type DocumentSequenceKey = keyof typeof DOCUMENT_SEQUENCE_KEYS;
 
-const PAD_LENGTH = 6;
+export const DEFAULT_PAD_LENGTH = 6;
+
+/** The prefix a sequence starts with when the clinic hasn't set one: `TAG-RX-2026-`. */
+export function defaultSequencePrefix(clinicCode: string, key: DocumentSequenceKey, year: number): string {
+	return `${clinicCode}-${DOCUMENT_SEQUENCE_KEYS[key]}-${year}-`;
+}
+
+/** A number as the sequence prints it. */
+export function formatSequenceNumber(prefix: string | null, value: number, padLength: number): string {
+	return `${prefix ?? ''}${String(value).padStart(padLength, '0')}`;
+}
 
 /**
  * Issues per-clinic running numbers (MRN / patient no., encounter no., lab order no., Rx no., med cert no.,
@@ -45,10 +55,10 @@ export class DocumentSequenceService {
 			clinicId: clinic.id,
 			key,
 			year,
-			prefix: `${clinic.code}-${DOCUMENT_SEQUENCE_KEYS[key]}-${year}-`,
-			padLength: PAD_LENGTH,
+			prefix: defaultSequencePrefix(clinic.code, key, year),
+			padLength: DEFAULT_PAD_LENGTH,
 		});
-		return `${issued.prefix ?? ''}${String(issued.value).padStart(issued.padLength, '0')}`;
+		return formatSequenceNumber(issued.prefix, issued.value, issued.padLength);
 	}
 }
 

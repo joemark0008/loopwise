@@ -1,6 +1,7 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
 
 import type { Practitioner as PractitionerRow } from '../../../generated/prisma/client.js';
+import { Sex } from '../../patients/patients.enums.js';
 import { PractitionerType } from '../practitioners.enums.js';
 
 @ObjectType({ description: 'A clinic where the practitioner holds clinic.' })
@@ -89,6 +90,18 @@ export class Practitioner {
 	@Field(() => String, { nullable: true })
 	email: string | null;
 
+	@Field(() => Sex, { nullable: true })
+	sex: Sex | null;
+
+	@Field(() => String, { nullable: true, description: 'TIN, for the withholding tax on professional fees.' })
+	tin: string | null;
+
+	@Field(() => String, { nullable: true, description: 'Image URL of the e-signature printed on documents.' })
+	signatureUrl: string | null;
+
+	@Field({ description: 'False once the practitioner no longer practises (kept for the records they signed).' })
+	isActive: boolean;
+
 	@Field(() => [PractitionerClinic])
 	clinics: PractitionerClinic[];
 }
@@ -131,6 +144,10 @@ export function toPractitioner(
 		philhealthPanExpiry: dateOnly(row.philhealthPanExpiry),
 		mobileNo: row.mobileNo,
 		email: row.email,
+		sex: row.sex,
+		tin: row.tin,
+		signatureUrl: row.signatureUrl,
+		isActive: row.isActive,
 		clinics: (row.clinics ?? []).map((link) => ({
 			clinicId: link.clinicId,
 			clinicName: link.clinic.name,

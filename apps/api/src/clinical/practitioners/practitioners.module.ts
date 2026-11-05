@@ -10,6 +10,10 @@ import { PractitionersResolver } from './practitioners.resolver.js';
 import { PractitionerScheduleRepository } from './schedules/practitioner-schedule.repository.js';
 import { PractitionerScheduleResolver } from './schedules/practitioner-schedule.resolver.js';
 import { PractitionerScheduleService } from './schedules/practitioner-schedule.service.js';
+import { PractitionerScheduleAdminService } from './schedules/practitioner-schedule-admin.service.js';
+import { PractitionerSetupRepository } from './setup/practitioner-setup.repository.js';
+import { PractitionerSetupResolver } from './setup/practitioner-setup.resolver.js';
+import { PractitionerSetupService } from './setup/practitioner-setup.service.js';
 
 /**
  * Practitioners (replaces the clinician profile): PRC license, PTR, S2, PhilHealth PAN, the clinics they hold clinic
@@ -26,6 +30,10 @@ import { PractitionerScheduleService } from './schedules/practitioner-schedule.s
 		PractitionerScheduleRepository,
 		PractitionerScheduleService,
 		PractitionerScheduleResolver,
+		PractitionerScheduleAdminService,
+		PractitionerSetupRepository,
+		PractitionerSetupService,
+		PractitionerSetupResolver,
 	],
 	exports: [PractitionerService, PractitionerScheduleService],
 })
