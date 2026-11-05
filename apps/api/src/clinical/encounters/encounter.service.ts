@@ -162,6 +162,59 @@ export class EncounterService {
 	}
 
 	/**
+	 * Opens the visit of a patient checked in at the front desk (scheduling's check-in), on the caller's system
+	 * transaction so the ticket and the appointment change with it: OPEN, `encounterNo` from the clinic's sequence, the
+	 * booked doctor and the appointment (1:1). The doctor's user gets a care relationship, so the visit reaches their
+	 * line. The caller checks the user's desk role, the clinic and the patient first.
+	 */
+	async openForCheckIn(
+		tx: ClinicalTx,
+		userId: string,
+		visit: {
+			clinic: { id: string; code: string; organizationId: string };
+			patientId: string;
+			practitionerId: string;
+			appointmentId: string;
+			type: Encounter['type'];
+			chiefComplaint: string | null;
+		},
+	): Promise<Encounter> {
+		const startedAt = new Date();
+		const row = await this.encounters.create(tx, {
+			encounterNo: await this.sequences.next(tx, visit.clinic, 'ENCOUNTER', startedAt),
+			clinicId: visit.clinic.id,
+			patientId: visit.patientId,
+			practitionerId: visit.practitionerId,
+			appointmentId: visit.appointmentId,
+			type: visit.type,
+			status: 'OPEN',
+			chiefComplaint: visit.chiefComplaint,
+			createdById: userId,
+			startedAt,
+		});
+		const [doctor] = await this.practitioners.findManyByIds(tx, [visit.practitionerId]);
+		if (doctor?.userId) {
+			await this.encounters.addCareRelationship(tx, {
+				patientId: visit.patientId,
+				userId: doctor.userId,
+				organizationId: visit.clinic.organizationId,
+			});
+		}
+		await this.audit.created(tx, {
+			event: 'encounter.create',
+			entityType: 'Encounter',
+			entityId: row.id,
+			userId,
+			patientId: visit.patientId,
+			organizationId: visit.clinic.organizationId,
+			clinicId: visit.clinic.id,
+			changes: { after: auditSnapshot(row) },
+			reason: 'check-in',
+		});
+		return toEncounter(row);
+	}
+
+	/**
 	 * Moves the visit along its status machine (`transitionEncounterStatus`), as staff of its clinic. A practitioner
 	 * taking an unassigned visit (→ IN_PROGRESS) becomes its doctor and gets a care relationship. With
 	 * `expectedVersion`, a visit changed since is refused (STALE_VERSION).
