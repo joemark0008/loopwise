@@ -3,8 +3,8 @@ import { logIn, trackErrors } from './helpers';
 import type { Page } from '@playwright/test';
 
 /** Opens a seeded patient's chart from the patient list. */
-async function openChart(page: Page, mrn: string) {
-	await page.getByLabel('Search patients').fill(mrn);
+async function openChart(page: Page, name: string) {
+	await page.getByLabel('Search patients').fill(name);
 	await page.getByTestId('patient-list').getByRole('link').first().click();
 	await expect(page.getByTestId('patient-name')).toBeVisible();
 }
@@ -17,14 +17,14 @@ test.describe('patient chart', () => {
 	test('records an encounter with the New encounter form', async ({ page }) => {
 		const errors = trackErrors(page);
 		const reason = `Follow-up visit ${Date.now().toString(36)}`;
-		await openChart(page, 'THC-0003');
+		await openChart(page, 'Liza');
 
 		await page.getByRole('button', { name: 'New encounter' }).click();
 		const dialog = page.getByRole('dialog');
 		await dialog.getByRole('button', { name: 'Save encounter' }).click();
 		await expect(dialog.getByText('Add the reason for the visit.')).toBeVisible();
 
-		await dialog.getByLabel('Reason for visit').fill(reason);
+		await dialog.getByLabel('Chief complaint').fill(reason);
 		await dialog.getByLabel('Notes').fill('BP 130/85. Plan: recheck in 3 months.');
 		await dialog.getByRole('button', { name: 'Save encounter' }).click();
 		await expect(dialog).toBeHidden();
@@ -43,7 +43,7 @@ test.describe('patient chart', () => {
 		test.setTimeout(180_000);
 		// The model may reword the reason around the code; the token itself is unique.
 		const marker = Date.now().toString(36);
-		await openChart(page, 'THC-0005');
+		await openChart(page, 'Ana Lopez');
 
 		const panel = page.getByRole('region', { name: 'Ask Wise' });
 		await panel.locator('[contenteditable]').first().click();
@@ -73,7 +73,7 @@ test.describe('patient chart layout', () => {
 			}
 		});
 		await logIn(page, '/patients');
-		await openChart(page, 'THC-0001');
+		await openChart(page, 'Maria Santos');
 		const wise = page.locator('#patient-wise');
 		const splitter = page.getByRole('separator', { name: 'Resize Wise' });
 		await expect(splitter).toHaveAttribute('aria-valuenow', '440');

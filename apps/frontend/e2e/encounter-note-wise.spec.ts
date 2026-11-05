@@ -16,7 +16,7 @@ test.describe('Wise edits an encounter note', () => {
 		test.setTimeout(180_000);
 		const errors = trackErrors(page);
 		const marker = `recheck BP ${Date.now().toString(36)}`;
-		await page.getByLabel('Search patients').fill('THC-0002');
+		await page.getByLabel('Search patients').fill('Jose Ramos');
 		await page.getByTestId('patient-list').getByRole('link').first().click();
 		await expect(page.getByTestId('patient-name')).toBeVisible();
 

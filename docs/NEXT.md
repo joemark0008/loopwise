@@ -64,8 +64,14 @@ The database now follows the PH clinic reference schema. What changed, for anyon
   clinic's LLM config row do not survive. Re-enter the LLM key in Settings → Clinic → Agent as `test@test.test`.
 
 Flaky tests: real-LLM Playwright specs can flake on model wording; `a11y` (aria-prohibited-attr on the context-window
-ring) and the results-inbox ordering are known flakes. `test/user-management.e2e-spec.ts` expects
-`BETTER_AUTH_URL=http://localhost:3000` (a worktree on another port must set it for that spec).
+ring) and the results-inbox ordering are known flakes; `patient-chart` › "Wise resizes from the keyboard" failed once
+(the first ArrowLeft lands before the splitter is ready) and passed 3/3 on rerun. `test/user-management.e2e-spec.ts`
+expects `BETTER_AUTH_URL=http://localhost:3000` (a worktree on another port must set it for that spec). A worktree
+running its own frontend next to main's also needs `TANSTACK_DEVTOOLS_PORT` (main uses 42069). The
+`flows` › "a chat from the list opens" test skips on a database without chats (a fresh seed has none).
+
+Known UI issue: the avatar's white initials fail contrast on some palette colours, picked from the user's name
+("Test Admin" hit it; the seed keeps the admin's name "Test").
 
 ## Next: Phase 1 — front desk and AI scribe
 

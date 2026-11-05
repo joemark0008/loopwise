@@ -30,10 +30,12 @@ test.describe('Wise navigation', () => {
 });
 
 test.describe('app shell', () => {
-	test('the sidebar holds the doctor’s screens, and Wise docks beside a list page', async ({ page }) => {
+	test('the sidebar holds the admin doctor’s screens (and the lab desk), and Wise docks beside a list page', async ({
+		page,
+	}) => {
 		await logIn(page, '/patients');
 		const main = page.getByRole('navigation', { name: 'Main' });
-		for (const label of ['Today', 'Patients', 'Results', 'Cases', 'Wise chats']) {
+		for (const label of ['Today', 'Patients', 'Results', 'Wise chats', 'Reports', 'Lab worklist']) {
 			await expect(main.getByRole('link', { name: new RegExp(`^${label}`) })).toBeVisible();
 		}
 		await expect(main.getByRole('link', { name: /^Patients/ })).toHaveAttribute('aria-current', 'page');

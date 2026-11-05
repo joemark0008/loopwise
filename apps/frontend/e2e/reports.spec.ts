@@ -13,7 +13,7 @@ test.describe('charts and reports', () => {
 		test.setTimeout(240_000);
 		const errors = trackErrors(page);
 		await logIn(page, '/patients');
-		await page.getByLabel('Search patients').fill('THC-0001');
+		await page.getByLabel('Search patients').fill('Maria Santos');
 		await page
 			.getByTestId('patient-list')
 			.getByRole('link', { name: /Maria Santos/ })

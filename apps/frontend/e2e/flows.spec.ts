@@ -40,8 +40,9 @@ test.describe('signed in', () => {
 		await page.keyboard.press('ControlOrMeta+k');
 		const dialog = page.getByRole('dialog');
 		await expect(dialog).toBeVisible();
-		await dialog.getByRole('textbox').or(dialog.getByRole('combobox')).first().fill('patients');
-		await expect(dialog.getByText(/patients/i).first()).toBeVisible();
+		await dialog.getByRole('textbox').or(dialog.getByRole('combobox')).first().fill('theme');
+		// A built-in command, so the test needs no chats in the database.
+		await expect(dialog.getByRole('option', { name: /Switch (Dark|Light) Mode/ })).toBeVisible();
 		await page.keyboard.press('Escape');
 		await expect(dialog).toBeHidden();
 	});
@@ -104,6 +105,9 @@ test.describe('signed in', () => {
 	test('a chat from the list opens with its messages', async ({ page }) => {
 		// The chat history lives on the Wise chats page, not in the sidebar.
 		await page.goto('/chats');
+		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+		// A chat needs a real LLM call to exist; a freshly seeded database has none.
+		test.skip((await page.getByRole('table').getByRole('link').count()) === 0, 'no chats in this database');
 		const firstChat = page.getByRole('table').getByRole('link').first();
 		await firstChat.click();
 		await expect(page).toHaveURL(/\/[0-9a-z-]{10,}$/i);

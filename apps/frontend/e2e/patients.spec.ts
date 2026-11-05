@@ -1,10 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { logIn, trackErrors } from './helpers';
 
+/** Maria Santos, the seed's first patient at clinic TAG (patient numbers restart each year, Asia/Manila). */
+const MARIA_PATIENT_NO = `TAG-PT-${new Date(Date.now() + 8 * 3_600_000).getUTCFullYear()}-000001`;
+
 /** A synthetic patient no earlier run registered (the development database keeps them). */
 const uniquePatient = () => {
 	const run = Date.now().toString(36).toUpperCase();
-	return { givenName: 'Rosa', familyName: `Testcase${run.toLowerCase()}`, mrn: `THC-E2E-${run}` };
+	return { givenName: 'Rosa', familyName: `Testcase${run.toLowerCase()}`, mrn: `TAG-E2E-${run}` };
 };
 
 test.describe('patient registration', () => {
@@ -28,7 +31,7 @@ test.describe('patient registration', () => {
 		await page.getByLabel('Birth date').fill('1990-07-15');
 		await page.getByRole('combobox', { name: 'Sex' }).click();
 		await page.getByRole('option', { name: 'Female' }).click();
-		await page.getByLabel('MRN').fill(patient.mrn);
+		await page.getByLabel('Existing chart no.').fill(patient.mrn);
 		await page.getByLabel('Mobile number').fill('0917 000 1234');
 		await page.getByLabel('Consent').check();
 		await page.getByRole('button', { name: 'Register patient' }).click();
@@ -51,11 +54,11 @@ test.describe('patient registration', () => {
 		await page.getByLabel('Birth date').fill('1981-04-12');
 		await page.getByRole('combobox', { name: 'Sex' }).click();
 		await page.getByRole('option', { name: 'Female' }).click();
-		await page.getByLabel('MRN').fill('THC-0001');
+		await page.getByLabel('Existing chart no.').fill(MARIA_PATIENT_NO);
 		await page.getByLabel('Consent').check();
 		await page.getByRole('button', { name: 'Register patient' }).click();
 		await expect(page.getByTestId('duplicate-alert')).toContainText('This patient is already registered');
-		await expect(page.getByTestId('duplicate-alert')).toContainText('MRN THC-0001');
+		await expect(page.getByTestId('duplicate-alert')).toContainText(`Same patient no. ${MARIA_PATIENT_NO}`);
 	});
 
 	test('Wise drafts the registration and the clinician confirms it (real LLM call)', async ({ page }) => {

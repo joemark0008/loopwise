@@ -3,19 +3,20 @@ import { logIn, trackErrors } from './helpers';
 
 /**
  * The encounter record (DESIGN.md §5) on Maria Santos's seeded first visit: vitals with the BMI, an ICD-10 diagnosis,
- * a prescription saved, issued (locked) and printed. The seed admin gets a PRC license first (Settings → Account).
+ * a prescription saved, issued (locked) and printed with the practitioner's PRC license, and the visit's invoice with
+ * the senior citizen discount (RA 9994), issued and paid. The seed admin is a practitioner; the test sets its license.
  */
 test.describe('encounter record', () => {
-	test('records vitals and a diagnosis, then issues and prints a prescription', async ({ page }) => {
+	test('records vitals and a diagnosis, issues and prints a prescription, then bills the visit', async ({ page }) => {
 		const errors = trackErrors(page);
 		await logIn(page, '/settings/account');
 		await page.getByLabel('PRC license number').fill('0000099');
-		await page.getByLabel('Credentials').fill('MD');
+		await page.getByLabel('Post-nominals').fill('MD');
 		await page.getByRole('button', { name: 'Save profile' }).click();
 		await expect(page.getByText('Saved.')).toBeVisible();
 
 		await page.goto('/patients');
-		await page.getByLabel('Search patients').fill('THC-0001');
+		await page.getByLabel('Search patients').fill('Maria Santos');
 		await page
 			.getByTestId('patient-list')
 			.getByRole('link', { name: /Maria Santos/ })
@@ -50,7 +51,7 @@ test.describe('encounter record', () => {
 			'Acute upper respiratory infection, unspecified',
 		);
 
-		// Prescription: a draft, then issued as the signed-in clinician; issued ones can't be edited.
+		// Prescription: a draft, then issued as the signed-in practitioner; issued ones can't be edited.
 		await page.getByRole('tab', { name: /Prescriptions/ }).click();
 		// A draft left on the visit (e.g. from Wise) is edited instead of starting a new one.
 		if ((await page.getByTestId('prescription-editor').count()) === 0) {
@@ -61,34 +62,36 @@ test.describe('encounter record', () => {
 		await editor.getByLabel('Strength').fill('500 mg');
 		await editor.getByLabel('Dose').fill('1 tablet');
 		await editor.getByLabel('Frequency').fill('every 4 hours as needed');
-		await editor.getByLabel('Quantity').fill('10');
+		await editor.getByRole('textbox', { name: 'Quantity', exact: true }).fill('10');
 		await editor.getByRole('button', { name: 'Save draft' }).click();
 		await editor.getByRole('button', { name: 'Issue prescription' }).click();
 		await expect(page.getByTestId('prescription-editor')).toHaveCount(0);
 		const issued = page.getByTestId('prescription-card').filter({ hasText: 'Paracetamol' }).first();
 		await expect(issued).toContainText('Issued');
+		const printHref = await issued.getByRole('link', { name: 'Print' }).getAttribute('href');
 
-		// Billing: pre-filled with the consultation, senior discount, finalize, pay.
+		// Billing: the draft starts from the visit's suggested lines; senior discount, issue, pay in cash.
 		await page.goto(page.url().replace(/\?.*$/, '') + '?tab=billing');
-		const bill = page.getByTestId('bill-editor').or(page.getByTestId('bill-card')).first();
-		await expect(bill).toBeVisible();
-		if (await page.getByTestId('bill-editor').isVisible()) {
-			await page.getByRole('combobox', { name: 'Discount' }).click();
+		const invoiceEditor = page.getByTestId('invoice-editor');
+		await expect(invoiceEditor.or(page.getByTestId('invoice-card')).first()).toBeVisible();
+		if (await invoiceEditor.isVisible()) {
+			await invoiceEditor.getByRole('combobox', { name: 'Discount' }).click();
 			await page.getByRole('option', { name: /Senior citizen/ }).click();
-			await page.getByRole('button', { name: 'Save draft' }).click();
-			await page.getByRole('button', { name: 'Finalize bill' }).click();
+			await invoiceEditor.getByLabel('OSCA ID number').fill('OSCA-E2E-0001');
+			await invoiceEditor.getByRole('button', { name: 'Save draft' }).click();
+			await expect(page.getByTestId('invoice-discount')).toBeVisible();
+			await invoiceEditor.getByRole('button', { name: 'Issue invoice' }).click();
 		}
-		const finalized = page.getByTestId('bill-card').first();
-		if (await finalized.getByRole('button', { name: 'Mark paid' }).isVisible()) {
-			await finalized.getByLabel('Official receipt number').fill('OR-E2E');
-			await finalized.getByRole('button', { name: 'Mark paid' }).click();
-			await expect(finalized).toContainText('Paid');
+		const invoice = page.getByTestId('invoice-card').first();
+		const payment = page.getByTestId('payment-form');
+		if (await payment.isVisible()) {
+			await payment.getByLabel('Cash tendered').fill('5000');
+			await payment.getByRole('button', { name: 'Record payment' }).click();
+			await expect(invoice).toContainText('Paid');
 		}
-		await page.goBack();
 
-		const href = await issued.getByRole('link', { name: 'Print' }).getAttribute('href');
-		await page.goto(href ?? '/');
-		await expect(page.getByRole('article', { name: /Prescription RX-/ })).toContainText('PRC Lic. No. 0000099');
+		await page.goto(printHref ?? '/');
+		await expect(page.getByRole('article', { name: /Prescription TAG-RX-/ })).toContainText('PRC Lic. No. 0000099');
 		await expect(page.getByRole('article')).toContainText('Paracetamol 500 mg');
 		expect(errors).toEqual([]);
 	});

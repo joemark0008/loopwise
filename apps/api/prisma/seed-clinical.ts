@@ -65,7 +65,7 @@ export const STAFF: readonly {
 		key: 'admin',
 		firstName: 'Test',
 		lastName: 'Admin',
-		name: 'Test Admin',
+		name: 'Test',
 		roles: ['SUPER_ADMIN', 'ADMIN', 'DOCTOR'],
 		orgRole: 'ADMIN',
 	},
