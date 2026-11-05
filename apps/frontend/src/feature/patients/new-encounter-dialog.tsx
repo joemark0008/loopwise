@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { emptyEncounterForm, toCreateEncounterInput, validateEncounterForm } from './encounter-form-values';
+import {
+	defaultEncounterClinicId,
+	emptyEncounterForm,
+	toCreateEncounterInput,
+	validateEncounterForm,
+} from './encounter-form-values';
 import { EncounterFields } from './encounter-fields';
 import styles from './patient-chart.module.css';
 import type { EncounterFormValues } from './encounter-form-values';
@@ -14,6 +19,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { ErrorMessage } from '@/components/ui/error-message';
+import { useActiveClinicId } from '@/lib/active-clinic';
 import { encounterApi } from '@/lib/encounter-api';
 
 /** Records a visit by hand; Wise's `propose_encounter` card does the same from the chart chat. */
@@ -29,8 +35,11 @@ export function NewEncounterDialog({
 	onOpenChange: (open: boolean) => void;
 }) {
 	const queryClient = useQueryClient();
-	const initial = () => emptyEncounterForm(clinics.length === 1 ? clinics[0].id : '');
-	const [values, setValues] = useState<EncounterFormValues>(initial);
+	const activeClinicId = useActiveClinicId();
+	const initial = () => emptyEncounterForm();
+	const [draft, setValues] = useState<EncounterFormValues>(initial);
+	// The clinics may load after the dialog mounts: until the user picks one, the visit starts at the active clinic.
+	const values = { ...draft, clinicId: draft.clinicId || defaultEncounterClinicId(clinics, activeClinicId) };
 	const [showErrors, setShowErrors] = useState(false);
 	const create = useMutation(
 		encounterApi.encounter.create.mutationOptions({

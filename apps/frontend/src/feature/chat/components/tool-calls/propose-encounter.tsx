@@ -14,12 +14,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAgentContext } from '@/contexts/agent.provider';
 import { EncounterFields } from '@/feature/patients/encounter-fields';
 import {
+	defaultEncounterClinicId,
 	draftStartToLocalInput,
 	emptyEncounterForm,
 	toCreateEncounterInput,
 	validateEncounterForm,
 } from '@/feature/patients/encounter-form-values';
 import { vitalChips } from '@/feature/encounters/encounter-format';
+import { getActiveClinicId } from '@/lib/active-clinic';
 import { encounterApi } from '@/lib/encounter-api';
 import { encounterRecordApi } from '@/lib/encounter-record-api';
 
@@ -137,7 +139,7 @@ function EncounterCard({
 
 function fromDraft(draft: proposeEncounter.Input, clinics: proposeEncounter.Output['clinics']): EncounterFormValues {
 	return {
-		...emptyEncounterForm(clinics[0]?.id ?? ''),
+		...emptyEncounterForm(defaultEncounterClinicId(clinics, getActiveClinicId())),
 		type: draft.type ?? 'CONSULTATION',
 		reason: draft.reason ?? '',
 		notes: draft.notes ?? '',

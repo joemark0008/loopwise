@@ -37,6 +37,60 @@ test.describe('patient chart', () => {
 		expect(errors).toEqual([]);
 	});
 
+	test('the New encounter form starts at the active clinic when there are several', async ({ page }) => {
+		const errors = trackErrors(page);
+		const reason = `Second clinic visit ${Date.now().toString(36)}`;
+		await openChart(page, 'Liza');
+		const activeClinicId = await page.evaluate(() =>
+			JSON.parse(window.localStorage.getItem('loopwise.active-clinic-id') ?? 'null'),
+		);
+		expect(activeClinicId).toBeTruthy();
+
+		// A second clinic of the organization (synthetic), removed again at the end.
+		const graphql = async (query: string, variables: object, clinicId?: string) => {
+			const response = await page.request.post('/graphql', {
+				data: { query, variables },
+				headers: clinicId ? { 'x-loopwise-clinic-id': clinicId } : {},
+			});
+			const body = await response.json();
+			expect(body.errors).toBeUndefined();
+			return body.data;
+		};
+		const created = await graphql('mutation ($input: CreateClinicInput!) { createClinic(input: $input) { id } }', {
+			input: { name: `E2E Panglao annex ${Date.now().toString(36)}` },
+		});
+		const secondClinicId: string = created.createClinic.id;
+		try {
+			await page.reload();
+			await expect(page.getByTestId('patient-name')).toBeVisible();
+			await page.getByRole('button', { name: 'New encounter' }).click();
+			const dialog = page.getByRole('dialog');
+			const clinic = dialog.getByRole('combobox', { name: 'Clinic' });
+			await expect(clinic).toHaveText('Tagbilaran City Health Center');
+
+			// The user can still pick another clinic, and back.
+			await clinic.click();
+			await page.getByRole('option', { name: /E2E Panglao annex/ }).click();
+			await expect(clinic).toHaveText(/E2E Panglao annex/);
+			await clinic.click();
+			await page.getByRole('option', { name: 'Tagbilaran City Health Center' }).click();
+
+			await dialog.getByLabel('Chief complaint').fill(reason);
+			await dialog.getByRole('button', { name: 'Save encounter' }).click();
+			await expect(dialog).toBeHidden();
+			await expect(
+				page.getByTestId('encounter-list').getByRole('link', { name: new RegExp(reason) }),
+			).toBeVisible();
+		} finally {
+			await graphql(
+				'mutation ($clinicId: ID!) { deleteClinic(clinicId: $clinicId) }',
+				{ clinicId: secondClinicId },
+				secondClinicId,
+			);
+		}
+		expect(errors).toEqual([]);
+	});
+
 	test('Wise drafts an encounter from the chart chat and the clinician saves it (real LLM call)', async ({
 		page,
 	}) => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	defaultEncounterClinicId,
 	draftStartToLocalInput,
 	emptyEncounterForm,
 	toCreateEncounterInput,
@@ -20,6 +21,14 @@ describe('encounter form values', () => {
 			notes: '',
 			startedAt: '2026-10-01T14:30',
 		});
+	});
+
+	it('starts at the active clinic when it is offered, else at the first', () => {
+		const clinics = [{ id: 'tag' }, { id: 'pan' }];
+		expect(defaultEncounterClinicId(clinics, 'pan')).toBe('pan');
+		expect(defaultEncounterClinicId(clinics, null)).toBe('tag');
+		expect(defaultEncounterClinicId(clinics, 'elsewhere')).toBe('tag');
+		expect(defaultEncounterClinicId([], 'pan')).toBe('');
 	});
 
 	it('uses the API rules, plus a required clinic', () => {
