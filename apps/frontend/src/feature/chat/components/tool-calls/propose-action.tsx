@@ -168,7 +168,7 @@ export function ActionCard({
 }
 
 /** Models fill unstated numbers with 0 or null: those are not measurements (a stated pain score of 0 is lost too). */
-function vitalsForm(vitals: ProposeVitalsInput['vitals'] | undefined): VitalsFormValues {
+export function vitalsForm(vitals: ProposeVitalsInput['vitals'] | undefined): VitalsFormValues {
 	const form = emptyVitalsForm();
 	for (const field of VITAL_FIELDS) {
 		const value = vitals?.[field];
@@ -179,7 +179,7 @@ function vitalsForm(vitals: ProposeVitalsInput['vitals'] | undefined): VitalsFor
 	return form;
 }
 
-const vitalsSummary = (values: VitalsFormValues) => {
+export const vitalsSummary = (values: VitalsFormValues) => {
 	const parts: string[] = [];
 	if (values.systolicMmHg && values.diastolicMmHg) {
 		parts.push(`BP ${values.systolicMmHg}/${values.diastolicMmHg} mmHg`);

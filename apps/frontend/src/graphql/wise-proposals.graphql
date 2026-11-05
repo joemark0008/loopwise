@@ -3,6 +3,7 @@ fragment WiseProposalOutcomeFields on WiseProposalOutcome {
 	toolName
 	status
 	resourceId
+	edited
 }
 
 query WiseProposalOutcomes($chatId: ID!) {

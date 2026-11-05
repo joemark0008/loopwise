@@ -43,6 +43,7 @@ import { ReportChipToolCall } from './report-chip';
 import { WebFetchToolCall } from './web-fetch';
 import { WebSearchToolCall } from './web-search';
 import type { StaticToolName, UIToolPart } from '@loopwise/api/agent/types/chat';
+import { ScribeDraftToolCall } from '@/feature/scribe/scribe-draft-tool-call';
 import { getToolName, isToolSettled } from '@/lib/ai';
 import { ToolCallProvider } from '@/contexts/tool-call';
 import { useAssistantMessage } from '@/contexts/assistant-message';
@@ -72,6 +73,7 @@ const toolComponents: Partial<{
 	propose_prescription: ProposePrescriptionToolCall,
 	propose_medical_certificate: ProposeMedicalCertificateToolCall,
 	propose_charges: ProposeChargesToolCall,
+	propose_scribe_note: ScribeDraftToolCall,
 	propose_vitals: ProposeVitalsToolCall,
 	propose_allergy: ProposeAllergyToolCall,
 	propose_remove_allergy: ProposeRemoveAllergyToolCall,

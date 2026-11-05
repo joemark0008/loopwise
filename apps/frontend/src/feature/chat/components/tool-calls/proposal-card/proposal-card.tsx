@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { scribeOutcomeKey } from '@loopwise/shared/scribe';
 import { DESTRUCTIVE_REASON_MIN_LENGTH, isStaleEditMessage } from '@loopwise/shared/wise-proposal';
 import { Check, Pencil, X } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -19,6 +20,8 @@ export interface ProposalOrigin {
 	chatId: string;
 	toolCallId: string;
 	toolName: string;
+	/** The part of a scribe draft (`propose_scribe_note`): each part is confirmed and settled on its own. */
+	part?: string;
 }
 
 export interface ProposalConfirm {
@@ -62,6 +65,9 @@ const BADGES = {
  * Modes: `create` shows the draft, `update` the before → after of an existing record, `destructive` asks for a reason
  * and a second click. A stale-record error (the record changed since the draft) locks Confirm and offers Re-draft.
  * Every Wise card that writes uses this shell.
+ *
+ * A `part` of a scribe draft settles only from the API's outcome for that part (`<toolCallId>#<part>`): the chat's
+ * next message says nothing about it, Cancel ("Dismiss") sends none, and the agent running doesn't lock it.
  */
 export function ProposalCard({
 	toolCallId,
@@ -81,6 +87,8 @@ export function ProposalCard({
 	isConfirmedAnswer,
 	testId,
 	confirmStrength,
+	part,
+	cancelLabel = 'Cancel',
 	...modeProps
 }: Mode & {
 	toolCallId: string;
@@ -111,6 +119,9 @@ export function ProposalCard({
 	testId?: string;
 	/** `strong`: a second click ("Yes, …") before the mutation runs, as a destructive card has (critical results). */
 	confirmStrength?: 'standard' | 'reason' | 'strong';
+	/** The part of a scribe draft this card confirms. */
+	part?: string;
+	cancelLabel?: string;
 }) {
 	const mode = modeProps.mode ?? 'create';
 	const queryClient = useQueryClient();
@@ -122,7 +133,7 @@ export function ProposalCard({
 	const cancel = useMutation(
 		wiseProposalApi.wiseProposal.cancel.mutationOptions({
 			onSettled: () => void queryClient.invalidateQueries(wiseProposalApi.wiseProposal.outcomes.pathFilter()),
-			onSuccess: () => void queueOrSendMessage({ text: 'Cancel this proposal.' }),
+			onSuccess: () => void (part ? undefined : queueOrSendMessage({ text: 'Cancel this proposal.' })),
 		}),
 	);
 	const lock = useRef(false);
@@ -131,28 +142,35 @@ export function ProposalCard({
 	const [reason, setReason] = useState('');
 	const [isArmed, setIsArmed] = useState(false);
 
-	const outcome = outcomes.data?.find((candidate) => candidate.toolCallId === toolCallId)?.status;
+	const outcomeKey = scribeOutcomeKey(toolCallId, part);
+	const outcomeRow = outcomes.data?.find((candidate) => candidate.toolCallId === outcomeKey);
+	const outcome = outcomeRow?.status;
+	const chatAnswer = part ? null : answer;
 	const settled = isConfirmedHere
 		? 'confirmed'
-		: (outcome ?? (answer === null ? null : isConfirmedAnswer(answer) ? 'confirmed' : 'cancelled'));
+		: (outcome ?? (chatAnswer === null ? null : isConfirmedAnswer(chatAnswer) ? 'confirmed' : 'cancelled'));
 
 	if (settled) {
 		return (
 			<div className={styles.proposalCardResolved} data-testid={testId} data-settled={settled}>
 				<Icon />
 				<span className={styles.proposalCardTitle}>{title}</span>
-				<span>{settled === 'confirmed' ? resolvedLabels.confirmed : resolvedLabels.cancelled}</span>
+				<span>
+					{settled === 'confirmed' ? resolvedLabels.confirmed : resolvedLabels.cancelled}
+					{settled === 'confirmed' && outcomeRow?.edited && ' · edited'}
+				</span>
 			</div>
 		);
 	}
 
-	const origin = chatId ? { chatId, toolCallId, toolName } : null;
-	const busy = isRunning || isPending || isSubmitting || cancel.isPending;
+	const origin = chatId ? { chatId, toolCallId, toolName, ...(part && { part }) } : null;
+	const busy = (!part && isRunning) || isPending || isSubmitting || cancel.isPending;
 	const needsReason = mode === 'destructive';
 	const needsSecondClick = needsReason || confirmStrength === 'strong';
 	const reasonOk = reason.trim().length >= DESTRUCTIVE_REASON_MIN_LENGTH;
 	const nothingChanged = modeProps.mode === 'update' && !modeProps.changes.some((change) => change.changed);
-	const isStale = !!error && isStaleEditMessage(error);
+	// A scribe part re-bases on the record as it is now; re-drafting would redo the whole draft.
+	const isStale = !part && !!error && isStaleEditMessage(error);
 
 	const confirm = async () => {
 		if (lock.current || !origin) {
@@ -245,7 +263,7 @@ export function ProposalCard({
 					onClick={() => origin && cancel.mutate({ ...origin, edited: false })}
 				>
 					<X />
-					Cancel
+					{cancelLabel}
 				</Button>
 				{onEditToggle && (
 					<Button variant='outline' size='sm' disabled={isPending || isSubmitting} onClick={onEditToggle}>

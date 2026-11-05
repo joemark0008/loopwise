@@ -4,15 +4,31 @@ import { transcribeAudio } from '@/lib/transcribe';
 
 type TranscribeState = 'idle' | 'recording' | 'transcribing';
 
-export function useTranscribe({ onTranscribed }: { onTranscribed: (text: string) => void }) {
+/**
+ * Records from the microphone and turns the recording into text. `transcribe` replaces the default endpoint (the AI
+ * scribe sends its consent-checked one); `onError` hears a failed transcription instead of the console.
+ */
+export function useTranscribe({
+	onTranscribed,
+	transcribe = transcribeAudio,
+	onError,
+}: {
+	onTranscribed: (text: string) => void;
+	transcribe?: (input: { audio: string }) => Promise<{ text: string }>;
+	onError?: (error: Error) => void;
+}) {
 	const [state, setState] = useState<TranscribeState>('idle');
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 	const chunksRef = useRef<Blob[]>([]);
 	const analyserRef = useRef<AnalyserNode | null>(null);
 	const audioCtxRef = useRef<AudioContext | null>(null);
 	const onTranscribedRef = useRef(onTranscribed);
+	const transcribeRef = useRef(transcribe);
+	const onErrorRef = useRef(onError);
 	useEffect(() => {
 		onTranscribedRef.current = onTranscribed;
+		transcribeRef.current = transcribe;
+		onErrorRef.current = onError;
 	});
 
 	const stop = useCallback(() => {
@@ -42,7 +58,16 @@ export function useTranscribe({ onTranscribed }: { onTranscribed: (text: string)
 			return;
 		}
 
-		const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+		let stream: MediaStream;
+		try {
+			stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+		} catch (err) {
+			if (!onErrorRef.current) {
+				throw err;
+			}
+			onErrorRef.current(new Error('The microphone is not available. Allow it in the browser, or type instead.'));
+			return;
+		}
 
 		const audioCtx = new AudioContext();
 		const source = audioCtx.createMediaStreamSource(stream);
@@ -79,12 +104,16 @@ export function useTranscribe({ onTranscribed }: { onTranscribed: (text: string)
 
 			try {
 				const base64 = await blobToBase64(blob);
-				const { text } = await transcribeAudio({ audio: base64 });
+				const { text } = await transcribeRef.current({ audio: base64 });
 				if (text?.trim()) {
 					onTranscribedRef.current(text.trim());
 				}
 			} catch (err) {
-				console.error('Transcription error:', err);
+				if (onErrorRef.current) {
+					onErrorRef.current(err instanceof Error ? err : new Error('Transcription failed'));
+				} else {
+					console.error('Transcription error:', err);
+				}
 			} finally {
 				setState('idle');
 			}

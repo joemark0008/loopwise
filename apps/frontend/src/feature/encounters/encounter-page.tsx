@@ -13,6 +13,7 @@ import { OrdersTab } from './orders-tab';
 import { PrescriptionsTab } from './prescriptions-tab';
 import { VitalsTab } from './vitals-tab';
 import type { EncounterTab } from './encounter-tabs';
+import { ScribePanel } from '@/feature/scribe/scribe-panel';
 import { Button } from '@/components/ui/button';
 import { Empty } from '@/components/ui/empty';
 import { ErrorMessage } from '@/components/ui/error-message';
@@ -61,6 +62,8 @@ export function EncounterPage({
 	const latestVitals = data.vitals.find((vitals) => !vitals.voidedAt);
 	const tabs = [
 		{ id: 'note' as const, label: 'Note & diagnosis', count: activeCount(data.diagnoses) },
+		// The AI scribe drafts into the record, so only staff who can add to it see it.
+		...(data.canEdit ? [{ id: 'scribe' as const, label: 'AI scribe' }] : []),
 		{ id: 'vitals' as const, label: 'Vitals', count: activeCount(data.vitals) },
 		// The other areas' tabs count their own records once their fields are on the record again.
 		{ id: 'orders' as const, label: 'Orders & results' },
@@ -126,6 +129,7 @@ export function EncounterPage({
 				/>
 				<TabPanel idBase={TAB_ID} tabId={tab} className={styles.tabPanel}>
 					{tab === 'note' && <NoteTab key={data.encounter.id} record={data} />}
+					{tab === 'scribe' && data.canEdit && <ScribePanel record={data} />}
 					{tab === 'vitals' && <VitalsTab record={data} />}
 					{tab === 'orders' && <OrdersTab record={data} />}
 					{tab === 'prescriptions' && <PrescriptionsTab record={data} />}

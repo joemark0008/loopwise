@@ -89,6 +89,8 @@ import type {
 	RescheduleAppointmentInput,
 	SchedulingPractitionersQuery,
 	SendQueueTicketInput,
+	RecordingConsentFieldsFragment,
+	RecordScribeConsentInput,
 } from '@/graphql/generated/graphql';
 
 interface Procedure<Input, Output> {
@@ -712,6 +714,10 @@ interface GraphQLProcedures {
 		toReview: Procedure<void, DiagnosticReportFieldsFragment[]>;
 		forPatient: Procedure<{ patientId: string }, DiagnosticReportFieldsFragment[]>;
 		review: Procedure<ReviewResultInput, DiagnosticReportFieldsFragment>;
+	};
+	scribe: {
+		consent: Procedure<{ encounterId: string }, RecordingConsentFieldsFragment | null>;
+		recordConsent: Procedure<RecordScribeConsentInput, RecordingConsentFieldsFragment>;
 	};
 	wiseProposal: {
 		outcomes: Procedure<{ chatId: string }, WiseProposalOutcomeFieldsFragment[]>;

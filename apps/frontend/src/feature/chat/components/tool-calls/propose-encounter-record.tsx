@@ -116,10 +116,10 @@ const replacing = (label: string, record: EncounterRecordFieldsFragment): Propos
 	detail: `${record.encounter.reason ?? 'Visit'} · ${formatDay(record.encounter.startedAt.slice(0, 10))} · replaces the draft on this visit`,
 });
 
-const RX_LABELS = { medicines: 'Medicines', notes: 'Notes' };
+export const RX_LABELS = { medicines: 'Medicines', notes: 'Notes' };
 
 /** A prescription as lines of text, for the before → after of an update card (a draft on the visit, or the form). */
-const rxSummary = (prescription: {
+export const rxSummary = (prescription: {
 	notes?: string | null;
 	items: {
 		genericName: string;
@@ -150,19 +150,19 @@ const rxSummary = (prescription: {
 });
 
 /** The form's items with the sig the API will store. */
-const withSigs = (values: PrescriptionFormValues) => ({
+export const withSigs = (values: PrescriptionFormValues) => ({
 	notes: values.notes,
 	items: values.items.map((item) => ({ ...item, sig: itemSig(item) })),
 });
 
-const CERTIFICATE_LABELS = {
+export const CERTIFICATE_LABELS = {
 	diagnosis: 'Diagnosis',
 	fitness: 'Fitness',
 	recommendation: 'Recommendation',
 	purpose: 'Purpose',
 };
 
-const certificateSummary = (certificate: {
+export const certificateSummary = (certificate: {
 	diagnosisText: string | null;
 	isFitToWork: boolean | null;
 	restDays?: number | string | null;
@@ -181,7 +181,8 @@ const certificateSummary = (certificate: {
 	purpose: certificate.purpose ?? '',
 });
 
-const isFitToWorkOf = (values: CertificateFormValues) => (values.fitness === '' ? null : values.fitness === 'fit');
+export const isFitToWorkOf = (values: CertificateFormValues) =>
+	values.fitness === '' ? null : values.fitness === 'fit';
 
 // ---- propose_prescription ---------------------------------------------------------------------------------------
 
@@ -193,7 +194,7 @@ export const ProposePrescriptionToolCall = memo(({ toolPart }: ToolCallComponent
 	</ProposalFrame>
 ));
 
-function prescriptionFormFromDraft(draft: proposePrescription.Input): PrescriptionFormValues {
+export function prescriptionFormFromDraft(draft: proposePrescription.Input): PrescriptionFormValues {
 	const text = (value?: string) => value ?? '';
 	const number = (value?: number) => (value === undefined ? '' : String(value));
 	return {

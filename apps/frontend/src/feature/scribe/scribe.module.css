@@ -1,0 +1,178 @@
+/* The AI scribe tab of the encounter page (docs/frontend-design.md: tokens only, sizes in rem). */
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.step {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	padding: 0.875rem 1rem;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+	background: var(--app-surface);
+}
+.stepHeader {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem 0.75rem;
+}
+.stepTitle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.9375rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.stepTitle svg {
+	width: 1rem;
+	height: 1rem;
+}
+.muted {
+	color: var(--app-muted);
+	font-size: var(--app-text-sm);
+}
+.consentText {
+	font-size: var(--app-text-sm);
+	white-space: pre-wrap;
+}
+.status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.125rem 0.5rem;
+	border-radius: 999px;
+	border: 1px solid var(--app-line);
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.status[data-tone='ok'] {
+	color: var(--app-ok);
+	border-color: var(--app-ok);
+}
+.status[data-tone='warn'] {
+	color: var(--app-warn);
+	border-color: var(--app-warn);
+}
+.status svg {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.75rem;
+}
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.push {
+	margin-left: auto;
+}
+.select {
+	height: var(--app-control-height-sm);
+	padding: 0 0.5rem;
+	border: 1px solid var(--app-control-line);
+	border-radius: var(--app-radius);
+	background: var(--app-surface);
+	color: var(--app-text);
+	font-size: var(--app-text-sm);
+}
+.label {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.8125rem;
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.cards {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.cardBody {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	font-size: var(--app-text-sm);
+}
+.fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: 0.75rem 1rem;
+}
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+.sectionLabel {
+	font-size: 0.75rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+	color: var(--app-muted);
+}
+.text {
+	white-space: pre-wrap;
+}
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin: 0;
+	padding-left: 1.125rem;
+}
+.warning {
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--app-critical-line);
+	border-left-width: 0.25rem;
+	background: var(--app-critical-bg);
+	color: var(--app-critical);
+	font-size: var(--app-text-sm);
+	font-weight: 500;
+}
+.note {
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--app-line);
+	border-left-width: 0.25rem;
+	color: var(--app-muted);
+	font-size: var(--app-text-sm);
+}
+.error {
+	font-size: 0.75rem;
+	color: var(--app-danger);
+}
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.chatCard {
+	display: grid;
+	gap: 0.375rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+	font-size: var(--app-text-sm);
+}
+.chatCard a {
+	width: fit-content;
+	color: var(--app-accent-text);
+	text-decoration: underline;
+}
+.skeleton {
+	height: 8rem;
+	width: 100%;
+}

@@ -1,0 +1,23 @@
+fragment RecordingConsentFields on RecordingConsent {
+	id
+	encounterId
+	type
+	version
+	granted
+	signedBy
+	signedAt
+	revokedAt
+	isActive
+}
+
+query ScribeConsent($encounterId: ID!) {
+	scribeConsent(encounterId: $encounterId) {
+		...RecordingConsentFields
+	}
+}
+
+mutation RecordScribeConsent($input: RecordScribeConsentInput!) {
+	recordScribeConsent(input: $input) {
+		...RecordingConsentFields
+	}
+}
