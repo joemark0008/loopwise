@@ -21,10 +21,11 @@ export const excelSkill: InternalSkill = {
 			<Block>
 				<Title level={1}>Working with Excel workbooks</Title>
 				<Span>
-					A workbook is a zip archive of XML, so its cells never arrive as text. What <Bold>read</Bold> gives
-					you instead is its outline: every sheet in tab order, which of them are hidden, and the used range
-					and row and column counts of each. Start there on every workbook. It is one cheap call, and it is
-					the only way to know which sheets exist — never infer them, or what they hold, from the file name.
+					A workbook is a zip archive of XML, so its cells never arrive as text. What{' '}
+					<Bold>read_attachment</Bold> gives you instead is its outline: every sheet in tab order, which of
+					them are hidden, and the used range and row and column counts of each. Start there on every
+					workbook. It is one cheap call, and it is the only way to know which sheets exist — never infer
+					them, or what they hold, from the file name.
 				</Span>
 				{canRunSandbox ? (
 					<Span>
@@ -34,8 +35,8 @@ export const excelSkill: InternalSkill = {
 				) : (
 					<Span>
 						Nothing available here can read the cells, so stop at the outline: name the sheet you need and
-						ask for the sheet as a CSV, which <Bold>read</Bold> opens as text. The advice below applies to
-						that export as well.
+						ask for the sheet as a CSV, which <Bold>read_attachment</Bold> opens as text. The advice below
+						applies to that export as well.
 					</Span>
 				)}
 				<Span>
