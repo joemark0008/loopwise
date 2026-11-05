@@ -11,6 +11,7 @@ type ReadSources = {
 	results: AgentToolServices['results'];
 	orders: AgentToolServices['orders'];
 	rules: AgentToolServices['rules'];
+	attachments: AgentToolServices['attachments'];
 };
 
 /**
@@ -28,6 +29,7 @@ export const TOOL_SERVICE_READS = {
 	results: ['toReviewForWise'],
 	orders: ['labOrdersForWise'],
 	rules: ['explainForWise'],
+	attachments: ['readTextForWise'],
 } as const satisfies { [K in keyof ReadSources]: readonly (keyof ReadSources[K])[] };
 
 export function readOnlyToolServices(sources: ReadSources): ReadSources {

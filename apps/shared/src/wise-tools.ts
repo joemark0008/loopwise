@@ -369,6 +369,15 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 		defaultOn: ALL,
 	},
 	{
+		name: 'read_attachment',
+		label: 'Read attached files',
+		summary: 'Reads a file you attach to a message (PDF, Word, CSV, text), with OCR for scanned pages.',
+		kind: 'read',
+		category: 'assistant',
+		locked: true,
+		defaultOn: ALL,
+	},
+	{
 		name: 'suggest_follow_ups',
 		label: 'Suggest follow-ups',
 		summary: 'Offers a few next questions after an answer.',

@@ -5,6 +5,7 @@ import type { LlmProvider, LlmSelectedModel } from '@loopwise/shared/types';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { convertToModelMessages, type InferUIMessageChunk, type Tool } from 'ai';
 
+import { AttachmentsService } from '../attachments/attachments.service.js';
 import { ImageRepository } from '../attachments/image.repository.js';
 import type { StorageScope } from '../attachments/storage/index.js';
 import { statUserFile } from '../attachments/storage/user-files.js';
@@ -95,6 +96,7 @@ export class AgentService {
 		@Inject(ORDERS_READER) private readonly orders: AgentToolServices['orders'],
 		private readonly toolSettings: WiseToolSettingsService,
 		@Inject(RULES_READER) private readonly rules: AgentToolServices['rules'],
+		private readonly attachments: AttachmentsService,
 	) {}
 
 	/** `POST /api/agent`: `authorizeAgentRun` + `handleAgentRoute`. */
@@ -334,6 +336,7 @@ export class AgentService {
 					results: this.results,
 					orders: this.orders,
 					rules: this.rules,
+					attachments: this.attachments,
 				}),
 			},
 			projectFolder: project.path,

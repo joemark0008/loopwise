@@ -43,6 +43,7 @@ import {
 } from './propose-encounter-record.js';
 import proposePatientRegistration from './propose-patient-registration.js';
 import proposeSkill from './propose-skill.js';
+import readAttachment from './read-attachment.js';
 import reportTool from './report.js';
 import runAnalyticsSql from './run-analytics-sql.js';
 import suggestFollowUps from './suggest-follow-ups.js';
@@ -68,6 +69,7 @@ export const tools = {
 	propose_encounter: proposeEncounter,
 	propose_encounter_note: proposeEncounterNote,
 	find_patient: findPatient,
+	read_attachment: readAttachment,
 	open_page: openPage,
 	propose_prescription: proposePrescriptionTool,
 	propose_medical_certificate: proposeMedicalCertificateTool,

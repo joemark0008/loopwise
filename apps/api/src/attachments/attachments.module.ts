@@ -16,7 +16,7 @@ import { StorageResolver } from './storage.resolver.js';
 	imports: [ProjectsCoreModule],
 	controllers: [AttachmentsController],
 	providers: [AttachmentsService, ImageRepository, StorageResolver],
-	exports: [ImageRepository],
+	exports: [AttachmentsService, ImageRepository],
 })
 export class AttachmentsModule implements OnApplicationShutdown {
 	async onApplicationShutdown(): Promise<void> {

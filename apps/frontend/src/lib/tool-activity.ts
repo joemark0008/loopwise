@@ -60,6 +60,8 @@ const describeToolActivity = (part: UIToolPart): string | null => {
 			return withAsset('Looking up', asString(input.query)) ?? 'Looking up the patient';
 		case 'open_page':
 			return 'Opening the page';
+		case 'read_attachment':
+			return withAsset('Reading', getFileName(asString(input.path))) ?? 'Reading the attachment';
 		case 'chart_patient_trend':
 			return withAsset('Charting', asString(input.measure)?.replaceAll('_', ' ')) ?? 'Charting the trend';
 		case 'chart_facility_panel':

@@ -168,6 +168,10 @@ export interface AgentToolServices {
 		): Promise<Record<string, { toolName: string; output: unknown }>>;
 		versions(userId: string, chatId: string, reportId: string): Promise<report.Output[]>;
 	};
+	/** `AttachmentsService` read for `read_attachment`: a file in the user's own storage space, as text. */
+	attachments: {
+		readTextForWise(userId: string, projectId: string, relativePath: string): Promise<string>;
+	};
 	/** `ResultsService` read for `list_results_to_review`; reviewing is the user's `reviewResult`. */
 	results: {
 		toReviewForWise(
