@@ -47,8 +47,14 @@ import { Route as ProtectedPatientsPatientIdIndexRouteImport } from './routes/_p
 import { Route as ProtectedPatientsPatientIdResultsRouteImport } from './routes/_protected/patients.$patientId.results'
 import { Route as ProtectedSettingsClinicIndexRouteImport } from './routes/_protected/settings.clinic.index'
 import { Route as ProtectedSettingsClinicAgentRouteImport } from './routes/_protected/settings.clinic.agent'
+import { Route as ProtectedSettingsClinicExpiriesRouteImport } from './routes/_protected/settings.clinic.expiries'
 import { Route as ProtectedSettingsClinicModelsRouteImport } from './routes/_protected/settings.clinic.models'
+import { Route as ProtectedSettingsClinicNumberingRouteImport } from './routes/_protected/settings.clinic.numbering'
+import { Route as ProtectedSettingsClinicPractitionersRouteImport } from './routes/_protected/settings.clinic.practitioners'
+import { Route as ProtectedSettingsClinicProfileRouteImport } from './routes/_protected/settings.clinic.profile'
+import { Route as ProtectedSettingsClinicServicesRouteImport } from './routes/_protected/settings.clinic.services'
 import { Route as ProtectedSettingsClinicSkillsRouteImport } from './routes/_protected/settings.clinic.skills'
+import { Route as ProtectedSettingsClinicStaffRouteImport } from './routes/_protected/settings.clinic.staff'
 import { Route as ProtectedPatientsPatientIdEncountersEncounterIdRouteImport } from './routes/_protected/patients.$patientId.encounters.$encounterId'
 
 const PrintRoute = PrintRouteImport.update({
@@ -252,16 +258,52 @@ const ProtectedSettingsClinicAgentRoute =
     path: '/agent',
     getParentRoute: () => ProtectedSettingsClinicRoute,
   } as any)
+const ProtectedSettingsClinicExpiriesRoute =
+  ProtectedSettingsClinicExpiriesRouteImport.update({
+    id: '/expiries',
+    path: '/expiries',
+    getParentRoute: () => ProtectedSettingsClinicRoute,
+  } as any)
 const ProtectedSettingsClinicModelsRoute =
   ProtectedSettingsClinicModelsRouteImport.update({
     id: '/models',
     path: '/models',
     getParentRoute: () => ProtectedSettingsClinicRoute,
   } as any)
+const ProtectedSettingsClinicNumberingRoute =
+  ProtectedSettingsClinicNumberingRouteImport.update({
+    id: '/numbering',
+    path: '/numbering',
+    getParentRoute: () => ProtectedSettingsClinicRoute,
+  } as any)
+const ProtectedSettingsClinicPractitionersRoute =
+  ProtectedSettingsClinicPractitionersRouteImport.update({
+    id: '/practitioners',
+    path: '/practitioners',
+    getParentRoute: () => ProtectedSettingsClinicRoute,
+  } as any)
+const ProtectedSettingsClinicProfileRoute =
+  ProtectedSettingsClinicProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => ProtectedSettingsClinicRoute,
+  } as any)
+const ProtectedSettingsClinicServicesRoute =
+  ProtectedSettingsClinicServicesRouteImport.update({
+    id: '/services',
+    path: '/services',
+    getParentRoute: () => ProtectedSettingsClinicRoute,
+  } as any)
 const ProtectedSettingsClinicSkillsRoute =
   ProtectedSettingsClinicSkillsRouteImport.update({
     id: '/skills',
     path: '/skills',
+    getParentRoute: () => ProtectedSettingsClinicRoute,
+  } as any)
+const ProtectedSettingsClinicStaffRoute =
+  ProtectedSettingsClinicStaffRouteImport.update({
+    id: '/staff',
+    path: '/staff',
     getParentRoute: () => ProtectedSettingsClinicRoute,
   } as any)
 const ProtectedPatientsPatientIdEncountersEncounterIdRoute =
@@ -304,8 +346,14 @@ export interface FileRoutesByFullPath {
   '/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
   '/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
   '/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
+  '/settings/clinic/expiries': typeof ProtectedSettingsClinicExpiriesRoute
   '/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
+  '/settings/clinic/numbering': typeof ProtectedSettingsClinicNumberingRoute
+  '/settings/clinic/practitioners': typeof ProtectedSettingsClinicPractitionersRoute
+  '/settings/clinic/profile': typeof ProtectedSettingsClinicProfileRoute
+  '/settings/clinic/services': typeof ProtectedSettingsClinicServicesRoute
   '/settings/clinic/skills': typeof ProtectedSettingsClinicSkillsRoute
+  '/settings/clinic/staff': typeof ProtectedSettingsClinicStaffRoute
   '/patients/$patientId/': typeof ProtectedPatientsPatientIdIndexRoute
   '/settings/clinic/': typeof ProtectedSettingsClinicIndexRoute
   '/patients/$patientId/encounters/$encounterId': typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
@@ -339,8 +387,14 @@ export interface FileRoutesByTo {
   '/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
   '/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
   '/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
+  '/settings/clinic/expiries': typeof ProtectedSettingsClinicExpiriesRoute
   '/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
+  '/settings/clinic/numbering': typeof ProtectedSettingsClinicNumberingRoute
+  '/settings/clinic/practitioners': typeof ProtectedSettingsClinicPractitionersRoute
+  '/settings/clinic/profile': typeof ProtectedSettingsClinicProfileRoute
+  '/settings/clinic/services': typeof ProtectedSettingsClinicServicesRoute
   '/settings/clinic/skills': typeof ProtectedSettingsClinicSkillsRoute
+  '/settings/clinic/staff': typeof ProtectedSettingsClinicStaffRoute
   '/patients/$patientId': typeof ProtectedPatientsPatientIdIndexRoute
   '/settings/clinic': typeof ProtectedSettingsClinicIndexRoute
   '/patients/$patientId/encounters/$encounterId': typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
@@ -383,8 +437,14 @@ export interface FileRoutesById {
   '/_print/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
   '/_protected/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
   '/_protected/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
+  '/_protected/settings/clinic/expiries': typeof ProtectedSettingsClinicExpiriesRoute
   '/_protected/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
+  '/_protected/settings/clinic/numbering': typeof ProtectedSettingsClinicNumberingRoute
+  '/_protected/settings/clinic/practitioners': typeof ProtectedSettingsClinicPractitionersRoute
+  '/_protected/settings/clinic/profile': typeof ProtectedSettingsClinicProfileRoute
+  '/_protected/settings/clinic/services': typeof ProtectedSettingsClinicServicesRoute
   '/_protected/settings/clinic/skills': typeof ProtectedSettingsClinicSkillsRoute
+  '/_protected/settings/clinic/staff': typeof ProtectedSettingsClinicStaffRoute
   '/_protected/patients/$patientId/': typeof ProtectedPatientsPatientIdIndexRoute
   '/_protected/settings/clinic/': typeof ProtectedSettingsClinicIndexRoute
   '/_protected/patients/$patientId/encounters/$encounterId': typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
@@ -424,8 +484,14 @@ export interface FileRouteTypes {
     | '/print/prescription/$prescriptionId'
     | '/patients/$patientId/results'
     | '/settings/clinic/agent'
+    | '/settings/clinic/expiries'
     | '/settings/clinic/models'
+    | '/settings/clinic/numbering'
+    | '/settings/clinic/practitioners'
+    | '/settings/clinic/profile'
+    | '/settings/clinic/services'
     | '/settings/clinic/skills'
+    | '/settings/clinic/staff'
     | '/patients/$patientId/'
     | '/settings/clinic/'
     | '/patients/$patientId/encounters/$encounterId'
@@ -459,8 +525,14 @@ export interface FileRouteTypes {
     | '/print/prescription/$prescriptionId'
     | '/patients/$patientId/results'
     | '/settings/clinic/agent'
+    | '/settings/clinic/expiries'
     | '/settings/clinic/models'
+    | '/settings/clinic/numbering'
+    | '/settings/clinic/practitioners'
+    | '/settings/clinic/profile'
+    | '/settings/clinic/services'
     | '/settings/clinic/skills'
+    | '/settings/clinic/staff'
     | '/patients/$patientId'
     | '/settings/clinic'
     | '/patients/$patientId/encounters/$encounterId'
@@ -502,8 +574,14 @@ export interface FileRouteTypes {
     | '/_print/print/prescription/$prescriptionId'
     | '/_protected/patients/$patientId/results'
     | '/_protected/settings/clinic/agent'
+    | '/_protected/settings/clinic/expiries'
     | '/_protected/settings/clinic/models'
+    | '/_protected/settings/clinic/numbering'
+    | '/_protected/settings/clinic/practitioners'
+    | '/_protected/settings/clinic/profile'
+    | '/_protected/settings/clinic/services'
     | '/_protected/settings/clinic/skills'
+    | '/_protected/settings/clinic/staff'
     | '/_protected/patients/$patientId/'
     | '/_protected/settings/clinic/'
     | '/_protected/patients/$patientId/encounters/$encounterId'
@@ -787,6 +865,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSettingsClinicAgentRouteImport
       parentRoute: typeof ProtectedSettingsClinicRoute
     }
+    '/_protected/settings/clinic/expiries': {
+      id: '/_protected/settings/clinic/expiries'
+      path: '/expiries'
+      fullPath: '/settings/clinic/expiries'
+      preLoaderRoute: typeof ProtectedSettingsClinicExpiriesRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
+    }
     '/_protected/settings/clinic/models': {
       id: '/_protected/settings/clinic/models'
       path: '/models'
@@ -794,11 +879,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSettingsClinicModelsRouteImport
       parentRoute: typeof ProtectedSettingsClinicRoute
     }
+    '/_protected/settings/clinic/numbering': {
+      id: '/_protected/settings/clinic/numbering'
+      path: '/numbering'
+      fullPath: '/settings/clinic/numbering'
+      preLoaderRoute: typeof ProtectedSettingsClinicNumberingRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
+    }
+    '/_protected/settings/clinic/practitioners': {
+      id: '/_protected/settings/clinic/practitioners'
+      path: '/practitioners'
+      fullPath: '/settings/clinic/practitioners'
+      preLoaderRoute: typeof ProtectedSettingsClinicPractitionersRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
+    }
+    '/_protected/settings/clinic/profile': {
+      id: '/_protected/settings/clinic/profile'
+      path: '/profile'
+      fullPath: '/settings/clinic/profile'
+      preLoaderRoute: typeof ProtectedSettingsClinicProfileRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
+    }
+    '/_protected/settings/clinic/services': {
+      id: '/_protected/settings/clinic/services'
+      path: '/services'
+      fullPath: '/settings/clinic/services'
+      preLoaderRoute: typeof ProtectedSettingsClinicServicesRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
+    }
     '/_protected/settings/clinic/skills': {
       id: '/_protected/settings/clinic/skills'
       path: '/skills'
       fullPath: '/settings/clinic/skills'
       preLoaderRoute: typeof ProtectedSettingsClinicSkillsRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
+    }
+    '/_protected/settings/clinic/staff': {
+      id: '/_protected/settings/clinic/staff'
+      path: '/staff'
+      fullPath: '/settings/clinic/staff'
+      preLoaderRoute: typeof ProtectedSettingsClinicStaffRouteImport
       parentRoute: typeof ProtectedSettingsClinicRoute
     }
     '/_protected/patients/$patientId/encounters/$encounterId': {
@@ -877,16 +997,30 @@ const ProtectedPatientsRouteWithChildren =
 
 interface ProtectedSettingsClinicRouteChildren {
   ProtectedSettingsClinicAgentRoute: typeof ProtectedSettingsClinicAgentRoute
+  ProtectedSettingsClinicExpiriesRoute: typeof ProtectedSettingsClinicExpiriesRoute
   ProtectedSettingsClinicModelsRoute: typeof ProtectedSettingsClinicModelsRoute
+  ProtectedSettingsClinicNumberingRoute: typeof ProtectedSettingsClinicNumberingRoute
+  ProtectedSettingsClinicPractitionersRoute: typeof ProtectedSettingsClinicPractitionersRoute
+  ProtectedSettingsClinicProfileRoute: typeof ProtectedSettingsClinicProfileRoute
+  ProtectedSettingsClinicServicesRoute: typeof ProtectedSettingsClinicServicesRoute
   ProtectedSettingsClinicSkillsRoute: typeof ProtectedSettingsClinicSkillsRoute
+  ProtectedSettingsClinicStaffRoute: typeof ProtectedSettingsClinicStaffRoute
   ProtectedSettingsClinicIndexRoute: typeof ProtectedSettingsClinicIndexRoute
 }
 
 const ProtectedSettingsClinicRouteChildren: ProtectedSettingsClinicRouteChildren =
   {
     ProtectedSettingsClinicAgentRoute: ProtectedSettingsClinicAgentRoute,
+    ProtectedSettingsClinicExpiriesRoute: ProtectedSettingsClinicExpiriesRoute,
     ProtectedSettingsClinicModelsRoute: ProtectedSettingsClinicModelsRoute,
+    ProtectedSettingsClinicNumberingRoute:
+      ProtectedSettingsClinicNumberingRoute,
+    ProtectedSettingsClinicPractitionersRoute:
+      ProtectedSettingsClinicPractitionersRoute,
+    ProtectedSettingsClinicProfileRoute: ProtectedSettingsClinicProfileRoute,
+    ProtectedSettingsClinicServicesRoute: ProtectedSettingsClinicServicesRoute,
     ProtectedSettingsClinicSkillsRoute: ProtectedSettingsClinicSkillsRoute,
+    ProtectedSettingsClinicStaffRoute: ProtectedSettingsClinicStaffRoute,
     ProtectedSettingsClinicIndexRoute: ProtectedSettingsClinicIndexRoute,
   }
 

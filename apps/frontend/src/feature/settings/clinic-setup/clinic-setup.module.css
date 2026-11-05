@@ -1,0 +1,223 @@
+/* Settings → Clinic setup pages: forms in cards, tables that scroll on a phone, row actions on the right. */
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: 0.75rem 1rem;
+}
+.field {
+	display: grid;
+	gap: 0.3125rem;
+	align-content: start;
+}
+.field[data-wide] {
+	grid-column: 1 / -1;
+}
+.fieldLabel {
+	font-size: 0.8125rem;
+	--fx-font-weight: 500;
+	font-weight: 500;
+}
+.required {
+	color: var(--app-danger);
+}
+.hint {
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.fieldError {
+	font-size: 0.75rem;
+	color: var(--app-danger);
+}
+.fieldset {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	min-width: 0;
+}
+.legend {
+	font-family: var(--app-font-heading);
+	font-size: 0.875rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+.checkboxRow {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: var(--app-text-sm);
+}
+/* A form's actions: the primary one last, on the right (docs/design-system.md). */
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.muted {
+	color: var(--app-muted);
+	font-size: var(--app-text-sm);
+}
+.toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+.toolbarStart {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+}
+.search {
+	width: 16rem;
+	max-width: 100%;
+}
+.tableScroll {
+	overflow-x: auto;
+	min-width: 0;
+}
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--app-text-sm);
+	font-variant-numeric: tabular-nums;
+}
+.table th,
+.table td {
+	height: var(--app-row-height);
+	padding: 0.375rem 0.625rem;
+	border-bottom: 1px solid var(--app-line);
+	text-align: left;
+	vertical-align: middle;
+}
+.table th {
+	height: auto;
+	font-size: var(--app-text-xs);
+	--fx-font-weight: 600;
+	font-weight: 600;
+	color: var(--app-muted);
+	white-space: nowrap;
+}
+.table [data-numeric] {
+	text-align: right;
+	white-space: nowrap;
+}
+.table tr[data-inactive] td {
+	color: var(--app-muted);
+}
+.rowActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.25rem;
+	white-space: nowrap;
+}
+.code {
+	font-family: var(--app-font-mono);
+	font-size: 0.8125rem;
+}
+.strike {
+	text-decoration: line-through;
+	color: var(--app-muted);
+}
+.cardList {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.practitionerHeader {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+.practitionerName {
+	font-family: var(--app-font-heading);
+	font-size: 1rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+}
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+}
+.subheading {
+	font-size: 0.8125rem;
+	--fx-font-weight: 600;
+	font-weight: 600;
+	margin-top: 0.5rem;
+}
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.listItem {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.375rem 0;
+	border-bottom: 1px solid var(--app-line);
+	font-size: var(--app-text-sm);
+}
+.preview {
+	font-family: var(--app-font-mono);
+	font-size: 0.8125rem;
+	color: var(--app-muted);
+}
+.logo {
+	max-height: 3rem;
+	max-width: 10rem;
+	object-fit: contain;
+}
+.options {
+	display: flex;
+	flex-direction: column;
+	max-height: 12rem;
+	overflow-y: auto;
+	border: 1px solid var(--app-line);
+	border-radius: var(--app-radius);
+}
+.option {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.5rem 0.625rem;
+	border: 0;
+	background: transparent;
+	text-align: left;
+	font: inherit;
+	font-size: var(--app-text-sm);
+	color: var(--app-text);
+	cursor: pointer;
+}
+.option:hover,
+.option:focus-visible {
+	background: var(--app-fill);
+}
+.selected {
+	font-size: var(--app-text-sm);
+}
+@media (max-width: 40rem) {
+	.search {
+		width: 100%;
+	}
+}

@@ -1,0 +1,274 @@
+# Settings → Clinic (clinic setup): apps/api/src/clinical/clinics, practitioners/setup, billing/service-items.
+
+fragment OrganizationProfileFields on OrganizationProfile {
+	id
+	name
+	tradeName
+	tin
+	vatRegistration
+	secOrDtiNo
+	logoUrl
+}
+
+fragment ClinicProfileFields on ClinicProfile {
+	id
+	code
+	name
+	birBranchCode
+	dohLicenseNo
+	dohLicenseExpiry
+	philhealthAccreditNo
+	philhealthAccreditExp
+	addressLine
+	barangayCode
+	barangayName
+	cityMunicipalityCode
+	cityMunicipalityName
+	provinceName
+	zipCode
+	contactNo
+	email
+	isActive
+}
+
+fragment ClinicSetupProfileFields on ClinicSetupProfile {
+	canEditOrganization
+	organization {
+		...OrganizationProfileFields
+	}
+	clinic {
+		...ClinicProfileFields
+	}
+}
+
+query ClinicProfile {
+	clinicProfile {
+		...ClinicSetupProfileFields
+	}
+}
+
+mutation UpdateOrganizationProfile($input: UpdateOrganizationProfileInput!) {
+	updateOrganizationProfile(input: $input) {
+		...ClinicSetupProfileFields
+	}
+}
+
+mutation UpdateClinicProfile($input: UpdateClinicProfileInput!) {
+	updateClinicProfile(input: $input) {
+		...ClinicSetupProfileFields
+	}
+}
+
+query CityMunicipalities($query: String!) {
+	cityMunicipalities(query: $query) {
+		code
+		name
+		provinceName
+		zipCode
+	}
+}
+
+query SetupBarangays($cityMunicipalityCode: String!) {
+	barangays(cityMunicipalityCode: $cityMunicipalityCode) {
+		code
+		name
+	}
+}
+
+fragment DocumentSequenceSettingFields on DocumentSequenceSetting {
+	key
+	label
+	year
+	prefix
+	padLength
+	nextValue
+	preview
+	isStarted
+}
+
+query DocumentSequences {
+	documentSequences {
+		...DocumentSequenceSettingFields
+	}
+}
+
+mutation SetDocumentSequence($input: SetDocumentSequenceInput!) {
+	setDocumentSequence(input: $input) {
+		...DocumentSequenceSettingFields
+	}
+}
+
+fragment SetupPractitionerFields on Practitioner {
+	id
+	userId
+	type
+	title
+	firstName
+	middleName
+	lastName
+	suffix
+	postNominals
+	displayName
+	sex
+	specialty
+	subspecialty
+	mobileNo
+	email
+	prcLicenseNo
+	prcLicenseExpiry
+	ptrNo
+	ptrIssuedDate
+	ptrIssuedAt
+	s2LicenseNo
+	s2LicenseExpiry
+	philhealthPan
+	philhealthPanExpiry
+	tin
+	signatureUrl
+	isActive
+}
+
+fragment ClinicPractitionerFields on ClinicPractitioner {
+	roomName
+	consultFee
+	isActive
+	practitioner {
+		...SetupPractitionerFields
+	}
+	schedules {
+		id
+		practitionerId
+		dayOfWeek
+		startTime
+		endTime
+		slotMinutes
+		maxPatients
+	}
+	leaves {
+		id
+		practitionerId
+		startAt
+		endAt
+		reason
+	}
+}
+
+query ClinicPractitionerSetup {
+	clinicPractitionerSetup {
+		...ClinicPractitionerFields
+	}
+}
+
+query PractitionerUserOptions {
+	practitionerUserOptions {
+		id
+		name
+		email
+		firstName
+		lastName
+	}
+}
+
+mutation SavePractitioner($input: SavePractitionerInput!) {
+	savePractitioner(input: $input) {
+		...SetupPractitionerFields
+	}
+}
+
+mutation SetPractitionerClinic($input: SetPractitionerClinicInput!) {
+	setPractitionerClinic(input: $input) {
+		...ClinicPractitionerFields
+	}
+}
+
+mutation SavePractitionerSchedule($input: PractitionerScheduleInput!) {
+	savePractitionerSchedule(input: $input) {
+		id
+	}
+}
+
+mutation RemovePractitionerSchedule($id: ID!) {
+	removePractitionerSchedule(id: $id)
+}
+
+mutation AddPractitionerLeave($input: AddPractitionerLeaveInput!) {
+	addPractitionerLeave(input: $input) {
+		id
+	}
+}
+
+mutation RemovePractitionerLeave($id: ID!) {
+	removePractitionerLeave(id: $id)
+}
+
+fragment ServiceCatalogItemFields on ServiceCatalogItem {
+	id
+	code
+	name
+	category
+	defaultPrice
+	taxType
+	isPfShareable
+	diagnosticTestId
+	diagnosticTestName
+	inventoryItemId
+	inventoryItemName
+	isActive
+	clinicPrice
+	hmoPrice
+	price
+}
+
+query ServiceCatalog($includeInactive: Boolean!) {
+	serviceCatalog(includeInactive: $includeInactive) {
+		...ServiceCatalogItemFields
+	}
+}
+
+query ServiceLinkOptions {
+	serviceLinkOptions {
+		diagnosticTests {
+			id
+			name
+			code
+			linkedServiceItemId
+		}
+		inventoryItems {
+			id
+			name
+			code
+			linkedServiceItemId
+		}
+	}
+}
+
+mutation SaveServiceItem($input: SaveServiceItemInput!) {
+	saveServiceItem(input: $input) {
+		...ServiceCatalogItemFields
+	}
+}
+
+mutation SetClinicServicePrice($input: SetClinicServicePriceInput!) {
+	setClinicServicePrice(input: $input) {
+		...ServiceCatalogItemFields
+	}
+}
+
+mutation RemoveClinicServicePrice($serviceItemId: ID!) {
+	removeClinicServicePrice(serviceItemId: $serviceItemId) {
+		...ServiceCatalogItemFields
+	}
+}
+
+query ExpiringCredentials($withinDays: Int!) {
+	expiringCredentials(withinDays: $withinDays) {
+		kind
+		label
+		subjectType
+		subjectId
+		subjectName
+		number
+		expiresOn
+		daysLeft
+	}
+}
