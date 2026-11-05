@@ -1,161 +1,488 @@
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
+-- CreateEnum
+CREATE TYPE "audit_action" AS ENUM ('CREATE', 'UPDATE', 'DELETE', 'VIEW', 'PRINT', 'EXPORT', 'SIGN', 'VOID', 'LOGIN', 'LOGOUT', 'LOGIN_FAILED');
+
+-- CreateEnum
+CREATE TYPE "service_category" AS ENUM ('CONSULTATION', 'PROFESSIONAL_FEE', 'PROCEDURE', 'LABORATORY', 'IMAGING', 'MEDICINE', 'SUPPLY', 'VACCINE', 'PACKAGE', 'CERTIFICATE', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "tax_type" AS ENUM ('VATABLE', 'VAT_EXEMPT', 'ZERO_RATED');
+
+-- CreateEnum
+CREATE TYPE "invoice_doc_type" AS ENUM ('SALES_INVOICE', 'OFFICIAL_RECEIPT', 'ACKNOWLEDGMENT_RECEIPT', 'BILLING_STATEMENT');
+
+-- CreateEnum
+CREATE TYPE "invoice_status" AS ENUM ('DRAFT', 'ISSUED', 'PARTIALLY_PAID', 'PAID', 'VOID');
+
+-- CreateEnum
+CREATE TYPE "discount_type" AS ENUM ('SENIOR_CITIZEN', 'PWD', 'SOLO_PARENT', 'NATIONAL_ATHLETE', 'EMPLOYEE', 'PROMO', 'SPECIAL');
+
+-- CreateEnum
+CREATE TYPE "payment_method" AS ENUM ('CASH', 'GCASH', 'MAYA', 'QR_PH', 'CREDIT_CARD', 'DEBIT_CARD', 'BANK_TRANSFER', 'CHECK', 'HMO', 'PHILHEALTH', 'CORPORATE_CHARGE', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "payment_status" AS ENUM ('POSTED', 'VOIDED', 'REFUNDED');
+
+-- CreateEnum
+CREATE TYPE "pf_status" AS ENUM ('UNPAID', 'FOR_RELEASE', 'RELEASED');
+
+-- CreateEnum
+CREATE TYPE "encounter_type" AS ENUM ('CONSULTATION', 'FOLLOW_UP', 'TELECONSULTATION', 'PROCEDURE', 'PEME', 'APE', 'KONSULTA_FPE', 'KONSULTA_VISIT', 'PRENATAL', 'WELL_BABY', 'IMMUNIZATION', 'DENTAL', 'EMERGENCY', 'LAB_ONLY');
+
+-- CreateEnum
+CREATE TYPE "encounter_status" AS ENUM ('OPEN', 'IN_PROGRESS', 'FOR_BILLING', 'COMPLETED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "disposition" AS ENUM ('SENT_HOME', 'FOR_FOLLOW_UP', 'REFERRED', 'ADMITTED', 'TRANSFERRED_ER', 'EXPIRED');
+
+-- CreateEnum
+CREATE TYPE "diagnosis_type" AS ENUM ('PRIMARY', 'SECONDARY', 'WORKING', 'COMORBIDITY');
+
+-- CreateEnum
+CREATE TYPE "diagnostic_category" AS ENUM ('LABORATORY', 'IMAGING', 'CARDIO', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "result_value_type" AS ENUM ('NUMERIC', 'TEXT', 'OPTION');
+
+-- CreateEnum
+CREATE TYPE "order_priority" AS ENUM ('ROUTINE', 'URGENT', 'STAT');
+
+-- CreateEnum
+CREATE TYPE "diagnostic_order_status" AS ENUM ('REQUESTED', 'PAID', 'SPECIMEN_COLLECTED', 'IN_PROGRESS', 'RESULTED', 'RELEASED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "result_flag" AS ENUM ('NORMAL', 'LOW', 'HIGH', 'CRITICAL_LOW', 'CRITICAL_HIGH', 'ABNORMAL');
+
+-- CreateEnum
+CREATE TYPE "certificate_type" AS ENUM ('MEDICAL_CERTIFICATE', 'FIT_TO_WORK', 'MEDICAL_CLEARANCE', 'PEME_CERTIFICATE', 'APE_CERTIFICATE', 'SSS_SICKNESS', 'VACCINATION_CERTIFICATE', 'DRIVERS_LICENSE_MEDICAL');
+
+-- CreateEnum
+CREATE TYPE "referral_status" AS ENUM ('DRAFT', 'SENT', 'ACCEPTED', 'COMPLETED', 'DECLINED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "document_type" AS ENUM ('EXTERNAL_LAB_RESULT', 'EXTERNAL_IMAGING', 'CONSENT_FORM', 'IDENTIFICATION', 'REFERRAL_LETTER', 'PHILHEALTH_FORM', 'HMO_LOA', 'PRESCRIPTION_SCAN', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "loa_status" AS ENUM ('REQUESTED', 'APPROVED', 'DENIED', 'USED', 'EXPIRED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "transmittal_status" AS ENUM ('DRAFT', 'SUBMITTED', 'PARTIALLY_PAID', 'PAID', 'DISPUTED');
+
+-- CreateEnum
+CREATE TYPE "vaccine_route" AS ENUM ('IM', 'SC', 'ID', 'ORAL', 'INTRANASAL');
+
+-- CreateEnum
+CREATE TYPE "item_category" AS ENUM ('MEDICINE', 'VACCINE', 'MEDICAL_SUPPLY', 'LAB_REAGENT', 'DENTAL_SUPPLY', 'OFFICE_SUPPLY', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "stock_movement_type" AS ENUM ('RECEIPT', 'DISPENSE', 'CONSUMPTION', 'ADJUSTMENT_IN', 'ADJUSTMENT_OUT', 'TRANSFER_IN', 'TRANSFER_OUT', 'RETURN_TO_SUPPLIER', 'RETURN_FROM_PATIENT', 'EXPIRED_DISPOSAL', 'DAMAGED');
+
+-- CreateEnum
+CREATE TYPE "care_relationship_reason" AS ENUM ('ENCOUNTER', 'ORDER', 'REFERRAL', 'BREAK_GLASS');
+
+-- CreateEnum
+CREATE TYPE "document_status" AS ENUM ('DRAFT', 'ISSUED');
+
+-- CreateEnum
+CREATE TYPE "vat_registration" AS ENUM ('VAT', 'NON_VAT');
+
+-- CreateEnum
+CREATE TYPE "staff_role" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'NURSE', 'MIDWIFE', 'RECEPTIONIST', 'CASHIER', 'BILLING_CLERK', 'PHARMACIST', 'PHARMACY_ASSISTANT', 'MEDTECH', 'RADTECH', 'INVENTORY_CLERK', 'MEMBER', 'VIEWER', 'CONTEXT_ADMIN');
+
+-- CreateEnum
+CREATE TYPE "org_role" AS ENUM ('ADMIN', 'MEMBER', 'VIEWER');
+
+-- CreateEnum
+CREATE TYPE "sex" AS ENUM ('MALE', 'FEMALE');
+
+-- CreateEnum
+CREATE TYPE "civil_status" AS ENUM ('SINGLE', 'MARRIED', 'WIDOWED', 'LEGALLY_SEPARATED', 'ANNULLED');
+
+-- CreateEnum
+CREATE TYPE "blood_type" AS ENUM ('A_POS', 'A_NEG', 'B_POS', 'B_NEG', 'AB_POS', 'AB_NEG', 'O_POS', 'O_NEG', 'UNKNOWN');
+
+-- CreateEnum
+CREATE TYPE "address_type" AS ENUM ('HOME', 'PROVINCIAL', 'WORK', 'BILLING');
+
+-- CreateEnum
+CREATE TYPE "identification_type" AS ENUM ('PHILSYS_NATIONAL_ID', 'SENIOR_CITIZEN_OSCA', 'PWD', 'SOLO_PARENT', 'PHILHEALTH_ID', 'SSS', 'GSIS', 'UMID', 'TIN', 'DRIVERS_LICENSE', 'PASSPORT', 'POSTAL_ID', 'VOTERS_ID', 'PRC_ID', 'STUDENT_ID', 'COMPANY_ID', 'BARANGAY_ID', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "allergy_type" AS ENUM ('DRUG', 'FOOD', 'ENVIRONMENTAL', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "severity" AS ENUM ('MILD', 'MODERATE', 'SEVERE');
+
+-- CreateEnum
+CREATE TYPE "problem_status" AS ENUM ('ACTIVE', 'CONTROLLED', 'RESOLVED');
+
+-- CreateEnum
+CREATE TYPE "history_category" AS ENUM ('PAST_MEDICAL', 'SURGICAL', 'FAMILY', 'SOCIAL', 'OB_GYN', 'HOSPITALIZATION');
+
+-- CreateEnum
+CREATE TYPE "consent_type" AS ENUM ('DATA_PRIVACY', 'GENERAL_TREATMENT', 'PROCEDURE', 'TELEMEDICINE', 'SMS_EMAIL_NOTIFICATIONS', 'MARKETING', 'PHOTO_VIDEO');
+
+-- CreateEnum
+CREATE TYPE "contributor_type" AS ENUM ('DIRECT', 'INDIRECT');
+
+-- CreateEnum
+CREATE TYPE "philhealth_member_category" AS ENUM ('EMPLOYED_PRIVATE', 'EMPLOYED_GOVERNMENT', 'KASAMBAHAY', 'SELF_EARNING', 'PROFESSIONAL_PRACTITIONER', 'OFW_LAND_BASED', 'OFW_SEA_BASED', 'FILIPINO_WITH_DUAL_CITIZENSHIP', 'LIFETIME_MEMBER', 'INDIGENT_NHTS', 'FOUR_PS', 'SENIOR_CITIZEN', 'PWD', 'SPONSORED_LGU', 'SPONSORED_OTHER', 'POINT_OF_SERVICE', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "dependent_relationship" AS ENUM ('SPOUSE', 'CHILD', 'PARENT');
+
+-- CreateEnum
+CREATE TYPE "konsulta_status" AS ENUM ('REGISTERED', 'FPE_DONE', 'ACTIVE', 'TRANSFERRED', 'INACTIVE');
+
+-- CreateEnum
+CREATE TYPE "philhealth_claim_type" AS ENUM ('KONSULTA', 'OUTPATIENT_PACKAGE', 'DAY_SURGERY', 'MEDICAL_CASE_RATE', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "philhealth_claim_status" AS ENUM ('DRAFT', 'FOR_SUBMISSION', 'SUBMITTED', 'IN_PROCESS', 'RETURN_TO_HOSPITAL', 'DENIED', 'APPROVED', 'PAID');
+
+-- CreateEnum
+CREATE TYPE "practitioner_type" AS ENUM ('PHYSICIAN', 'DENTIST', 'MIDWIFE', 'NURSE', 'PSYCHOLOGIST', 'PHYSICAL_THERAPIST', 'NUTRITIONIST_DIETITIAN', 'OPTOMETRIST', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "prescription_status" AS ENUM ('ACTIVE', 'PARTIALLY_DISPENSED', 'DISPENSED', 'CANCELLED', 'EXPIRED');
+
+-- CreateEnum
+CREATE TYPE "case_rate_type" AS ENUM ('MEDICAL', 'PROCEDURE', 'PACKAGE');
+
+-- CreateEnum
+CREATE TYPE "appointment_status" AS ENUM ('SCHEDULED', 'CONFIRMED', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW', 'RESCHEDULED');
+
+-- CreateEnum
+CREATE TYPE "booking_channel" AS ENUM ('WALK_IN', 'PHONE', 'SMS', 'FACEBOOK_MESSENGER', 'VIBER', 'ONLINE_PORTAL', 'REFERRAL');
+
+-- CreateEnum
+CREATE TYPE "visit_type" AS ENUM ('NEW_PATIENT', 'FOLLOW_UP', 'PROCEDURE', 'TELECONSULT', 'PEME', 'APE');
+
+-- CreateEnum
+CREATE TYPE "queue_status" AS ENUM ('WAITING', 'CALLED', 'SERVING', 'DONE', 'SKIPPED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "priority_reason" AS ENUM ('SENIOR_CITIZEN', 'PWD', 'PREGNANT', 'WITH_INFANT', 'EMERGENCY');
+
 -- CreateTable
-CREATE TABLE "account" (
-    "id" TEXT NOT NULL,
+CREATE TABLE "audit_logs" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID,
+    "clinic_id" UUID,
+    "user_id" UUID,
+    "action" "audit_action" NOT NULL,
+    "entity_type" TEXT NOT NULL,
+    "entity_id" TEXT,
+    "patient_id" UUID,
+    "changes" JSONB,
+    "ip_address" TEXT,
+    "user_agent" TEXT,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "event" TEXT,
+    "reason" TEXT,
+    "origin" JSONB,
+    "request_id" TEXT,
+
+    CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "accounts" (
+    "id" UUID NOT NULL,
     "account_id" TEXT NOT NULL,
     "provider_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
     "access_token" TEXT,
     "refresh_token" TEXT,
     "id_token" TEXT,
-    "access_token_expires_at" TIMESTAMP(6),
-    "refresh_token_expires_at" TIMESTAMP(6),
+    "access_token_expires_at" TIMESTAMPTZ(3),
+    "refresh_token_expires_at" TIMESTAMPTZ(3),
     "scope" TEXT,
     "password" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
-    CONSTRAINT "account_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "accounts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "activity" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "user_id" TEXT,
-    "type" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'completed',
-    "trigger" TEXT NOT NULL DEFAULT 'system',
-    "story_id" TEXT,
-    "chat_id" TEXT,
-    "shared_story_id" TEXT,
-    "shared_chat_id" TEXT,
-    "payload" JSONB,
-    "error_message" TEXT,
-    "started_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "completed_at" TIMESTAMP(6),
+CREATE TABLE "sessions" (
+    "id" UUID NOT NULL,
+    "expires_at" TIMESTAMPTZ(3) NOT NULL,
+    "token" TEXT NOT NULL,
+    "ip_address" TEXT,
+    "user_agent" TEXT,
+    "user_id" UUID NOT NULL,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
-    CONSTRAINT "activity_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "sessions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "analytics_event" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
-    "asset_type" TEXT NOT NULL,
-    "actor_user_id" TEXT,
-    "chat_id" TEXT,
-    "story_id" TEXT,
-    "shared_chat_id" TEXT,
-    "shared_story_id" TEXT,
-    "metadata" JSONB,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE "verifications" (
+    "id" UUID NOT NULL,
+    "identifier" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "expires_at" TIMESTAMPTZ(3) NOT NULL,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
-    CONSTRAINT "analytics_event_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "verifications_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "api_key" (
-    "id" TEXT NOT NULL,
-    "org_id" TEXT NOT NULL,
+CREATE TABLE "service_items" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "key_hash" TEXT NOT NULL,
-    "key_prefix" TEXT NOT NULL,
-    "created_by" TEXT NOT NULL,
-    "last_used_at" TIMESTAMP(6),
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "category" "service_category" NOT NULL,
+    "default_price" DECIMAL(12,2) NOT NULL,
+    "tax_type" "tax_type" NOT NULL DEFAULT 'VAT_EXEMPT',
+    "is_pf_shareable" BOOLEAN NOT NULL DEFAULT false,
+    "diagnostic_test_id" UUID,
+    "inventory_item_id" UUID,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
 
-    CONSTRAINT "api_key_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "service_items_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "automation" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "prompt" TEXT NOT NULL,
-    "schedule_description" TEXT,
-    "timezone" TEXT,
-    "model_provider" TEXT,
-    "model_id" TEXT,
-    "mcp_enabled" BOOLEAN NOT NULL DEFAULT true,
-    "mcp_servers" JSONB,
-    "integrations" JSONB NOT NULL DEFAULT '{}',
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "webhook_enabled" BOOLEAN NOT NULL DEFAULT false,
+CREATE TABLE "clinic_service_prices" (
+    "service_item_id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "price" DECIMAL(12,2) NOT NULL,
+    "hmo_price" DECIMAL(12,2),
 
-    CONSTRAINT "automation_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "clinic_service_prices_pkey" PRIMARY KEY ("service_item_id","clinic_id")
 );
 
 -- CreateTable
-CREATE TABLE "automation_run" (
-    "id" TEXT NOT NULL,
-    "automation_id" TEXT NOT NULL,
-    "chat_id" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'running',
-    "started_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "completed_at" TIMESTAMP(6),
-    "error_message" TEXT,
-    "integration_results" JSONB NOT NULL DEFAULT '[]',
-    "read_at" TIMESTAMP(6),
+CREATE TABLE "corporate_accounts" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "tin" TEXT,
+    "address" TEXT,
+    "contact_person" TEXT,
+    "contact_no" TEXT,
+    "email" TEXT,
+    "credit_limit" DECIMAL(12,2),
+    "payment_terms_days" INTEGER DEFAULT 30,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
 
-    CONSTRAINT "automation_run_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "corporate_accounts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "budget_notification" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "provider" TEXT NOT NULL,
-    "scope" TEXT NOT NULL,
-    "period_start" TIMESTAMP(6) NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE "invoice_series" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "doc_type" "invoice_doc_type" NOT NULL DEFAULT 'SALES_INVOICE',
+    "prefix" TEXT,
+    "start_no" INTEGER NOT NULL,
+    "end_no" INTEGER NOT NULL,
+    "next_no" INTEGER NOT NULL,
+    "permit_no" TEXT,
+    "permit_date" DATE,
+    "valid_until" DATE,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
 
-    CONSTRAINT "budget_notification_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "invoice_series_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "chart_image" (
-    "id" TEXT NOT NULL,
+CREATE TABLE "invoices" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "series_id" UUID,
+    "doc_type" "invoice_doc_type" NOT NULL DEFAULT 'SALES_INVOICE',
+    "invoice_no" TEXT,
+    "invoice_date" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "encounter_id" UUID,
+    "corporate_account_id" UUID,
+    "buyer_name" TEXT NOT NULL,
+    "buyer_tin" TEXT,
+    "buyer_address" TEXT,
+    "buyer_business_style" TEXT,
+    "gross_amount" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "vatable_sales" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "vat_exempt_sales" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "zero_rated_sales" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "vat_amount" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "less_vat_sc_pwd" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "sc_pwd_discount" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "other_discount" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "withholding_tax" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "net_amount" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "amount_paid" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "balance" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "status" "invoice_status" NOT NULL DEFAULT 'DRAFT',
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "remarks" TEXT,
+    "created_by_id" UUID,
+    "issued_at" TIMESTAMPTZ(3),
+    "voided_at" TIMESTAMPTZ(3),
+    "voided_by_id" UUID,
+    "void_reason" TEXT,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "invoices_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "invoice_lines" (
+    "id" UUID NOT NULL,
+    "invoice_id" UUID NOT NULL,
+    "service_item_id" UUID,
+    "encounter_id" UUID,
+    "practitioner_id" UUID,
+    "description" TEXT NOT NULL,
+    "quantity" DECIMAL(10,2) NOT NULL DEFAULT 1,
+    "unit_price" DECIMAL(12,2) NOT NULL,
+    "tax_type" "tax_type" NOT NULL DEFAULT 'VAT_EXEMPT',
+    "vat_amount" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "discount_amount" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "line_total" DECIMAL(12,2) NOT NULL,
+    "is_professional_fee" BOOLEAN NOT NULL DEFAULT false,
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "invoice_lines_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "invoice_discounts" (
+    "id" UUID NOT NULL,
+    "invoice_id" UUID NOT NULL,
+    "invoice_line_id" UUID,
+    "identification_id" UUID,
+    "type" "discount_type" NOT NULL,
+    "rate" DECIMAL(5,4) NOT NULL,
+    "amount" DECIMAL(12,2) NOT NULL,
+    "vat_exempted" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "beneficiary_name" TEXT,
+    "id_number" TEXT,
+    "signature_url" TEXT,
+    "approved_by_id" UUID,
+
+    CONSTRAINT "invoice_discounts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "payments" (
+    "id" UUID NOT NULL,
+    "payment_no" TEXT NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "cashier_shift_id" UUID,
+    "method" "payment_method" NOT NULL,
+    "amount" DECIMAL(12,2) NOT NULL,
+    "tendered_amount" DECIMAL(12,2),
+    "change_amount" DECIMAL(12,2),
+    "reference_no" TEXT,
+    "bank_name" TEXT,
+    "check_date" DATE,
+    "hmo_loa_id" UUID,
+    "hmo_transmittal_id" UUID,
+    "philhealth_claim_id" UUID,
+    "corporate_account_id" UUID,
+    "status" "payment_status" NOT NULL DEFAULT 'POSTED',
+    "received_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "received_by_id" UUID,
+    "void_reason" TEXT,
+    "notes" TEXT,
+
+    CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "payment_allocations" (
+    "id" UUID NOT NULL,
+    "payment_id" UUID NOT NULL,
+    "invoice_id" UUID NOT NULL,
+    "amount" DECIMAL(12,2) NOT NULL,
+
+    CONSTRAINT "payment_allocations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "cashier_shifts" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "cashier_id" UUID NOT NULL,
+    "opened_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "closed_at" TIMESTAMPTZ(3),
+    "opening_cash" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "expected_cash" DECIMAL(12,2),
+    "counted_cash" DECIMAL(12,2),
+    "variance" DECIMAL(12,2),
+    "denominations" JSONB,
+    "remarks" TEXT,
+
+    CONSTRAINT "cashier_shifts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "professional_fees" (
+    "id" UUID NOT NULL,
+    "practitioner_id" UUID NOT NULL,
+    "invoice_line_id" UUID,
+    "encounter_id" UUID,
+    "gross_amount" DECIMAL(12,2) NOT NULL,
+    "clinic_share" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "ewt_rate" DECIMAL(5,4) NOT NULL DEFAULT 0.10,
+    "ewt_amount" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "net_payable" DECIMAL(12,2) NOT NULL,
+    "status" "pf_status" NOT NULL DEFAULT 'UNPAID',
+    "released_at" TIMESTAMPTZ(3),
+    "release_ref" TEXT,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "professional_fees_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "chart_images" (
+    "id" UUID NOT NULL,
     "tool_call_id" TEXT NOT NULL,
     "data" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "chart_image_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "chart_images_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "chat" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
+CREATE TABLE "chats" (
+    "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
     "title" TEXT NOT NULL DEFAULT 'New Conversation',
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "slack_thread_id" TEXT,
-    "project_id" TEXT NOT NULL,
-    "teams_thread_id" TEXT,
+    "surface" TEXT NOT NULL DEFAULT 'chat',
+    "patient_id" UUID,
     "is_starred" BOOLEAN NOT NULL DEFAULT false,
+    "fork_metadata" JSONB,
+    "slack_thread_id" TEXT,
+    "teams_thread_id" TEXT,
     "telegram_thread_id" TEXT,
     "whatsapp_thread_id" TEXT,
-    "deleted_at" TIMESTAMP(6),
-    "fork_metadata" JSONB,
     "mattermost_thread_id" TEXT,
     "discord_thread_id" TEXT,
+    "deleted_at" TIMESTAMPTZ(3),
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
-    CONSTRAINT "chat_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "chats_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "chat_message" (
-    "id" TEXT NOT NULL,
-    "chat_id" TEXT NOT NULL,
+CREATE TABLE "chat_messages" (
+    "id" UUID NOT NULL,
+    "chat_id" UUID NOT NULL,
     "role" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "sender_user_id" UUID,
     "stop_reason" TEXT,
     "error_message" TEXT,
     "llm_provider" TEXT,
@@ -168,301 +495,57 @@ CREATE TABLE "chat_message" (
     "output_text_tokens" INTEGER,
     "output_reasoning_tokens" INTEGER,
     "total_tokens" INTEGER,
-    "superseded_at" TIMESTAMP(6),
+    "superseded_at" TIMESTAMPTZ(3),
     "source" TEXT,
-    "isForked" BOOLEAN,
+    "is_forked" BOOLEAN,
     "citation" JSONB,
-    "version_group_id" TEXT,
-    "sender_user_id" TEXT,
+    "version_group_id" UUID,
     "discord_message_id" TEXT,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "chat_message_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "context_branch_ownership" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "branch" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "review_request_url" TEXT,
-    "review_request_kind" TEXT,
-
-    CONSTRAINT "context_branch_ownership_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "context_recommendation" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "run_id" TEXT NOT NULL,
-    "fingerprint" TEXT NOT NULL,
-    "suggested_file" TEXT NOT NULL,
-    "subject_key" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'open',
-    "impact_score" INTEGER NOT NULL DEFAULT 0,
-    "impact" JSONB,
-    "insights" JSONB NOT NULL DEFAULT '[]',
-    "title" TEXT NOT NULL,
-    "summary" TEXT NOT NULL,
-    "suggested_action" TEXT NOT NULL,
-    "fix_kind" TEXT,
-    "proposed_edits" JSONB,
-    "fix_guidance" TEXT,
-    "fix_prompt" TEXT,
-    "pr_url" TEXT,
-    "pr_branch" TEXT,
-    "pr_created_at" TIMESTAMP(6),
-    "llm_provider" TEXT,
-    "llm_model_id" TEXT,
-    "first_seen_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "last_seen_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "occurrence_count" INTEGER NOT NULL DEFAULT 1,
-    "status_changed_at" TIMESTAMP(6),
-    "status_changed_by" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "fix_target" TEXT,
-    "category" TEXT,
-    "root_cause" TEXT,
-    "root_cause_kind" TEXT,
-
-    CONSTRAINT "context_recommendation_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "context_recommendation_config" (
-    "project_id" TEXT NOT NULL,
-    "frequency" TEXT,
-    "custom_system_prompt_instructions" TEXT,
-    "repo_full_name" TEXT,
-    "auto_create_prs" BOOLEAN,
-    "max_auto_prs_per_run" INTEGER,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "repo_provider" TEXT,
-
-    CONSTRAINT "context_recommendation_config_pkey" PRIMARY KEY ("project_id")
-);
-
--- CreateTable
-CREATE TABLE "context_recommendation_linked_feedback" (
-    "recommendation_id" TEXT NOT NULL,
-    "message_id" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "context_recommendation_linked_feedback_recommendation_id_messag" PRIMARY KEY ("recommendation_id","message_id")
-);
-
--- CreateTable
-CREATE TABLE "context_recommendation_run" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "chat_id" TEXT,
-    "trigger" TEXT NOT NULL DEFAULT 'schedule',
-    "status" TEXT NOT NULL DEFAULT 'running',
-    "window_start" TIMESTAMP(6),
-    "window_end" TIMESTAMP(6),
-    "started_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "completed_at" TIMESTAMP(6),
-    "error_message" TEXT,
-    "llm_provider" TEXT,
-    "llm_model_id" TEXT,
-    "input_total_tokens" INTEGER,
-    "output_total_tokens" INTEGER,
-    "total_tokens" INTEGER,
-
-    CONSTRAINT "context_recommendation_run_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "favorite" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "story_id" TEXT,
-    "folder_id" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "favorite_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "jwks" (
-    "id" TEXT NOT NULL,
-    "public_key" TEXT NOT NULL,
-    "private_key" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "expires_at" TIMESTAMP(6),
-
-    CONSTRAINT "jwks_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "keyed_lock" (
-    "key" TEXT NOT NULL,
-    "owner" TEXT NOT NULL,
-    "expires_at" TIMESTAMP(6) NOT NULL,
-
-    CONSTRAINT "keyed_lock_pkey" PRIMARY KEY ("key")
-);
-
--- CreateTable
-CREATE TABLE "llm_inference" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "chat_id" TEXT,
-    "type" TEXT NOT NULL,
-    "llm_provider" TEXT NOT NULL,
-    "llm_model_id" TEXT NOT NULL,
-    "input_total_tokens" INTEGER,
-    "input_no_cache_tokens" INTEGER,
-    "input_cache_read_tokens" INTEGER,
-    "input_cache_write_tokens" INTEGER,
-    "output_total_tokens" INTEGER,
-    "output_text_tokens" INTEGER,
-    "output_reasoning_tokens" INTEGER,
-    "total_tokens" INTEGER,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "llm_inference_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "log" (
-    "id" TEXT NOT NULL,
-    "level" TEXT NOT NULL,
-    "message" TEXT NOT NULL,
-    "context" JSONB,
-    "source" TEXT NOT NULL,
-    "project_id" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "log_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "mcp_call_log" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "tool_name" TEXT NOT NULL,
-    "duration_ms" INTEGER,
-    "success" BOOLEAN NOT NULL,
-    "tool_input" JSONB,
-    "tool_output" JSONB,
-    "called_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "mcp_call_log_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "mcp_chart_embed" (
-    "chart_embed_id" TEXT NOT NULL,
-    "query_id" TEXT NOT NULL,
-    "chart_config" JSONB NOT NULL,
-    "source_chat_id" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "mcp_chart_embed_pkey" PRIMARY KEY ("chart_embed_id")
-);
-
--- CreateTable
-CREATE TABLE "mcp_map_embed" (
-    "map_embed_id" TEXT NOT NULL,
-    "query_id" TEXT NOT NULL,
-    "map_config" JSONB NOT NULL,
-    "source_chat_id" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "mcp_map_embed_pkey" PRIMARY KEY ("map_embed_id")
-);
-
--- CreateTable
-CREATE TABLE "mcp_oauth_client" (
-    "project_id" TEXT NOT NULL,
-    "server_name" TEXT NOT NULL,
-    "client_id" TEXT NOT NULL,
-    "client_secret" TEXT,
-    "client_data" TEXT,
-    "discovery_user_id" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "mcp_oauth_client_project_id_server_name_pk" PRIMARY KEY ("project_id","server_name")
-);
-
--- CreateTable
-CREATE TABLE "mcp_query_data" (
-    "query_id" TEXT NOT NULL,
-    "call_log_id" TEXT,
-    "project_id" TEXT NOT NULL,
-    "source_chat_id" TEXT,
-    "columns" JSONB NOT NULL,
-    "data" JSONB NOT NULL,
-    "expires_at" TIMESTAMP(6) NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "mcp_query_data_pkey" PRIMARY KEY ("query_id")
-);
-
--- CreateTable
-CREATE TABLE "mcp_user_token" (
-    "user_id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "server_name" TEXT NOT NULL,
-    "access_token" TEXT,
-    "refresh_token" TEXT,
-    "expires_at" TIMESTAMP(6),
-    "scope" TEXT,
-    "code_verifier" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "mcp_user_token_user_id_project_id_server_name_pk" PRIMARY KEY ("user_id","project_id","server_name")
+    CONSTRAINT "chat_messages_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "memories" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "chat_id" UUID,
     "content" TEXT NOT NULL,
     "category" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "chat_id" TEXT,
-    "superseded_by" TEXT,
+    "superseded_by" UUID,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "memories_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "message_feedback" (
-    "message_id" TEXT NOT NULL,
+    "message_id" UUID NOT NULL,
     "vote" TEXT NOT NULL,
     "explanation" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
     CONSTRAINT "message_feedback_pkey" PRIMARY KEY ("message_id")
 );
 
 -- CreateTable
-CREATE TABLE "message_image" (
-    "id" TEXT NOT NULL,
+CREATE TABLE "message_images" (
+    "id" UUID NOT NULL,
     "data" TEXT NOT NULL,
     "media_type" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "message_image_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "message_images_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "message_part" (
-    "id" TEXT NOT NULL,
-    "message_id" TEXT NOT NULL,
+CREATE TABLE "message_parts" (
+    "id" UUID NOT NULL,
+    "message_id" UUID NOT NULL,
     "order" INTEGER NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "type" TEXT NOT NULL,
     "text" TEXT,
     "reasoning_text" TEXT,
@@ -479,1435 +562,2178 @@ CREATE TABLE "message_part" (
     "tool_provider_metadata" JSONB,
     "provider_metadata" JSONB,
     "media_type" TEXT,
-    "image_id" TEXT,
+    "image_id" UUID,
     "storage_path" TEXT,
     "filename" TEXT,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "message_part_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "message_parts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "notification" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "category" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "body" TEXT,
-    "link_url" TEXT,
-    "payload" JSONB,
-    "read_at" TIMESTAMP(6),
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE "shared_chats" (
+    "id" UUID NOT NULL,
+    "chat_id" UUID NOT NULL,
+    "visibility" TEXT NOT NULL DEFAULT 'clinic',
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "notification_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "notification_unsubscribe" (
-    "user_id" TEXT NOT NULL,
-    "scope" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "notification_unsubscribe_user_id_scope_pk" PRIMARY KEY ("user_id","scope")
-);
-
--- CreateTable
-CREATE TABLE "oauth_access_token" (
-    "id" TEXT NOT NULL,
-    "token" TEXT NOT NULL,
-    "client_id" TEXT NOT NULL,
-    "session_id" TEXT,
-    "user_id" TEXT,
-    "reference_id" TEXT,
-    "refresh_id" TEXT,
-    "expires_at" TIMESTAMP(6) NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "scopes" JSONB NOT NULL,
-
-    CONSTRAINT "oauth_access_token_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "oauth_client" (
-    "id" TEXT NOT NULL,
-    "client_id" TEXT NOT NULL,
-    "client_secret" TEXT,
-    "disabled" BOOLEAN DEFAULT false,
-    "skip_consent" BOOLEAN,
-    "enable_end_session" BOOLEAN,
-    "subject_type" TEXT,
-    "scopes" JSONB,
-    "user_id" TEXT,
-    "name" TEXT,
-    "uri" TEXT,
-    "icon" TEXT,
-    "contacts" JSONB,
-    "tos" TEXT,
-    "policy" TEXT,
-    "software_id" TEXT,
-    "software_version" TEXT,
-    "software_statement" TEXT,
-    "redirect_uris" JSONB NOT NULL,
-    "post_logout_redirect_uris" JSONB,
-    "token_endpoint_auth_method" TEXT,
-    "grant_types" JSONB,
-    "response_types" JSONB,
-    "public" BOOLEAN,
-    "type" TEXT,
-    "require_pkce" BOOLEAN,
-    "reference_id" TEXT,
-    "metadata" JSONB,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "oauth_client_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "oauth_consent" (
-    "id" TEXT NOT NULL,
-    "client_id" TEXT NOT NULL,
-    "user_id" TEXT,
-    "reference_id" TEXT,
-    "scopes" JSONB NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "oauth_consent_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "oauth_refresh_token" (
-    "id" TEXT NOT NULL,
-    "token" TEXT NOT NULL,
-    "client_id" TEXT NOT NULL,
-    "session_id" TEXT,
-    "user_id" TEXT NOT NULL,
-    "reference_id" TEXT,
-    "expires_at" TIMESTAMP(6) NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "revoked" TIMESTAMP(6),
-    "auth_time" TIMESTAMP(6),
-    "scopes" JSONB NOT NULL,
-
-    CONSTRAINT "oauth_refresh_token_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "org_member" (
-    "org_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "role" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "org_member_org_id_user_id_pk" PRIMARY KEY ("org_id","user_id")
-);
-
--- CreateTable
-CREATE TABLE "organization" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "slug" TEXT NOT NULL,
-    "google_client_id" TEXT,
-    "google_client_secret" TEXT,
-    "google_auth_domains" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "organization_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "project" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
-    "path" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "org_id" TEXT,
-    "agent_settings" JSONB,
-    "enabled_tools" JSONB NOT NULL DEFAULT '[]',
-    "known_mcp_servers" JSONB NOT NULL DEFAULT '[]',
-    "slack_settings" JSONB,
-    "teams_settings" JSONB,
-    "telegram_settings" JSONB,
-    "whatsapp_settings" JSONB,
-    "env_vars" JSONB NOT NULL DEFAULT '{}',
-    "mcp_endpoint_settings" JSONB,
-    "display_settings" JSONB,
-    "disabled_mcp_servers" JSONB NOT NULL DEFAULT '[]',
-    "disabled_mcp_tools" JSONB NOT NULL DEFAULT '[]',
-    "map_settings" JSONB,
-    "default_models" JSONB,
-    "mattermost_settings" JSONB,
-    "row_security" JSONB,
-    "discord_settings" JSONB,
-
-    CONSTRAINT "project_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "project_discord_link" (
-    "project_id" TEXT NOT NULL,
-    "discord_user_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "project_discord_link_project_id_discord_user_id_pk" PRIMARY KEY ("project_id","discord_user_id")
-);
-
--- CreateTable
-CREATE TABLE "project_group_budget" (
-    "group_id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "limit_usd" INTEGER NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "project_group_budget_pkey" PRIMARY KEY ("group_id")
-);
-
--- CreateTable
-CREATE TABLE "project_llm_config" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "provider" TEXT NOT NULL,
-    "api_key" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "enabled_models" JSONB NOT NULL DEFAULT '[]',
-    "base_url" TEXT,
-    "credentials" JSONB,
-    "custom_models" JSONB NOT NULL DEFAULT '[]',
-    "model_settings" JSONB NOT NULL DEFAULT '{}',
-
-    CONSTRAINT "project_llm_config_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "project_member" (
-    "project_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "role" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "project_member_project_id_user_id_pk" PRIMARY KEY ("project_id","user_id")
-);
-
--- CreateTable
-CREATE TABLE "project_provider_budget" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "provider" TEXT NOT NULL,
-    "limit_usd" INTEGER NOT NULL,
-    "period" TEXT NOT NULL,
-    "current_period_start" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "notified_at" TIMESTAMP(6),
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "per_user_limit_usd" INTEGER,
-
-    CONSTRAINT "project_provider_budget_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "project_saved_prompt" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "prompt" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "project_saved_prompt_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "project_story_theme" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "version" INTEGER NOT NULL,
-    "theme" JSONB,
-    "enabled" BOOLEAN NOT NULL DEFAULT false,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "generation" JSONB,
-
-    CONSTRAINT "project_story_theme_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "project_warehouse_credentials" (
-    "project_id" TEXT NOT NULL,
-    "provider" TEXT NOT NULL,
-    "encrypted_credentials" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "project_warehouse_credentials_pkey" PRIMARY KEY ("project_id")
-);
-
--- CreateTable
-CREATE TABLE "project_whatsapp_link" (
-    "project_id" TEXT NOT NULL,
-    "whatsapp_user_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "project_whatsapp_link_project_id_whatsapp_user_id_pk" PRIMARY KEY ("project_id","whatsapp_user_id")
-);
-
--- CreateTable
-CREATE TABLE "sandbox_secret" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "encrypted_value" TEXT NOT NULL,
-    "description" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "sandbox_secret_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "session" (
-    "id" TEXT NOT NULL,
-    "expires_at" TIMESTAMP(6) NOT NULL,
-    "token" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL,
-    "ip_address" TEXT,
-    "user_agent" TEXT,
-    "user_id" TEXT NOT NULL,
-
-    CONSTRAINT "session_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "shared_chat" (
-    "id" TEXT NOT NULL,
-    "chat_id" TEXT NOT NULL,
-    "visibility" TEXT NOT NULL DEFAULT 'project',
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "shared_chat_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "shared_chats_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "shared_chat_access" (
-    "shared_chat_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
+    "shared_chat_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
 
-    CONSTRAINT "shared_chat_access_shared_chat_id_user_id_pk" PRIMARY KEY ("shared_chat_id","user_id")
+    CONSTRAINT "shared_chat_access_pkey" PRIMARY KEY ("shared_chat_id","user_id")
 );
 
 -- CreateTable
-CREATE TABLE "shared_story" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "story_id" TEXT NOT NULL,
-    "visibility" TEXT NOT NULL DEFAULT 'project',
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "is_pinned" BOOLEAN NOT NULL DEFAULT false,
+CREATE TABLE "encounters" (
+    "id" UUID NOT NULL,
+    "encounter_no" TEXT NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "practitioner_id" UUID,
+    "appointment_id" UUID,
+    "corporate_account_id" UUID,
+    "type" "encounter_type" NOT NULL DEFAULT 'CONSULTATION',
+    "status" "encounter_status" NOT NULL DEFAULT 'OPEN',
+    "started_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "ended_at" TIMESTAMPTZ(3),
+    "chief_complaint" TEXT,
+    "history_of_present_illness" TEXT,
+    "review_of_systems" JSONB,
+    "subjective" TEXT,
+    "physical_exam" JSONB,
+    "objective" TEXT,
+    "assessment" TEXT,
+    "plan" TEXT,
+    "disposition" "disposition",
+    "follow_up_date" DATE,
+    "is_confidential" BOOLEAN NOT NULL DEFAULT false,
+    "signed_at" TIMESTAMPTZ(3),
+    "created_by_id" UUID,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+    "notes" TEXT,
+    "patient_instructions" TEXT,
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "source_chat_id" UUID,
 
-    CONSTRAINT "shared_story_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "encounters_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "shared_story_access" (
-    "shared_story_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
+CREATE TABLE "vital_signs" (
+    "id" UUID NOT NULL,
+    "encounter_id" UUID NOT NULL,
+    "recorded_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "recorded_by_id" UUID,
+    "systolic_bp" INTEGER,
+    "diastolic_bp" INTEGER,
+    "heart_rate" INTEGER,
+    "respiratory_rate" INTEGER,
+    "temperature_c" DECIMAL(4,1),
+    "oxygen_saturation" INTEGER,
+    "weight_kg" DECIMAL(5,2),
+    "height_cm" DECIMAL(5,1),
+    "bmi" DECIMAL(4,1),
+    "waist_cm" DECIMAL(5,1),
+    "head_circ_cm" DECIMAL(4,1),
+    "blood_glucose" DECIMAL(5,1),
+    "pain_score" INTEGER,
+    "visual_acuity_od" TEXT,
+    "visual_acuity_os" TEXT,
+    "notes" TEXT,
+    "voided_at" TIMESTAMPTZ(3),
+    "voided_by_id" UUID,
+    "void_reason" TEXT,
 
-    CONSTRAINT "shared_story_access_shared_story_id_user_id_pk" PRIMARY KEY ("shared_story_id","user_id")
+    CONSTRAINT "vital_signs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "shared_story_group_access" (
-    "shared_story_id" TEXT NOT NULL,
-    "group_id" TEXT NOT NULL,
+CREATE TABLE "encounter_diagnoses" (
+    "id" UUID NOT NULL,
+    "encounter_id" UUID NOT NULL,
+    "icd10_code" TEXT,
+    "description" TEXT NOT NULL,
+    "type" "diagnosis_type" NOT NULL DEFAULT 'PRIMARY',
+    "is_final" BOOLEAN NOT NULL DEFAULT true,
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+    "notes" TEXT,
+    "recorded_by_id" UUID,
+    "recorded_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "voided_at" TIMESTAMPTZ(3),
+    "voided_by_id" UUID,
+    "void_reason" TEXT,
 
-    CONSTRAINT "shared_story_group_access_shared_story_id_group_id_pk" PRIMARY KEY ("shared_story_id","group_id")
+    CONSTRAINT "encounter_diagnoses_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "story" (
-    "id" TEXT NOT NULL,
-    "chat_id" TEXT,
-    "slug" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "is_live" BOOLEAN NOT NULL DEFAULT false,
-    "is_live_text_dynamic" BOOLEAN NOT NULL DEFAULT true,
-    "cache_schedule" TEXT,
-    "cache_schedule_description" TEXT,
-    "archived_at" TIMESTAMP(6),
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "project_id" TEXT,
-    "user_id" TEXT,
-    "certified_at" TIMESTAMP(6),
-    "certified_by" TEXT,
-    "format" TEXT NOT NULL DEFAULT 'classic',
+CREATE TABLE "encounter_procedures" (
+    "id" UUID NOT NULL,
+    "encounter_id" UUID NOT NULL,
+    "rvs_code" TEXT,
+    "description" TEXT NOT NULL,
+    "performed_by_id" UUID,
+    "performed_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "anesthesia" TEXT,
+    "laterality" TEXT,
+    "notes" TEXT,
 
-    CONSTRAINT "story_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "encounter_procedures_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "story_app_state" (
-    "id" TEXT NOT NULL,
-    "story_id" TEXT NOT NULL,
-    "scope" TEXT NOT NULL,
-    "user_id" TEXT,
-    "key" TEXT NOT NULL,
-    "value" JSONB NOT NULL,
-    "updated_by" TEXT,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "story_app_state_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "story_bundle" (
-    "story_version_id" TEXT NOT NULL,
-    "kind" TEXT NOT NULL,
-    "bundle" TEXT,
-    "page_shell" TEXT,
-    "bundle_error" TEXT,
-    "built_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "thumbnail" TEXT,
-    "thumbnail_theme" TEXT,
-
-    CONSTRAINT "story_bundle_pkey" PRIMARY KEY ("story_version_id")
-);
-
--- CreateTable
-CREATE TABLE "story_data_cache" (
-    "story_id" TEXT NOT NULL,
-    "query_data" JSONB NOT NULL,
-    "analysis_results" JSONB,
-    "cached_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "query_sources" JSONB,
-
-    CONSTRAINT "story_data_cache_pkey" PRIMARY KEY ("story_id")
-);
-
--- CreateTable
-CREATE TABLE "story_delivery" (
-    "id" TEXT NOT NULL,
-    "story_id" TEXT NOT NULL,
-    "project_id" TEXT,
-    "enabled" BOOLEAN NOT NULL DEFAULT false,
-    "cron" TEXT,
-    "schedule_description" TEXT,
-    "channels" JSONB NOT NULL,
-    "recipient_mode" TEXT NOT NULL DEFAULT 'specific',
-    "recipient_user_ids" JSONB NOT NULL,
-    "created_by" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "recipient_group_ids" JSONB NOT NULL DEFAULT '[]',
-
-    CONSTRAINT "story_delivery_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "story_draft_file" (
-    "id" TEXT NOT NULL,
-    "story_id" TEXT NOT NULL,
-    "path" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "story_draft_file_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "story_feedback" (
-    "story_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "vote" TEXT NOT NULL,
-    "explanation" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "story_feedback_story_id_user_id_pk" PRIMARY KEY ("story_id","user_id")
-);
-
--- CreateTable
-CREATE TABLE "story_file" (
-    "id" TEXT NOT NULL,
-    "story_version_id" TEXT NOT NULL,
-    "path" TEXT NOT NULL,
-    "content_hash" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "story_file_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "story_file_blob" (
-    "content_hash" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
-    "size" INTEGER NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "story_file_blob_pkey" PRIMARY KEY ("content_hash")
-);
-
--- CreateTable
-CREATE TABLE "story_folder" (
-    "id" TEXT NOT NULL,
-    "owner_id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "parent_id" TEXT,
-    "name" TEXT NOT NULL,
-    "visibility" TEXT NOT NULL DEFAULT 'public',
-    "system_type" TEXT,
-    "archived_at" TIMESTAMP(6),
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "story_folder_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "story_folder_item" (
-    "story_id" TEXT NOT NULL,
-    "folder_id" TEXT NOT NULL,
-
-    CONSTRAINT "story_folder_item_pkey" PRIMARY KEY ("story_id")
-);
-
--- CreateTable
-CREATE TABLE "story_version" (
-    "id" TEXT NOT NULL,
-    "story_id" TEXT NOT NULL,
-    "version" INTEGER NOT NULL,
+CREATE TABLE "diagnostic_tests" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID NOT NULL,
     "code" TEXT NOT NULL,
-    "action" TEXT NOT NULL,
-    "source" TEXT NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "name" TEXT NOT NULL,
+    "category" "diagnostic_category" NOT NULL,
+    "section" TEXT,
+    "specimen_type" TEXT,
+    "requires_fasting" BOOLEAN NOT NULL DEFAULT false,
+    "turnaround_hours" INTEGER,
+    "is_outsourced" BOOLEAN NOT NULL DEFAULT false,
+    "outsourced_lab" TEXT,
+    "lis_code" TEXT,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
 
-    CONSTRAINT "story_version_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "diagnostic_tests_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "user" (
-    "id" TEXT NOT NULL,
+CREATE TABLE "diagnostic_test_parameters" (
+    "id" UUID NOT NULL,
+    "test_id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "unit" TEXT,
+    "value_type" "result_value_type" NOT NULL DEFAULT 'NUMERIC',
+    "options" TEXT[],
+    "ref_low_male" DECIMAL(12,4),
+    "ref_high_male" DECIMAL(12,4),
+    "ref_low_female" DECIMAL(12,4),
+    "ref_high_female" DECIMAL(12,4),
+    "ref_range_text" TEXT,
+    "lis_code" TEXT,
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "diagnostic_test_parameters_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "diagnostic_orders" (
+    "id" UUID NOT NULL,
+    "order_no" TEXT NOT NULL,
+    "encounter_id" UUID NOT NULL,
+    "requested_by_id" UUID,
+    "external_physician" TEXT,
+    "priority" "order_priority" NOT NULL DEFAULT 'ROUTINE',
+    "status" "diagnostic_order_status" NOT NULL DEFAULT 'REQUESTED',
+    "clinical_info" TEXT,
+    "is_external" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "diagnostic_orders_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "diagnostic_order_items" (
+    "id" UUID NOT NULL,
+    "order_id" UUID NOT NULL,
+    "test_id" UUID NOT NULL,
+    "status" "diagnostic_order_status" NOT NULL DEFAULT 'REQUESTED',
+    "accession_no" TEXT,
+    "specimen_collected_at" TIMESTAMPTZ(3),
+    "collected_by_id" UUID,
+    "status_reason" TEXT,
+    "cancelled_at" TIMESTAMPTZ(3),
+
+    CONSTRAINT "diagnostic_order_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "diagnostic_results" (
+    "id" UUID NOT NULL,
+    "order_item_id" UUID NOT NULL,
+    "performed_by_id" UUID,
+    "verified_by_id" UUID,
+    "signed_by_id" UUID,
+    "findings" TEXT,
+    "impression" TEXT,
+    "remarks" TEXT,
+    "attachment_url" TEXT,
+    "hl7_message_id" TEXT,
+    "resulted_at" TIMESTAMPTZ(3),
+    "released_at" TIMESTAMPTZ(3),
+    "reviewed_at" TIMESTAMPTZ(3),
+    "reviewed_by_id" UUID,
+
+    CONSTRAINT "diagnostic_results_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "diagnostic_result_values" (
+    "id" UUID NOT NULL,
+    "result_id" UUID NOT NULL,
+    "parameter_id" UUID,
+    "name" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "numeric_value" DECIMAL(12,4),
+    "unit" TEXT,
+    "reference_range" TEXT,
+    "flag" "result_flag",
+
+    CONSTRAINT "diagnostic_result_values_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "medical_certificates" (
+    "id" UUID NOT NULL,
+    "cert_no" TEXT NOT NULL,
+    "encounter_id" UUID NOT NULL,
+    "practitioner_id" UUID NOT NULL,
+    "type" "certificate_type" NOT NULL DEFAULT 'MEDICAL_CERTIFICATE',
+    "purpose" TEXT,
+    "examined_at" TIMESTAMPTZ(3) NOT NULL,
+    "diagnosis_text" TEXT,
+    "findings" TEXT,
+    "recommendation" TEXT,
+    "rest_days" INTEGER,
+    "rest_from" DATE,
+    "rest_to" DATE,
+    "is_fit_to_work" BOOLEAN,
+    "pe_classification" TEXT,
+    "issued_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "verification_code" TEXT NOT NULL,
+    "is_void" BOOLEAN NOT NULL DEFAULT false,
+    "void_reason" TEXT,
+    "document_status" "document_status" NOT NULL DEFAULT 'DRAFT',
+    "signatory" JSONB,
+    "voided_at" TIMESTAMPTZ(3),
+    "voided_by_id" UUID,
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "medical_certificates_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "referrals" (
+    "id" UUID NOT NULL,
+    "encounter_id" UUID NOT NULL,
+    "from_practitioner_id" UUID NOT NULL,
+    "to_practitioner_id" UUID,
+    "to_external_doctor" TEXT,
+    "to_facility" TEXT,
+    "specialty" TEXT,
+    "reason" TEXT NOT NULL,
+    "clinical_summary" TEXT,
+    "urgency" "order_priority" NOT NULL DEFAULT 'ROUTINE',
+    "status" "referral_status" NOT NULL DEFAULT 'SENT',
+    "referred_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "response_notes" TEXT,
+    "responded_at" TIMESTAMPTZ(3),
+
+    CONSTRAINT "referrals_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "patient_documents" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "encounter_id" UUID,
+    "type" "document_type" NOT NULL,
+    "title" TEXT NOT NULL,
+    "storage_key" TEXT NOT NULL,
+    "mime_type" TEXT NOT NULL,
+    "size_bytes" INTEGER NOT NULL,
+    "document_date" DATE,
+    "uploaded_by_id" UUID,
+    "uploaded_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMPTZ(3),
+
+    CONSTRAINT "patient_documents_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "hmo_providers" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "tin" TEXT,
+    "address" TEXT,
+    "contact_person" TEXT,
+    "contact_no" TEXT,
+    "email" TEXT,
+    "accreditation_no" TEXT,
+    "payment_terms_days" INTEGER DEFAULT 60,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "hmo_providers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "patient_hmo_coverages" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "hmo_provider_id" UUID NOT NULL,
+    "card_no" TEXT NOT NULL,
+    "account_name" TEXT,
+    "plan_name" TEXT,
+    "mbl" DECIMAL(12,2),
+    "is_principal" BOOLEAN NOT NULL DEFAULT true,
+    "principal_name" TEXT,
+    "valid_from" DATE,
+    "valid_to" DATE,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "remarks" TEXT,
+
+    CONSTRAINT "patient_hmo_coverages_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "hmo_loas" (
+    "id" UUID NOT NULL,
+    "coverage_id" UUID NOT NULL,
+    "encounter_id" UUID,
+    "loa_no" TEXT,
+    "approved_services" TEXT,
+    "diagnosis_text" TEXT,
+    "approved_amount" DECIMAL(12,2),
+    "status" "loa_status" NOT NULL DEFAULT 'REQUESTED',
+    "requested_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "approved_at" TIMESTAMPTZ(3),
+    "expires_at" TIMESTAMPTZ(3),
+    "approved_by_name" TEXT,
+    "attachment_key" TEXT,
+    "remarks" TEXT,
+
+    CONSTRAINT "hmo_loas_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "hmo_transmittals" (
+    "id" UUID NOT NULL,
+    "hmo_provider_id" UUID NOT NULL,
+    "transmittal_no" TEXT NOT NULL,
+    "period_from" DATE NOT NULL,
+    "period_to" DATE NOT NULL,
+    "total_amount" DECIMAL(12,2) NOT NULL,
+    "status" "transmittal_status" NOT NULL DEFAULT 'DRAFT',
+    "submitted_at" TIMESTAMPTZ(3),
+    "paid_amount" DECIMAL(12,2),
+    "paid_at" TIMESTAMPTZ(3),
+    "payment_ref" TEXT,
+    "remarks" TEXT,
+
+    CONSTRAINT "hmo_transmittals_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "immunizations" (
+    "id" UUID NOT NULL,
+    "encounter_id" UUID NOT NULL,
+    "inventory_item_id" UUID,
+    "inventory_lot_id" UUID,
+    "vaccine_name" TEXT NOT NULL,
+    "antigen" TEXT,
+    "dose_number" INTEGER,
+    "dose_label" TEXT,
+    "lot_no" TEXT,
+    "expiry_date" DATE,
+    "route" "vaccine_route",
+    "site" TEXT,
+    "administered_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "administered_by_id" UUID,
+    "next_due_date" DATE,
+    "is_nip_vaccine" BOOLEAN NOT NULL DEFAULT false,
+    "is_historical" BOOLEAN NOT NULL DEFAULT false,
+    "adverse_reaction" TEXT,
+    "remarks" TEXT,
+
+    CONSTRAINT "immunizations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "inventory_items" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID NOT NULL,
+    "sku" TEXT NOT NULL,
+    "barcode" TEXT,
+    "name" TEXT NOT NULL,
+    "category" "item_category" NOT NULL,
+    "generic_name" TEXT,
+    "brand_name" TEXT,
+    "strength" TEXT,
+    "dosage_form" TEXT,
+    "manufacturer" TEXT,
+    "fda_cpr_no" TEXT,
+    "is_rx_only" BOOLEAN NOT NULL DEFAULT false,
+    "is_dangerous_drug" BOOLEAN NOT NULL DEFAULT false,
+    "is_antimicrobial" BOOLEAN NOT NULL DEFAULT false,
+    "is_pnf" BOOLEAN NOT NULL DEFAULT false,
+    "storage_condition" TEXT,
+    "unit_of_measure" TEXT NOT NULL,
+    "pack_size" INTEGER,
+    "tax_type" "tax_type" NOT NULL DEFAULT 'VATABLE',
+    "default_cost" DECIMAL(12,2),
+    "selling_price" DECIMAL(12,2),
+    "reorder_level" DECIMAL(10,2),
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "inventory_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "suppliers" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "tin" TEXT,
+    "address" TEXT,
+    "contact_person" TEXT,
+    "contact_no" TEXT,
+    "email" TEXT,
+    "fda_lto_no" TEXT,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "suppliers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "inventory_lots" (
+    "id" UUID NOT NULL,
+    "item_id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "supplier_id" UUID,
+    "lot_no" TEXT NOT NULL,
+    "expiry_date" DATE,
+    "quantity_on_hand" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "unit_cost" DECIMAL(12,2),
+    "received_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "inventory_lots_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "stock_movements" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "item_id" UUID NOT NULL,
+    "lot_id" UUID,
+    "type" "stock_movement_type" NOT NULL,
+    "quantity" DECIMAL(12,2) NOT NULL,
+    "unit_cost" DECIMAL(12,2),
+    "balance_after" DECIMAL(12,2),
+    "encounter_id" UUID,
+    "invoice_line_id" UUID,
+    "prescription_item_id" UUID,
+    "stock_receipt_id" UUID,
+    "transfer_ref" TEXT,
+    "reason" TEXT,
+    "performed_by_id" UUID,
+    "performed_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "stock_movements_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "stock_receipts" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "supplier_id" UUID NOT NULL,
+    "receipt_no" TEXT NOT NULL,
+    "delivery_receipt_no" TEXT,
+    "supplier_invoice_no" TEXT,
+    "received_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "received_by_id" UUID,
+    "total_cost" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "remarks" TEXT,
+
+    CONSTRAINT "stock_receipts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "stock_receipt_items" (
+    "id" UUID NOT NULL,
+    "receipt_id" UUID NOT NULL,
+    "item_id" UUID NOT NULL,
+    "lot_id" UUID,
+    "lot_no" TEXT NOT NULL,
+    "expiry_date" DATE,
+    "quantity" DECIMAL(12,2) NOT NULL,
+    "unit_cost" DECIMAL(12,2) NOT NULL,
+
+    CONSTRAINT "stock_receipt_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "care_relationships" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "organization_id" UUID NOT NULL,
+    "reason" "care_relationship_reason" NOT NULL,
+    "note" TEXT,
+    "expires_at" TIMESTAMPTZ(3),
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "care_relationships_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "clinical_documents" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "kind" TEXT NOT NULL DEFAULT 'wise_report',
+    "title" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "data" JSONB NOT NULL,
+    "version" INTEGER NOT NULL,
+    "source_chat_id" UUID NOT NULL,
+    "source_tool_call_id" TEXT NOT NULL,
+    "created_by_id" UUID NOT NULL,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "clinical_documents_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "wise_proposal_outcomes" (
+    "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "chat_id" UUID NOT NULL,
+    "message_id" UUID NOT NULL,
+    "tool_call_id" TEXT NOT NULL,
+    "tool_name" TEXT NOT NULL,
+    "status" TEXT NOT NULL,
+    "entity_type" TEXT,
+    "entity_id" TEXT,
+    "edited" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "wise_proposal_outcomes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "wise_tool_settings" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID,
+    "user_id" UUID,
+    "tool_name" TEXT NOT NULL,
+    "enabled" BOOLEAN NOT NULL,
+    "updated_by_id" UUID NOT NULL,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "wise_tool_settings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "organizations" (
+    "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "trade_name" TEXT,
+    "tin" TEXT,
+    "vat_registration" "vat_registration" NOT NULL DEFAULT 'NON_VAT',
+    "sec_or_dti_no" TEXT,
+    "logo_url" TEXT,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+    "slug" TEXT NOT NULL,
+    "google_client_id" TEXT,
+    "google_client_secret" TEXT,
+    "google_auth_domains" TEXT,
+
+    CONSTRAINT "organizations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "organization_members" (
+    "organization_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "role" "org_role" NOT NULL DEFAULT 'MEMBER',
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "organization_members_pkey" PRIMARY KEY ("organization_id","user_id")
+);
+
+-- CreateTable
+CREATE TABLE "clinics" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "bir_branch_code" TEXT,
+    "doh_license_no" TEXT,
+    "doh_license_expiry" DATE,
+    "philhealth_accredit_no" TEXT,
+    "philhealth_accredit_exp" DATE,
+    "address_line" TEXT,
+    "barangay_code" TEXT,
+    "city_municipality_code" TEXT,
+    "zip_code" TEXT,
+    "contact_no" TEXT,
+    "email" TEXT,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+    "kind" TEXT NOT NULL DEFAULT 'local',
+    "path" TEXT,
+    "agent_settings" JSONB,
+    "env_vars" JSONB NOT NULL DEFAULT '{}',
+    "display_settings" JSONB,
+    "map_settings" JSONB,
+    "default_models" JSONB,
+
+    CONSTRAINT "clinics_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "users" (
+    "id" UUID NOT NULL,
     "email" TEXT NOT NULL,
+    "first_name" TEXT NOT NULL,
+    "last_name" TEXT NOT NULL,
+    "mobile_no" TEXT,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "last_login_at" TIMESTAMPTZ(3),
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+    "name" TEXT NOT NULL,
     "email_verified" BOOLEAN NOT NULL DEFAULT false,
     "image" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "requires_password_reset" BOOLEAN NOT NULL DEFAULT false,
     "memory_enabled" BOOLEAN NOT NULL DEFAULT true,
     "messaging_provider_code" TEXT,
     "github_access_token" TEXT,
     "gitlab_access_token" TEXT,
-    "deactivated_at" TIMESTAMP(6),
 
-    CONSTRAINT "user_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "user_group" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
+CREATE TABLE "user_clinic_roles" (
+    "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "role" "staff_role" NOT NULL,
+
+    CONSTRAINT "user_clinic_roles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "document_sequences" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "key" TEXT NOT NULL,
+    "prefix" TEXT,
+    "year" INTEGER,
+    "next_value" INTEGER NOT NULL DEFAULT 1,
+    "pad_length" INTEGER NOT NULL DEFAULT 6,
+
+    CONSTRAINT "document_sequences_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "clinic_llm_configs" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "provider" TEXT NOT NULL,
+    "api_key" TEXT NOT NULL,
+    "base_url" TEXT,
+    "credentials" JSONB,
+    "enabled_models" JSONB NOT NULL DEFAULT '[]',
+    "custom_models" JSONB NOT NULL DEFAULT '[]',
+    "model_settings" JSONB NOT NULL DEFAULT '{}',
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "clinic_llm_configs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "clinic_saved_prompts" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "prompt" TEXT NOT NULL,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "clinic_saved_prompts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "user_groups" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "is_default" BOOLEAN NOT NULL DEFAULT false,
     "feature_grants" JSONB NOT NULL DEFAULT '{"version": 2, "features": [], "toolCallDensity": {"canChange": true, "defaultDensity": "detailed"}}',
     "context_grants" JSONB,
     "row_policies" JSONB,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
-    CONSTRAINT "user_group_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "user_groups_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "user_group_member" (
-    "group_id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "provider" TEXT NOT NULL DEFAULT 'manual',
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "user_group_member_group_id_user_id_provider_pk" PRIMARY KEY ("group_id","user_id","provider")
-);
-
--- CreateTable
-CREATE TABLE "user_preference" (
-    "user_id" TEXT NOT NULL,
+CREATE TABLE "user_preferences" (
+    "user_id" UUID NOT NULL,
     "preferences" JSONB NOT NULL DEFAULT '{}',
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
-    CONSTRAINT "user_preference_pkey" PRIMARY KEY ("user_id")
+    CONSTRAINT "user_preferences_pkey" PRIMARY KEY ("user_id")
 );
 
 -- CreateTable
-CREATE TABLE "verification" (
-    "id" TEXT NOT NULL,
-    "identifier" TEXT NOT NULL,
-    "value" TEXT NOT NULL,
-    "expires_at" TIMESTAMP(6) NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE "patients" (
+    "id" UUID NOT NULL,
+    "organization_id" UUID NOT NULL,
+    "patient_no" TEXT NOT NULL,
+    "last_name" TEXT NOT NULL,
+    "first_name" TEXT NOT NULL,
+    "middle_name" TEXT,
+    "suffix" TEXT,
+    "nickname" TEXT,
+    "sex" "sex" NOT NULL,
+    "birth_date" DATE NOT NULL,
+    "birth_place" TEXT,
+    "civil_status" "civil_status",
+    "nationality" TEXT NOT NULL DEFAULT 'Filipino',
+    "religion" TEXT,
+    "occupation" TEXT,
+    "employer" TEXT,
+    "educational_level" TEXT,
+    "blood_type" "blood_type" DEFAULT 'UNKNOWN',
+    "mobile_no" TEXT,
+    "landline_no" TEXT,
+    "email" TEXT,
+    "photo_url" TEXT,
+    "preferred_language" TEXT,
+    "notes" TEXT,
+    "is_deceased" BOOLEAN NOT NULL DEFAULT false,
+    "deceased_at" TIMESTAMPTZ(3),
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+    "deleted_at" TIMESTAMPTZ(3),
 
-    CONSTRAINT "verification_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "patients_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "warehouse_connection_check" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "provider" TEXT NOT NULL,
-    "outcome" TEXT NOT NULL,
-    "error" TEXT,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE "patient_addresses" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "type" "address_type" NOT NULL DEFAULT 'HOME',
+    "address_line" TEXT,
+    "barangay_code" TEXT,
+    "city_municipality_code" TEXT,
+    "zip_code" TEXT,
+    "is_primary" BOOLEAN NOT NULL DEFAULT true,
 
-    CONSTRAINT "warehouse_connection_check_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "patient_addresses_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "patient_contacts" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "full_name" TEXT NOT NULL,
+    "relationship" TEXT NOT NULL,
+    "mobile_no" TEXT,
+    "address" TEXT,
+    "is_emergency" BOOLEAN NOT NULL DEFAULT true,
+    "is_guardian" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "patient_contacts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "patient_identifications" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "type" "identification_type" NOT NULL,
+    "id_number" TEXT NOT NULL,
+    "issued_by" TEXT,
+    "issued_at" DATE,
+    "expires_at" DATE,
+    "image_url" TEXT,
+    "verified_by_id" UUID,
+    "verified_at" TIMESTAMPTZ(3),
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "patient_identifications_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "patient_allergies" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "type" "allergy_type" NOT NULL,
+    "allergen" TEXT NOT NULL,
+    "reaction" TEXT,
+    "severity" "severity",
+    "noted_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "voided_at" TIMESTAMPTZ(3),
+    "voided_by_id" UUID,
+    "void_reason" TEXT,
+
+    CONSTRAINT "patient_allergies_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "patient_problems" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "icd10_code" TEXT,
+    "description" TEXT NOT NULL,
+    "status" "problem_status" NOT NULL DEFAULT 'ACTIVE',
+    "onset_date" DATE,
+    "resolved_date" DATE,
+    "notes" TEXT,
+
+    CONSTRAINT "patient_problems_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "patient_histories" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "category" "history_category" NOT NULL,
+    "description" TEXT NOT NULL,
+    "details" JSONB,
+    "recorded_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "patient_histories_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "patient_consents" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "encounter_id" UUID,
+    "type" "consent_type" NOT NULL,
+    "version" TEXT NOT NULL,
+    "granted" BOOLEAN NOT NULL,
+    "signed_by" TEXT,
+    "signature_url" TEXT,
+    "witnessed_by_id" UUID,
+    "signed_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "revoked_at" TIMESTAMPTZ(3),
+
+    CONSTRAINT "patient_consents_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "philhealth_memberships" (
+    "id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "pin" TEXT NOT NULL,
+    "is_principal" BOOLEAN NOT NULL DEFAULT true,
+    "member_pin" TEXT,
+    "member_name" TEXT,
+    "relationship_to_member" "dependent_relationship",
+    "contributor_type" "contributor_type",
+    "category" "philhealth_member_category",
+    "employer_name" TEXT,
+    "employer_pen" TEXT,
+    "valid_from" DATE,
+    "valid_to" DATE,
+    "last_verified_at" TIMESTAMPTZ(3),
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "philhealth_memberships_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "konsulta_enrollments" (
+    "id" UUID NOT NULL,
+    "membership_id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "year" INTEGER NOT NULL,
+    "atc_no" TEXT,
+    "registered_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "fpe_encounter_id" UUID,
+    "fpe_completed_at" TIMESTAMPTZ(3),
+    "status" "konsulta_status" NOT NULL DEFAULT 'REGISTERED',
+    "remarks" TEXT,
+
+    CONSTRAINT "konsulta_enrollments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "philhealth_claims" (
+    "id" UUID NOT NULL,
+    "membership_id" UUID NOT NULL,
+    "encounter_id" UUID NOT NULL,
+    "invoice_id" UUID,
+    "type" "philhealth_claim_type" NOT NULL,
+    "first_case_rate_id" UUID,
+    "second_case_rate_id" UUID,
+    "service_date_from" DATE NOT NULL,
+    "service_date_to" DATE,
+    "claim_series_lhio" TEXT,
+    "total_actual_charges" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "facility_benefit" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "professional_benefit" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "status" "philhealth_claim_status" NOT NULL DEFAULT 'DRAFT',
+    "submitted_at" TIMESTAMPTZ(3),
+    "return_reason" TEXT,
+    "approved_amount" DECIMAL(12,2),
+    "paid_amount" DECIMAL(12,2),
+    "paid_at" TIMESTAMPTZ(3),
+    "payment_reference" TEXT,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "philhealth_claims_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "practitioners" (
+    "id" UUID NOT NULL,
+    "user_id" UUID,
+    "type" "practitioner_type" NOT NULL DEFAULT 'PHYSICIAN',
+    "title" TEXT,
+    "first_name" TEXT NOT NULL,
+    "middle_name" TEXT,
+    "last_name" TEXT NOT NULL,
+    "suffix" TEXT,
+    "post_nominals" TEXT,
+    "sex" "sex",
+    "specialty" TEXT,
+    "subspecialty" TEXT,
+    "mobile_no" TEXT,
+    "email" TEXT,
+    "prc_license_no" TEXT NOT NULL,
+    "prc_license_expiry" DATE,
+    "ptr_no" TEXT,
+    "ptr_issued_date" DATE,
+    "ptr_issued_at" TEXT,
+    "s2_license_no" TEXT,
+    "s2_license_expiry" DATE,
+    "philhealth_pan" TEXT,
+    "philhealth_pan_expiry" DATE,
+    "tin" TEXT,
+    "signature_url" TEXT,
+    "default_consult_fee" DECIMAL(12,2),
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+    "deleted_at" TIMESTAMPTZ(3),
+
+    CONSTRAINT "practitioners_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "practitioner_clinics" (
+    "practitioner_id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "room_name" TEXT,
+    "consult_fee" DECIMAL(12,2),
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "practitioner_clinics_pkey" PRIMARY KEY ("practitioner_id","clinic_id")
+);
+
+-- CreateTable
+CREATE TABLE "practitioner_schedules" (
+    "id" UUID NOT NULL,
+    "practitioner_id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "day_of_week" INTEGER NOT NULL,
+    "start_time" TIME(0) NOT NULL,
+    "end_time" TIME(0) NOT NULL,
+    "slot_minutes" INTEGER NOT NULL DEFAULT 15,
+    "max_patients" INTEGER,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "practitioner_schedules_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "practitioner_leaves" (
+    "id" UUID NOT NULL,
+    "practitioner_id" UUID NOT NULL,
+    "start_at" TIMESTAMPTZ(3) NOT NULL,
+    "end_at" TIMESTAMPTZ(3) NOT NULL,
+    "reason" TEXT,
+
+    CONSTRAINT "practitioner_leaves_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "prescriptions" (
+    "id" UUID NOT NULL,
+    "rx_no" TEXT NOT NULL,
+    "encounter_id" UUID NOT NULL,
+    "practitioner_id" UUID NOT NULL,
+    "issued_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "valid_until" DATE,
+    "is_dangerous_drug" BOOLEAN NOT NULL DEFAULT false,
+    "s2_form_serial_no" TEXT,
+    "status" "prescription_status" NOT NULL DEFAULT 'ACTIVE',
+    "notes" TEXT,
+    "verification_code" TEXT,
+    "document_status" "document_status" NOT NULL DEFAULT 'DRAFT',
+    "signatory" JSONB,
+    "voided_at" TIMESTAMPTZ(3),
+    "voided_by_id" UUID,
+    "void_reason" TEXT,
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "prescriptions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "prescription_items" (
+    "id" UUID NOT NULL,
+    "prescription_id" UUID NOT NULL,
+    "inventory_item_id" UUID,
+    "generic_name" TEXT NOT NULL,
+    "brand_name" TEXT,
+    "strength" TEXT,
+    "dosage_form" TEXT,
+    "quantity" DECIMAL(10,2) NOT NULL,
+    "quantity_in_words" TEXT,
+    "unit" TEXT,
+    "sig" TEXT NOT NULL,
+    "route" TEXT,
+    "frequency" TEXT,
+    "duration_days" INTEGER,
+    "is_prn" BOOLEAN NOT NULL DEFAULT false,
+    "dispensed_qty" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "prescription_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "regions" (
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "short_name" TEXT,
+
+    CONSTRAINT "regions_pkey" PRIMARY KEY ("code")
+);
+
+-- CreateTable
+CREATE TABLE "provinces" (
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "region_code" TEXT NOT NULL,
+
+    CONSTRAINT "provinces_pkey" PRIMARY KEY ("code")
+);
+
+-- CreateTable
+CREATE TABLE "city_municipalities" (
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "region_code" TEXT NOT NULL,
+    "province_code" TEXT,
+    "is_city" BOOLEAN NOT NULL DEFAULT false,
+    "is_huc" BOOLEAN NOT NULL DEFAULT false,
+    "zip_code" TEXT,
+
+    CONSTRAINT "city_municipalities_pkey" PRIMARY KEY ("code")
+);
+
+-- CreateTable
+CREATE TABLE "barangays" (
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "city_municipality_code" TEXT NOT NULL,
+
+    CONSTRAINT "barangays_pkey" PRIMARY KEY ("code")
+);
+
+-- CreateTable
+CREATE TABLE "icd10_codes" (
+    "code" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "parent_code" TEXT,
+    "is_billable" BOOLEAN NOT NULL DEFAULT true,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "icd10_codes_pkey" PRIMARY KEY ("code")
+);
+
+-- CreateTable
+CREATE TABLE "rvs_codes" (
+    "code" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "rvu" DECIMAL(8,2),
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "rvs_codes_pkey" PRIMARY KEY ("code")
+);
+
+-- CreateTable
+CREATE TABLE "philhealth_case_rates" (
+    "id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
+    "type" "case_rate_type" NOT NULL,
+    "description" TEXT NOT NULL,
+    "icd10_code" TEXT,
+    "rvs_code" TEXT,
+    "total_amount" DECIMAL(12,2) NOT NULL,
+    "facility_fee" DECIMAL(12,2) NOT NULL,
+    "professional_fee" DECIMAL(12,2) NOT NULL,
+    "effective_from" DATE NOT NULL,
+    "effective_to" DATE,
+    "circular_ref" TEXT,
+
+    CONSTRAINT "philhealth_case_rates_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "appointments" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "patient_id" UUID NOT NULL,
+    "practitioner_id" UUID NOT NULL,
+    "scheduled_start" TIMESTAMPTZ(3) NOT NULL,
+    "scheduled_end" TIMESTAMPTZ(3),
+    "visit_type" "visit_type" NOT NULL DEFAULT 'NEW_PATIENT',
+    "channel" "booking_channel" NOT NULL DEFAULT 'WALK_IN',
+    "status" "appointment_status" NOT NULL DEFAULT 'SCHEDULED',
+    "reason" TEXT,
+    "notes" TEXT,
+    "reminder_sent_at" TIMESTAMPTZ(3),
+    "cancelled_reason" TEXT,
+    "rescheduled_from" UUID,
+    "created_by_id" UUID,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "appointments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "queue_tickets" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "queue_date" DATE NOT NULL,
+    "prefix" TEXT NOT NULL DEFAULT 'A',
+    "number" INTEGER NOT NULL,
+    "is_priority" BOOLEAN NOT NULL DEFAULT false,
+    "priority_reason" "priority_reason",
+    "practitioner_id" UUID,
+    "encounter_id" UUID,
+    "station" TEXT,
+    "status" "queue_status" NOT NULL DEFAULT 'WAITING',
+    "issued_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "called_at" TIMESTAMPTZ(3),
+    "served_at" TIMESTAMPTZ(3),
+    "done_at" TIMESTAMPTZ(3),
+
+    CONSTRAINT "queue_tickets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "llm_inferences" (
+    "id" UUID NOT NULL,
+    "clinic_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "chat_id" UUID,
+    "type" TEXT NOT NULL,
+    "llm_provider" TEXT NOT NULL,
+    "llm_model_id" TEXT NOT NULL,
+    "input_total_tokens" INTEGER,
+    "input_no_cache_tokens" INTEGER,
+    "input_cache_read_tokens" INTEGER,
+    "input_cache_write_tokens" INTEGER,
+    "output_total_tokens" INTEGER,
+    "output_text_tokens" INTEGER,
+    "output_reasoning_tokens" INTEGER,
+    "total_tokens" INTEGER,
+    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "llm_inferences_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE INDEX "account_userId_idx" ON "account"("user_id");
+CREATE INDEX "audit_logs_entity_type_entity_id_idx" ON "audit_logs"("entity_type", "entity_id");
 
 -- CreateIndex
-CREATE INDEX "activity_chatId_idx" ON "activity"("chat_id");
+CREATE INDEX "audit_logs_patient_id_created_at_idx" ON "audit_logs"("patient_id", "created_at");
 
 -- CreateIndex
-CREATE INDEX "activity_projectId_idx" ON "activity"("project_id");
+CREATE INDEX "audit_logs_user_id_created_at_idx" ON "audit_logs"("user_id", "created_at");
 
 -- CreateIndex
-CREATE INDEX "activity_sharedChatId_idx" ON "activity"("shared_chat_id");
+CREATE INDEX "audit_logs_created_at_idx" ON "audit_logs"("created_at");
 
 -- CreateIndex
-CREATE INDEX "activity_sharedStoryId_idx" ON "activity"("shared_story_id");
+CREATE INDEX "audit_logs_request_id_idx" ON "audit_logs"("request_id");
 
 -- CreateIndex
-CREATE INDEX "activity_startedAt_idx" ON "activity"("started_at");
+CREATE INDEX "accounts_user_id_idx" ON "accounts"("user_id");
 
 -- CreateIndex
-CREATE INDEX "activity_storyId_idx" ON "activity"("story_id");
+CREATE UNIQUE INDEX "sessions_token_key" ON "sessions"("token");
 
 -- CreateIndex
-CREATE INDEX "activity_type_idx" ON "activity"("type");
+CREATE INDEX "sessions_user_id_idx" ON "sessions"("user_id");
 
 -- CreateIndex
-CREATE INDEX "activity_userId_idx" ON "activity"("user_id");
+CREATE INDEX "verifications_identifier_idx" ON "verifications"("identifier");
 
 -- CreateIndex
-CREATE INDEX "analytics_event_actorUserId_idx" ON "analytics_event"("actor_user_id");
+CREATE UNIQUE INDEX "service_items_diagnostic_test_id_key" ON "service_items"("diagnostic_test_id");
 
 -- CreateIndex
-CREATE INDEX "analytics_event_chatId_idx" ON "analytics_event"("chat_id");
+CREATE UNIQUE INDEX "service_items_inventory_item_id_key" ON "service_items"("inventory_item_id");
 
 -- CreateIndex
-CREATE INDEX "analytics_event_projectId_idx" ON "analytics_event"("project_id");
+CREATE UNIQUE INDEX "service_items_organization_id_code_key" ON "service_items"("organization_id", "code");
 
 -- CreateIndex
-CREATE INDEX "analytics_event_project_type_asset_story_idx" ON "analytics_event"("project_id", "type", "asset_type", "story_id");
+CREATE INDEX "invoice_series_clinic_id_doc_type_is_active_idx" ON "invoice_series"("clinic_id", "doc_type", "is_active");
 
 -- CreateIndex
-CREATE INDEX "analytics_event_sharedChatId_idx" ON "analytics_event"("shared_chat_id");
+CREATE INDEX "invoices_encounter_id_idx" ON "invoices"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "analytics_event_sharedStoryId_idx" ON "analytics_event"("shared_story_id");
+CREATE INDEX "invoices_clinic_id_invoice_date_idx" ON "invoices"("clinic_id", "invoice_date");
 
 -- CreateIndex
-CREATE INDEX "analytics_event_storyId_idx" ON "analytics_event"("story_id");
+CREATE INDEX "invoices_status_idx" ON "invoices"("status");
 
 -- CreateIndex
-CREATE INDEX "analytics_event_type_createdAt_idx" ON "analytics_event"("type", "created_at");
+CREATE UNIQUE INDEX "invoices_clinic_id_doc_type_invoice_no_key" ON "invoices"("clinic_id", "doc_type", "invoice_no");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "api_key_key_hash_unique" ON "api_key"("key_hash");
+CREATE INDEX "invoice_lines_invoice_id_idx" ON "invoice_lines"("invoice_id");
 
 -- CreateIndex
-CREATE INDEX "api_key_orgId_idx" ON "api_key"("org_id");
+CREATE INDEX "invoice_lines_encounter_id_idx" ON "invoice_lines"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "automation_projectId_idx" ON "automation"("project_id");
+CREATE INDEX "invoice_discounts_invoice_id_idx" ON "invoice_discounts"("invoice_id");
 
 -- CreateIndex
-CREATE INDEX "automation_userId_idx" ON "automation"("user_id");
+CREATE INDEX "invoice_discounts_type_idx" ON "invoice_discounts"("type");
 
 -- CreateIndex
-CREATE INDEX "automation_run_automationId_idx" ON "automation_run"("automation_id");
+CREATE INDEX "payments_clinic_id_received_at_idx" ON "payments"("clinic_id", "received_at");
 
 -- CreateIndex
-CREATE INDEX "automation_run_chatId_idx" ON "automation_run"("chat_id");
+CREATE INDEX "payments_method_idx" ON "payments"("method");
 
 -- CreateIndex
-CREATE INDEX "automation_run_status_idx" ON "automation_run"("status");
+CREATE UNIQUE INDEX "payments_clinic_id_payment_no_key" ON "payments"("clinic_id", "payment_no");
 
 -- CreateIndex
-CREATE INDEX "budget_notification_projectId_idx" ON "budget_notification"("project_id");
+CREATE UNIQUE INDEX "payment_allocations_payment_id_invoice_id_key" ON "payment_allocations"("payment_id", "invoice_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "budget_notification_project_provider_scope_period" ON "budget_notification"("project_id", "provider", "scope", "period_start");
+CREATE INDEX "cashier_shifts_clinic_id_opened_at_idx" ON "cashier_shifts"("clinic_id", "opened_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "chart_image_tool_call_id_unique" ON "chart_image"("tool_call_id");
+CREATE UNIQUE INDEX "professional_fees_invoice_line_id_key" ON "professional_fees"("invoice_line_id");
 
 -- CreateIndex
-CREATE INDEX "chat_discord_thread_idx" ON "chat"("discord_thread_id");
+CREATE INDEX "professional_fees_practitioner_id_status_idx" ON "professional_fees"("practitioner_id", "status");
 
 -- CreateIndex
-CREATE INDEX "chat_mattermost_thread_idx" ON "chat"("mattermost_thread_id");
+CREATE UNIQUE INDEX "chart_images_tool_call_id_key" ON "chart_images"("tool_call_id");
 
 -- CreateIndex
-CREATE INDEX "chat_projectId_idx" ON "chat"("project_id");
+CREATE INDEX "chats_clinic_id_idx" ON "chats"("clinic_id");
 
 -- CreateIndex
-CREATE INDEX "chat_slack_thread_idx" ON "chat"("slack_thread_id");
+CREATE INDEX "chats_user_id_idx" ON "chats"("user_id");
 
 -- CreateIndex
-CREATE INDEX "chat_teams_thread_idx" ON "chat"("teams_thread_id");
+CREATE INDEX "chats_slack_thread_id_idx" ON "chats"("slack_thread_id");
 
 -- CreateIndex
-CREATE INDEX "chat_telegram_thread_idx" ON "chat"("telegram_thread_id");
+CREATE INDEX "chats_teams_thread_id_idx" ON "chats"("teams_thread_id");
 
 -- CreateIndex
-CREATE INDEX "chat_userId_idx" ON "chat"("user_id");
+CREATE INDEX "chats_telegram_thread_id_idx" ON "chats"("telegram_thread_id");
 
 -- CreateIndex
-CREATE INDEX "chat_whatsapp_thread_idx" ON "chat"("whatsapp_thread_id");
+CREATE INDEX "chats_whatsapp_thread_id_idx" ON "chats"("whatsapp_thread_id");
 
 -- CreateIndex
-CREATE INDEX "chat_message_chatId_createdAt_idx" ON "chat_message"("chat_id", "created_at");
+CREATE INDEX "chats_mattermost_thread_id_idx" ON "chats"("mattermost_thread_id");
 
 -- CreateIndex
-CREATE INDEX "chat_message_chatId_idx" ON "chat_message"("chat_id");
+CREATE INDEX "chats_discord_thread_id_idx" ON "chats"("discord_thread_id");
 
 -- CreateIndex
-CREATE INDEX "chat_message_createdAt_idx" ON "chat_message"("created_at");
+CREATE UNIQUE INDEX "chats_one_chart_chat_per_user_patient" ON "chats"("user_id", "patient_id") WHERE ((patient_id IS NOT NULL) AND (deleted_at IS NULL));
 
 -- CreateIndex
-CREATE INDEX "chat_message_discordMessageId_idx" ON "chat_message"("discord_message_id");
+CREATE INDEX "chat_messages_chat_id_created_at_idx" ON "chat_messages"("chat_id", "created_at");
 
 -- CreateIndex
-CREATE INDEX "chat_message_senderUserId_idx" ON "chat_message"("sender_user_id");
+CREATE INDEX "chat_messages_created_at_idx" ON "chat_messages"("created_at");
 
 -- CreateIndex
-CREATE INDEX "chat_message_versionGroupId_idx" ON "chat_message"("version_group_id");
+CREATE INDEX "chat_messages_discord_message_id_idx" ON "chat_messages"("discord_message_id");
 
 -- CreateIndex
-CREATE INDEX "context_branch_ownership_userId_idx" ON "context_branch_ownership"("user_id");
+CREATE INDEX "chat_messages_sender_user_id_idx" ON "chat_messages"("sender_user_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "context_branch_ownership_project_branch_unique" ON "context_branch_ownership"("project_id", "branch");
+CREATE INDEX "chat_messages_version_group_id_idx" ON "chat_messages"("version_group_id");
 
 -- CreateIndex
-CREATE INDEX "context_recommendation_projectId_status_idx" ON "context_recommendation"("project_id", "status");
+CREATE INDEX "memories_chat_id_idx" ON "memories"("chat_id");
 
 -- CreateIndex
-CREATE INDEX "context_recommendation_runId_idx" ON "context_recommendation"("run_id");
+CREATE INDEX "memories_superseded_by_idx" ON "memories"("superseded_by");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "context_recommendation_project_fingerprint_unique" ON "context_recommendation"("project_id", "fingerprint");
+CREATE INDEX "memories_user_id_idx" ON "memories"("user_id");
 
 -- CreateIndex
-CREATE INDEX "context_recommendation_linked_feedback_message_id_idx" ON "context_recommendation_linked_feedback"("message_id");
+CREATE UNIQUE INDEX "message_parts_tool_call_id_key" ON "message_parts"("tool_call_id");
 
 -- CreateIndex
-CREATE INDEX "context_recommendation_run_chatId_idx" ON "context_recommendation_run"("chat_id");
+CREATE INDEX "message_parts_message_id_order_idx" ON "message_parts"("message_id", "order");
 
 -- CreateIndex
-CREATE INDEX "context_recommendation_run_projectId_idx" ON "context_recommendation_run"("project_id");
+CREATE UNIQUE INDEX "shared_chats_chat_id_key" ON "shared_chats"("chat_id");
 
 -- CreateIndex
-CREATE INDEX "context_recommendation_run_status_idx" ON "context_recommendation_run"("status");
+CREATE UNIQUE INDEX "encounters_appointment_id_key" ON "encounters"("appointment_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "context_recommendation_run_id_project_unique" ON "context_recommendation_run"("id", "project_id");
+CREATE INDEX "encounters_patient_id_started_at_idx" ON "encounters"("patient_id", "started_at");
 
 -- CreateIndex
-CREATE INDEX "favorite_user_id_idx" ON "favorite"("user_id");
+CREATE INDEX "encounters_practitioner_id_started_at_idx" ON "encounters"("practitioner_id", "started_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "favorite_user_id_folder_id_unique" ON "favorite"("user_id", "folder_id");
+CREATE INDEX "encounters_clinic_id_status_idx" ON "encounters"("clinic_id", "status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "favorite_user_id_story_id_unique" ON "favorite"("user_id", "story_id");
+CREATE INDEX "encounters_clinic_id_patient_id_idx" ON "encounters"("clinic_id", "patient_id");
 
 -- CreateIndex
-CREATE INDEX "llm_inference_createdAt_idx" ON "llm_inference"("created_at");
+CREATE UNIQUE INDEX "encounters_clinic_id_encounter_no_key" ON "encounters"("clinic_id", "encounter_no");
 
 -- CreateIndex
-CREATE INDEX "llm_inference_projectId_idx" ON "llm_inference"("project_id");
+CREATE INDEX "vital_signs_encounter_id_idx" ON "vital_signs"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "llm_inference_type_idx" ON "llm_inference"("type");
+CREATE INDEX "encounter_diagnoses_encounter_id_idx" ON "encounter_diagnoses"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "llm_inference_userId_idx" ON "llm_inference"("user_id");
+CREATE INDEX "encounter_diagnoses_icd10_code_idx" ON "encounter_diagnoses"("icd10_code");
 
 -- CreateIndex
-CREATE INDEX "log_createdAt_idx" ON "log"("created_at");
+CREATE UNIQUE INDEX "encounter_diagnoses_one_primary" ON "encounter_diagnoses"("encounter_id") WHERE ((type = 'PRIMARY'::diagnosis_type) AND (voided_at IS NULL));
 
 -- CreateIndex
-CREATE INDEX "log_level_idx" ON "log"("level");
+CREATE INDEX "encounter_procedures_encounter_id_idx" ON "encounter_procedures"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "log_projectId_idx" ON "log"("project_id");
+CREATE UNIQUE INDEX "diagnostic_tests_organization_id_code_key" ON "diagnostic_tests"("organization_id", "code");
 
 -- CreateIndex
-CREATE INDEX "mcp_call_log_calledAt_idx" ON "mcp_call_log"("called_at");
+CREATE UNIQUE INDEX "diagnostic_test_parameters_test_id_code_key" ON "diagnostic_test_parameters"("test_id", "code");
 
 -- CreateIndex
-CREATE INDEX "mcp_call_log_projectId_idx" ON "mcp_call_log"("project_id");
+CREATE UNIQUE INDEX "diagnostic_orders_order_no_key" ON "diagnostic_orders"("order_no");
 
 -- CreateIndex
-CREATE INDEX "mcp_call_log_userId_idx" ON "mcp_call_log"("user_id");
+CREATE INDEX "diagnostic_orders_encounter_id_idx" ON "diagnostic_orders"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "mcp_chart_embed_query_id_idx" ON "mcp_chart_embed"("query_id");
+CREATE INDEX "diagnostic_orders_status_idx" ON "diagnostic_orders"("status");
 
 -- CreateIndex
-CREATE INDEX "mcp_map_embed_query_id_idx" ON "mcp_map_embed"("query_id");
+CREATE INDEX "diagnostic_order_items_order_id_idx" ON "diagnostic_order_items"("order_id");
 
 -- CreateIndex
-CREATE INDEX "mcp_query_data_callLogId_idx" ON "mcp_query_data"("call_log_id");
+CREATE INDEX "diagnostic_order_items_accession_no_idx" ON "diagnostic_order_items"("accession_no");
 
 -- CreateIndex
-CREATE INDEX "mcp_query_data_project_id_idx" ON "mcp_query_data"("project_id");
+CREATE UNIQUE INDEX "diagnostic_results_order_item_id_key" ON "diagnostic_results"("order_item_id");
 
 -- CreateIndex
-CREATE INDEX "mcp_user_token_project_server_idx" ON "mcp_user_token"("project_id", "server_name");
+CREATE INDEX "diagnostic_result_values_result_id_idx" ON "diagnostic_result_values"("result_id");
 
 -- CreateIndex
-CREATE INDEX "memories_chatId_idx" ON "memories"("chat_id");
+CREATE UNIQUE INDEX "medical_certificates_cert_no_key" ON "medical_certificates"("cert_no");
 
 -- CreateIndex
-CREATE INDEX "memories_supersededBy_idx" ON "memories"("superseded_by");
+CREATE UNIQUE INDEX "medical_certificates_verification_code_key" ON "medical_certificates"("verification_code");
 
 -- CreateIndex
-CREATE INDEX "memories_userId_idx" ON "memories"("user_id");
+CREATE INDEX "medical_certificates_encounter_id_idx" ON "medical_certificates"("encounter_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "message_part_tool_call_id_unique" ON "message_part"("tool_call_id");
+CREATE INDEX "referrals_encounter_id_idx" ON "referrals"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "parts_message_id_idx" ON "message_part"("message_id");
+CREATE INDEX "patient_documents_patient_id_type_idx" ON "patient_documents"("patient_id", "type");
 
 -- CreateIndex
-CREATE INDEX "parts_message_id_order_idx" ON "message_part"("message_id", "order");
+CREATE UNIQUE INDEX "hmo_providers_organization_id_code_key" ON "hmo_providers"("organization_id", "code");
 
 -- CreateIndex
-CREATE INDEX "notification_createdAt_idx" ON "notification"("created_at");
+CREATE INDEX "patient_hmo_coverages_patient_id_idx" ON "patient_hmo_coverages"("patient_id");
 
 -- CreateIndex
-CREATE INDEX "notification_user_project_read_idx" ON "notification"("user_id", "project_id", "read_at");
+CREATE UNIQUE INDEX "patient_hmo_coverages_hmo_provider_id_card_no_key" ON "patient_hmo_coverages"("hmo_provider_id", "card_no");
 
 -- CreateIndex
-CREATE INDEX "notification_user_read_idx" ON "notification"("user_id", "read_at");
+CREATE INDEX "hmo_loas_coverage_id_idx" ON "hmo_loas"("coverage_id");
 
 -- CreateIndex
-CREATE INDEX "notification_unsubscribe_scope_idx" ON "notification_unsubscribe"("scope");
+CREATE INDEX "hmo_loas_loa_no_idx" ON "hmo_loas"("loa_no");
 
 -- CreateIndex
-CREATE INDEX "notification_unsubscribe_userId_idx" ON "notification_unsubscribe"("user_id");
+CREATE UNIQUE INDEX "hmo_transmittals_transmittal_no_key" ON "hmo_transmittals"("transmittal_no");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "oauth_access_token_token_unique" ON "oauth_access_token"("token");
+CREATE INDEX "immunizations_encounter_id_idx" ON "immunizations"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "oauth_access_token_clientId_idx" ON "oauth_access_token"("client_id");
+CREATE INDEX "immunizations_next_due_date_idx" ON "immunizations"("next_due_date");
 
 -- CreateIndex
-CREATE INDEX "oauth_access_token_refreshId_idx" ON "oauth_access_token"("refresh_id");
+CREATE INDEX "inventory_items_generic_name_idx" ON "inventory_items"("generic_name");
 
 -- CreateIndex
-CREATE INDEX "oauth_access_token_userId_idx" ON "oauth_access_token"("user_id");
+CREATE UNIQUE INDEX "inventory_items_organization_id_sku_key" ON "inventory_items"("organization_id", "sku");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "oauth_client_client_id_unique" ON "oauth_client"("client_id");
+CREATE INDEX "inventory_lots_clinic_id_expiry_date_idx" ON "inventory_lots"("clinic_id", "expiry_date");
 
 -- CreateIndex
-CREATE INDEX "oauth_client_userId_idx" ON "oauth_client"("user_id");
+CREATE UNIQUE INDEX "inventory_lots_item_id_clinic_id_lot_no_key" ON "inventory_lots"("item_id", "clinic_id", "lot_no");
 
 -- CreateIndex
-CREATE INDEX "oauth_consent_clientId_idx" ON "oauth_consent"("client_id");
+CREATE INDEX "stock_movements_clinic_id_item_id_performed_at_idx" ON "stock_movements"("clinic_id", "item_id", "performed_at");
 
 -- CreateIndex
-CREATE INDEX "oauth_consent_userId_idx" ON "oauth_consent"("user_id");
+CREATE INDEX "stock_movements_lot_id_idx" ON "stock_movements"("lot_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "oauth_refresh_token_token_unique" ON "oauth_refresh_token"("token");
+CREATE UNIQUE INDEX "stock_receipts_clinic_id_receipt_no_key" ON "stock_receipts"("clinic_id", "receipt_no");
 
 -- CreateIndex
-CREATE INDEX "oauth_refresh_token_clientId_idx" ON "oauth_refresh_token"("client_id");
+CREATE INDEX "care_relationships_user_id_patient_id_idx" ON "care_relationships"("user_id", "patient_id");
 
 -- CreateIndex
-CREATE INDEX "oauth_refresh_token_sessionId_idx" ON "oauth_refresh_token"("session_id");
+CREATE INDEX "care_relationships_patient_id_user_id_idx" ON "care_relationships"("patient_id", "user_id");
 
 -- CreateIndex
-CREATE INDEX "oauth_refresh_token_userId_idx" ON "oauth_refresh_token"("user_id");
+CREATE UNIQUE INDEX "clinical_documents_source_tool_call_id_key" ON "clinical_documents"("source_tool_call_id");
 
 -- CreateIndex
-CREATE INDEX "org_member_userId_idx" ON "org_member"("user_id");
+CREATE INDEX "clinical_documents_patient_id_created_at_idx" ON "clinical_documents"("patient_id", "created_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "organization_slug_unique" ON "organization"("slug");
+CREATE UNIQUE INDEX "wise_proposal_outcomes_tool_call_id_key" ON "wise_proposal_outcomes"("tool_call_id");
 
 -- CreateIndex
-CREATE INDEX "project_orgId_idx" ON "project"("org_id");
+CREATE INDEX "wise_proposal_outcomes_chat_id_idx" ON "wise_proposal_outcomes"("chat_id");
 
 -- CreateIndex
-CREATE INDEX "project_discord_link_userId_idx" ON "project_discord_link"("user_id");
+CREATE INDEX "wise_tool_settings_organization_id_idx" ON "wise_tool_settings"("organization_id");
 
 -- CreateIndex
-CREATE INDEX "project_group_budget_projectId_idx" ON "project_group_budget"("project_id");
+CREATE INDEX "wise_tool_settings_user_id_idx" ON "wise_tool_settings"("user_id");
 
 -- CreateIndex
-CREATE INDEX "project_llm_config_projectId_idx" ON "project_llm_config"("project_id");
+CREATE UNIQUE INDEX "wise_tool_settings_org_tool_unique" ON "wise_tool_settings"("organization_id", "tool_name") WHERE (organization_id IS NOT NULL);
 
 -- CreateIndex
-CREATE UNIQUE INDEX "project_llm_config_project_provider" ON "project_llm_config"("project_id", "provider");
+CREATE UNIQUE INDEX "wise_tool_settings_user_tool_unique" ON "wise_tool_settings"("user_id", "tool_name") WHERE (user_id IS NOT NULL);
 
 -- CreateIndex
-CREATE INDEX "project_member_userId_idx" ON "project_member"("user_id");
+CREATE UNIQUE INDEX "organizations_slug_key" ON "organizations"("slug");
 
 -- CreateIndex
-CREATE INDEX "project_provider_budget_projectId_idx" ON "project_provider_budget"("project_id");
+CREATE INDEX "organization_members_user_id_idx" ON "organization_members"("user_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "project_provider_budget_project_provider" ON "project_provider_budget"("project_id", "provider");
+CREATE UNIQUE INDEX "clinics_organization_id_code_key" ON "clinics"("organization_id", "code");
 
 -- CreateIndex
-CREATE INDEX "project_saved_prompt_projectId_idx" ON "project_saved_prompt"("project_id");
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
-CREATE INDEX "project_story_theme_projectId_idx" ON "project_story_theme"("project_id");
+CREATE UNIQUE INDEX "users_messaging_provider_code_key" ON "users"("messaging_provider_code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "project_story_theme_project_version_unique" ON "project_story_theme"("project_id", "version");
+CREATE INDEX "user_clinic_roles_clinic_id_idx" ON "user_clinic_roles"("clinic_id");
 
 -- CreateIndex
-CREATE INDEX "project_whatsapp_link_userId_idx" ON "project_whatsapp_link"("user_id");
+CREATE INDEX "user_clinic_roles_user_id_role_idx" ON "user_clinic_roles"("user_id", "role");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "sandbox_secret_user_project_name_idx" ON "sandbox_secret"("user_id", "project_id", "name");
+CREATE UNIQUE INDEX "user_clinic_roles_user_id_clinic_id_role_key" ON "user_clinic_roles"("user_id", "clinic_id", "role");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "session_token_unique" ON "session"("token");
+CREATE UNIQUE INDEX "document_sequences_clinic_id_key_year_key" ON "document_sequences"("clinic_id", "key", "year");
 
 -- CreateIndex
-CREATE INDEX "session_userId_idx" ON "session"("user_id");
+CREATE UNIQUE INDEX "clinic_llm_configs_clinic_id_provider_key" ON "clinic_llm_configs"("clinic_id", "provider");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "shared_chat_chatId_unique" ON "shared_chat"("chat_id");
+CREATE INDEX "clinic_saved_prompts_clinic_id_idx" ON "clinic_saved_prompts"("clinic_id");
 
 -- CreateIndex
-CREATE INDEX "shared_story_projectId_idx" ON "shared_story"("project_id");
+CREATE UNIQUE INDEX "user_groups_one_default_per_clinic" ON "user_groups"("clinic_id") WHERE (is_default = true);
 
 -- CreateIndex
-CREATE INDEX "shared_story_storyId_idx" ON "shared_story"("story_id");
+CREATE UNIQUE INDEX "user_groups_clinic_id_name_key" ON "user_groups"("clinic_id", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "shared_story_project_story_unique" ON "shared_story"("project_id", "story_id");
+CREATE INDEX "patients_organization_id_last_name_first_name_birth_date_idx" ON "patients"("organization_id", "last_name", "first_name", "birth_date");
 
 -- CreateIndex
-CREATE INDEX "shared_story_group_access_groupId_idx" ON "shared_story_group_access"("group_id");
+CREATE INDEX "patients_mobile_no_idx" ON "patients"("mobile_no");
 
 -- CreateIndex
-CREATE INDEX "story_chatId_idx" ON "story"("chat_id");
+CREATE UNIQUE INDEX "patients_organization_id_patient_no_key" ON "patients"("organization_id", "patient_no");
 
 -- CreateIndex
-CREATE INDEX "story_projectId_idx" ON "story"("project_id");
+CREATE INDEX "patient_addresses_patient_id_idx" ON "patient_addresses"("patient_id");
 
 -- CreateIndex
-CREATE INDEX "story_userId_idx" ON "story"("user_id");
+CREATE INDEX "patient_contacts_patient_id_idx" ON "patient_contacts"("patient_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "story_chat_slug_unique" ON "story"("chat_id", "slug");
+CREATE INDEX "patient_identifications_type_id_number_idx" ON "patient_identifications"("type", "id_number");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "story_standalone_slug_unique" ON "story"("project_id", "user_id", "slug") WHERE (chat_id IS NULL);
+CREATE UNIQUE INDEX "patient_identifications_patient_id_type_id_number_key" ON "patient_identifications"("patient_id", "type", "id_number");
 
 -- CreateIndex
-CREATE INDEX "story_app_state_storyId_idx" ON "story_app_state"("story_id");
+CREATE INDEX "patient_allergies_patient_id_idx" ON "patient_allergies"("patient_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "story_app_state_project_key_unique" ON "story_app_state"("story_id", "key") WHERE (scope = 'project'::text);
+CREATE INDEX "patient_problems_patient_id_idx" ON "patient_problems"("patient_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "story_app_state_user_key_unique" ON "story_app_state"("story_id", "user_id", "key") WHERE (scope = 'user'::text);
+CREATE INDEX "patient_histories_patient_id_category_idx" ON "patient_histories"("patient_id", "category");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "story_delivery_story_id_unique" ON "story_delivery"("story_id");
+CREATE INDEX "patient_consents_patient_id_type_idx" ON "patient_consents"("patient_id", "type");
 
 -- CreateIndex
-CREATE INDEX "story_draft_file_storyId_idx" ON "story_draft_file"("story_id");
+CREATE INDEX "philhealth_memberships_pin_idx" ON "philhealth_memberships"("pin");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "story_draft_file_story_path_unique" ON "story_draft_file"("story_id", "path");
+CREATE INDEX "philhealth_memberships_patient_id_idx" ON "philhealth_memberships"("patient_id");
 
 -- CreateIndex
-CREATE INDEX "story_feedback_userId_idx" ON "story_feedback"("user_id");
+CREATE INDEX "konsulta_enrollments_clinic_id_year_idx" ON "konsulta_enrollments"("clinic_id", "year");
 
 -- CreateIndex
-CREATE INDEX "story_file_storyVersionId_idx" ON "story_file"("story_version_id");
+CREATE UNIQUE INDEX "konsulta_enrollments_membership_id_year_key" ON "konsulta_enrollments"("membership_id", "year");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "story_file_version_path_unique" ON "story_file"("story_version_id", "path");
+CREATE INDEX "philhealth_claims_status_idx" ON "philhealth_claims"("status");
 
 -- CreateIndex
-CREATE INDEX "story_folder_ownerProjectParent_idx" ON "story_folder"("owner_id", "project_id", "parent_id");
+CREATE INDEX "philhealth_claims_encounter_id_idx" ON "philhealth_claims"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "story_folder_projectId_idx" ON "story_folder"("project_id");
+CREATE UNIQUE INDEX "practitioners_user_id_key" ON "practitioners"("user_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "story_folder_private_root_unique" ON "story_folder"("project_id", "owner_id") WHERE (system_type = 'private_folder'::text);
+CREATE UNIQUE INDEX "practitioners_prc_license_no_key" ON "practitioners"("prc_license_no");
 
 -- CreateIndex
-CREATE INDEX "story_folder_item_folderId_idx" ON "story_folder_item"("folder_id");
+CREATE INDEX "practitioners_last_name_first_name_idx" ON "practitioners"("last_name", "first_name");
 
 -- CreateIndex
-CREATE INDEX "story_version_storyId_idx" ON "story_version"("story_id");
+CREATE INDEX "practitioner_schedules_practitioner_id_day_of_week_idx" ON "practitioner_schedules"("practitioner_id", "day_of_week");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "story_version_story_version_unique" ON "story_version"("story_id", "version");
+CREATE INDEX "practitioner_leaves_practitioner_id_start_at_idx" ON "practitioner_leaves"("practitioner_id", "start_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_email_unique" ON "user"("email");
+CREATE UNIQUE INDEX "prescriptions_rx_no_key" ON "prescriptions"("rx_no");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_messaging_provider_code_unique" ON "user"("messaging_provider_code");
+CREATE UNIQUE INDEX "prescriptions_verification_code_key" ON "prescriptions"("verification_code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_group_project_default_unique" ON "user_group"("project_id") WHERE (is_default = true);
+CREATE INDEX "prescriptions_encounter_id_idx" ON "prescriptions"("encounter_id");
 
 -- CreateIndex
-CREATE INDEX "user_group_projectId_idx" ON "user_group"("project_id");
+CREATE INDEX "prescription_items_prescription_id_idx" ON "prescription_items"("prescription_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_group_project_name_unique" ON "user_group"("project_id", "name");
+CREATE INDEX "provinces_region_code_idx" ON "provinces"("region_code");
 
 -- CreateIndex
-CREATE INDEX "user_group_member_user_provider_idx" ON "user_group_member"("user_id", "provider");
+CREATE INDEX "city_municipalities_province_code_idx" ON "city_municipalities"("province_code");
 
 -- CreateIndex
-CREATE INDEX "verification_identifier_idx" ON "verification"("identifier");
+CREATE INDEX "city_municipalities_region_code_idx" ON "city_municipalities"("region_code");
 
 -- CreateIndex
-CREATE INDEX "warehouse_connection_check_userId_idx" ON "warehouse_connection_check"("user_id");
+CREATE INDEX "barangays_city_municipality_code_idx" ON "barangays"("city_municipality_code");
 
+-- CreateIndex
+CREATE INDEX "icd10_codes_description_idx" ON "icd10_codes"("description");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "philhealth_case_rates_code_effective_from_key" ON "philhealth_case_rates"("code", "effective_from");
+
+-- CreateIndex
+CREATE INDEX "appointments_clinic_id_scheduled_start_idx" ON "appointments"("clinic_id", "scheduled_start");
+
+-- CreateIndex
+CREATE INDEX "appointments_practitioner_id_scheduled_start_idx" ON "appointments"("practitioner_id", "scheduled_start");
+
+-- CreateIndex
+CREATE INDEX "appointments_patient_id_idx" ON "appointments"("patient_id");
+
+-- CreateIndex
+CREATE INDEX "appointments_clinic_id_patient_id_idx" ON "appointments"("clinic_id", "patient_id");
+
+-- CreateIndex
+CREATE INDEX "queue_tickets_clinic_id_queue_date_status_idx" ON "queue_tickets"("clinic_id", "queue_date", "status");
+
+-- CreateIndex
+CREATE INDEX "queue_tickets_encounter_id_idx" ON "queue_tickets"("encounter_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "queue_tickets_clinic_id_queue_date_prefix_number_key" ON "queue_tickets"("clinic_id", "queue_date", "prefix", "number");
+
+-- CreateIndex
+CREATE INDEX "llm_inferences_created_at_idx" ON "llm_inferences"("created_at");
+
+-- CreateIndex
+CREATE INDEX "llm_inferences_clinic_id_idx" ON "llm_inferences"("clinic_id");
+
+-- CreateIndex
+CREATE INDEX "llm_inferences_type_idx" ON "llm_inferences"("type");
+
+-- CreateIndex
+CREATE INDEX "llm_inferences_user_id_idx" ON "llm_inferences"("user_id");
+
+-- AddForeignKey
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "service_items" ADD CONSTRAINT "service_items_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "service_items" ADD CONSTRAINT "service_items_diagnostic_test_id_fkey" FOREIGN KEY ("diagnostic_test_id") REFERENCES "diagnostic_tests"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "service_items" ADD CONSTRAINT "service_items_inventory_item_id_fkey" FOREIGN KEY ("inventory_item_id") REFERENCES "inventory_items"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clinic_service_prices" ADD CONSTRAINT "clinic_service_prices_service_item_id_fkey" FOREIGN KEY ("service_item_id") REFERENCES "service_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clinic_service_prices" ADD CONSTRAINT "clinic_service_prices_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "corporate_accounts" ADD CONSTRAINT "corporate_accounts_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoice_series" ADD CONSTRAINT "invoice_series_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_series_id_fkey" FOREIGN KEY ("series_id") REFERENCES "invoice_series"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
 -- AddForeignKey
-ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_corporate_account_id_fkey" FOREIGN KEY ("corporate_account_id") REFERENCES "corporate_accounts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "activity" ADD CONSTRAINT "activity_chat_id_chat_id_fk" FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_invoice_id_fkey" FOREIGN KEY ("invoice_id") REFERENCES "invoices"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "activity" ADD CONSTRAINT "activity_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_service_item_id_fkey" FOREIGN KEY ("service_item_id") REFERENCES "service_items"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "activity" ADD CONSTRAINT "activity_shared_chat_id_shared_chat_id_fk" FOREIGN KEY ("shared_chat_id") REFERENCES "shared_chat"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "activity" ADD CONSTRAINT "activity_shared_story_id_shared_story_id_fk" FOREIGN KEY ("shared_story_id") REFERENCES "shared_story"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "activity" ADD CONSTRAINT "activity_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "invoice_discounts" ADD CONSTRAINT "invoice_discounts_invoice_id_fkey" FOREIGN KEY ("invoice_id") REFERENCES "invoices"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "activity" ADD CONSTRAINT "activity_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "invoice_discounts" ADD CONSTRAINT "invoice_discounts_invoice_line_id_fkey" FOREIGN KEY ("invoice_line_id") REFERENCES "invoice_lines"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "analytics_event" ADD CONSTRAINT "analytics_event_actor_user_id_user_id_fk" FOREIGN KEY ("actor_user_id") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "invoice_discounts" ADD CONSTRAINT "invoice_discounts_identification_id_fkey" FOREIGN KEY ("identification_id") REFERENCES "patient_identifications"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "analytics_event" ADD CONSTRAINT "analytics_event_chat_id_chat_id_fk" FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "payments" ADD CONSTRAINT "payments_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "analytics_event" ADD CONSTRAINT "analytics_event_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "payments" ADD CONSTRAINT "payments_cashier_shift_id_fkey" FOREIGN KEY ("cashier_shift_id") REFERENCES "cashier_shifts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "analytics_event" ADD CONSTRAINT "analytics_event_shared_chat_id_shared_chat_id_fk" FOREIGN KEY ("shared_chat_id") REFERENCES "shared_chat"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "payments" ADD CONSTRAINT "payments_hmo_loa_id_fkey" FOREIGN KEY ("hmo_loa_id") REFERENCES "hmo_loas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "analytics_event" ADD CONSTRAINT "analytics_event_shared_story_id_shared_story_id_fk" FOREIGN KEY ("shared_story_id") REFERENCES "shared_story"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "payments" ADD CONSTRAINT "payments_hmo_transmittal_id_fkey" FOREIGN KEY ("hmo_transmittal_id") REFERENCES "hmo_transmittals"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "analytics_event" ADD CONSTRAINT "analytics_event_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "payments" ADD CONSTRAINT "payments_philhealth_claim_id_fkey" FOREIGN KEY ("philhealth_claim_id") REFERENCES "philhealth_claims"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "api_key" ADD CONSTRAINT "api_key_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "payments" ADD CONSTRAINT "payments_corporate_account_id_fkey" FOREIGN KEY ("corporate_account_id") REFERENCES "corporate_accounts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "api_key" ADD CONSTRAINT "api_key_org_id_organization_id_fk" FOREIGN KEY ("org_id") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "payment_allocations" ADD CONSTRAINT "payment_allocations_payment_id_fkey" FOREIGN KEY ("payment_id") REFERENCES "payments"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "automation" ADD CONSTRAINT "automation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "payment_allocations" ADD CONSTRAINT "payment_allocations_invoice_id_fkey" FOREIGN KEY ("invoice_id") REFERENCES "invoices"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "automation" ADD CONSTRAINT "automation_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "cashier_shifts" ADD CONSTRAINT "cashier_shifts_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "automation_run" ADD CONSTRAINT "automation_run_automation_id_automation_id_fk" FOREIGN KEY ("automation_id") REFERENCES "automation"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "cashier_shifts" ADD CONSTRAINT "cashier_shifts_cashier_id_fkey" FOREIGN KEY ("cashier_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "automation_run" ADD CONSTRAINT "automation_run_chat_id_chat_id_fk" FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "professional_fees" ADD CONSTRAINT "professional_fees_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "budget_notification" ADD CONSTRAINT "budget_notification_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "professional_fees" ADD CONSTRAINT "professional_fees_invoice_line_id_fkey" FOREIGN KEY ("invoice_line_id") REFERENCES "invoice_lines"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "chat" ADD CONSTRAINT "chat_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "professional_fees" ADD CONSTRAINT "professional_fees_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "chat" ADD CONSTRAINT "chat_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "chats" ADD CONSTRAINT "chats_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "chat_message" ADD CONSTRAINT "chat_message_chat_id_chat_id_fk" FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "chats" ADD CONSTRAINT "chats_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "chat_message" ADD CONSTRAINT "chat_message_sender_user_id_user_id_fk" FOREIGN KEY ("sender_user_id") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "chats" ADD CONSTRAINT "chats_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_branch_ownership" ADD CONSTRAINT "context_branch_ownership_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "chats"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_branch_ownership" ADD CONSTRAINT "context_branch_ownership_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_sender_user_id_fkey" FOREIGN KEY ("sender_user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_recommendation" ADD CONSTRAINT "context_recommendation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "memories" ADD CONSTRAINT "memories_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_recommendation" ADD CONSTRAINT "context_recommendation_run_fk" FOREIGN KEY ("run_id", "project_id") REFERENCES "context_recommendation_run"("id", "project_id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE "memories" ADD CONSTRAINT "memories_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "chats"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_recommendation" ADD CONSTRAINT "context_recommendation_status_changed_by_user_id_fk" FOREIGN KEY ("status_changed_by") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "message_feedback" ADD CONSTRAINT "message_feedback_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "chat_messages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_recommendation_config" ADD CONSTRAINT "context_recommendation_config_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "message_parts" ADD CONSTRAINT "message_parts_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "chat_messages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_recommendation_linked_feedback" ADD CONSTRAINT "context_recommendation_linked_feedback_message_id_chat_message_" FOREIGN KEY ("message_id") REFERENCES "chat_message"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "message_parts" ADD CONSTRAINT "message_parts_image_id_fkey" FOREIGN KEY ("image_id") REFERENCES "message_images"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_recommendation_linked_feedback" ADD CONSTRAINT "context_recommendation_linked_feedback_recommendation_id_contex" FOREIGN KEY ("recommendation_id") REFERENCES "context_recommendation"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "shared_chats" ADD CONSTRAINT "shared_chats_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "chats"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_recommendation_run" ADD CONSTRAINT "context_recommendation_run_chat_id_chat_id_fk" FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "shared_chat_access" ADD CONSTRAINT "shared_chat_access_shared_chat_id_fkey" FOREIGN KEY ("shared_chat_id") REFERENCES "shared_chats"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "context_recommendation_run" ADD CONSTRAINT "context_recommendation_run_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "shared_chat_access" ADD CONSTRAINT "shared_chat_access_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "favorite" ADD CONSTRAINT "favorite_folder_id_story_folder_id_fk" FOREIGN KEY ("folder_id") REFERENCES "story_folder"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "encounters" ADD CONSTRAINT "encounters_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "favorite" ADD CONSTRAINT "favorite_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "encounters" ADD CONSTRAINT "encounters_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "favorite" ADD CONSTRAINT "favorite_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "encounters" ADD CONSTRAINT "encounters_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "llm_inference" ADD CONSTRAINT "llm_inference_chat_id_chat_id_fk" FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "encounters" ADD CONSTRAINT "encounters_appointment_id_fkey" FOREIGN KEY ("appointment_id") REFERENCES "appointments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "llm_inference" ADD CONSTRAINT "llm_inference_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "encounters" ADD CONSTRAINT "encounters_corporate_account_id_fkey" FOREIGN KEY ("corporate_account_id") REFERENCES "corporate_accounts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "llm_inference" ADD CONSTRAINT "llm_inference_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "vital_signs" ADD CONSTRAINT "vital_signs_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "log" ADD CONSTRAINT "log_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "encounter_diagnoses" ADD CONSTRAINT "encounter_diagnoses_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "mcp_call_log" ADD CONSTRAINT "mcp_call_log_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "encounter_diagnoses" ADD CONSTRAINT "encounter_diagnoses_icd10_code_fkey" FOREIGN KEY ("icd10_code") REFERENCES "icd10_codes"("code") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "mcp_call_log" ADD CONSTRAINT "mcp_call_log_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "encounter_procedures" ADD CONSTRAINT "encounter_procedures_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "mcp_chart_embed" ADD CONSTRAINT "mcp_chart_embed_query_id_mcp_query_data_query_id_fk" FOREIGN KEY ("query_id") REFERENCES "mcp_query_data"("query_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "encounter_procedures" ADD CONSTRAINT "encounter_procedures_rvs_code_fkey" FOREIGN KEY ("rvs_code") REFERENCES "rvs_codes"("code") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "mcp_map_embed" ADD CONSTRAINT "mcp_map_embed_query_id_mcp_query_data_query_id_fk" FOREIGN KEY ("query_id") REFERENCES "mcp_query_data"("query_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "encounter_procedures" ADD CONSTRAINT "encounter_procedures_performed_by_id_fkey" FOREIGN KEY ("performed_by_id") REFERENCES "practitioners"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "mcp_oauth_client" ADD CONSTRAINT "mcp_oauth_client_discovery_user_id_user_id_fk" FOREIGN KEY ("discovery_user_id") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_tests" ADD CONSTRAINT "diagnostic_tests_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "mcp_oauth_client" ADD CONSTRAINT "mcp_oauth_client_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_test_parameters" ADD CONSTRAINT "diagnostic_test_parameters_test_id_fkey" FOREIGN KEY ("test_id") REFERENCES "diagnostic_tests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "mcp_query_data" ADD CONSTRAINT "mcp_query_data_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_orders" ADD CONSTRAINT "diagnostic_orders_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "mcp_user_token" ADD CONSTRAINT "mcp_user_token_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_orders" ADD CONSTRAINT "diagnostic_orders_requested_by_id_fkey" FOREIGN KEY ("requested_by_id") REFERENCES "practitioners"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "mcp_user_token" ADD CONSTRAINT "mcp_user_token_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_order_items" ADD CONSTRAINT "diagnostic_order_items_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "diagnostic_orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "memories" ADD CONSTRAINT "memories_chat_id_chat_id_fk" FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_order_items" ADD CONSTRAINT "diagnostic_order_items_test_id_fkey" FOREIGN KEY ("test_id") REFERENCES "diagnostic_tests"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "memories" ADD CONSTRAINT "memories_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_results" ADD CONSTRAINT "diagnostic_results_order_item_id_fkey" FOREIGN KEY ("order_item_id") REFERENCES "diagnostic_order_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "message_feedback" ADD CONSTRAINT "message_feedback_message_id_chat_message_id_fk" FOREIGN KEY ("message_id") REFERENCES "chat_message"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_results" ADD CONSTRAINT "diagnostic_results_signed_by_id_fkey" FOREIGN KEY ("signed_by_id") REFERENCES "practitioners"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "message_part" ADD CONSTRAINT "message_part_image_id_message_image_id_fk" FOREIGN KEY ("image_id") REFERENCES "message_image"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_result_values" ADD CONSTRAINT "diagnostic_result_values_result_id_fkey" FOREIGN KEY ("result_id") REFERENCES "diagnostic_results"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "message_part" ADD CONSTRAINT "message_part_message_id_chat_message_id_fk" FOREIGN KEY ("message_id") REFERENCES "chat_message"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "diagnostic_result_values" ADD CONSTRAINT "diagnostic_result_values_parameter_id_fkey" FOREIGN KEY ("parameter_id") REFERENCES "diagnostic_test_parameters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "notification" ADD CONSTRAINT "notification_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "medical_certificates" ADD CONSTRAINT "medical_certificates_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "notification" ADD CONSTRAINT "notification_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "medical_certificates" ADD CONSTRAINT "medical_certificates_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "notification_unsubscribe" ADD CONSTRAINT "notification_unsubscribe_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "referrals" ADD CONSTRAINT "referrals_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_access_token" ADD CONSTRAINT "oauth_access_token_client_id_oauth_client_client_id_fk" FOREIGN KEY ("client_id") REFERENCES "oauth_client"("client_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "referrals" ADD CONSTRAINT "referrals_from_practitioner_id_fkey" FOREIGN KEY ("from_practitioner_id") REFERENCES "practitioners"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_access_token" ADD CONSTRAINT "oauth_access_token_refresh_id_oauth_refresh_token_id_fk" FOREIGN KEY ("refresh_id") REFERENCES "oauth_refresh_token"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "referrals" ADD CONSTRAINT "referrals_to_practitioner_id_fkey" FOREIGN KEY ("to_practitioner_id") REFERENCES "practitioners"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_access_token" ADD CONSTRAINT "oauth_access_token_session_id_session_id_fk" FOREIGN KEY ("session_id") REFERENCES "session"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "patient_documents" ADD CONSTRAINT "patient_documents_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_access_token" ADD CONSTRAINT "oauth_access_token_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_documents" ADD CONSTRAINT "patient_documents_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_client" ADD CONSTRAINT "oauth_client_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "hmo_providers" ADD CONSTRAINT "hmo_providers_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_consent" ADD CONSTRAINT "oauth_consent_client_id_oauth_client_client_id_fk" FOREIGN KEY ("client_id") REFERENCES "oauth_client"("client_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_hmo_coverages" ADD CONSTRAINT "patient_hmo_coverages_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_consent" ADD CONSTRAINT "oauth_consent_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_hmo_coverages" ADD CONSTRAINT "patient_hmo_coverages_hmo_provider_id_fkey" FOREIGN KEY ("hmo_provider_id") REFERENCES "hmo_providers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_refresh_token" ADD CONSTRAINT "oauth_refresh_token_client_id_oauth_client_client_id_fk" FOREIGN KEY ("client_id") REFERENCES "oauth_client"("client_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "hmo_loas" ADD CONSTRAINT "hmo_loas_coverage_id_fkey" FOREIGN KEY ("coverage_id") REFERENCES "patient_hmo_coverages"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_refresh_token" ADD CONSTRAINT "oauth_refresh_token_session_id_session_id_fk" FOREIGN KEY ("session_id") REFERENCES "session"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "hmo_loas" ADD CONSTRAINT "hmo_loas_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "oauth_refresh_token" ADD CONSTRAINT "oauth_refresh_token_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "hmo_transmittals" ADD CONSTRAINT "hmo_transmittals_hmo_provider_id_fkey" FOREIGN KEY ("hmo_provider_id") REFERENCES "hmo_providers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "org_member" ADD CONSTRAINT "org_member_org_id_organization_id_fk" FOREIGN KEY ("org_id") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "immunizations" ADD CONSTRAINT "immunizations_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "org_member" ADD CONSTRAINT "org_member_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "immunizations" ADD CONSTRAINT "immunizations_administered_by_id_fkey" FOREIGN KEY ("administered_by_id") REFERENCES "practitioners"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project" ADD CONSTRAINT "project_org_id_organization_id_fk" FOREIGN KEY ("org_id") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "immunizations" ADD CONSTRAINT "immunizations_inventory_item_id_fkey" FOREIGN KEY ("inventory_item_id") REFERENCES "inventory_items"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_discord_link" ADD CONSTRAINT "project_discord_link_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "immunizations" ADD CONSTRAINT "immunizations_inventory_lot_id_fkey" FOREIGN KEY ("inventory_lot_id") REFERENCES "inventory_lots"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_discord_link" ADD CONSTRAINT "project_discord_link_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "inventory_items" ADD CONSTRAINT "inventory_items_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_group_budget" ADD CONSTRAINT "project_group_budget_group_id_user_group_id_fk" FOREIGN KEY ("group_id") REFERENCES "user_group"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "suppliers" ADD CONSTRAINT "suppliers_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_group_budget" ADD CONSTRAINT "project_group_budget_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "inventory_lots" ADD CONSTRAINT "inventory_lots_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "inventory_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_llm_config" ADD CONSTRAINT "project_llm_config_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "inventory_lots" ADD CONSTRAINT "inventory_lots_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_member" ADD CONSTRAINT "project_member_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "inventory_lots" ADD CONSTRAINT "inventory_lots_supplier_id_fkey" FOREIGN KEY ("supplier_id") REFERENCES "suppliers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_member" ADD CONSTRAINT "project_member_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_provider_budget" ADD CONSTRAINT "project_provider_budget_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "inventory_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_saved_prompt" ADD CONSTRAINT "project_saved_prompt_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_lot_id_fkey" FOREIGN KEY ("lot_id") REFERENCES "inventory_lots"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_story_theme" ADD CONSTRAINT "project_story_theme_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_warehouse_credentials" ADD CONSTRAINT "project_warehouse_credentials_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_invoice_line_id_fkey" FOREIGN KEY ("invoice_line_id") REFERENCES "invoice_lines"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_whatsapp_link" ADD CONSTRAINT "project_whatsapp_link_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_prescription_item_id_fkey" FOREIGN KEY ("prescription_item_id") REFERENCES "prescription_items"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "project_whatsapp_link" ADD CONSTRAINT "project_whatsapp_link_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_stock_receipt_id_fkey" FOREIGN KEY ("stock_receipt_id") REFERENCES "stock_receipts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "sandbox_secret" ADD CONSTRAINT "sandbox_secret_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_receipts" ADD CONSTRAINT "stock_receipts_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "sandbox_secret" ADD CONSTRAINT "sandbox_secret_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_receipts" ADD CONSTRAINT "stock_receipts_supplier_id_fkey" FOREIGN KEY ("supplier_id") REFERENCES "suppliers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_receipt_items" ADD CONSTRAINT "stock_receipt_items_receipt_id_fkey" FOREIGN KEY ("receipt_id") REFERENCES "stock_receipts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_chat" ADD CONSTRAINT "shared_chat_chat_id_chat_id_fk" FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_receipt_items" ADD CONSTRAINT "stock_receipt_items_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "inventory_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_chat_access" ADD CONSTRAINT "shared_chat_access_shared_chat_id_shared_chat_id_fk" FOREIGN KEY ("shared_chat_id") REFERENCES "shared_chat"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "stock_receipt_items" ADD CONSTRAINT "stock_receipt_items_lot_id_fkey" FOREIGN KEY ("lot_id") REFERENCES "inventory_lots"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_chat_access" ADD CONSTRAINT "shared_chat_access_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "care_relationships" ADD CONSTRAINT "care_relationships_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_story" ADD CONSTRAINT "shared_story_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "care_relationships" ADD CONSTRAINT "care_relationships_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_story" ADD CONSTRAINT "shared_story_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "care_relationships" ADD CONSTRAINT "care_relationships_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_story" ADD CONSTRAINT "shared_story_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "clinical_documents" ADD CONSTRAINT "clinical_documents_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_story_access" ADD CONSTRAINT "shared_story_access_shared_story_id_shared_story_id_fk" FOREIGN KEY ("shared_story_id") REFERENCES "shared_story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "wise_tool_settings" ADD CONSTRAINT "wise_tool_settings_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_story_access" ADD CONSTRAINT "shared_story_access_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "wise_tool_settings" ADD CONSTRAINT "wise_tool_settings_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_story_group_access" ADD CONSTRAINT "shared_story_group_access_group_id_user_group_id_fk" FOREIGN KEY ("group_id") REFERENCES "user_group"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shared_story_group_access" ADD CONSTRAINT "shared_story_group_access_shared_story_id_shared_story_id_fk" FOREIGN KEY ("shared_story_id") REFERENCES "shared_story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story" ADD CONSTRAINT "story_certified_by_user_id_fk" FOREIGN KEY ("certified_by") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "clinics" ADD CONSTRAINT "clinics_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story" ADD CONSTRAINT "story_chat_id_chat_id_fk" FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "clinics" ADD CONSTRAINT "clinics_barangay_code_fkey" FOREIGN KEY ("barangay_code") REFERENCES "barangays"("code") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story" ADD CONSTRAINT "story_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "clinics" ADD CONSTRAINT "clinics_city_municipality_code_fkey" FOREIGN KEY ("city_municipality_code") REFERENCES "city_municipalities"("code") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story" ADD CONSTRAINT "story_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "user_clinic_roles" ADD CONSTRAINT "user_clinic_roles_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_app_state" ADD CONSTRAINT "story_app_state_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "user_clinic_roles" ADD CONSTRAINT "user_clinic_roles_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_app_state" ADD CONSTRAINT "story_app_state_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "document_sequences" ADD CONSTRAINT "document_sequences_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_app_state" ADD CONSTRAINT "story_app_state_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "clinic_llm_configs" ADD CONSTRAINT "clinic_llm_configs_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_bundle" ADD CONSTRAINT "story_bundle_story_version_id_story_version_id_fk" FOREIGN KEY ("story_version_id") REFERENCES "story_version"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "clinic_saved_prompts" ADD CONSTRAINT "clinic_saved_prompts_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_data_cache" ADD CONSTRAINT "story_data_cache_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "user_groups" ADD CONSTRAINT "user_groups_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_delivery" ADD CONSTRAINT "story_delivery_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "user_preferences" ADD CONSTRAINT "user_preferences_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_delivery" ADD CONSTRAINT "story_delivery_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patients" ADD CONSTRAINT "patients_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_delivery" ADD CONSTRAINT "story_delivery_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_addresses" ADD CONSTRAINT "patient_addresses_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_draft_file" ADD CONSTRAINT "story_draft_file_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_addresses" ADD CONSTRAINT "patient_addresses_barangay_code_fkey" FOREIGN KEY ("barangay_code") REFERENCES "barangays"("code") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_feedback" ADD CONSTRAINT "story_feedback_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_addresses" ADD CONSTRAINT "patient_addresses_city_municipality_code_fkey" FOREIGN KEY ("city_municipality_code") REFERENCES "city_municipalities"("code") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_feedback" ADD CONSTRAINT "story_feedback_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_contacts" ADD CONSTRAINT "patient_contacts_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_file" ADD CONSTRAINT "story_file_content_hash_story_file_blob_content_hash_fk" FOREIGN KEY ("content_hash") REFERENCES "story_file_blob"("content_hash") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE "patient_identifications" ADD CONSTRAINT "patient_identifications_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_file" ADD CONSTRAINT "story_file_story_version_id_story_version_id_fk" FOREIGN KEY ("story_version_id") REFERENCES "story_version"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_allergies" ADD CONSTRAINT "patient_allergies_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_folder" ADD CONSTRAINT "story_folder_owner_id_user_id_fk" FOREIGN KEY ("owner_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_problems" ADD CONSTRAINT "patient_problems_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_folder" ADD CONSTRAINT "story_folder_parent_id_story_folder_id_fk" FOREIGN KEY ("parent_id") REFERENCES "story_folder"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "patient_problems" ADD CONSTRAINT "patient_problems_icd10_code_fkey" FOREIGN KEY ("icd10_code") REFERENCES "icd10_codes"("code") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_folder" ADD CONSTRAINT "story_folder_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_histories" ADD CONSTRAINT "patient_histories_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_folder_item" ADD CONSTRAINT "story_folder_item_folder_id_story_folder_id_fk" FOREIGN KEY ("folder_id") REFERENCES "story_folder"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_consents" ADD CONSTRAINT "patient_consents_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_folder_item" ADD CONSTRAINT "story_folder_item_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "patient_consents" ADD CONSTRAINT "patient_consents_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "story_version" ADD CONSTRAINT "story_version_story_id_story_id_fk" FOREIGN KEY ("story_id") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "philhealth_memberships" ADD CONSTRAINT "philhealth_memberships_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "user_group" ADD CONSTRAINT "user_group_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "konsulta_enrollments" ADD CONSTRAINT "konsulta_enrollments_membership_id_fkey" FOREIGN KEY ("membership_id") REFERENCES "philhealth_memberships"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "user_group_member" ADD CONSTRAINT "user_group_member_group_id_user_group_id_fk" FOREIGN KEY ("group_id") REFERENCES "user_group"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "konsulta_enrollments" ADD CONSTRAINT "konsulta_enrollments_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "user_group_member" ADD CONSTRAINT "user_group_member_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "konsulta_enrollments" ADD CONSTRAINT "konsulta_enrollments_fpe_encounter_id_fkey" FOREIGN KEY ("fpe_encounter_id") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "user_preference" ADD CONSTRAINT "user_preference_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "philhealth_claims" ADD CONSTRAINT "philhealth_claims_membership_id_fkey" FOREIGN KEY ("membership_id") REFERENCES "philhealth_memberships"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "warehouse_connection_check" ADD CONSTRAINT "warehouse_connection_check_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "philhealth_claims" ADD CONSTRAINT "philhealth_claims_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
+-- AddForeignKey
+ALTER TABLE "philhealth_claims" ADD CONSTRAINT "philhealth_claims_invoice_id_fkey" FOREIGN KEY ("invoice_id") REFERENCES "invoices"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "philhealth_claims" ADD CONSTRAINT "philhealth_claims_first_case_rate_id_fkey" FOREIGN KEY ("first_case_rate_id") REFERENCES "philhealth_case_rates"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "philhealth_claims" ADD CONSTRAINT "philhealth_claims_second_case_rate_id_fkey" FOREIGN KEY ("second_case_rate_id") REFERENCES "philhealth_case_rates"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "practitioners" ADD CONSTRAINT "practitioners_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "practitioner_clinics" ADD CONSTRAINT "practitioner_clinics_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "practitioner_clinics" ADD CONSTRAINT "practitioner_clinics_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "practitioner_schedules" ADD CONSTRAINT "practitioner_schedules_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "practitioner_schedules" ADD CONSTRAINT "practitioner_schedules_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "practitioner_leaves" ADD CONSTRAINT "practitioner_leaves_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "prescriptions" ADD CONSTRAINT "prescriptions_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "prescriptions" ADD CONSTRAINT "prescriptions_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "prescription_items" ADD CONSTRAINT "prescription_items_prescription_id_fkey" FOREIGN KEY ("prescription_id") REFERENCES "prescriptions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "prescription_items" ADD CONSTRAINT "prescription_items_inventory_item_id_fkey" FOREIGN KEY ("inventory_item_id") REFERENCES "inventory_items"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "provinces" ADD CONSTRAINT "provinces_region_code_fkey" FOREIGN KEY ("region_code") REFERENCES "regions"("code") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- Check constraints (not modelled by Prisma; copied from the upstream Drizzle schema)
-ALTER TABLE "analytics_event" ADD CONSTRAINT "analytics_event_asset_id_required" CHECK (
-CASE
-    WHEN (asset_type = 'chat'::text) THEN (chat_id IS NOT NULL)
-    WHEN (asset_type = 'story'::text) THEN (story_id IS NOT NULL)
-    ELSE true
-END);
-ALTER TABLE "favorite" ADD CONSTRAINT "favorite_xor_target" CHECK (((((story_id IS NOT NULL))::integer + ((folder_id IS NOT NULL))::integer) = 1));
-ALTER TABLE "message_part" ADD CONSTRAINT "file_fields_required" CHECK (
-CASE
-    WHEN (type = 'file'::text) THEN ((media_type IS NOT NULL) AND ((image_id IS NOT NULL) OR (storage_path IS NOT NULL)))
-    ELSE true
-END);
-ALTER TABLE "message_part" ADD CONSTRAINT "reasoning_text_required_if_type_is_reasoning" CHECK (
-CASE
-    WHEN (type = 'reasoning'::text) THEN (reasoning_text IS NOT NULL)
-    ELSE true
-END);
-ALTER TABLE "message_part" ADD CONSTRAINT "text_required_if_type_is_text" CHECK (
-CASE
-    WHEN (type = 'text'::text) THEN (text IS NOT NULL)
-    ELSE true
-END);
-ALTER TABLE "message_part" ADD CONSTRAINT "tool_call_fields_required" CHECK (
-CASE
-    WHEN (type ~~ 'tool-%'::text) THEN ((tool_call_id IS NOT NULL) AND (tool_state IS NOT NULL))
-    ELSE true
-END);
-ALTER TABLE "project_provider_budget" ADD CONSTRAINT "budget_period_valid" CHECK ((period = ANY (ARRAY['day'::text, 'week'::text, 'month'::text])));
-ALTER TABLE "project" ADD CONSTRAINT "local_project_path_required" CHECK (
-CASE
-    WHEN (type = 'local'::text) THEN (path IS NOT NULL)
-    ELSE true
-END);
-ALTER TABLE "story_app_state" ADD CONSTRAINT "story_app_state_user_scope" CHECK (((scope = 'user'::text) = (user_id IS NOT NULL)));
-ALTER TABLE "story" ADD CONSTRAINT "story_owner_required" CHECK (((chat_id IS NOT NULL) OR ((project_id IS NOT NULL) AND (user_id IS NOT NULL))));
+-- AddForeignKey
+ALTER TABLE "city_municipalities" ADD CONSTRAINT "city_municipalities_region_code_fkey" FOREIGN KEY ("region_code") REFERENCES "regions"("code") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "city_municipalities" ADD CONSTRAINT "city_municipalities_province_code_fkey" FOREIGN KEY ("province_code") REFERENCES "provinces"("code") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "barangays" ADD CONSTRAINT "barangays_city_municipality_code_fkey" FOREIGN KEY ("city_municipality_code") REFERENCES "city_municipalities"("code") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "philhealth_case_rates" ADD CONSTRAINT "philhealth_case_rates_icd10_code_fkey" FOREIGN KEY ("icd10_code") REFERENCES "icd10_codes"("code") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "philhealth_case_rates" ADD CONSTRAINT "philhealth_case_rates_rvs_code_fkey" FOREIGN KEY ("rvs_code") REFERENCES "rvs_codes"("code") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "appointments" ADD CONSTRAINT "appointments_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "appointments" ADD CONSTRAINT "appointments_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "patients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "appointments" ADD CONSTRAINT "appointments_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "queue_tickets" ADD CONSTRAINT "queue_tickets_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "queue_tickets" ADD CONSTRAINT "queue_tickets_practitioner_id_fkey" FOREIGN KEY ("practitioner_id") REFERENCES "practitioners"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "queue_tickets" ADD CONSTRAINT "queue_tickets_encounter_id_fkey" FOREIGN KEY ("encounter_id") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "llm_inferences" ADD CONSTRAINT "llm_inferences_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "llm_inferences" ADD CONSTRAINT "llm_inferences_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "llm_inferences" ADD CONSTRAINT "llm_inferences_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "chats"("id") ON DELETE SET NULL ON UPDATE CASCADE;

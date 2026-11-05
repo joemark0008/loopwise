@@ -1,0 +1,302 @@
+// =============================================================================
+//  ORGANIZATION, CLINICS (the reference's branches), USERS
+//
+//  Reference: docs/schema-reference/clinic-prisma-schema/prisma/schema/organization.prisma.
+//  Loopwise additions are marked "Loopwise:" — the Wise workspace settings on a clinic, organization membership and
+//  SSO settings, and the better-auth columns on users.
+// =============================================================================
+
+enum VatRegistration {
+  VAT
+  NON_VAT
+
+  @@map("vat_registration")
+}
+
+/// Loopwise: MEMBER (staff without a specific desk; the base app's "user"), VIEWER (read-only) and CONTEXT_ADMIN
+/// (manages Wise's context files) are access roles kept from the base app. `@loopwise/shared/staff-roles` maps a
+/// user's roles at a clinic to the access level the guards check.
+enum StaffRole {
+  SUPER_ADMIN
+  ADMIN
+  DOCTOR
+  NURSE
+  MIDWIFE
+  RECEPTIONIST
+  CASHIER
+  BILLING_CLERK
+  PHARMACIST
+  PHARMACY_ASSISTANT
+  MEDTECH
+  RADTECH
+  INVENTORY_CLERK
+  MEMBER
+  VIEWER
+  CONTEXT_ADMIN
+
+  @@map("staff_role")
+}
+
+/// Loopwise: an organization-level role (ADMIN manages every clinic of the organization and its settings).
+enum OrgRole {
+  ADMIN
+  MEMBER
+  VIEWER
+
+  @@map("org_role")
+}
+
+model Organization {
+  id              String          @id @default(uuid(7)) @db.Uuid
+  name            String // registered business name (DTI/SEC)
+  tradeName       String?         @map("trade_name")
+  tin             String? // BIR TIN, e.g. 123-456-789-000
+  vatRegistration VatRegistration @default(NON_VAT) @map("vat_registration")
+  secOrDtiNo      String?         @map("sec_or_dti_no")
+  logoUrl         String?         @map("logo_url")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  /// Loopwise: URL-safe handle, and the organization's own Google sign-in.
+  slug               String  @unique
+  googleClientId     String? @map("google_client_id")
+  googleClientSecret String? @map("google_client_secret")
+  googleAuthDomains  String? @map("google_auth_domains")
+
+  clinics           Clinic[]
+  patients          Patient[]
+  serviceItems      ServiceItem[]
+  inventoryItems    InventoryItem[]
+  suppliers         Supplier[]
+  hmoProviders      HmoProvider[]
+  corporateAccounts CorporateAccount[]
+  diagnosticTests   DiagnosticTest[]
+  auditLogs         AuditLog[]
+
+  members           OrganizationMember[]
+  careRelationships CareRelationship[]
+  wiseToolSettings  WiseToolSetting[]
+
+  @@map("organizations")
+}
+
+/// Loopwise: who belongs to an organization, and at what level. Clinic roles are in `user_clinic_roles`.
+model OrganizationMember {
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  role           OrgRole  @default(MEMBER)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+model Clinic {
+  id                    String    @id @default(uuid(7)) @db.Uuid
+  organizationId        String    @map("organization_id") @db.Uuid
+  code                  String // short code used in document numbers, e.g. "TAG"
+  name                  String
+  birBranchCode         String?   @map("bir_branch_code") // last 3-5 digits of TIN, e.g. "00001"
+  dohLicenseNo          String?   @map("doh_license_no") // DOH License to Operate (clinic / lab)
+  dohLicenseExpiry      DateTime? @map("doh_license_expiry") @db.Date
+  philhealthAccreditNo  String?   @map("philhealth_accredit_no") // facility accreditation (e.g. Konsulta/YAKAP provider)
+  philhealthAccreditExp DateTime? @map("philhealth_accredit_exp") @db.Date
+  addressLine           String?   @map("address_line")
+  barangayCode          String?   @map("barangay_code")
+  cityMunicipalityCode  String?   @map("city_municipality_code")
+  zipCode               String?   @map("zip_code")
+  contactNo             String?   @map("contact_no")
+  email                 String?
+  isActive              Boolean   @default(true) @map("is_active")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  /// Loopwise: the clinic's Wise workspace (the base app's project). `kind` is `local` (context files under `path`).
+  kind            String  @default("local")
+  path            String?
+  agentSettings   Json?   @map("agent_settings")
+  envVars         Json    @default("{}") @map("env_vars")
+  displaySettings Json?   @map("display_settings")
+  mapSettings     Json?   @map("map_settings")
+  defaultModels   Json?   @map("default_models")
+
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  barangay         Barangay?         @relation(fields: [barangayCode], references: [code])
+  cityMunicipality CityMunicipality? @relation(fields: [cityMunicipalityCode], references: [code])
+
+  userRoles           UserClinicRole[]
+  documentSequences   DocumentSequence[]
+  practitioners       PractitionerClinic[]
+  schedules           PractitionerSchedule[]
+  appointments        Appointment[]
+  queueTickets        QueueTicket[]
+  encounters          Encounter[]
+  konsultaEnrollments KonsultaEnrollment[]
+  clinicPrices        ClinicServicePrice[]
+  invoiceSeries       InvoiceSeries[]
+  invoices            Invoice[]
+  payments            Payment[]
+  cashierShifts       CashierShift[]
+  inventoryLots       InventoryLot[]
+  stockMovements      StockMovement[]
+  stockReceipts       StockReceipt[]
+
+  chats         Chat[]
+  llmInferences LlmInference[]
+  llmConfigs    ClinicLlmConfig[]
+  savedPrompts  ClinicSavedPrompt[]
+  userGroups    UserGroup[]
+
+  @@unique([organizationId, code])
+  @@map("clinics")
+}
+
+/// The better-auth user (better-auth owns sign-in; `accounts` holds the credentials, so no password hash here) with the
+/// reference's staff fields. Ids are UUIDv7 (better-auth `advanced.database.generateId`).
+model User {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  email       String    @unique
+  firstName   String    @map("first_name")
+  lastName    String    @map("last_name")
+  mobileNo    String?   @map("mobile_no")
+  isActive    Boolean   @default(true) @map("is_active")
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  /// Loopwise (better-auth): display name, verified email and avatar.
+  name                  String
+  emailVerified         Boolean @default(false) @map("email_verified")
+  image                 String?
+  /// Loopwise (base app): forced password change, Wise memory, chat-channel link code, git tokens.
+  requiresPasswordReset Boolean @default(false) @map("requires_password_reset")
+  memoryEnabled         Boolean @default(true) @map("memory_enabled")
+  messagingProviderCode String? @unique @map("messaging_provider_code")
+  githubAccessToken     String? @map("github_access_token")
+  gitlabAccessToken     String? @map("gitlab_access_token")
+
+  clinicRoles   UserClinicRole[]
+  practitioner  Practitioner?
+  cashierShifts CashierShift[]
+  auditLogs     AuditLog[]
+
+  accounts            Account[]
+  sessions            Session[]
+  organizationMembers OrganizationMember[]
+  careRelationships   CareRelationship[]
+  chats               Chat[]
+  chatMessages        ChatMessage[]
+  llmInferences       LlmInference[]
+  memories            Memory[]
+  sharedChatAccess    SharedChatAccess[]
+  preference          UserPreference?
+  wiseToolSettings    WiseToolSetting[]
+
+  @@map("users")
+}
+
+/// A user can hold different roles per clinic (e.g. doctor in one, admin in another)
+model UserClinicRole {
+  id       String    @id @default(uuid(7)) @db.Uuid
+  userId   String    @map("user_id") @db.Uuid
+  clinicId String    @map("clinic_id") @db.Uuid
+  role     StaffRole
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clinicId, role])
+  @@index([clinicId])
+  @@index([userId, role])
+  @@map("user_clinic_roles")
+}
+
+/// Per-clinic running numbers for human-readable IDs (MRN, encounter no, Rx no, etc.)
+/// Use SELECT ... FOR UPDATE / atomic increment when issuing.
+model DocumentSequence {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  clinicId  String  @map("clinic_id") @db.Uuid
+  key       String // PATIENT | ENCOUNTER | RX | LAB_ORDER | MED_CERT | PAYMENT ...
+  prefix    String? // e.g. "TAG-RX-"
+  year      Int? // null = never resets; set to reset yearly
+  nextValue Int     @default(1) @map("next_value")
+  padLength Int     @default(6) @map("pad_length")
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId, key, year])
+  @@map("document_sequences")
+}
+
+// -----------------------------------------------------------------------------
+//  Loopwise: Wise workspace settings of a clinic and the user's preferences
+// -----------------------------------------------------------------------------
+
+/// An LLM provider the clinic configured for Wise (API key, enabled models).
+model ClinicLlmConfig {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  clinicId      String   @map("clinic_id") @db.Uuid
+  provider      String
+  apiKey        String   @map("api_key")
+  baseUrl       String?  @map("base_url")
+  credentials   Json?
+  enabledModels Json     @default("[]") @map("enabled_models")
+  customModels  Json     @default("[]") @map("custom_models")
+  modelSettings Json     @default("{}") @map("model_settings")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId, provider])
+  @@map("clinic_llm_configs")
+}
+
+model ClinicSavedPrompt {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  clinicId  String   @map("clinic_id") @db.Uuid
+  title     String
+  prompt    String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+  @@map("clinic_saved_prompts")
+}
+
+/// A group of the clinic's users with the Wise features, context and row policies they get. One default group per
+/// clinic (partial unique index).
+model UserGroup {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  clinicId      String   @map("clinic_id") @db.Uuid
+  name          String
+  isDefault     Boolean  @default(false) @map("is_default")
+  featureGrants Json     @default("{\"version\": 2, \"features\": [], \"toolCallDensity\": {\"canChange\": true, \"defaultDensity\": \"detailed\"}}") @map("feature_grants")
+  contextGrants Json?    @map("context_grants")
+  rowPolicies   Json?    @map("row_policies")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId], map: "user_groups_one_default_per_clinic", where: raw("(is_default = true)"))
+  @@unique([clinicId, name])
+  @@map("user_groups")
+}
+
+model UserPreference {
+  userId      String   @id @map("user_id") @db.Uuid
+  preferences Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}

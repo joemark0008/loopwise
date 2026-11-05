@@ -1,0 +1,160 @@
+// =============================================================================
+//  PHILHEALTH — membership, Konsulta/YAKAP primary care enrollment, claims
+//  Categories follow the UHC Act (RA 11223) direct / indirect contributors.
+// =============================================================================
+
+enum ContributorType {
+  DIRECT
+  INDIRECT
+
+  @@map("contributor_type")
+}
+
+enum PhilHealthMemberCategory {
+  // Direct contributors
+  EMPLOYED_PRIVATE
+  EMPLOYED_GOVERNMENT
+  KASAMBAHAY
+  SELF_EARNING
+  PROFESSIONAL_PRACTITIONER
+  OFW_LAND_BASED
+  OFW_SEA_BASED
+  FILIPINO_WITH_DUAL_CITIZENSHIP
+  LIFETIME_MEMBER
+  // Indirect contributors
+  INDIGENT_NHTS
+  FOUR_PS // Pantawid Pamilyang Pilipino Program
+  SENIOR_CITIZEN
+  PWD
+  SPONSORED_LGU
+  SPONSORED_OTHER
+  POINT_OF_SERVICE // enrolled at point of care
+  OTHER
+
+  @@map("philhealth_member_category")
+}
+
+enum DependentRelationship {
+  SPOUSE
+  CHILD
+  PARENT
+
+  @@map("dependent_relationship")
+}
+
+enum KonsultaStatus {
+  REGISTERED
+  FPE_DONE
+  ACTIVE
+  TRANSFERRED
+  INACTIVE
+
+  @@map("konsulta_status")
+}
+
+enum PhilHealthClaimType {
+  KONSULTA // Konsulta/YAKAP capitation-based
+  OUTPATIENT_PACKAGE // TB-DOTS, Animal Bite, MCP, Outpatient HIV/AIDS, Malaria …
+  DAY_SURGERY // ambulatory surgical procedures (RVS)
+  MEDICAL_CASE_RATE
+  OTHER
+
+  @@map("philhealth_claim_type")
+}
+
+enum PhilHealthClaimStatus {
+  DRAFT
+  FOR_SUBMISSION
+  SUBMITTED // via eClaims
+  IN_PROCESS
+  RETURN_TO_HOSPITAL // RTH — needs compliance
+  DENIED
+  APPROVED
+  PAID
+
+  @@map("philhealth_claim_status")
+}
+
+model PhilHealthMembership {
+  id                   String                    @id @default(uuid(7)) @db.Uuid
+  patientId            String                    @map("patient_id") @db.Uuid
+  pin                  String // 12-digit PhilHealth Identification Number (patient's own PIN)
+  isPrincipal          Boolean                   @default(true) @map("is_principal") // false = dependent
+  memberPin            String?                   @map("member_pin") // principal member's PIN if dependent
+  memberName           String?                   @map("member_name") // principal member's name if dependent
+  relationshipToMember DependentRelationship?    @map("relationship_to_member")
+  contributorType      ContributorType?          @map("contributor_type")
+  category             PhilHealthMemberCategory?
+  employerName         String?                   @map("employer_name")
+  employerPen          String?                   @map("employer_pen") // PhilHealth Employer Number
+  validFrom            DateTime?                 @map("valid_from") @db.Date
+  validTo              DateTime?                 @map("valid_to") @db.Date
+  lastVerifiedAt       DateTime?                 @map("last_verified_at") @db.Timestamptz(3) // eligibility check (PBEF / member portal)
+  isActive             Boolean                   @default(true) @map("is_active")
+  createdAt            DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  patient             Patient              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  konsultaEnrollments KonsultaEnrollment[]
+  claims              PhilHealthClaim[]
+
+  @@index([pin])
+  @@index([patientId])
+  @@map("philhealth_memberships")
+}
+
+/// Primary care package (Konsulta, rebranded YAKAP). One accredited provider per member per year.
+model KonsultaEnrollment {
+  id             String               @id @default(uuid(7)) @db.Uuid
+  membershipId   String               @map("membership_id") @db.Uuid
+  clinicId       String               @map("clinic_id") @db.Uuid // accredited facility
+  year           Int
+  atcNo          String?              @map("atc_no") // Authorization Transaction Code
+  registeredAt   DateTime             @default(now()) @map("registered_at") @db.Timestamptz(3)
+  fpeEncounterId String?              @map("fpe_encounter_id") @db.Uuid // First Patient Encounter
+  fpeCompletedAt DateTime?            @map("fpe_completed_at") @db.Timestamptz(3)
+  status         KonsultaStatus       @default(REGISTERED)
+  remarks        String?
+  membership     PhilHealthMembership @relation(fields: [membershipId], references: [id])
+  clinic         Clinic               @relation(fields: [clinicId], references: [id])
+  fpeEncounter   Encounter?           @relation(fields: [fpeEncounterId], references: [id])
+
+  @@unique([membershipId, year])
+  @@index([clinicId, year])
+  @@map("konsulta_enrollments")
+}
+
+model PhilHealthClaim {
+  id                  String                @id @default(uuid(7)) @db.Uuid
+  membershipId        String                @map("membership_id") @db.Uuid
+  encounterId         String                @map("encounter_id") @db.Uuid
+  invoiceId           String?               @map("invoice_id") @db.Uuid
+  type                PhilHealthClaimType
+  firstCaseRateId     String?               @map("first_case_rate_id") @db.Uuid
+  secondCaseRateId    String?               @map("second_case_rate_id") @db.Uuid
+  serviceDateFrom     DateTime              @map("service_date_from") @db.Date
+  serviceDateTo       DateTime?             @map("service_date_to") @db.Date
+  claimSeriesLhio     String?               @map("claim_series_lhio") // eClaims claim series / transmittal no.
+  totalActualCharges  Decimal               @default(0) @map("total_actual_charges") @db.Decimal(12, 2)
+  facilityBenefit     Decimal               @default(0) @map("facility_benefit") @db.Decimal(12, 2) // HCI share
+  professionalBenefit Decimal               @default(0) @map("professional_benefit") @db.Decimal(12, 2) // PF share
+  status              PhilHealthClaimStatus @default(DRAFT)
+  submittedAt         DateTime?             @map("submitted_at") @db.Timestamptz(3)
+  returnReason        String?               @map("return_reason") // RTH / denial reason
+  approvedAmount      Decimal?              @map("approved_amount") @db.Decimal(12, 2)
+  paidAmount          Decimal?              @map("paid_amount") @db.Decimal(12, 2)
+  paidAt              DateTime?             @map("paid_at") @db.Timestamptz(3)
+  paymentReference    String?               @map("payment_reference") // voucher / check / ADA ref
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  membership          PhilHealthMembership  @relation(fields: [membershipId], references: [id])
+  encounter           Encounter             @relation(fields: [encounterId], references: [id])
+  invoice             Invoice?              @relation(fields: [invoiceId], references: [id])
+  firstCaseRate       PhilHealthCaseRate?   @relation("FirstCaseRate", fields: [firstCaseRateId], references: [id])
+  secondCaseRate      PhilHealthCaseRate?   @relation("SecondCaseRate", fields: [secondCaseRateId], references: [id])
+  payments            Payment[]
+
+  @@index([status])
+  @@index([encounterId])
+  @@map("philhealth_claims")
+}

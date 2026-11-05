@@ -1,0 +1,108 @@
+// =============================================================================
+//  Loopwise additions to the reference schema: the access rule (care relationships), Wise's saved reports, the
+//  outcome of each Wise proposal card, and Wise tool settings. Row-level security and the append-only triggers are in
+//  migration 0001_rls_and_triggers.
+// =============================================================================
+
+/// Why a user may see a patient. Deny by default (DESIGN.md §8): a user reaches a patient only through one of these
+/// (or a time-limited, logged break-glass row with a note).
+enum CareRelationshipReason {
+  ENCOUNTER
+  ORDER
+  REFERRAL
+  BREAK_GLASS
+
+  @@map("care_relationship_reason")
+}
+
+/// A prescription or medical certificate: editable as a draft, frozen once issued (it can then only be voided).
+enum DocumentStatus {
+  DRAFT
+  ISSUED
+
+  @@map("document_status")
+}
+
+model CareRelationship {
+  id             String                 @id @default(uuid(7)) @db.Uuid
+  patientId      String                 @map("patient_id") @db.Uuid
+  userId         String                 @map("user_id") @db.Uuid
+  organizationId String                 @map("organization_id") @db.Uuid
+  reason         CareRelationshipReason
+  note           String?
+  expiresAt      DateTime?              @map("expires_at") @db.Timestamptz(3)
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([userId, patientId])
+  @@index([patientId, userId])
+  @@map("care_relationships")
+}
+
+/// A Wise report version a clinician saved to the patient's chart, frozen with the tool results it embeds.
+/// Append-only (a trigger rejects UPDATE and DELETE).
+model ClinicalDocument {
+  id               String   @id @default(uuid(7)) @db.Uuid
+  patientId        String   @map("patient_id") @db.Uuid
+  kind             String   @default("wise_report")
+  title            String
+  /// The report's markdown with its <chart>/<table>/<sections> blocks.
+  body             String
+  /// The embedded tool results by result id, as they were when saved.
+  data             Json
+  version          Int
+  sourceChatId     String   @map("source_chat_id") @db.Uuid
+  sourceToolCallId String   @unique @map("source_tool_call_id")
+  createdById      String   @map("created_by_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, createdAt])
+  @@map("clinical_documents")
+}
+
+/// How each Wise proposal card ended (DESIGN.md §7.1): one row per tool call, so a card can't be confirmed twice.
+/// Append-only; ids are plain columns (the chat can be deleted).
+model WiseProposalOutcome {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  chatId     String   @map("chat_id") @db.Uuid
+  messageId  String   @map("message_id") @db.Uuid
+  toolCallId String   @unique @map("tool_call_id")
+  toolName   String   @map("tool_name")
+  /// `confirmed` or `cancelled` (check constraint).
+  status     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  /// Whether the clinician changed Wise's draft before confirming.
+  edited     Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([chatId])
+  @@map("wise_proposal_outcomes")
+}
+
+/// Which Wise tools an organization turned on or off, and the ones a user turned off for themselves. Overrides only;
+/// without a row the catalogue default applies (`@loopwise/shared/wise-tools`). Exactly one of organizationId / userId.
+model WiseToolSetting {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  toolName       String   @map("tool_name")
+  enabled        Boolean
+  updatedById    String   @map("updated_by_id") @db.Uuid
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, toolName], map: "wise_tool_settings_org_tool_unique", where: raw("(organization_id IS NOT NULL)"))
+  @@unique([userId, toolName], map: "wise_tool_settings_user_tool_unique", where: raw("(user_id IS NOT NULL)"))
+  @@index([organizationId])
+  @@index([userId])
+  @@map("wise_tool_settings")
+}

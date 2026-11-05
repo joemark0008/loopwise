@@ -1,0 +1,75 @@
+// =============================================================================
+//  PRESCRIPTIONS
+//  - Generics Act (RA 6675 / RA 9502): generic name is mandatory; brand optional.
+//  - Dangerous drugs (RA 9165): requires S2 license + DOH/PDEA special Rx form;
+//    quantity must also be written in words.
+// =============================================================================
+
+enum PrescriptionStatus {
+  ACTIVE
+  PARTIALLY_DISPENSED
+  DISPENSED
+  CANCELLED
+  EXPIRED
+
+  @@map("prescription_status")
+}
+
+model Prescription {
+  id               String             @id @default(uuid(7)) @db.Uuid
+  rxNo             String             @unique @map("rx_no") // clinic code is in the prefix, e.g. TAG-RX-000123
+  encounterId      String             @map("encounter_id") @db.Uuid
+  practitionerId   String             @map("practitioner_id") @db.Uuid
+  issuedAt         DateTime           @default(now()) @map("issued_at") @db.Timestamptz(3)
+  validUntil       DateTime?          @map("valid_until") @db.Date
+  isDangerousDrug  Boolean            @default(false) @map("is_dangerous_drug") // S2 / yellow Rx
+  s2FormSerialNo   String?            @map("s2_form_serial_no") // DOH dangerous drugs prescription form serial
+  status           PrescriptionStatus @default(ACTIVE)
+  notes            String? // general advice: "Increase oral fluids"
+  verificationCode String?            @unique @map("verification_code") // QR for pharmacy verification
+  // Loopwise: a draft is editable (Wise drafts land here); issuing freezes it (a trigger allows only voiding and
+  // dispensing). Voiding sets status CANCELLED with who, when and why. `signatory` is the prescriber and clinic as
+  // printed when issued (name, PRC/PTR/S2, clinic letterhead). `version` is bumped by a trigger on every update.
+  documentStatus   DocumentStatus     @default(DRAFT) @map("document_status")
+  signatory        Json?
+  voidedAt         DateTime?          @map("voided_at") @db.Timestamptz(3)
+  voidedById       String?            @map("voided_by_id") @db.Uuid
+  voidReason       String?            @map("void_reason")
+  version          Int                @default(1)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  encounter    Encounter          @relation(fields: [encounterId], references: [id])
+  practitioner Practitioner       @relation(fields: [practitionerId], references: [id])
+  items        PrescriptionItem[]
+
+  @@index([encounterId])
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id              String  @id @default(uuid(7)) @db.Uuid
+  prescriptionId  String  @map("prescription_id") @db.Uuid
+  inventoryItemId String? @map("inventory_item_id") @db.Uuid // link to formulary/stock if available
+  genericName     String  @map("generic_name") // REQUIRED by Generics Act, e.g. "Amoxicillin"
+  brandName       String? @map("brand_name") // optional, e.g. "Amoxil"
+  strength        String? // "500 mg"
+  dosageForm      String? @map("dosage_form") // capsule, tablet, suspension 250mg/5mL
+  quantity        Decimal @db.Decimal(10, 2)
+  quantityInWords String? @map("quantity_in_words") // required for dangerous drugs: "twenty (20)"
+  unit            String? // caps, tabs, bottle
+  sig             String // "1 cap every 8 hours for 7 days"
+  route           String? // PO, IM, topical
+  frequency       String? // TID, BID, q8h
+  durationDays    Int?    @map("duration_days")
+  isPrn           Boolean @default(false) @map("is_prn")
+  dispensedQty    Decimal @default(0) @map("dispensed_qty") @db.Decimal(10, 2)
+  sortOrder       Int     @default(0) @map("sort_order")
+
+  prescription   Prescription    @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  inventoryItem  InventoryItem?  @relation(fields: [inventoryItemId], references: [id])
+  stockMovements StockMovement[]
+
+  @@index([prescriptionId])
+  @@map("prescription_items")
+}

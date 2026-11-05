@@ -1,0 +1,388 @@
+// =============================================================================
+//  BILLING — BIR-compliant invoicing, statutory discounts, payments, PF
+//
+//  BIR notes:
+//   - Under the EOPT Act (RA 11976) the Sales Invoice is the primary document
+//     for both goods and services; ORs become supplementary.
+//   - Invoice must show VATable / VAT-exempt / zero-rated sales, VAT amount,
+//     buyer name/TIN/address when required, and ATP/PTU/CAS permit details.
+//   - Senior Citizen (RA 9994) & PWD (RA 10754): 20% discount + VAT exemption on
+//     medical/dental services, lab fees, PF and medicines. Record beneficiary
+//     name, ID no. and signature per transaction.
+// =============================================================================
+
+enum ServiceCategory {
+  CONSULTATION
+  PROFESSIONAL_FEE
+  PROCEDURE
+  LABORATORY
+  IMAGING
+  MEDICINE
+  SUPPLY
+  VACCINE
+  PACKAGE // PEME, APE, executive check-up bundles
+  CERTIFICATE
+  OTHER
+
+  @@map("service_category")
+}
+
+enum TaxType {
+  VATABLE
+  VAT_EXEMPT
+  ZERO_RATED
+
+  @@map("tax_type")
+}
+
+enum InvoiceDocType {
+  SALES_INVOICE
+  OFFICIAL_RECEIPT // supplementary under EOPT
+  ACKNOWLEDGMENT_RECEIPT
+  BILLING_STATEMENT // non-BIR SOA for HMO/corporate
+
+  @@map("invoice_doc_type")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED // finalized, unpaid
+  PARTIALLY_PAID
+  PAID
+  VOID
+
+  @@map("invoice_status")
+}
+
+enum DiscountType {
+  SENIOR_CITIZEN // 20% + VAT exempt
+  PWD // 20% + VAT exempt
+  SOLO_PARENT // RA 11861 (limited coverage)
+  NATIONAL_ATHLETE // RA 10699
+  EMPLOYEE
+  PROMO
+  SPECIAL // doctor's discretion / charity
+
+  @@map("discount_type")
+}
+
+enum PaymentMethod {
+  CASH
+  GCASH
+  MAYA
+  QR_PH
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER // InstaPay / PESONet
+  CHECK
+  HMO
+  PHILHEALTH
+  CORPORATE_CHARGE
+  OTHER
+
+  @@map("payment_method")
+}
+
+enum PaymentStatus {
+  POSTED
+  VOIDED
+  REFUNDED
+
+  @@map("payment_status")
+}
+
+enum PfStatus {
+  UNPAID
+  FOR_RELEASE
+  RELEASED
+
+  @@map("pf_status")
+}
+
+/// Chargeable catalog. Links to a test or stock item when applicable.
+model ServiceItem {
+  id               String          @id @default(uuid(7)) @db.Uuid
+  organizationId   String          @map("organization_id") @db.Uuid
+  code             String
+  name             String
+  category         ServiceCategory
+  defaultPrice     Decimal         @map("default_price") @db.Decimal(12, 2)
+  taxType          TaxType         @default(VAT_EXEMPT) @map("tax_type")
+  isPfShareable    Boolean         @default(false) @map("is_pf_shareable") // portion goes to practitioner
+  diagnosticTestId String?         @unique @map("diagnostic_test_id") @db.Uuid
+  inventoryItemId  String?         @unique @map("inventory_item_id") @db.Uuid
+  isActive         Boolean         @default(true) @map("is_active")
+
+  organization   Organization         @relation(fields: [organizationId], references: [id])
+  diagnosticTest DiagnosticTest?      @relation(fields: [diagnosticTestId], references: [id])
+  inventoryItem  InventoryItem?       @relation(fields: [inventoryItemId], references: [id])
+  clinicPrices   ClinicServicePrice[]
+  invoiceLines   InvoiceLine[]
+
+  @@unique([organizationId, code])
+  @@map("service_items")
+}
+
+model ClinicServicePrice {
+  serviceItemId String   @map("service_item_id") @db.Uuid
+  clinicId      String   @map("clinic_id") @db.Uuid
+  price         Decimal  @db.Decimal(12, 2)
+  hmoPrice      Decimal? @map("hmo_price") @db.Decimal(12, 2) // contracted rate if different
+
+  serviceItem ServiceItem @relation(fields: [serviceItemId], references: [id], onDelete: Cascade)
+  clinic      Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@id([serviceItemId, clinicId])
+  @@map("clinic_service_prices")
+}
+
+/// Companies with charge accounts (PEME/APE, employee consults)
+model CorporateAccount {
+  id               String   @id @default(uuid(7)) @db.Uuid
+  organizationId   String   @map("organization_id") @db.Uuid
+  name             String
+  tin              String?
+  address          String?
+  contactPerson    String?  @map("contact_person")
+  contactNo        String?  @map("contact_no")
+  email            String?
+  creditLimit      Decimal? @map("credit_limit") @db.Decimal(12, 2)
+  paymentTermsDays Int?     @default(30) @map("payment_terms_days")
+  isActive         Boolean  @default(true) @map("is_active")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  encounters   Encounter[]
+  invoices     Invoice[]
+  payments     Payment[]
+
+  @@map("corporate_accounts")
+}
+
+/// BIR-registered invoice/receipt series per clinic (ATP or CAS/PTU permit)
+model InvoiceSeries {
+  id         String         @id @default(uuid(7)) @db.Uuid
+  clinicId   String         @map("clinic_id") @db.Uuid
+  docType    InvoiceDocType @default(SALES_INVOICE) @map("doc_type")
+  prefix     String?
+  startNo    Int            @map("start_no")
+  endNo      Int            @map("end_no")
+  nextNo     Int            @map("next_no")
+  permitNo   String?        @map("permit_no") // ATP no. or CAS/PTU permit
+  permitDate DateTime?      @map("permit_date") @db.Date
+  validUntil DateTime?      @map("valid_until") @db.Date
+  isActive   Boolean        @default(true) @map("is_active")
+
+  clinic   Clinic    @relation(fields: [clinicId], references: [id])
+  invoices Invoice[]
+
+  @@index([clinicId, docType, isActive])
+  @@map("invoice_series")
+}
+
+model Invoice {
+  id                 String         @id @default(uuid(7)) @db.Uuid
+  clinicId           String         @map("clinic_id") @db.Uuid
+  seriesId           String?        @map("series_id") @db.Uuid
+  docType            InvoiceDocType @default(SALES_INVOICE) @map("doc_type")
+  invoiceNo          String?        @map("invoice_no") // assigned when ISSUED
+  invoiceDate        DateTime       @default(now()) @map("invoice_date") @db.Timestamptz(3)
+  encounterId        String?        @map("encounter_id") @db.Uuid // single-visit bill; null for consolidated (corporate/HMO) — see InvoiceLine.encounterId
+  corporateAccountId String?        @map("corporate_account_id") @db.Uuid
+
+  // Buyer info as printed (snapshot)
+  buyerName          String  @map("buyer_name")
+  buyerTin           String? @map("buyer_tin")
+  buyerAddress       String? @map("buyer_address")
+  buyerBusinessStyle String? @map("buyer_business_style")
+
+  // Amounts (PHP)
+  grossAmount    Decimal @default(0) @map("gross_amount") @db.Decimal(12, 2)
+  vatableSales   Decimal @default(0) @map("vatable_sales") @db.Decimal(12, 2)
+  vatExemptSales Decimal @default(0) @map("vat_exempt_sales") @db.Decimal(12, 2)
+  zeroRatedSales Decimal @default(0) @map("zero_rated_sales") @db.Decimal(12, 2)
+  vatAmount      Decimal @default(0) @map("vat_amount") @db.Decimal(12, 2)
+  lessVatScPwd   Decimal @default(0) @map("less_vat_sc_pwd") @db.Decimal(12, 2) // VAT removed for SC/PWD
+  scPwdDiscount  Decimal @default(0) @map("sc_pwd_discount") @db.Decimal(12, 2)
+  otherDiscount  Decimal @default(0) @map("other_discount") @db.Decimal(12, 2)
+  withholdingTax Decimal @default(0) @map("withholding_tax") @db.Decimal(12, 2) // CWT by corporate payors (BIR 2307)
+  netAmount      Decimal @default(0) @map("net_amount") @db.Decimal(12, 2)
+  amountPaid     Decimal @default(0) @map("amount_paid") @db.Decimal(12, 2)
+  balance        Decimal @default(0) @db.Decimal(12, 2)
+
+  status      InvoiceStatus @default(DRAFT)
+  /// Loopwise: bumped by a trigger on every update; a Wise card saves against the version it showed.
+  version     Int           @default(1)
+  remarks     String?
+  createdById String?       @map("created_by_id") @db.Uuid
+  issuedAt    DateTime?     @map("issued_at") @db.Timestamptz(3)
+  voidedAt    DateTime?     @map("voided_at") @db.Timestamptz(3)
+  voidedById  String?       @map("voided_by_id") @db.Uuid
+  voidReason  String?       @map("void_reason")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  clinic           Clinic            @relation(fields: [clinicId], references: [id])
+  series           InvoiceSeries?    @relation(fields: [seriesId], references: [id])
+  encounter        Encounter?        @relation(fields: [encounterId], references: [id])
+  corporateAccount CorporateAccount? @relation(fields: [corporateAccountId], references: [id])
+
+  lines            InvoiceLine[]
+  discounts        InvoiceDiscount[]
+  allocations      PaymentAllocation[]
+  philhealthClaims PhilHealthClaim[]
+
+  @@unique([clinicId, docType, invoiceNo])
+  @@index([encounterId])
+  @@index([clinicId, invoiceDate])
+  @@index([status])
+  @@map("invoices")
+}
+
+model InvoiceLine {
+  id                String  @id @default(uuid(7)) @db.Uuid
+  invoiceId         String  @map("invoice_id") @db.Uuid
+  serviceItemId     String? @map("service_item_id") @db.Uuid
+  encounterId       String? @map("encounter_id") @db.Uuid // which visit this charge came from (needed on consolidated invoices)
+  practitionerId    String? @map("practitioner_id") @db.Uuid // whose PF this line is
+  description       String
+  quantity          Decimal @default(1) @db.Decimal(10, 2)
+  unitPrice         Decimal @map("unit_price") @db.Decimal(12, 2)
+  taxType           TaxType @default(VAT_EXEMPT) @map("tax_type")
+  vatAmount         Decimal @default(0) @map("vat_amount") @db.Decimal(12, 2)
+  discountAmount    Decimal @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  lineTotal         Decimal @map("line_total") @db.Decimal(12, 2)
+  isProfessionalFee Boolean @default(false) @map("is_professional_fee")
+  sortOrder         Int     @default(0) @map("sort_order")
+
+  invoice         Invoice           @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  serviceItem     ServiceItem?      @relation(fields: [serviceItemId], references: [id])
+  encounter       Encounter?        @relation(fields: [encounterId], references: [id])
+  practitioner    Practitioner?     @relation(fields: [practitionerId], references: [id])
+  discounts       InvoiceDiscount[]
+  professionalFee ProfessionalFee?
+  stockMovements  StockMovement[]
+
+  @@index([invoiceId])
+  @@index([encounterId])
+  @@map("invoice_lines")
+}
+
+/// Statutory / other discounts with the proof BIR & DOH auditors ask for
+model InvoiceDiscount {
+  id               String       @id @default(uuid(7)) @db.Uuid
+  invoiceId        String       @map("invoice_id") @db.Uuid
+  invoiceLineId    String?      @map("invoice_line_id") @db.Uuid // null = applies to whole invoice
+  identificationId String?      @map("identification_id") @db.Uuid // SC/PWD ID presented
+  type             DiscountType
+  rate             Decimal      @db.Decimal(5, 4) // 0.2000 = 20%
+  amount           Decimal      @db.Decimal(12, 2)
+  vatExempted      Decimal      @default(0) @map("vat_exempted") @db.Decimal(12, 2)
+  beneficiaryName  String?      @map("beneficiary_name") // snapshot
+  idNumber         String?      @map("id_number") // snapshot as presented
+  signatureUrl     String?      @map("signature_url") // beneficiary signature
+  approvedById     String?      @map("approved_by_id") @db.Uuid
+
+  invoice        Invoice                @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceLine    InvoiceLine?           @relation(fields: [invoiceLineId], references: [id])
+  identification PatientIdentification? @relation(fields: [identificationId], references: [id])
+
+  @@index([invoiceId])
+  @@index([type])
+  @@map("invoice_discounts")
+}
+
+model Payment {
+  id                 String        @id @default(uuid(7)) @db.Uuid
+  paymentNo          String        @map("payment_no")
+  clinicId           String        @map("clinic_id") @db.Uuid
+  cashierShiftId     String?       @map("cashier_shift_id") @db.Uuid
+  method             PaymentMethod
+  amount             Decimal       @db.Decimal(12, 2)
+  tenderedAmount     Decimal?      @map("tendered_amount") @db.Decimal(12, 2) // cash given
+  changeAmount       Decimal?      @map("change_amount") @db.Decimal(12, 2)
+  referenceNo        String?       @map("reference_no") // GCash/Maya ref, card approval code, check no.
+  bankName           String?       @map("bank_name")
+  checkDate          DateTime?     @map("check_date") @db.Date
+  hmoLoaId           String?       @map("hmo_loa_id") @db.Uuid
+  hmoTransmittalId   String?       @map("hmo_transmittal_id") @db.Uuid
+  philhealthClaimId  String?       @map("philhealth_claim_id") @db.Uuid
+  corporateAccountId String?       @map("corporate_account_id") @db.Uuid
+  status             PaymentStatus @default(POSTED)
+  receivedAt         DateTime      @default(now()) @map("received_at") @db.Timestamptz(3)
+  receivedById       String?       @map("received_by_id") @db.Uuid
+  voidReason         String?       @map("void_reason")
+  notes              String?
+
+  clinic           Clinic              @relation(fields: [clinicId], references: [id])
+  cashierShift     CashierShift?       @relation(fields: [cashierShiftId], references: [id])
+  hmoLoa           HmoLoa?             @relation(fields: [hmoLoaId], references: [id])
+  hmoTransmittal   HmoTransmittal?     @relation(fields: [hmoTransmittalId], references: [id])
+  philhealthClaim  PhilHealthClaim?    @relation(fields: [philhealthClaimId], references: [id])
+  corporateAccount CorporateAccount?   @relation(fields: [corporateAccountId], references: [id])
+  allocations      PaymentAllocation[]
+
+  @@unique([clinicId, paymentNo])
+  @@index([clinicId, receivedAt])
+  @@index([method])
+  @@map("payments")
+}
+
+/// One payment can settle many invoices; one invoice can have split tenders
+model PaymentAllocation {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  paymentId String  @map("payment_id") @db.Uuid
+  invoiceId String  @map("invoice_id") @db.Uuid
+  amount    Decimal @db.Decimal(12, 2)
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@unique([paymentId, invoiceId])
+  @@map("payment_allocations")
+}
+
+/// Cashier shift / end-of-day cash count (X/Z reading support)
+model CashierShift {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  clinicId      String    @map("clinic_id") @db.Uuid
+  cashierId     String    @map("cashier_id") @db.Uuid
+  openedAt      DateTime  @default(now()) @map("opened_at") @db.Timestamptz(3)
+  closedAt      DateTime? @map("closed_at") @db.Timestamptz(3)
+  openingCash   Decimal   @default(0) @map("opening_cash") @db.Decimal(12, 2)
+  expectedCash  Decimal?  @map("expected_cash") @db.Decimal(12, 2)
+  countedCash   Decimal?  @map("counted_cash") @db.Decimal(12, 2)
+  variance      Decimal?  @db.Decimal(12, 2)
+  denominations Json? // { "1000": 5, "500": 3, "coins": 120.50 }
+  remarks       String?
+
+  clinic   Clinic    @relation(fields: [clinicId], references: [id])
+  cashier  User      @relation(fields: [cashierId], references: [id])
+  payments Payment[]
+
+  @@index([clinicId, openedAt])
+  @@map("cashier_shifts")
+}
+
+/// Doctor's professional fee, tracked separately for payout & EWT (BIR 2307)
+model ProfessionalFee {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  practitionerId String    @map("practitioner_id") @db.Uuid
+  invoiceLineId  String?   @unique @map("invoice_line_id") @db.Uuid
+  encounterId    String?   @map("encounter_id") @db.Uuid
+  grossAmount    Decimal   @map("gross_amount") @db.Decimal(12, 2)
+  clinicShare    Decimal   @default(0) @map("clinic_share") @db.Decimal(12, 2) // clinic's cut, if any
+  ewtRate        Decimal   @default(0.10) @map("ewt_rate") @db.Decimal(5, 4) // 5% / 10% / 15% per BIR rules
+  ewtAmount      Decimal   @default(0) @map("ewt_amount") @db.Decimal(12, 2)
+  netPayable     Decimal   @map("net_payable") @db.Decimal(12, 2)
+  status         PfStatus  @default(UNPAID)
+  releasedAt     DateTime? @map("released_at") @db.Timestamptz(3)
+  releaseRef     String?   @map("release_ref") // check / bank transfer ref
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  practitioner Practitioner @relation(fields: [practitionerId], references: [id])
+  invoiceLine  InvoiceLine? @relation(fields: [invoiceLineId], references: [id])
+  encounter    Encounter?   @relation(fields: [encounterId], references: [id])
+
+  @@index([practitionerId, status])
+  @@map("professional_fees")
+}

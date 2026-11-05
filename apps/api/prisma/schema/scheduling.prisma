@@ -1,0 +1,121 @@
+// =============================================================================
+//  APPOINTMENTS & QUEUE
+//  Most PH clinics run walk-in + numbered queue; seniors, PWDs and pregnant
+//  women get a priority lane (RA 9994, RA 10754, RA 7277 / Magna Carta).
+// =============================================================================
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  ARRIVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+
+  @@map("appointment_status")
+}
+
+enum BookingChannel {
+  WALK_IN
+  PHONE
+  SMS
+  FACEBOOK_MESSENGER
+  VIBER
+  ONLINE_PORTAL
+  REFERRAL
+
+  @@map("booking_channel")
+}
+
+enum VisitType {
+  NEW_PATIENT
+  FOLLOW_UP
+  PROCEDURE
+  TELECONSULT
+  PEME // Pre-Employment Medical Exam
+  APE // Annual Physical Exam
+
+  @@map("visit_type")
+}
+
+enum QueueStatus {
+  WAITING
+  CALLED
+  SERVING
+  DONE
+  SKIPPED
+  CANCELLED
+
+  @@map("queue_status")
+}
+
+enum PriorityReason {
+  SENIOR_CITIZEN
+  PWD
+  PREGNANT
+  WITH_INFANT
+  EMERGENCY
+
+  @@map("priority_reason")
+}
+
+model Appointment {
+  id              String            @id @default(uuid(7)) @db.Uuid
+  clinicId        String            @map("clinic_id") @db.Uuid
+  patientId       String            @map("patient_id") @db.Uuid
+  practitionerId  String            @map("practitioner_id") @db.Uuid
+  scheduledStart  DateTime          @map("scheduled_start") @db.Timestamptz(3)
+  scheduledEnd    DateTime?         @map("scheduled_end") @db.Timestamptz(3)
+  visitType       VisitType         @default(NEW_PATIENT) @map("visit_type")
+  channel         BookingChannel    @default(WALK_IN)
+  status          AppointmentStatus @default(SCHEDULED)
+  reason          String?
+  notes           String?
+  reminderSentAt  DateTime?         @map("reminder_sent_at") @db.Timestamptz(3)
+  cancelledReason String?           @map("cancelled_reason")
+  rescheduledFrom String?           @map("rescheduled_from") @db.Uuid
+  createdById     String?           @map("created_by_id") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  clinic       Clinic       @relation(fields: [clinicId], references: [id])
+  patient      Patient      @relation(fields: [patientId], references: [id])
+  practitioner Practitioner @relation(fields: [practitionerId], references: [id])
+  encounter    Encounter?
+
+  @@index([clinicId, scheduledStart])
+  @@index([practitionerId, scheduledStart])
+  @@index([patientId])
+  @@index([clinicId, patientId]) // Loopwise: row-level security lookups
+  @@map("appointments")
+}
+
+/// Daily queue numbers. prefix separates lanes, e.g. "A" regular, "P" priority.
+model QueueTicket {
+  id             String          @id @default(uuid(7)) @db.Uuid
+  clinicId       String          @map("clinic_id") @db.Uuid
+  queueDate      DateTime        @map("queue_date") @db.Date
+  prefix         String          @default("A")
+  number         Int
+  isPriority     Boolean         @default(false) @map("is_priority")
+  priorityReason PriorityReason? @map("priority_reason")
+  practitionerId String?         @map("practitioner_id") @db.Uuid // which doctor\'s line (known even before the encounter exists)
+  encounterId    String?         @map("encounter_id") @db.Uuid // set at check-in; null for kiosk/unregistered walk-ins until registered
+  station        String? // "Triage", "Dr. Cruz Rm 2", "Cashier"
+  status         QueueStatus     @default(WAITING)
+  issuedAt       DateTime        @default(now()) @map("issued_at") @db.Timestamptz(3)
+  calledAt       DateTime?       @map("called_at") @db.Timestamptz(3)
+  servedAt       DateTime?       @map("served_at") @db.Timestamptz(3)
+  doneAt         DateTime?       @map("done_at") @db.Timestamptz(3)
+
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  practitioner Practitioner? @relation(fields: [practitionerId], references: [id])
+  encounter    Encounter?    @relation(fields: [encounterId], references: [id])
+
+  @@unique([clinicId, queueDate, prefix, number])
+  @@index([clinicId, queueDate, status])
+  @@index([encounterId])
+  @@map("queue_tickets")
+}

@@ -1,0 +1,125 @@
+// =============================================================================
+//  REFERENCE DATA
+//  - PSGC (Philippine Standard Geographic Code) from PSA — seed from PSA publication
+//  - ICD-10 (WHO version, as used by PhilHealth — NOT the US ICD-10-CM)
+//  - RVS (Relative Value Scale) procedure codes used by PhilHealth
+// =============================================================================
+
+model Region {
+  code      String  @id // PSGC 10-digit code
+  name      String // e.g. "Region VII (Central Visayas)"
+  shortName String? @map("short_name") // e.g. "VII", "NCR", "BARMM"
+
+  provinces Province[]
+  cities    CityMunicipality[]
+
+  @@map("regions")
+}
+
+model Province {
+  code       String @id
+  name       String
+  regionCode String @map("region_code")
+
+  region Region             @relation(fields: [regionCode], references: [code])
+  cities CityMunicipality[]
+
+  @@index([regionCode])
+  @@map("provinces")
+}
+
+/// NCR cities and HUCs may have no province — provinceCode is optional
+model CityMunicipality {
+  code         String  @id
+  name         String
+  regionCode   String  @map("region_code")
+  provinceCode String? @map("province_code")
+  isCity       Boolean @default(false) @map("is_city")
+  isHuc        Boolean @default(false) @map("is_huc") // Highly Urbanized City
+  zipCode      String? @map("zip_code")
+
+  region    Region     @relation(fields: [regionCode], references: [code])
+  province  Province?  @relation(fields: [provinceCode], references: [code])
+  barangays Barangay[]
+
+  clinics          Clinic[]
+  patientAddresses PatientAddress[]
+
+  @@index([provinceCode])
+  @@index([regionCode])
+  @@map("city_municipalities")
+}
+
+model Barangay {
+  code                 String @id
+  name                 String
+  cityMunicipalityCode String @map("city_municipality_code")
+
+  cityMunicipality CityMunicipality @relation(fields: [cityMunicipalityCode], references: [code])
+
+  clinics          Clinic[]
+  patientAddresses PatientAddress[]
+
+  @@index([cityMunicipalityCode])
+  @@map("barangays")
+}
+
+model Icd10Code {
+  code        String  @id // e.g. "J06.9"
+  description String
+  parentCode  String? @map("parent_code")
+  isBillable  Boolean @default(true) @map("is_billable")
+  isActive    Boolean @default(true) @map("is_active")
+
+  diagnoses EncounterDiagnosis[]
+  problems  PatientProblem[]
+  caseRates PhilHealthCaseRate[]
+
+  @@index([description])
+  @@map("icd10_codes")
+}
+
+model RvsCode {
+  code        String   @id // PhilHealth RVS code, e.g. "10060"
+  description String
+  rvu         Decimal? @db.Decimal(8, 2)
+  isActive    Boolean  @default(true) @map("is_active")
+
+  procedures EncounterProcedure[]
+  caseRates  PhilHealthCaseRate[]
+
+  @@map("rvs_codes")
+}
+
+enum CaseRateType {
+  MEDICAL // keyed by ICD-10
+  PROCEDURE // keyed by RVS
+  PACKAGE // e.g. TB-DOTS, Animal Bite, MCP, Konsulta/YAKAP
+
+  @@map("case_rate_type")
+}
+
+/// PhilHealth case rates / package rates. Keep history via effectiveFrom/To.
+model PhilHealthCaseRate {
+  id              String       @id @default(uuid(7)) @db.Uuid
+  code            String // case rate / package code
+  type            CaseRateType
+  description     String
+  icd10Code       String?      @map("icd10_code")
+  rvsCode         String?      @map("rvs_code")
+  totalAmount     Decimal      @map("total_amount") @db.Decimal(12, 2)
+  facilityFee     Decimal      @map("facility_fee") @db.Decimal(12, 2) // HCI portion
+  professionalFee Decimal      @map("professional_fee") @db.Decimal(12, 2) // PF portion
+  effectiveFrom   DateTime     @map("effective_from") @db.Date
+  effectiveTo     DateTime?    @map("effective_to") @db.Date
+  circularRef     String?      @map("circular_ref") // PhilHealth Circular reference
+
+  icd10 Icd10Code? @relation(fields: [icd10Code], references: [code])
+  rvs   RvsCode?   @relation(fields: [rvsCode], references: [code])
+
+  firstCaseClaims  PhilHealthClaim[] @relation("FirstCaseRate")
+  secondCaseClaims PhilHealthClaim[] @relation("SecondCaseRate")
+
+  @@unique([code, effectiveFrom])
+  @@map("philhealth_case_rates")
+}

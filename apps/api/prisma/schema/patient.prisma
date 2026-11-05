@@ -1,0 +1,303 @@
+// =============================================================================
+//  PATIENT MASTER
+// =============================================================================
+
+enum Sex {
+  MALE
+  FEMALE
+
+  @@map("sex")
+}
+
+/// Values follow PhilHealth PMRF civil status options
+enum CivilStatus {
+  SINGLE
+  MARRIED
+  WIDOWED
+  LEGALLY_SEPARATED
+  ANNULLED
+
+  @@map("civil_status")
+}
+
+enum BloodType {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+  UNKNOWN
+
+  @@map("blood_type")
+}
+
+enum AddressType {
+  HOME
+  PROVINCIAL
+  WORK
+  BILLING
+
+  @@map("address_type")
+}
+
+enum IdentificationType {
+  PHILSYS_NATIONAL_ID
+  SENIOR_CITIZEN_OSCA // RA 9994 — 20% discount + VAT exemption
+  PWD // RA 10754 — 20% discount + VAT exemption
+  SOLO_PARENT // RA 11861
+  PHILHEALTH_ID
+  SSS
+  GSIS
+  UMID
+  TIN
+  DRIVERS_LICENSE
+  PASSPORT
+  POSTAL_ID
+  VOTERS_ID
+  PRC_ID
+  STUDENT_ID
+  COMPANY_ID
+  BARANGAY_ID
+  OTHER
+
+  @@map("identification_type")
+}
+
+enum AllergyType {
+  DRUG
+  FOOD
+  ENVIRONMENTAL
+  OTHER
+
+  @@map("allergy_type")
+}
+
+enum Severity {
+  MILD
+  MODERATE
+  SEVERE
+
+  @@map("severity")
+}
+
+enum ProblemStatus {
+  ACTIVE
+  CONTROLLED
+  RESOLVED
+
+  @@map("problem_status")
+}
+
+enum HistoryCategory {
+  PAST_MEDICAL
+  SURGICAL
+  FAMILY
+  SOCIAL // smoking (pack-years), alcohol, drugs
+  OB_GYN // G_P_ (T-P-A-L), LMP, menarche
+  HOSPITALIZATION
+
+  @@map("history_category")
+}
+
+enum ConsentType {
+  DATA_PRIVACY // RA 10173
+  GENERAL_TREATMENT
+  PROCEDURE
+  TELEMEDICINE
+  SMS_EMAIL_NOTIFICATIONS
+  MARKETING
+  PHOTO_VIDEO
+
+  @@map("consent_type")
+}
+
+model Patient {
+  id                String       @id @default(uuid(7)) @db.Uuid
+  organizationId    String       @map("organization_id") @db.Uuid
+  patientNo         String       @map("patient_no") // MRN / chart no.
+  lastName          String       @map("last_name")
+  firstName         String       @map("first_name")
+  middleName        String?      @map("middle_name")
+  suffix            String? // Jr., Sr., III
+  nickname          String?
+  sex               Sex
+  birthDate         DateTime     @map("birth_date") @db.Date
+  birthPlace        String?      @map("birth_place")
+  civilStatus       CivilStatus? @map("civil_status")
+  nationality       String       @default("Filipino")
+  religion          String?
+  occupation        String?
+  employer          String?
+  educationalLevel  String?      @map("educational_level")
+  bloodType         BloodType?   @default(UNKNOWN) @map("blood_type")
+  mobileNo          String?      @map("mobile_no") // +63 9XX XXX XXXX
+  landlineNo        String?      @map("landline_no")
+  email             String?
+  photoUrl          String?      @map("photo_url")
+  preferredLanguage String?      @map("preferred_language") // Tagalog, Cebuano/Bisaya, Ilocano, English …
+  notes             String?
+  isDeceased        Boolean      @default(false) @map("is_deceased")
+  deceasedAt        DateTime?    @map("deceased_at") @db.Timestamptz(3)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  addresses             PatientAddress[]
+  contacts              PatientContact[]
+  identifications       PatientIdentification[]
+  allergies             PatientAllergy[]
+  problems              PatientProblem[]
+  histories             PatientHistory[]
+  consents              PatientConsent[]
+  philhealthMemberships PhilHealthMembership[]
+  hmoCoverages          PatientHmoCoverage[]
+  appointments          Appointment[]
+  encounters            Encounter[]
+  documents             PatientDocument[]
+
+  // Loopwise: who may see the patient, Wise chart chats and saved Wise reports.
+  careRelationships CareRelationship[]
+  chats             Chat[]
+  clinicalDocuments ClinicalDocument[]
+
+  @@unique([organizationId, patientNo])
+  @@index([organizationId, lastName, firstName, birthDate])
+  @@index([mobileNo])
+  @@map("patients")
+}
+
+model PatientAddress {
+  id                   String      @id @default(uuid(7)) @db.Uuid
+  patientId            String      @map("patient_id") @db.Uuid
+  type                 AddressType @default(HOME)
+  addressLine          String?     @map("address_line") // house no., street, subdivision / purok / sitio
+  barangayCode         String?     @map("barangay_code")
+  cityMunicipalityCode String?     @map("city_municipality_code")
+  zipCode              String?     @map("zip_code")
+  isPrimary            Boolean     @default(true) @map("is_primary")
+
+  patient          Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  barangay         Barangay?         @relation(fields: [barangayCode], references: [code])
+  cityMunicipality CityMunicipality? @relation(fields: [cityMunicipalityCode], references: [code])
+
+  @@index([patientId])
+  @@map("patient_addresses")
+}
+
+/// Emergency contacts, guardians of minors, next of kin
+model PatientContact {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  patientId    String  @map("patient_id") @db.Uuid
+  fullName     String  @map("full_name")
+  relationship String // Mother, Spouse, Guardian …
+  mobileNo     String? @map("mobile_no")
+  address      String?
+  isEmergency  Boolean @default(true) @map("is_emergency")
+  isGuardian   Boolean @default(false) @map("is_guardian")
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("patient_contacts")
+}
+
+/// Government / discount IDs. SC & PWD IDs drive statutory discounts in billing.
+model PatientIdentification {
+  id           String             @id @default(uuid(7)) @db.Uuid
+  patientId    String             @map("patient_id") @db.Uuid
+  type         IdentificationType
+  idNumber     String             @map("id_number")
+  issuedBy     String?            @map("issued_by") // e.g. "OSCA Tagbilaran City", "PDAO Bohol"
+  issuedAt     DateTime?          @map("issued_at") @db.Date
+  expiresAt    DateTime?          @map("expires_at") @db.Date
+  imageUrl     String?            @map("image_url")
+  verifiedById String?            @map("verified_by_id") @db.Uuid
+  verifiedAt   DateTime?          @map("verified_at") @db.Timestamptz(3)
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  patient   Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  discounts InvoiceDiscount[]
+
+  @@unique([patientId, type, idNumber])
+  @@index([type, idNumber])
+  @@map("patient_identifications")
+}
+
+model PatientAllergy {
+  id        String      @id @default(uuid(7)) @db.Uuid
+  patientId String      @map("patient_id") @db.Uuid
+  type      AllergyType
+  allergen  String // "Penicillin", "Shrimp"
+  reaction  String? // rash, anaphylaxis
+  severity  Severity?
+  notedAt   DateTime    @default(now()) @map("noted_at") @db.Timestamptz(3)
+  isActive  Boolean     @default(true) @map("is_active")
+
+  // Loopwise: an entry made in error is voided (never deleted), e.g. from a confirmed Wise card.
+  voidedAt   DateTime? @map("voided_at") @db.Timestamptz(3)
+  voidedById String?   @map("voided_by_id") @db.Uuid
+  voidReason String?   @map("void_reason")
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("patient_allergies")
+}
+
+/// Problem list / chronic conditions (HTN, DM2, asthma …)
+model PatientProblem {
+  id           String        @id @default(uuid(7)) @db.Uuid
+  patientId    String        @map("patient_id") @db.Uuid
+  icd10Code    String?       @map("icd10_code")
+  description  String
+  status       ProblemStatus @default(ACTIVE)
+  onsetDate    DateTime?     @map("onset_date") @db.Date
+  resolvedDate DateTime?     @map("resolved_date") @db.Date
+  notes        String?
+
+  patient Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  icd10   Icd10Code? @relation(fields: [icd10Code], references: [code])
+
+  @@index([patientId])
+  @@map("patient_problems")
+}
+
+model PatientHistory {
+  id          String          @id @default(uuid(7)) @db.Uuid
+  patientId   String          @map("patient_id") @db.Uuid
+  category    HistoryCategory
+  description String
+  details     Json? // structured extras, e.g. { "gravida": 2, "para": 1, "lmp": "2026-10-01" }
+  recordedAt  DateTime        @default(now()) @map("recorded_at") @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, category])
+  @@map("patient_histories")
+}
+
+/// Signed consents — keep version of the consent text that was shown
+model PatientConsent {
+  id            String      @id @default(uuid(7)) @db.Uuid
+  patientId     String      @map("patient_id") @db.Uuid
+  encounterId   String?     @map("encounter_id") @db.Uuid // set for visit-specific consent (PROCEDURE, TELEMEDICINE); null = patient-level (DATA_PRIVACY, GENERAL)
+  type          ConsentType
+  version       String // version of the consent form/text
+  granted       Boolean
+  signedBy      String?     @map("signed_by") // patient, or guardian name for minors
+  signatureUrl  String?     @map("signature_url")
+  witnessedById String?     @map("witnessed_by_id") @db.Uuid
+  signedAt      DateTime    @default(now()) @map("signed_at") @db.Timestamptz(3)
+  revokedAt     DateTime?   @map("revoked_at") @db.Timestamptz(3)
+
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  encounter Encounter? @relation(fields: [encounterId], references: [id])
+
+  @@index([patientId, type])
+  @@map("patient_consents")
+}

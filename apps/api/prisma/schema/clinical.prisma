@@ -1,0 +1,202 @@
+// =============================================================================
+//  CLINICAL — encounters, SOAP notes, vitals, diagnoses, procedures
+// =============================================================================
+
+enum EncounterType {
+  CONSULTATION
+  FOLLOW_UP
+  TELECONSULTATION
+  PROCEDURE
+  PEME // Pre-Employment Medical Exam
+  APE // Annual Physical Exam
+  KONSULTA_FPE // PhilHealth Konsulta/YAKAP First Patient Encounter
+  KONSULTA_VISIT // PhilHealth Konsulta/YAKAP consultation
+  PRENATAL
+  WELL_BABY
+  IMMUNIZATION
+  DENTAL
+  EMERGENCY
+  LAB_ONLY // walk-in lab/imaging without consult
+
+  @@map("encounter_type")
+}
+
+enum EncounterStatus {
+  OPEN // checked in / triage
+  IN_PROGRESS // with doctor
+  FOR_BILLING
+  COMPLETED
+  CANCELLED
+
+  @@map("encounter_status")
+}
+
+enum Disposition {
+  SENT_HOME
+  FOR_FOLLOW_UP
+  REFERRED
+  ADMITTED
+  TRANSFERRED_ER
+  EXPIRED
+
+  @@map("disposition")
+}
+
+enum DiagnosisType {
+  PRIMARY
+  SECONDARY
+  WORKING // impression / rule-out
+  COMORBIDITY
+
+  @@map("diagnosis_type")
+}
+
+model Encounter {
+  id                 String          @id @default(uuid(7)) @db.Uuid
+  encounterNo        String          @map("encounter_no")
+  clinicId           String          @map("clinic_id") @db.Uuid
+  patientId          String          @map("patient_id") @db.Uuid
+  practitionerId     String?         @map("practitioner_id") @db.Uuid
+  appointmentId      String?         @unique @map("appointment_id") @db.Uuid
+  corporateAccountId String?         @map("corporate_account_id") @db.Uuid // for PEME/APE billed to a company
+  type               EncounterType   @default(CONSULTATION)
+  status             EncounterStatus @default(OPEN)
+  startedAt          DateTime        @default(now()) @map("started_at") @db.Timestamptz(3)
+  endedAt            DateTime?       @map("ended_at") @db.Timestamptz(3)
+
+  // SOAP
+  chiefComplaint          String? @map("chief_complaint")
+  historyOfPresentIllness String? @map("history_of_present_illness")
+  reviewOfSystems         Json?   @map("review_of_systems")
+  subjective              String?
+  physicalExam            Json?   @map("physical_exam") // structured PE per system: { "heent": "...", "chest": "..." }
+  objective               String?
+  assessment              String?
+  plan                    String?
+
+  disposition    Disposition?
+  followUpDate   DateTime?    @map("follow_up_date") @db.Date
+  isConfidential Boolean      @default(false) @map("is_confidential") // e.g. psych, HIV, reproductive health
+  signedAt       DateTime?    @map("signed_at") @db.Timestamptz(3) // locked once signed by practitioner
+  createdById    String?      @map("created_by_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  // Loopwise: general visit notes, the plain-words instructions for the patient, the version a Wise card confirms
+  // against (bumped by a trigger on every update), and the chart chat Wise drafted the encounter in.
+  notes               String?
+  patientInstructions String? @map("patient_instructions")
+  version             Int     @default(1)
+  sourceChatId        String? @map("source_chat_id") @db.Uuid
+
+  clinic           Clinic            @relation(fields: [clinicId], references: [id])
+  patient          Patient           @relation(fields: [patientId], references: [id])
+  practitioner     Practitioner?     @relation(fields: [practitionerId], references: [id])
+  appointment      Appointment?      @relation(fields: [appointmentId], references: [id])
+  corporateAccount CorporateAccount? @relation(fields: [corporateAccountId], references: [id])
+  queueTickets     QueueTicket[]
+  consents         PatientConsent[]
+
+  vitals              VitalSigns[]
+  diagnosis           EncounterDiagnosis[]
+  procedures          EncounterProcedure[]
+  diagnosticOrders    DiagnosticOrder[]
+  prescriptions       Prescription[]
+  immunizations       Immunization[]
+  medicalCertificates MedicalCertificate[]
+  referrals           Referral[]
+  documents           PatientDocument[]
+  konsultaFpeOf       KonsultaEnrollment[]
+  philhealthClaims    PhilHealthClaim[]
+  hmoLoas             HmoLoa[]
+  invoices            Invoice[]
+  invoiceLines        InvoiceLine[]
+  professionalFees    ProfessionalFee[]
+  stockMovements      StockMovement[]
+
+  @@unique([clinicId, encounterNo])
+  @@index([patientId, startedAt])
+  @@index([practitionerId, startedAt])
+  @@index([clinicId, status])
+  @@index([clinicId, patientId]) // Loopwise: row-level security lookups
+  @@map("encounters")
+}
+
+model VitalSigns {
+  id               String   @id @default(uuid(7)) @db.Uuid
+  encounterId      String   @map("encounter_id") @db.Uuid
+  recordedAt       DateTime @default(now()) @map("recorded_at") @db.Timestamptz(3)
+  recordedById     String?  @map("recorded_by_id") @db.Uuid
+  systolicBp       Int?     @map("systolic_bp")
+  diastolicBp      Int?     @map("diastolic_bp")
+  heartRate        Int?     @map("heart_rate") // bpm
+  respiratoryRate  Int?     @map("respiratory_rate") // cpm
+  temperatureC     Decimal? @map("temperature_c") @db.Decimal(4, 1)
+  oxygenSaturation Int?     @map("oxygen_saturation") // %
+  weightKg         Decimal? @map("weight_kg") @db.Decimal(5, 2)
+  heightCm         Decimal? @map("height_cm") @db.Decimal(5, 1)
+  bmi              Decimal? @db.Decimal(4, 1)
+  waistCm          Decimal? @map("waist_cm") @db.Decimal(5, 1)
+  headCircCm       Decimal? @map("head_circ_cm") @db.Decimal(4, 1) // pediatrics
+  bloodGlucose     Decimal? @map("blood_glucose") @db.Decimal(5, 1) // CBG mg/dL
+  painScore        Int?     @map("pain_score") // 0-10
+  visualAcuityOd   String?  @map("visual_acuity_od") // PEME: 20/20
+  visualAcuityOs   String?  @map("visual_acuity_os")
+  notes            String?
+
+  // Loopwise: a wrong reading is voided, never deleted.
+  voidedAt   DateTime? @map("voided_at") @db.Timestamptz(3)
+  voidedById String?   @map("voided_by_id") @db.Uuid
+  voidReason String?   @map("void_reason")
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([encounterId])
+  @@map("vital_signs")
+}
+
+model EncounterDiagnosis {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  encounterId String        @map("encounter_id") @db.Uuid
+  icd10Code   String?       @map("icd10_code")
+  description String // free-text label shown on Rx / med cert
+  type        DiagnosisType @default(PRIMARY)
+  isFinal     Boolean       @default(true) @map("is_final")
+  sortOrder   Int           @default(0) @map("sort_order")
+  notes       String?
+
+  // Loopwise: who recorded it and when, and voiding (never deleted).
+  recordedById String?   @map("recorded_by_id") @db.Uuid
+  recordedAt   DateTime  @default(now()) @map("recorded_at") @db.Timestamptz(3)
+  voidedAt     DateTime? @map("voided_at") @db.Timestamptz(3)
+  voidedById   String?   @map("voided_by_id") @db.Uuid
+  voidReason   String?   @map("void_reason")
+
+  encounter Encounter  @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  icd10     Icd10Code? @relation(fields: [icd10Code], references: [code])
+
+  /// Loopwise: one primary diagnosis per encounter among the entries not voided.
+  @@unique([encounterId], map: "encounter_diagnoses_one_primary", where: raw("((type = 'PRIMARY'::diagnosis_type) AND (voided_at IS NULL))"))
+  @@index([encounterId])
+  @@index([icd10Code])
+  @@map("encounter_diagnoses")
+}
+
+model EncounterProcedure {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  encounterId   String   @map("encounter_id") @db.Uuid
+  rvsCode       String?  @map("rvs_code")
+  description   String // "I&D of abscess, left forearm"
+  performedById String?  @map("performed_by_id") @db.Uuid
+  performedAt   DateTime @default(now()) @map("performed_at") @db.Timestamptz(3)
+  anesthesia    String? // local, none
+  laterality    String? // LEFT, RIGHT, BILATERAL
+  notes         String?
+
+  encounter   Encounter     @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  rvs         RvsCode?      @relation(fields: [rvsCode], references: [code])
+  performedBy Practitioner? @relation(fields: [performedById], references: [id])
+
+  @@index([encounterId])
+  @@map("encounter_procedures")
+}

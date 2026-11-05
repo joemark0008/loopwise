@@ -1,0 +1,53 @@
+// =============================================================================
+//  AUDIT TRAIL — Data Privacy Act (RA 10173) & NPC: log who accessed/changed
+//  patient data. Append-only; consider monthly partitioning on createdAt.
+// =============================================================================
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+  PRINT
+  EXPORT
+  SIGN
+  VOID
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+
+  @@map("audit_action")
+}
+
+model AuditLog {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  organizationId String?     @map("organization_id") @db.Uuid
+  clinicId       String?     @map("clinic_id") @db.Uuid
+  userId         String?     @map("user_id") @db.Uuid
+  action         AuditAction
+  entityType     String      @map("entity_type") // "Patient", "Encounter", "Invoice" …
+  entityId       String?     @map("entity_id")
+  patientId      String?     @map("patient_id") @db.Uuid // denormalized for "who viewed my record" queries
+  changes        Json? // { before: {...}, after: {...} }
+  ipAddress      String?     @map("ip_address")
+  userAgent      String?     @map("user_agent")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  // Loopwise: the specific event (e.g. `result.review`, `analytics.query.rejected`), the reason given (break-glass, a
+  // review note), where the action came from when not the app's own forms (a confirmed Wise card:
+  // `{ via: "wise", toolName, chatId, messageId, toolCallId, edited }`), and the request's correlation id.
+  event     String?
+  reason    String?
+  origin    Json?
+  requestId String? @map("request_id")
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  user         User?         @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([patientId, createdAt])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([requestId])
+  @@map("audit_logs")
+}
