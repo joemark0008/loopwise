@@ -15,7 +15,7 @@ import { VitalsInputSchema } from './tools/propose-encounter';
  */
 
 /** What the card names before the draft: the record it is about, which the card loads as the clinician. */
-export const WISE_ACTION_SUBJECTS = ['encounter', 'patient', 'result', 'order', 'report'] as const;
+export const WISE_ACTION_SUBJECTS = ['encounter', 'patient', 'result', 'order', 'report', 'appointment'] as const;
 export type WiseActionSubject = (typeof WISE_ACTION_SUBJECTS)[number];
 
 /** `ProposalCard` modes: a new record, a change to one, or a void / removal (reason + second click). */
@@ -53,6 +53,8 @@ export const WISE_ACTION_MUTATIONS = [
 	'voidInvoice',
 	'saveReportToChart',
 	'updatePatient',
+	'bookAppointment',
+	'rescheduleAppointment',
 ] as const;
 export type WiseActionMutation = (typeof WISE_ACTION_MUTATIONS)[number];
 
@@ -390,6 +392,68 @@ export const proposePatientUpdate = {
 	}),
 } as const satisfies WiseActionDefinition;
 
+export const VISIT_TYPES = ['NEW_PATIENT', 'FOLLOW_UP', 'PROCEDURE', 'TELECONSULT', 'PEME', 'APE'] as const;
+export const BOOKING_CHANNELS = [
+	'WALK_IN',
+	'PHONE',
+	'SMS',
+	'FACEBOOK_MESSENGER',
+	'VIBER',
+	'ONLINE_PORTAL',
+	'REFERRAL',
+] as const;
+
+const BOOKING_RULES = [
+	"The card shows the doctor's open slots that day and the front desk picks or changes the time; Confirm books it.",
+	'Never send the patient a message about it yourself.',
+	RULES,
+].join(' ');
+
+export const proposeAppointment = {
+	name: 'propose_appointment',
+	mutations: ['bookAppointment'],
+	subject: 'patient',
+	mode: 'create',
+	confirm: 'standard',
+	description: [
+		"Show the front desk a booking for this patient with a doctor of this chat's clinic, in a card they can edit,",
+		'confirm or cancel ("Book Maria with Dr. Reyes next Tuesday morning"). Give the date the user meant as',
+		'YYYY-MM-DD (Asia/Manila) and the time they asked for, if any.',
+		BOOKING_RULES,
+	].join(' '),
+	InputSchema: z.object({
+		doctor: z.string().max(80).describe('Words of the doctor\'s name, e.g. "Reyes".'),
+		date: z.string().describe('YYYY-MM-DD (Asia/Manila).'),
+		time: z.string().max(5).optional().describe('HH:MM (24 h) if the user said a time.'),
+		partOfDay: z.enum(['morning', 'afternoon']).optional().describe('If the user said morning or afternoon.'),
+		visitType: z.enum(VISIT_TYPES).optional().describe('Default NEW_PATIENT; FOLLOW_UP for a return visit.'),
+		channel: z.enum(BOOKING_CHANNELS).optional().describe('How the patient asked: phone, SMS, Messenger …'),
+		reason: z.string().max(400).optional().describe("Why they're coming, in the user's words."),
+	}),
+} as const satisfies WiseActionDefinition;
+
+export const proposeReschedule = {
+	name: 'propose_reschedule',
+	mutations: ['rescheduleAppointment'],
+	subject: 'appointment',
+	mode: 'update',
+	confirm: 'standard',
+	description: [
+		"Show the front desk a move of one of this patient's upcoming appointments (the id from list_appointments) to",
+		'another day or time, or another doctor, in a card showing before → after. Use it when the doctor is out or the',
+		'patient asked to move it.',
+		BOOKING_RULES,
+	].join(' '),
+	InputSchema: z.object({
+		appointmentId: z.string().describe('The appointment id from list_appointments.'),
+		date: z.string().describe('The new day, YYYY-MM-DD (Asia/Manila).'),
+		time: z.string().max(5).optional().describe('HH:MM (24 h) if the user said a time.'),
+		partOfDay: z.enum(['morning', 'afternoon']).optional(),
+		doctor: z.string().max(80).optional().describe('Another doctor, if the user named one.'),
+		reason: z.string().max(300).optional().describe('Why, e.g. "Dr. Reyes is at a conference".'),
+	}),
+} as const satisfies WiseActionDefinition;
+
 export const WISE_ACTIONS = [
 	proposeVitals,
 	proposeAllergy,
@@ -406,6 +470,8 @@ export const WISE_ACTIONS = [
 	proposeBillStep,
 	proposeSaveReport,
 	proposePatientUpdate,
+	proposeAppointment,
+	proposeReschedule,
 ] as const satisfies readonly WiseActionDefinition[];
 
 export type WiseActionName = (typeof WISE_ACTIONS)[number]['name'];
@@ -436,3 +502,5 @@ export type ProposeVoidDocumentInput = z.infer<typeof proposeVoidDocument.InputS
 export type ProposeBillStepInput = z.infer<typeof proposeBillStep.InputSchema>;
 export type ProposeSaveReportInput = z.infer<typeof proposeSaveReport.InputSchema>;
 export type ProposePatientUpdateInput = z.infer<typeof proposePatientUpdate.InputSchema>;
+export type ProposeAppointmentInput = z.infer<typeof proposeAppointment.InputSchema>;
+export type ProposeRescheduleInput = z.infer<typeof proposeReschedule.InputSchema>;

@@ -1,0 +1,229 @@
+fragment SchedulingPractitionerFields on SchedulingPractitioner {
+	id
+	name
+	shortName
+	roomName
+	userId
+}
+
+fragment AppointmentFields on Appointment {
+	id
+	clinicId
+	patientId
+	practitionerId
+	scheduledStart
+	scheduledEnd
+	visitType
+	channel
+	status
+	reason
+	notes
+	reminderSentAt
+	cancelledReason
+	rescheduledFrom
+	patient {
+		id
+		name
+		patientNo
+		birthDate
+		sex
+		mobileNo
+	}
+	practitioner {
+		...SchedulingPractitionerFields
+	}
+	encounter {
+		id
+		encounterNo
+		status
+	}
+}
+
+fragment QueueTicketFields on QueueTicket {
+	id
+	clinicId
+	queueDate
+	code
+	prefix
+	number
+	isPriority
+	priorityReason
+	station
+	stationLabel
+	status
+	issuedAt
+	calledAt
+	servedAt
+	doneAt
+	practitioner {
+		...SchedulingPractitionerFields
+	}
+	encounter {
+		id
+		encounterNo
+		status
+		reason
+		version
+	}
+	patient {
+		id
+		name
+		patientNo
+		birthDate
+		sex
+	}
+	appointment {
+		id
+		status
+		scheduledStart
+		visitType
+	}
+}
+
+fragment BoardTicketFields on BoardTicket {
+	id
+	code
+	isPriority
+	status
+	station
+	stationLabel
+	calledAt
+}
+
+query SchedulingPractitioners($clinicId: ID!) {
+	clinicPractitioners(clinicId: $clinicId) {
+		id
+		displayName
+		userId
+		clinics {
+			clinicId
+			roomName
+		}
+	}
+}
+
+query ClinicAppointments($input: ClinicAppointmentsInput!) {
+	clinicAppointments(input: $input) {
+		...AppointmentFields
+	}
+}
+
+query Appointment($appointmentId: ID!) {
+	appointment(appointmentId: $appointmentId) {
+		...AppointmentFields
+	}
+}
+
+query AppointmentSlots($input: AppointmentSlotsInput!) {
+	appointmentSlots(input: $input) {
+		start
+		end
+		status
+	}
+}
+
+mutation BookAppointment($input: BookAppointmentInput!) {
+	bookAppointment(input: $input) {
+		...AppointmentFields
+	}
+}
+
+mutation RescheduleAppointment($input: RescheduleAppointmentInput!) {
+	rescheduleAppointment(input: $input) {
+		...AppointmentFields
+	}
+}
+
+mutation CancelAppointment($input: CancelAppointmentInput!) {
+	cancelAppointment(input: $input) {
+		id
+		status
+	}
+}
+
+mutation ConfirmAppointment($appointmentId: ID!) {
+	confirmAppointment(appointmentId: $appointmentId) {
+		id
+		status
+	}
+}
+
+mutation MarkAppointmentNoShow($appointmentId: ID!) {
+	markAppointmentNoShow(appointmentId: $appointmentId) {
+		id
+		status
+	}
+}
+
+query QueueTickets($input: QueueTicketsInput!) {
+	queueTickets(input: $input) {
+		...QueueTicketFields
+	}
+}
+
+query QueueBoard($clinicId: ID!) {
+	queueBoard(clinicId: $clinicId) {
+		clinicName
+		date
+		nowServing {
+			...BoardTicketFields
+		}
+		waiting {
+			...BoardTicketFields
+		}
+	}
+}
+
+mutation CheckInPatient($input: CheckInPatientInput!) {
+	checkInPatient(input: $input) {
+		...QueueTicketFields
+	}
+}
+
+mutation CallNextQueueTicket($input: CallNextInput!) {
+	callNextQueueTicket(input: $input) {
+		...QueueTicketFields
+	}
+}
+
+mutation CallQueueTicket($ticketId: ID!) {
+	callQueueTicket(ticketId: $ticketId) {
+		...QueueTicketFields
+	}
+}
+
+mutation StartQueueTicket($ticketId: ID!) {
+	startQueueTicket(ticketId: $ticketId) {
+		...QueueTicketFields
+	}
+}
+
+mutation SendQueueTicket($input: SendQueueTicketInput!) {
+	sendQueueTicket(input: $input) {
+		...QueueTicketFields
+	}
+}
+
+mutation CompleteQueueTicket($ticketId: ID!) {
+	completeQueueTicket(ticketId: $ticketId) {
+		...QueueTicketFields
+	}
+}
+
+mutation SkipQueueTicket($ticketId: ID!) {
+	skipQueueTicket(ticketId: $ticketId) {
+		...QueueTicketFields
+	}
+}
+
+mutation RequeueQueueTicket($ticketId: ID!) {
+	requeueQueueTicket(ticketId: $ticketId) {
+		...QueueTicketFields
+	}
+}
+
+mutation CancelQueueTicket($input: CancelQueueTicketInput!) {
+	cancelQueueTicket(input: $input) {
+		...QueueTicketFields
+	}
+}

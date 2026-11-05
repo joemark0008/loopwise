@@ -44,6 +44,7 @@ function subjectIdOf(action: WiseActionDefinition, input: Record<string, unknown
 		result: 'resultId',
 		order: 'itemId',
 		report: 'reportId',
+		appointment: 'appointmentId',
 		patient: null,
 	}[action.subject];
 	if (!key) {
@@ -58,6 +59,7 @@ function subjectIdOf(action: WiseActionDefinition, input: Record<string, unknown
 				result: 'Name the result: use the id from list_results_to_review.',
 				order: 'Name the test: use the item id from list_lab_orders.',
 				report: 'Name the report: use the id the report tool returned.',
+				appointment: 'Name the appointment: use the id from list_appointments.',
 				patient: '',
 			}[action.subject],
 		);

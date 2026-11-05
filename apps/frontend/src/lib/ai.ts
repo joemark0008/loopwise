@@ -87,6 +87,8 @@ const WISE_ACTION_CARDS = [
 	...WISE_ACTIONS.map((action) => action.name),
 	'list_results_to_review',
 	'list_lab_orders',
+	'list_appointments',
+	'list_queue',
 ] as const;
 
 /** Tools that should NOT be collapsed (important UI elements), per density setting. */

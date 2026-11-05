@@ -19,6 +19,7 @@ export const WISE_TOOL_KIND_LABELS: Record<WiseToolKind, string> = {
 
 export const WISE_TOOL_CATEGORIES = [
 	'patients',
+	'scheduling',
 	'encounters',
 	'orders',
 	'results',
@@ -32,6 +33,7 @@ export type WiseToolCategory = (typeof WISE_TOOL_CATEGORIES)[number];
 
 export const WISE_TOOL_CATEGORY_LABELS: Record<WiseToolCategory, string> = {
 	patients: 'Patients',
+	scheduling: 'Appointments and queue',
 	encounters: 'Encounters',
 	orders: 'Orders',
 	results: 'Results',
@@ -103,6 +105,39 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 		kind: 'propose',
 		category: 'patients',
 		defaultOn: CARE,
+	},
+	// Appointments and queue
+	{
+		name: 'list_appointments',
+		label: "List a day's appointments",
+		summary: "Lists the clinic's appointments on a day, for one doctor or all, by time.",
+		kind: 'read',
+		category: 'scheduling',
+		defaultOn: ALL,
+	},
+	{
+		name: 'list_queue',
+		label: "Who's next",
+		summary: "Lists today's queue in call order, the priority lane first.",
+		kind: 'read',
+		category: 'scheduling',
+		defaultOn: ALL,
+	},
+	{
+		name: 'propose_appointment',
+		label: 'Book an appointment',
+		summary: "Drafts a booking with a doctor; you pick the slot and confirm. The patient isn't messaged.",
+		kind: 'propose',
+		category: 'scheduling',
+		defaultOn: ALL,
+	},
+	{
+		name: 'propose_reschedule',
+		label: 'Reschedule an appointment',
+		summary: 'Drafts moving a booking to another slot or doctor, shown before → after.',
+		kind: 'propose',
+		category: 'scheduling',
+		defaultOn: ALL,
 	},
 	// Encounters
 	{

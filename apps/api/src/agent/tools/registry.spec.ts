@@ -59,6 +59,10 @@ describe('agent tool registry', () => {
 			propose_bill_step: 'propose',
 			propose_save_report: 'propose',
 			propose_patient_update: 'propose',
+			list_appointments: 'read',
+			list_queue: 'read',
+			propose_appointment: 'propose',
+			propose_reschedule: 'propose',
 			web_search: 'read',
 			web_fetch: 'read',
 		});
@@ -95,6 +99,7 @@ describe('agent tool registry', () => {
 			analytics: { ...readMocks(TOOL_SERVICE_READS.analytics) },
 			reports: { ...readMocks(TOOL_SERVICE_READS.reports), exportPdf: write },
 			diagnostics: { ...readMocks(TOOL_SERVICE_READS.diagnostics), review: write, release: write },
+			scheduling: { ...readMocks(TOOL_SERVICE_READS.scheduling), book: write, checkIn: write },
 			attachments: { ...readMocks(TOOL_SERVICE_READS.attachments), upload: write },
 		} as never);
 
@@ -108,6 +113,7 @@ describe('agent tool registry', () => {
 			analytics: ['describe', 'run', 'metric'],
 			reports: ['toolOutputs', 'versions'],
 			diagnostics: ['labWorklistForWise', 'resultsToReviewForWise'],
+			scheduling: ['appointmentsForWise', 'queueForWise'],
 			attachments: ['readTextForWise'],
 		});
 		expect(Object.isFrozen(facades.patients)).toBe(true);
@@ -166,6 +172,8 @@ describe('agent tool registry', () => {
 			propose_bill_step: { encounterId: 'e1', step: 'issue' },
 			propose_save_report: { reportId: 'rep1' },
 			propose_patient_update: { phone: '0917 000 0000' },
+			propose_appointment: { doctor: 'Reyes', date: '2026-11-10', partOfDay: 'morning' },
+			propose_reschedule: { appointmentId: 'a1', date: '2026-11-12' },
 		};
 		const proposeTools = Object.entries(everyTool).filter(([, tool]) => getToolKind(tool) === 'propose');
 		expect(proposeTools.map(([name]) => name).sort()).toEqual(Object.keys(inputs).sort());

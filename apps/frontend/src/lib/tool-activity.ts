@@ -119,6 +119,14 @@ const describeToolActivity = (part: UIToolPart): string | null => {
 			return 'Preparing to save the report';
 		case 'propose_patient_update':
 			return 'Drafting the contact change';
+		case 'list_appointments':
+			return 'Reading the appointments';
+		case 'list_queue':
+			return 'Reading the queue';
+		case 'propose_appointment':
+			return 'Drafting the booking';
+		case 'propose_reschedule':
+			return 'Drafting the reschedule';
 		case 'mcp_call':
 			return describeMcpCall(input);
 		case 'mcp_connect':
