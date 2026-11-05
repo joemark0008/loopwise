@@ -167,7 +167,13 @@ function SkillsManager() {
 					onSubmit={(draft) =>
 						editing.data &&
 						updateMutation.mutate(
-							{ ...draft, expectedHash: editing.data.hash },
+							// Only the input's fields: the draft starts from the query result (`hash`, `__typename`).
+							{
+								name: draft.name,
+								description: draft.description,
+								body: draft.body,
+								expectedHash: editing.data.hash,
+							},
 							{ onSuccess: () => setEditingName(null) },
 						)
 					}

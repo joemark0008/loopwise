@@ -17,3 +17,6 @@ apps/api/storage/
 
 # Playwright
 test-results/
+
+# Skills an interrupted e2e run may leave in the seeded clinic folder (apps/api)
+apps/api/agent/skills/e2e-skill-*.md

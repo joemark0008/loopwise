@@ -155,8 +155,20 @@ test.describe('skills', () => {
 		await expect(page.getByRole('button', { name: `Delete ${name}` })).toBeHidden();
 	};
 
-	test('creates a skill in the form, finds it in chat, edits and deletes it', async ({ page }) => {
-		const name = `e2e-skill-${Date.now()}`;
+	/** Removes the skill's file (`agent/skills/<name>.md`) if a failed run left it; no-op when it is gone. */
+	const removeSkillFile = async (page: Page, name: string) => {
+		const graphql = async (query: string, variables: object) =>
+			(await page.request.post('/graphql', { data: { query, variables } })).json();
+		const detail = await graphql('query ($name: String!) { skillDetail(name: $name) { hash } }', { name });
+		const hash = detail.data?.skillDetail?.hash;
+		if (hash) {
+			await graphql('mutation ($input: DeleteSkillInput!) { deleteSkill(input: $input) }', {
+				input: { name, expectedHash: hash },
+			});
+		}
+	};
+
+	const createEditAndDeleteSkill = async (page: Page, name: string) => {
 		await page.goto('/settings/clinic/skills');
 		await page.getByRole('button', { name: 'New skill' }).click();
 		await page.getByPlaceholder('churn-analysis').fill(name);
@@ -175,8 +187,18 @@ test.describe('skills', () => {
 		await expect(page.getByPlaceholder(/Call qt_monthly_churn/)).toHaveValue('1. Say hello.');
 		await page.getByPlaceholder(/Use when the user asks/).fill('Edited description.');
 		await page.getByRole('button', { name: 'Save skill' }).click();
+		await expect(page.getByRole('dialog')).toBeHidden();
 		await expect(page.getByText('Edited description.')).toBeVisible();
 
 		await deleteSkill(page, name);
+	};
+
+	test('creates a skill in the form, finds it in chat, edits and deletes it', async ({ page }) => {
+		const name = `e2e-skill-${Date.now()}`;
+		try {
+			await createEditAndDeleteSkill(page, name);
+		} finally {
+			await removeSkillFile(page, name);
+		}
 	});
 });
