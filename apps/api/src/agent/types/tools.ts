@@ -16,6 +16,7 @@ import type {
 	listResultsToReview,
 	proposeEncounterNote,
 	proposePatientRegistration,
+	proposeScribeNote,
 	report,
 	runAnalyticsSql,
 } from '@loopwise/shared/tools';
@@ -190,6 +191,17 @@ export interface AgentToolServices {
 			userId: string,
 			opts: { patientId?: string; urgency?: listResultsToReview.Input['urgency']; limit: number },
 		): Promise<Omit<listResultsToReview.Output, '_version'>>;
+	};
+	/**
+	 * `ScribeWiseReader` read for `propose_scribe_note` (the AI scribe): checks the visit, the ICD-10 codes, the tests
+	 * against the catalog and the allergies, as the user and audited. Each part is saved by its card's own mutation.
+	 */
+	scribe: {
+		draftForWise(
+			userId: string,
+			patientId: string,
+			input: proposeScribeNote.Input,
+		): Promise<Omit<proposeScribeNote.Output, '_version' | 'success'>>;
 	};
 	/** `EncounterNoteService` read for `propose_encounter_note`; saving is the user's `updateEncounterNote`. */
 	encounters: {

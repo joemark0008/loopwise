@@ -45,6 +45,7 @@ import {
 	proposePrescriptionTool,
 } from './propose-encounter-record.js';
 import proposePatientRegistration from './propose-patient-registration.js';
+import proposeScribeNote from './propose-scribe-note.js';
 import proposeSkill from './propose-skill.js';
 import readAttachment from './read-attachment.js';
 import reportTool from './report.js';
@@ -77,6 +78,7 @@ export const tools = {
 	propose_prescription: proposePrescriptionTool,
 	propose_medical_certificate: proposeMedicalCertificateTool,
 	propose_charges: proposeChargesTool,
+	propose_scribe_note: proposeScribeNote,
 	chart_patient_trend: chartPatientTrend,
 	chart_facility_panel: chartFacilityPanel,
 	create_report: createReport,

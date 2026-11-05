@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { ClinicalDbService } from '../../rls/clinical-db.service.js';
+import { ClinicalDbService, type ClinicalTx } from '../../rls/clinical-db.service.js';
 import { DiagnosticTestRepository } from './diagnostic-test.repository.js';
 import { type DiagnosticTest, toDiagnosticTest } from './models/diagnostic-test.model.js';
 
@@ -25,5 +25,10 @@ export class DiagnosticTestService {
 		return this.db.asUser(userId, async (tx) =>
 			(await this.tests.listForOrganization(tx, organizationId, opts)).map(toDiagnosticTest),
 		);
+	}
+
+	/** The organization's active tests, on the caller's transaction (the AI scribe matches the tests it drafts). */
+	async listActiveOn(tx: ClinicalTx, organizationId: string): Promise<DiagnosticTest[]> {
+		return (await this.tests.listForOrganization(tx, organizationId)).map(toDiagnosticTest);
 	}
 }

@@ -1818,6 +1818,11 @@ type Mutation {
 
   """Records a payment against an issued invoice; returns the invoice."""
   recordPayment(input: RecordPaymentInput!): Invoice!
+
+  """
+  Records the patient's answer to recording this visit (granted, refused or withdrawn).
+  """
+  recordScribeConsent(input: RecordScribeConsentInput!): RecordingConsent!
   recordVitals(input: RecordVitalsInput!): VitalSigns!
 
   """
@@ -2743,6 +2748,11 @@ type Query {
 
   """The chart document a report version was saved as."""
   savedReportDocument(toolCallId: String!): ClinicalDocument
+
+  """
+  The visit's latest answer to recording for the AI scribe; null when the patient wasn't asked.
+  """
+  scribeConsent(encounterId: ID!): RecordingConsent
   searchChats(limit: Int, query: String!): [ChatSearchResult!]!
 
   """Common ICD-10 codes by code prefix or title words."""
@@ -2977,6 +2987,21 @@ input RecordPaymentInput {
   wiseOrigin: WiseOriginInput
 }
 
+"""
+The patient's answer to recording this visit for the AI scribe, asked before recording.
+"""
+input RecordScribeConsentInput {
+  encounterId: ID!
+
+  """
+  Whether the patient agreed; false records a refusal or withdraws an earlier yes.
+  """
+  granted: Boolean!
+
+  """Who answered, when not the patient (a guardian)."""
+  signedBy: String
+}
+
 input RecordVitalsInput {
   bloodGlucoseMgDl: Int
   diastolicMmHg: Int
@@ -2994,6 +3019,33 @@ input RecordVitalsInput {
   Set when completing a confirmed `propose_encounter` card (its drafted vitals and diagnoses).
   """
   wiseOrigin: WiseOriginInput
+}
+
+"""
+The patient's answer to recording a visit for the AI scribe: a `patient_consents` row of type PHOTO_VIDEO tied to the encounter. The latest answer counts.
+"""
+type RecordingConsent {
+  encounterId: ID!
+
+  """Whether the patient agreed; false records a refusal or a withdrawal."""
+  granted: Boolean!
+  id: ID!
+
+  """Granted and not revoked: recording is allowed."""
+  isActive: Boolean!
+  revokedAt: DateTime
+  signedAt: DateTime!
+
+  """Who answered: the patient, or a guardian for a minor."""
+  signedBy: String
+
+  """
+  The consent type of the reference schema used for recording (PHOTO_VIDEO).
+  """
+  type: String!
+
+  """The version of the consent text read to the patient."""
+  version: String!
 }
 
 """

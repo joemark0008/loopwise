@@ -32,6 +32,7 @@ describe('agent tool registry', () => {
 			propose_prescription: 'propose',
 			propose_medical_certificate: 'propose',
 			propose_charges: 'propose',
+			propose_scribe_note: 'propose',
 			find_patient: 'read',
 			read_attachment: 'read',
 			open_page: 'navigate',
@@ -101,6 +102,7 @@ describe('agent tool registry', () => {
 			diagnostics: { ...readMocks(TOOL_SERVICE_READS.diagnostics), review: write, release: write },
 			scheduling: { ...readMocks(TOOL_SERVICE_READS.scheduling), book: write, checkIn: write },
 			attachments: { ...readMocks(TOOL_SERVICE_READS.attachments), upload: write },
+			scribe: { ...readMocks(TOOL_SERVICE_READS.scribe), recordConsent: write },
 		} as never);
 
 		expect(
@@ -115,6 +117,7 @@ describe('agent tool registry', () => {
 			diagnostics: ['labWorklistForWise', 'resultsToReviewForWise'],
 			scheduling: ['appointmentsForWise', 'queueForWise'],
 			attachments: ['readTextForWise'],
+			scribe: ['draftForWise'],
 		});
 		expect(Object.isFrozen(facades.patients)).toBe(true);
 		expect('register' in facades.patients).toBe(false);
@@ -140,6 +143,22 @@ describe('agent tool registry', () => {
 						version: 1,
 					}),
 				},
+				scribe: {
+					draftForWise: async () => ({
+						patientId: 'p1',
+						encounter: {
+							id: 'e1',
+							encounterNo: 'TAG-ENC-1',
+							startedAt: '2026-11-03T01:00:00.000Z',
+							clinicName: 'HC',
+						},
+						parts: ['soap'],
+						diagnoses: [],
+						tests: { matched: [], unmatched: [] },
+						allergies: [],
+						allergyWarnings: [],
+					}),
+				},
 			},
 			touched,
 		);
@@ -157,6 +176,7 @@ describe('agent tool registry', () => {
 			propose_prescription: { encounterId: 'e1', items: [] },
 			propose_medical_certificate: { encounterId: 'e1' },
 			propose_charges: { encounterId: 'e1' },
+			propose_scribe_note: { encounterId: 'e1', soap: { assessment: 'Hypertension, controlled.' } },
 			propose_vitals: { encounterId: 'e1', vitals: { systolicMmHg: 150, diastolicMmHg: 95 } },
 			propose_allergy: { substance: 'Penicillin' },
 			propose_remove_allergy: { substance: 'Penicillin' },

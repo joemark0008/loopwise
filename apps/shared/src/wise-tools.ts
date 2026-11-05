@@ -157,6 +157,15 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 		defaultOn: CARE,
 	},
 	{
+		name: 'propose_scribe_note',
+		label: 'AI scribe',
+		summary:
+			'Drafts a whole visit from your dictation or the consult recording: SOAP note, vitals, diagnoses, prescription, tests, certificate, follow-up and a patient summary, each confirmed by you.',
+		kind: 'propose',
+		category: 'encounters',
+		defaultOn: CARE,
+	},
+	{
 		name: 'propose_vitals',
 		label: 'Record vitals',
 		summary: 'Drafts vital signs for a visit that already exists.',

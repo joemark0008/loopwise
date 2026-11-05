@@ -24,6 +24,7 @@ import { PrescriptionsModule } from './clinical/prescriptions/prescriptions.modu
 import { ReferenceModule } from './clinical/reference/reference.module.js';
 import { ClinicalDbModule } from './clinical/rls/clinical-db.module.js';
 import { SchedulingModule } from './clinical/scheduling/scheduling.module.js';
+import { ScribeModule } from './clinical/scribe/scribe.module.js';
 import { WiseProposalsModule } from './clinical/wise-proposals/wise-proposals.module.js';
 import { RequestLoaders } from './common/dataloader/request-loaders.js';
 import { AllExceptionsFilter } from './common/errors/all-exceptions.filter.js';
@@ -93,6 +94,7 @@ export const SCHEMA_FILE = path.join(import.meta.dirname, '..', 'schema.gql');
 		PractitionersModule,
 		ClinicSetupModule,
 		ReferenceModule,
+		ScribeModule,
 		DiagnosticsModule,
 		PrescriptionsModule,
 		DocumentsModule,

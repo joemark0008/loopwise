@@ -33,6 +33,7 @@ export * as proposeEncounterNote from './propose-encounter-note';
 export * as proposeMedicalCertificate from './propose-medical-certificate';
 export * as proposePatientRegistration from './propose-patient-registration';
 export * as proposePrescription from './propose-prescription';
+export * as proposeScribeNote from './propose-scribe-note';
 export * as proposeSkill from './propose-skill';
 export * as proposeSql from './propose-sql';
 export { QueryIdSchema } from './query-id';

@@ -39,6 +39,7 @@
 		"./medical-certificate": "./src/medical-certificate.ts",
 		"./prescription": "./src/prescription.ts",
 		"./scribe": "./src/scribe.ts",
+		"./scribe-demo": "./src/scribe-demo.ts",
 		"./staff-roles": "./src/staff-roles.ts",
 		"./vitals": "./src/vitals.ts",
 		"./wise-proposal": "./src/wise-proposal.ts",

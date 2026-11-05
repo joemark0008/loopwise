@@ -28,7 +28,8 @@ import { LabWorklistService } from './worklist/lab-worklist.service.js';
  * Diagnostics (schema `diagnostics.prisma`): the organization's test catalog (`catalog/`), a visit's lab and imaging
  * requests (`orders/`), the clinic's in-house lab desk that collects, runs, enters and releases results (`worklist/`),
  * and the doctor's results inbox and review (`results/`). Every status change goes through
- * `DiagnosticOrderTransitions`; Wise reads through `DIAGNOSTICS_READER`.
+ * `DiagnosticOrderTransitions`; Wise reads through `DIAGNOSTICS_READER`, the AI scribe the catalog
+ * (`DiagnosticTestService`).
  */
 @Module({
 	imports: [ClinicalDbModule, AuditModule, DocumentSequencesModule, WiseProposalsModule, GuardsModule],
@@ -50,6 +51,6 @@ import { LabWorklistService } from './worklist/lab-worklist.service.js';
 		DiagnosticsWiseReader,
 		{ provide: DIAGNOSTICS_READER, useExisting: DiagnosticsWiseReader },
 	],
-	exports: [DIAGNOSTICS_READER],
+	exports: [DIAGNOSTICS_READER, DiagnosticTestService],
 })
 export class DiagnosticsModule {}

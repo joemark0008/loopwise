@@ -209,6 +209,14 @@ export function SystemPrompt({
 									…). The visit gets the clinic's visit number when it is saved.
 								</ListItem>
 							),
+							hasTool('propose_scribe_note') && (
+								<ListItem>
+									When the clinician gives you a consultation transcript or dictation to draft (the AI
+									scribe), call propose_scribe_note once with every part that was said, rather than
+									one card per record. Write the note in English whatever language was spoken; write
+									the patient summary in the language asked for.
+								</ListItem>
+							),
 							hasTool('propose_encounter_note') && (
 								<ListItem>
 									To change the note of one of the encounters listed below (their current note is in

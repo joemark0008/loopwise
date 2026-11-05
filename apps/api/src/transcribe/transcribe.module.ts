@@ -1,14 +1,18 @@
 import { Module } from '@nestjs/common';
 
-import { AgentModule } from '../agent/agent.module.js';
+import { AgentCoreModule } from '../agent/agent-core.module.js';
 import { TranscribeController } from './transcribe.controller.js';
 import { TranscribeResolver } from './transcribe.resolver.js';
 import { TranscribeService } from './transcribe.service.js';
 
-/** Voice input: `POST /api/transcribe` and the transcription model catalogue. */
+/**
+ * Voice input: `POST /api/transcribe` and the transcription model catalogue. Exports `TranscribeService` for the AI
+ * scribe's consent-checked recording (`clinical/scribe`).
+ */
 @Module({
-	imports: [AgentModule],
+	imports: [AgentCoreModule],
 	controllers: [TranscribeController],
 	providers: [TranscribeService, TranscribeResolver],
+	exports: [TranscribeService],
 })
 export class TranscribeModule {}
