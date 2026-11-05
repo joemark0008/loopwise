@@ -5,11 +5,11 @@ import { toUserRole } from '@loopwise/shared/staff-roles';
 import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
 
-import { HandlerError } from '../common/errors/handler-error.js';
-import { ConfigService } from '../config/config.service.js';
-import type { Clinic, Prisma, StaffRole } from '../generated/prisma/client.js';
-import { PrismaService } from '../prisma/prisma.service.js';
-import type { DbExecutor } from '../prisma/prisma.types.js';
+import { HandlerError } from '../../../common/errors/handler-error.js';
+import { ConfigService } from '../../../config/config.service.js';
+import type { Clinic, Prisma, StaffRole } from '../../../generated/prisma/client.js';
+import { PrismaService } from '../../../prisma/prisma.service.js';
+import type { DbExecutor } from '../../../prisma/prisma.types.js';
 import { clinicCodeFromName } from './clinic-code.js';
 import { defaultUserGroupValues } from './default-user-group.js';
 

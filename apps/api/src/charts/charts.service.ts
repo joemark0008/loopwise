@@ -7,7 +7,7 @@ import { z } from 'zod/v4';
 import { listChartPlugins, readChartPlugin } from '../agent/services/chart-plugin.js';
 import { ChatRepository } from '../chats/chat.repository.js';
 import { ChatAccessService } from '../chats/chat-access.service.js';
-import { ClinicRepository } from '../clinics/clinic.repository.js';
+import { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import { AccessService } from '../common/guards/access.service.js';
 import type { Clinic } from '../generated/prisma/client.js';
@@ -28,7 +28,7 @@ export class ChartsService {
 	constructor(
 		private readonly charts: ChartRepository,
 		private readonly chats: ChatRepository,
-		private readonly clinics: ClinicRepository,
+		private readonly clinics: ClinicDirectoryService,
 		private readonly access: AccessService,
 		private readonly chatAccess: ChatAccessService,
 	) {}

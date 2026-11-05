@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AgentModule } from '../agent/agent.module.js';
-import { ClinicsCoreModule } from '../clinics/clinics-core.module.js';
+import { ClinicsCoreModule } from '../clinical/clinics/clinics/clinics-core.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { ChatMessagesLoader } from './chat.loader.js';
 import { ChatForkService } from './chat-fork.service.js';

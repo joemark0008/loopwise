@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 
 import { HandlerError } from '../common/errors/handler-error.js';
 import type { Prisma, User } from '../generated/prisma/client.js';
-import { OrganizationRepository } from '../organizations/organization.repository.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UserRepository } from '../users/user.repository.js';
 
@@ -14,13 +13,16 @@ export class SetupRepository {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly users: UserRepository,
-		private readonly organizations: OrganizationRepository,
 	) {}
 
-	/** Creates the first user and the default organization in one transaction; refuses once any user exists. */
+	/**
+	 * Creates the first user, then runs `afterCreate` (the default organization) on the same transaction; refuses once
+	 * any user exists.
+	 */
 	createFirstAdmin(
 		user: Parameters<UserRepository['createUser']>[0],
 		account: Parameters<UserRepository['createUser']>[1],
+		afterCreate: (created: User, tx: Prisma.TransactionClient) => Promise<void>,
 	): Promise<User> {
 		return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 			// $executeRaw, not $queryRaw: pg_advisory_xact_lock returns void, which Prisma can't deserialize.
@@ -29,7 +31,7 @@ export class SetupRepository {
 				throw new HandlerError('CONFLICT', 'Setup is already complete.');
 			}
 			const created = await this.users.createUser(user, account, tx);
-			await this.organizations.initializeDefaultOrganization(created.id, tx);
+			await afterCreate(created, tx);
 			return created;
 		});
 	}

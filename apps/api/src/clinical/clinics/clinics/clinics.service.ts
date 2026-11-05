@@ -6,13 +6,13 @@ import { DATE_FORMAT_PRESETS, type DisplaySettings } from '@loopwise/shared/date
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod/v4';
 
-import { isDatabaseObjectAllowed } from '../agent/services/context-access.js';
-import { fullClinicContextAccess } from '../agent/services/user-group-context-access.service.js';
-import { type DatabaseObject, getDatabaseObjects } from '../agent/user-rules.js';
-import { HandlerError } from '../common/errors/handler-error.js';
-import { AccessService, type ClinicAccessGrant } from '../common/guards/access.service.js';
-import { ConfigService } from '../config/config.service.js';
-import type { Clinic, ClinicSavedPrompt, StaffRole } from '../generated/prisma/client.js';
+import { isDatabaseObjectAllowed } from '../../../agent/services/context-access.js';
+import { fullClinicContextAccess } from '../../../agent/services/user-group-context-access.service.js';
+import { type DatabaseObject, getDatabaseObjects } from '../../../agent/user-rules.js';
+import { HandlerError } from '../../../common/errors/handler-error.js';
+import { AccessService, type ClinicAccessGrant } from '../../../common/guards/access.service.js';
+import { ConfigService } from '../../../config/config.service.js';
+import type { Clinic, ClinicSavedPrompt, StaffRole } from '../../../generated/prisma/client.js';
 import { ClinicRepository } from './clinic.repository.js';
 import { ClinicSavedPromptRepository } from './clinic-saved-prompt.repository.js';
 import type { ClinicSummary } from './models/clinic.model.js';

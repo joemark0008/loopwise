@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import type { ClinicSavedPrompt, Prisma } from '../generated/prisma/client.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import type { ClinicSavedPrompt, Prisma } from '../../../generated/prisma/client.js';
+import { PrismaService } from '../../../prisma/prisma.service.js';
 
 /** Port of upstream `queries/clinic-saved-prompt.queries.ts`. */
 @Injectable()

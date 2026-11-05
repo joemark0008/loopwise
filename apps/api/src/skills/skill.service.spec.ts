@@ -10,7 +10,7 @@ vi.mock('node:fs', async (importOriginal) => {
 	return { ...actual, watch: vi.fn(() => ({ close: vi.fn() })) };
 });
 
-import type { ClinicRepository } from '../clinics/clinic.repository.js';
+import type { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 import { PRELOADED_SKILL_CHAR_LIMIT, PRELOADED_SKILLS_TOTAL_CHAR_LIMIT, SkillService } from './skill.service.js';
 
 // loopwise: upstream mocked `retrieveClinicById` (throwing for unknown clinics); the service takes the repository.
@@ -22,7 +22,7 @@ const skillService = new SkillService({
 		}
 		return { id: clinicId, path };
 	}),
-} as unknown as ClinicRepository);
+} as unknown as ClinicDirectoryService);
 
 function createClinicWithSkill(prefix: string, skillName: string, body: string): string {
 	const root = mkdtempSync(join(tmpdir(), `loopwise-skill-${prefix}-`));

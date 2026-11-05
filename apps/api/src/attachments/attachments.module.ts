@@ -1,6 +1,6 @@
 import { Module, type OnApplicationShutdown } from '@nestjs/common';
 
-import { ClinicsCoreModule } from '../clinics/clinics-core.module.js';
+import { ClinicsCoreModule } from '../clinical/clinics/clinics/clinics-core.module.js';
 import { AttachmentsController } from './attachments.controller.js';
 import { AttachmentsService } from './attachments.service.js';
 import { ImageRepository } from './image.repository.js';

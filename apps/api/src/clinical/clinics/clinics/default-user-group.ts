@@ -13,7 +13,7 @@ import {
 import { ALL_MCP_ACCESS } from '@loopwise/shared/user-group-mcp';
 import { ALL_SKILLS_ACCESS } from '@loopwise/shared/user-group-skills';
 
-import type { Prisma } from '../generated/prisma/client.js';
+import type { Prisma } from '../../../generated/prisma/client.js';
 
 /** The "All Users" group every clinic gets on creation (upstream `defaultUserGroupValues`). */
 export const defaultUserGroupValues = (clinicId: string): Prisma.UserGroupUncheckedCreateInput => ({

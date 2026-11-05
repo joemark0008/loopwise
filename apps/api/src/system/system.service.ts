@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { OrganizationsService } from '../clinical/clinics/organizations/organizations.service.js';
 import { ConfigService } from '../config/config.service.js';
-import { OrganizationRepository } from '../organizations/organization.repository.js';
 import type { PublicConfig } from './models/public-config.model.js';
 import type { AppVersion } from './models/version.model.js';
 
@@ -10,7 +10,7 @@ import type { AppVersion } from './models/version.model.js';
 export class SystemService {
 	constructor(
 		private readonly config: ConfigService,
-		private readonly organizations: OrganizationRepository,
+		private readonly organizations: OrganizationsService,
 	) {}
 
 	async getPublicConfig(): Promise<PublicConfig> {

@@ -3,7 +3,7 @@ import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
 
 import { isStoragePath, toStorageRelativePath, toStorageVirtualPath } from '../agent/utils/tools.js';
-import { ClinicRepository } from '../clinics/clinic.repository.js';
+import { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import { readAttachmentText } from './attachment-text.js';
 import {
@@ -47,7 +47,7 @@ export interface AttachmentFile {
  */
 @Injectable()
 export class AttachmentsService {
-	constructor(private readonly clinics: ClinicRepository) {}
+	constructor(private readonly clinics: ClinicDirectoryService) {}
 
 	/** `POST /api/attachments`. */
 	async upload(

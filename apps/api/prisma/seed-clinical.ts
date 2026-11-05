@@ -2,12 +2,12 @@ import crypto from 'node:crypto';
 
 import { findIcd10 } from '@loopwise/shared/icd10';
 
+import { defaultUserGroupValues } from '../src/clinical/clinics/clinics/default-user-group.js';
 import { DocumentSequenceRepository } from '../src/clinical/clinics/document-sequences/document-sequence.repository.js';
 import {
 	type DocumentSequenceKey,
 	DocumentSequenceService,
 } from '../src/clinical/clinics/document-sequences/document-sequence.service.js';
-import { defaultUserGroupValues } from '../src/clinics/default-user-group.js';
 import { uuidv7 } from '../src/common/uuid.js';
 import type {
 	Disposition,

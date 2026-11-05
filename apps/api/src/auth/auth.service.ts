@@ -3,11 +3,11 @@ import { APIError, betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { bearer } from 'better-auth/plugins/bearer';
 
+import { OrganizationsService } from '../clinical/clinics/organizations/organizations.service.js';
 import { buildUsernameAllowlist } from '../common/utils/auth-utils.js';
 import { memoizeUntilRejected } from '../common/utils/memoize-until-rejected.js';
 import { uuidv7 } from '../common/uuid.js';
 import { ConfigService } from '../config/config.service.js';
-import { OrganizationRepository } from '../organizations/organization.repository.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { DEACTIVATED_ACCOUNT_MESSAGE } from '../users/account-status.js';
 import { UserRepository } from '../users/user.repository.js';
@@ -52,7 +52,7 @@ export class AuthService {
 		private readonly config: ConfigService,
 		private readonly prisma: PrismaService,
 		private readonly users: UserRepository,
-		private readonly organizations: OrganizationRepository,
+		private readonly organizations: OrganizationsService,
 	) {}
 
 	getAuth(): Promise<AuthInstance> {

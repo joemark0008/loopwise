@@ -7,10 +7,13 @@ import {
 import { Injectable } from '@nestjs/common';
 
 import { AuditService } from '../clinical/audit/audit.service.js';
+import {
+	OrganizationsService,
+	type UserOrganization,
+} from '../clinical/clinics/organizations/organizations.service.js';
 import { ClinicalDbService } from '../clinical/rls/clinical-db.service.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import type { WiseToolSetting } from '../generated/prisma/client.js';
-import { OrganizationsService, type UserOrganization } from '../organizations/organizations.service.js';
 import { type WiseToolOwner, WiseToolSettingsRepository } from './wise-tool-settings.repository.js';
 
 /** Settings → Wise tools; the GraphQL models (`models/wise-tool-settings.model.ts`) have the same shape. */

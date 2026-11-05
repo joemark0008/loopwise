@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { ClinicsCoreModule } from '../clinics/clinics-core.module.js';
+import { ClinicsCoreModule } from '../clinical/clinics/clinics/clinics-core.module.js';
 import { SkillService } from './skill.service.js';
 import { SkillAuthoringService } from './skill-authoring.service.js';
 import { SkillsResolver } from './skills.resolver.js';

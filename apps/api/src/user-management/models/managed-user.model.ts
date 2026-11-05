@@ -1,6 +1,6 @@
 import { Field, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
 
-import { StaffRole } from '../../clinics/models/clinic-enums.js';
+import { StaffRole } from '../../clinical/clinics/clinics/models/clinic-enums.js';
 
 export enum ManagedUserStatus {
 	/** Created by an admin; has not set a password through their link yet. */

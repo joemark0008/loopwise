@@ -11,12 +11,12 @@ import type { StorageScope } from '../attachments/storage/index.js';
 import { statUserFile } from '../attachments/storage/user-files.js';
 import { ChatRepository } from '../chats/chat.repository.js';
 import { ANALYTICS_READER } from '../clinical/analytics/analytics-reader.token.js';
+import { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 import { DIAGNOSTICS_READER } from '../clinical/diagnostics/diagnostics-reader.token.js';
 import { ENCOUNTER_NOTE_READER } from '../clinical/encounters/encounter-note-reader.token.js';
 import { INSIGHTS_READER } from '../clinical/insights/insights-reader.token.js';
 import { PATIENT_READER } from '../clinical/patients/patient-reader.token.js';
 import { REPORTS_READER } from '../clinical/reports/reports-reader.token.js';
-import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import { AccessService } from '../common/guards/access.service.js';
 import { ConfigService } from '../config/config.service.js';
@@ -77,7 +77,7 @@ export class AgentService {
 
 	constructor(
 		private readonly chats: ChatRepository,
-		private readonly clinics: ClinicRepository,
+		private readonly clinics: ClinicDirectoryService,
 		private readonly access: AccessService,
 		private readonly llm: LlmService,
 		private readonly llmConfigs: ClinicLlmConfigRepository,

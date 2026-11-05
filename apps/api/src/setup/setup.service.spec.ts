@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { hashPassword } from 'better-auth/crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { OrganizationsService } from '../clinical/clinics/organizations/organizations.service.js';
 import type { ConfigService } from '../config/config.service.js';
 import type { UserRepository } from '../users/user.repository.js';
 import type { SetupRepository } from './setup.repository.js';
@@ -19,6 +20,7 @@ const service = new SetupService(
 	config,
 	{ countUsers } as unknown as UserRepository,
 	{ createFirstAdmin } as unknown as SetupRepository,
+	{} as OrganizationsService,
 );
 
 let log: ReturnType<typeof vi.spyOn>;

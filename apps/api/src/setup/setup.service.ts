@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
 import { hashPassword } from 'better-auth/crypto';
 
+import { OrganizationsService } from '../clinical/clinics/organizations/organizations.service.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import { ConfigService } from '../config/config.service.js';
 import { UserRepository } from '../users/user.repository.js';
@@ -18,6 +19,7 @@ export class SetupService implements OnApplicationBootstrap {
 		private readonly config: ConfigService,
 		private readonly users: UserRepository,
 		private readonly setup: SetupRepository,
+		private readonly organizations: OrganizationsService,
 	) {}
 
 	/** On an empty instance, prints the setup token and URL: the only place the token is ever shown. */
@@ -41,6 +43,7 @@ export class SetupService implements OnApplicationBootstrap {
 		await this.setup.createFirstAdmin(
 			{ id: userId, name: input.name, email: input.email, emailVerified: true },
 			{ id: crypto.randomUUID(), accountId: userId, providerId: 'credential', password },
+			(created, tx) => this.organizations.initializeDefaultOrganization(created.id, tx),
 		);
 	}
 }

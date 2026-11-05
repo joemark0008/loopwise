@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { OrganizationsModule } from '../organizations/organizations.module.js';
+import { OrganizationsModule } from '../clinical/clinics/organizations/organizations.module.js';
 import { UsersCoreModule } from '../users/users-core.module.js';
 import { SetupRepository } from './setup.repository.js';
 import { SetupResolver } from './setup.resolver.js';

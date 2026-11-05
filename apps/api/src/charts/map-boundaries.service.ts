@@ -5,7 +5,7 @@ import { z } from 'zod/v4';
 
 import { getCachedBoundary, setCachedBoundary } from '../agent/utils/map-boundary-cache.js';
 import { parseAndValidateGeoJson, safeFetch } from '../agent/utils/safe-fetch.js';
-import { ClinicRepository } from '../clinics/clinic.repository.js';
+import { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import { AccessService } from '../common/guards/access.service.js';
 
@@ -52,7 +52,7 @@ export const deleteMapBoundarySchema = z.object({ key: z.string().trim().min(1) 
 @Injectable()
 export class MapBoundariesService {
 	constructor(
-		private readonly clinics: ClinicRepository,
+		private readonly clinics: ClinicDirectoryService,
 		private readonly access: AccessService,
 	) {}
 

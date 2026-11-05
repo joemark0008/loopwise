@@ -23,6 +23,26 @@ export default tseslint.config(
 		},
 	},
 	{
+		// Modules use each other through exported services (DESIGN.md §4.5): the clinics domain's repositories
+		// (clinics, organizations, numbering, clinic setup) stay inside `clinical/clinics/`.
+		files: ['apps/api/src/**/*.ts'],
+		ignores: ['apps/api/src/clinical/clinics/**', 'apps/api/src/**/*.spec.ts'],
+		rules: {
+			'@typescript-eslint/no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							group: ['**/clinical/clinics/**/*.repository*', '**/clinics/**/*.repository*'],
+							message:
+								'Use the clinics domain through its exported services (ClinicDirectoryService, OrganizationsService …), not its repositories.',
+						},
+					],
+				},
+			],
+		},
+	},
+	{
 		// Agent tools only read or draft (DESIGN.md §9.1): their services come through the read-only facades of the tool
 		// context, so they never import the API's services, repositories or Prisma (types are fine).
 		files: ['apps/api/src/agent/tools/**/*.ts'],

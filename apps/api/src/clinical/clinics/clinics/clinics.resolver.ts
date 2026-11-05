@@ -2,16 +2,16 @@ import type { UserRole } from '@loopwise/shared/types';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 
-import type { AuthUser } from '../auth/auth.service.js';
-import { ClinicAccess, ClinicAdmin } from '../common/decorators/access.decorator.js';
+import type { AuthUser } from '../../../auth/auth.service.js';
+import { ClinicAccess, ClinicAdmin } from '../../../common/decorators/access.decorator.js';
 import {
 	CurrentClinic,
 	CurrentStaffRoles,
 	CurrentUser,
 	CurrentUserRole,
 	SelectedClinicId,
-} from '../common/decorators/current.decorator.js';
-import type { Clinic, StaffRole } from '../generated/prisma/client.js';
+} from '../../../common/decorators/current.decorator.js';
+import type { Clinic, StaffRole } from '../../../generated/prisma/client.js';
 import { ClinicsService } from './clinics.service.js';
 import { CreateClinicInput, RenameClinicInput, SavedPromptInput, UpdateSavedPromptInput } from './dto/clinic.input.js';
 import { ClinicSummary, DatabaseObject, SavedPrompt } from './models/clinic.model.js';

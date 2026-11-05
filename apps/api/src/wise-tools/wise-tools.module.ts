@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 
 import { AuditModule } from '../clinical/audit/audit.module.js';
+import { OrganizationsModule } from '../clinical/clinics/organizations/organizations.module.js';
 import { ClinicalDbModule } from '../clinical/rls/clinical-db.module.js';
-import { OrganizationsModule } from '../organizations/organizations.module.js';
 import { WiseToolSettingsRepository } from './wise-tool-settings.repository.js';
 import { WiseToolSettingsService } from './wise-tool-settings.service.js';
 import { WiseToolsResolver } from './wise-tools.resolver.js';

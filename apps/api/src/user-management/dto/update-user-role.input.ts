@@ -1,7 +1,7 @@
 import { Field, ID, InputType } from '@nestjs/graphql';
 import { ArrayUnique, IsEnum, IsIn, IsUUID } from 'class-validator';
 
-import { StaffRole } from '../../clinics/models/clinic-enums.js';
+import { StaffRole } from '../../clinical/clinics/clinics/models/clinic-enums.js';
 import { ORG_ACCESS_LEVELS, type OrgAccessLevel } from './create-user.input.js';
 
 @InputType()

@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { AuditService } from '../clinical/audit/audit.service.js';
+import type {
+	OrganizationsService,
+	UserOrganization,
+} from '../clinical/clinics/organizations/organizations.service.js';
 import type { ClinicalDbService, ClinicalTx } from '../clinical/rls/clinical-db.service.js';
 import type { Organization, WiseToolSetting } from '../generated/prisma/client.js';
-import type { OrganizationsService, UserOrganization } from '../organizations/organizations.service.js';
 import type { WiseToolSettingsRepository } from './wise-tool-settings.repository.js';
 import { WiseToolSettingsService } from './wise-tool-settings.service.js';
 

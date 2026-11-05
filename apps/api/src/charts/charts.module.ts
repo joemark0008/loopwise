@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { ChatsCoreModule } from '../chats/chats-core.module.js';
-import { ClinicsCoreModule } from '../clinics/clinics-core.module.js';
+import { ClinicsCoreModule } from '../clinical/clinics/clinics/clinics-core.module.js';
 import { ChartRepository } from './chart.repository.js';
 import { ChartImagesController, MessageImagesController } from './charts.controller.js';
 import { ChartsResolver } from './charts.resolver.js';

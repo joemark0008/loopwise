@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
-import { AccessService, type ClinicAccessGrant } from '../common/guards/access.service.js';
-import type { Organization } from '../generated/prisma/client.js';
+import { AccessService, type ClinicAccessGrant } from '../../../common/guards/access.service.js';
+import { ConfigService } from '../../../config/config.service.js';
+import type { Organization, Prisma } from '../../../generated/prisma/client.js';
+import { ClinicDirectoryService } from '../clinics/clinic-directory.service.js';
 import { type GoogleConfig, OrganizationRepository } from './organization.repository.js';
 
 /** An organization the user works in, and whether they may administer it. */
@@ -19,11 +21,32 @@ export interface UserOrganization {
 export class OrganizationsService {
 	constructor(
 		private readonly organizations: OrganizationRepository,
+		private readonly clinics: ClinicDirectoryService,
 		private readonly access: AccessService,
+		private readonly config: ConfigService,
 	) {}
 
 	getGoogleConfig(): Promise<GoogleConfig> {
 		return this.organizations.getGoogleConfig();
+	}
+
+	/**
+	 * Setup of a self-hosted instance, on the caller's transaction: creates the default organization with the user as
+	 * its ADMIN and, when LOOPWISE_DEFAULT_CLINIC_PATH is set, the default clinic with the user as SUPER_ADMIN + ADMIN
+	 * there. Does nothing when an organization exists.
+	 */
+	async initializeDefaultOrganization(userId: string, tx: Prisma.TransactionClient): Promise<void> {
+		const org = await this.organizations.createDefaultOrganization(userId, tx);
+		const clinicPath = this.config.env.LOOPWISE_DEFAULT_CLINIC_PATH;
+		if (!org || !clinicPath || (await this.clinics.getClinicByPath(clinicPath, tx))) {
+			return;
+		}
+		const clinicName = clinicPath.split('/').pop() || 'Default Clinic';
+		const clinic = await this.clinics.createClinic(
+			{ name: clinicName, kind: 'local', path: clinicPath, organizationId: org.id },
+			tx,
+		);
+		await this.clinics.grantClinicRoles(clinic.id, userId, ['SUPER_ADMIN', 'ADMIN'], tx);
 	}
 
 	getOrganizationsByIds(ids: readonly string[]): Promise<Organization[]> {

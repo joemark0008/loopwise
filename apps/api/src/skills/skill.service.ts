@@ -6,7 +6,7 @@ import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
 import matter from 'gray-matter';
 
 import { truncateMiddle } from '../agent/utils/utils.js';
-import { ClinicRepository } from '../clinics/clinic.repository.js';
+import { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 
 const logger = new Logger('SkillService');
 
@@ -51,7 +51,7 @@ type SkillReadResult = { skill: Skill } | { loadError: SkillLoadError };
  */
 @Injectable()
 export class SkillService implements OnModuleDestroy {
-	constructor(private readonly clinics: ClinicRepository) {}
+	constructor(private readonly clinics: ClinicDirectoryService) {}
 
 	private clinicSkills = new Map<string, ClinicSkills>();
 	private _initPromises = new Map<string, Promise<void>>();

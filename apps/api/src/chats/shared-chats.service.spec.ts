@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ClinicRepository } from '../clinics/clinic.repository.js';
+import type { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import type { AccessService } from '../common/guards/access.service.js';
 import type { ChatRepository } from './chat.repository.js';
@@ -31,7 +31,7 @@ const service = new SharedChatsService(
 		getShareAllowedUserIds: mocks.getShareAllowedUserIds,
 		updateSharedChatAllowedUsers: mocks.updateSharedChatAllowedUsers,
 	} as unknown as SharedChatRepository,
-	{ listUsersWithClinicAccess: mocks.listUsersWithClinicAccess } as unknown as ClinicRepository,
+	{ listUsersWithClinicAccess: mocks.listUsersWithClinicAccess } as unknown as ClinicDirectoryService,
 	{ getUserRoleInClinic: mocks.getUserRoleInClinic } as unknown as AccessService,
 	{
 		assertCanShareToClinic: mocks.assertCanShareToClinic,

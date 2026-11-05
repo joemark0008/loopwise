@@ -1,7 +1,7 @@
 import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
 
-import { ClinicRepository } from '../clinics/clinic.repository.js';
+import { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import { AccessService } from '../common/guards/access.service.js';
 import type { SharedChat } from '../generated/prisma/client.js';
@@ -20,7 +20,7 @@ export class SharedChatsService {
 	constructor(
 		private readonly chats: ChatRepository,
 		private readonly sharedChats: SharedChatRepository,
-		private readonly clinics: ClinicRepository,
+		private readonly clinics: ClinicDirectoryService,
 		private readonly access: AccessService,
 		private readonly sharing: ClinicSharingService,
 		private readonly chatsService: ChatsService,

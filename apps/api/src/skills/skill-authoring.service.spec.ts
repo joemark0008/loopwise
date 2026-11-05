@@ -19,7 +19,7 @@ vi.mock('node:fs', async (importOriginal) => {
 	return { ...actual, watch: vi.fn(() => ({ close: vi.fn() })) };
 });
 
-import type { ClinicRepository } from '../clinics/clinic.repository.js';
+import type { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 import type { ConfigService } from '../config/config.service.js';
 import type { Clinic } from '../generated/prisma/client.js';
 import { SkillService } from './skill.service.js';
@@ -45,7 +45,7 @@ describe('SkillAuthoringService', () => {
 		authoringEnv = 'auto';
 		skills = new SkillService({
 			getClinicById: vi.fn(async () => clinic),
-		} as unknown as ClinicRepository);
+		} as unknown as ClinicDirectoryService);
 		authoring = new SkillAuthoringService(skills, {
 			get env() {
 				return { LOOPWISE_SKILL_AUTHORING: authoringEnv };

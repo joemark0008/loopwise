@@ -2,7 +2,7 @@ import { Field, InputType } from '@nestjs/graphql';
 import { Transform } from 'class-transformer';
 import { ArrayUnique, IsEnum, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
-import { StaffRole } from '../../clinics/models/clinic-enums.js';
+import { StaffRole } from '../../clinical/clinics/clinics/models/clinic-enums.js';
 import { IsSignInEmail, normalizeEmail, trim } from '../../common/validators/auth-input.validators.js';
 
 /** The organization access levels the users page offers; stored as `OrgRole` ADMIN / MEMBER / VIEWER. */

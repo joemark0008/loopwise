@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { ClinicsCoreModule } from '../clinics/clinics-core.module.js';
+import { ClinicsCoreModule } from '../clinical/clinics/clinics/clinics-core.module.js';
 import { ChatRepository } from './chat.repository.js';
 import { ChatAccessService } from './chat-access.service.js';
 

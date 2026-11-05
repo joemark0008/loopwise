@@ -11,7 +11,7 @@ vi.mock('node:fs', async (importOriginal) => {
 	return { ...actual, watch: vi.fn(() => ({ close: vi.fn() })) };
 });
 
-import type { ClinicRepository } from '../../clinics/clinic.repository.js';
+import type { ClinicDirectoryService } from '../../clinical/clinics/clinics/clinic-directory.service.js';
 import { SkillService } from '../../skills/skill.service.js';
 import type {
 	ResolvedFilesContextAccess,
@@ -21,7 +21,7 @@ import loadSkillTool from './load-skill.js';
 
 const skillService = new SkillService({
 	getClinicById: vi.fn(async (clinicId: string) => ({ id: clinicId, path: clinicPaths[clinicId] })),
-} as unknown as ClinicRepository);
+} as unknown as ClinicDirectoryService);
 
 const CLINIC_ID = 'load-skill-clinic';
 
