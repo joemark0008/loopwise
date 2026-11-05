@@ -11,13 +11,15 @@ and the current state in [docs/NEXT.md](docs/NEXT.md).
 ## What it does
 
 - **Patients and visits**: registration with duplicate checks and consent, the patient chart, SOAP notes, vitals,
-  ICD-10 diagnoses, allergies, prescriptions, medical certificates and billing, with print views.
+  ICD-10 diagnoses, allergies, prescriptions, medical certificates, referrals and invoices (SC/PWD discounts, BIR
+  invoice series, payments), with print views. The data model follows a Philippine clinic reference schema
+  ([docs/schema-reference/](docs/schema-reference/clinic-prisma-schema/)).
 - **Wise**: drafts registrations, notes, orders, prescriptions, certificates, charges and reviews as proposal cards;
-  explains results, charts trends, answers analytics questions and writes reports. A person confirms every change; the
+  summarises results, charts trends, answers analytics questions and writes reports. A person confirms every change; the
   AI never acts on its own.
-- **Lab and results**: orders, a lab worklist, HL7 v2 in and out, a results inbox, and a rules engine that flags
-  actionable and critical results against clinical pathways.
-- **Coming next**: appointments and queue, an AI scribe, pharmacy and inventory, follow-ups with owners, and a patient
+- **In-house lab and results**: a test catalog, orders, a lab worklist where results are entered and released, and a
+  results inbox for the doctor (abnormal and critical flags first).
+- **Coming next**: appointments and queue, an AI scribe, pharmacy and inventory, follow-up reminders, and a patient
   portal with reminders ([docs/PLAN.md](docs/PLAN.md) §6).
 - **Governance**: deny-by-default access through care relationships, Postgres row-level security, and an append-only
   audit trail.

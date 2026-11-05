@@ -3,8 +3,8 @@
 > **Run the whole clinic, with an assistant that drafts and a clinician who decides.**
 
 Loopwise becomes the operating system of a Philippine outpatient clinic: front desk, doctor, lab, pharmacy, cashier and
-the patient, with **Wise** (the AI assistant) drafting the work at every desk and a person confirming it. The
-screening-to-care loop from the original design stays, folded in as the clinic's **follow-ups and results loop**.
+the patient, with **Wise** (the AI assistant) drafting the work at every desk and a person confirming it. Every
+visit is an encounter, and everything recorded during it hangs off that encounter.
 
 | Item             | Value                                                                                   |
 | ---------------- | --------------------------------------------------------------------------------------- |
@@ -26,7 +26,7 @@ PhilHealth claims and BIR invoices are re-typed. Most clinic software digitises 
 staff.
 
 What we sell: **less typing, fewer dropped patients, cleaner records** — every desk gets a Wise draft it can confirm in
-one click, and every result and follow-up has an owner until it is closed.
+one click, and every result reaches the doctor who ordered it.
 
 ## 2. Who uses it
 
@@ -45,18 +45,22 @@ one click, and every result and follow-up has an owner until it is closed.
 
 Built and on `main` (details in `docs/NEXT.md` → Done):
 
-- **Patients:** registration with duplicate checks and consent, chart, allergies, identifiers (MRN, PhilHealth), RLS
-  deny-by-default, append-only audit.
-- **Encounters:** SOAP note, vitals with flags, ICD-10 diagnoses, prescriptions (formulary, allergy warning),
-  medical certificates (PRC license), billing (charges, finalize, pay, void), print views.
-- **Labs:** orders, lab worklist, HL7 ORM out / ORU in (REST, facility keys), results inbox, rules engine + pathways.
-- **Wise:** ~30 tools behind "AI drafts, the clinician confirms" (proposal cards, version checks, per-facility tool
-  settings), navigation, explain result, trends, safe analytics SQL with small-cell suppression, reports + PDF,
+- **Data model:** the PH clinic reference schema (DESIGN.md §5): organizations and clinics, practitioners, patients per
+  organization, encounter-centric records, diagnostics, prescriptions, documents, PhilHealth, HMO, billing, inventory,
+  audit; RLS deny-by-default and append-only audit.
+- **Patients:** registration (MRN per organization, data-privacy consent, duplicate checks), chart, allergies, IDs.
+- **Encounters:** status and number, SOAP note, vitals with flags, ICD-10 diagnoses, prescriptions (formulary, allergy
+  warning, S2), medical certificates (PRC license), referrals, print views.
+- **In-house lab:** test catalog, orders, lab worklist (collect, enter results, release), results inbox.
+- **Cashier:** invoices with SC/PWD discounts and the VAT split, BIR invoice series, split-tender payments, void.
+- **Wise:** ~30 tools behind "AI drafts, the clinician confirms" (proposal cards, version checks, per-organization
+  tool settings), navigation, trends, safe analytics SQL with small-cell suppression, reports + PDF,
   voice transcription (`apps/api/src/transcribe/`), skills, memory, multi-provider LLMs.
-- **Platform:** better-auth, organizations (facilities), pg-boss jobs (`@Job`), design system, a11y tests.
+- **Platform:** better-auth, organizations and clinics with staff roles per clinic, pg-boss jobs (`@Job`), request
+  correlation ids, design system, a11y tests.
 
-Re-framed, not removed: pathways and the rules engine become **clinical decision support** inside the clinic (result
-flags, follow-up rules); HL7 stays for clinics with an outside lab.
+Removed on 5 Nov 2026: the HL7 interface (labs are in-house) and the follow-up engine (pathways, rules engine, care
+cases, case referrals). Follow-ups are now the encounter's follow-up date and disposition plus appointments.
 
 ## 4. Product modules
 
@@ -65,8 +69,8 @@ thin resolvers, logic in services, Prisma only in repositories, RLS, audit, Wise
 
 ### 4.1 Staff roles and clinic setup (new — foundation)
 
-- Real staff roles in the API (`receptionist`, `nurse`, `doctor`, `lab`, `pharmacist`, `cashier`, `admin`) per
-  facility membership; replaces the facility-type guess in `use-staff-role.ts`. Decorator for role checks.
+- Staff roles per clinic (`user_clinic_roles`, built in Phase 0) drive the desk and the role checks
+  (`@ClinicAccess({ staffRoles })`).
 - Clinic profile: branches, rooms, clinic hours, services and fee schedule, doctors' schedules and PF (professional
   fee) rules, PhilHealth accreditation numbers, BIR details.
 - Role-based navigation and Wise tool defaults per role (extends `@loopwise/shared/wise-tools`).
@@ -98,20 +102,15 @@ thin resolvers, logic in services, Prisma only in repositories, RLS, audit, Wise
 - Stock by branch with lots and expiry, receiving (purchase orders / deliveries), adjustments, transfers, FEFO
   dispensing.
 - Dispense queue fed by issued prescriptions; partial dispense, substitution (generic equivalence) with the
-  pharmacist's confirmation; dispense posts charges to the bill and counts as evidence that treatment started.
+  pharmacist's confirmation; dispense writes the stock ledger and posts charges to the invoice.
 - Supplies used in procedures deducted from stock.
 - Alerts (jobs): low stock, near expiry, slow movers. Wise drafts a reorder list from usage.
 
-### 4.5 Follow-ups and results loop (folded from the original design)
+### 4.5 Follow-ups and results
 
-- Smaller case engine: every actionable result, follow-up date or referral becomes a **follow-up** with an owner, a
-  due date and a state (`open → contacted → booked → seen → closed`, plus `overdue` and `lost`).
-- Sources: rules-engine evaluations (built), the scribe's follow-up date, referrals out.
-- Nurse worklist of overdue follow-ups; critical results always go to a clinician first, never an automated patient
-  message.
-- Closing needs evidence (visit, dispense, result) or a named clinician's sign-off with a reason.
-- Reuses `CareCase` / `CaseEvent` / `Task` / `Evidence` from the clinical schema where they fit; trim states that only
-  made sense across providers.
+- The encounter's follow-up date and disposition (built) feed a follow-up list and reminders that book an appointment.
+- Referrals from a visit (built in the API) to a colleague or an outside doctor or facility; a referral letter print.
+- Critical results always go to a clinician first, never an automated patient message (built).
 
 ### 4.6 Patient portal and reminders (new — must-have)
 
@@ -123,17 +122,16 @@ thin resolvers, logic in services, Prisma only in repositories, RLS, audit, Wise
 
 ### 4.7 Billing, PhilHealth and HMOs (extend built billing)
 
-- Fee schedule, packages, discounts (senior citizen / PWD as required by law), doctor PF split.
-- BIR-compliant invoices (check the Ease of Paying Taxes Act rules on invoices vs official receipts against the
-  current OR-number field).
+- Built: invoices on the reference model, SC/PWD discounts (RA 9994 / RA 10754), BIR invoice series, payments.
+- Next: packages, corporate accounts, doctor PF split and EWT (`professional_fees`), cashier shifts and X/Z reading.
 - HMO letters of authorization and statements; PhilHealth eClaims / Konsulta later (§6).
 - Daily cash-up and end-of-day report.
 
 ### 4.8 Clinic dashboard and reports (extend built analytics)
 
-- Owner dashboard: patients seen, revenue, no-show rate, wait time, top diagnoses, stock value, open follow-ups.
+- Owner dashboard: patients seen, revenue, no-show rate, wait time, top diagnoses, stock value, follow-ups due.
 - Wise analytics (built) gets these metrics; reports export as PDF (built).
-- Morning brief for doctors: today's list, results to review, overdue follow-ups.
+- Morning brief for doctors: today's list, results to review, follow-ups due.
 
 ## 5. AI principles (unchanged, now applied to every desk)
 
@@ -154,7 +152,7 @@ Estimates assume the current pace (one coordinator + feature worktrees). They ar
 | ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | **0. Realign**               | ~1 week  | Rewrite `DESIGN.md` and `CLAUDE.md` intro for the clinic product; update `NEXT.md`; cleanup list (§7); staff roles (§4.1) | Docs agree; every user has a real role; dead base code gone                     |
 | **1. Front desk + scribe**   | ~3 weeks | Clinic setup, appointments and queue, triage, AI scribe card set                                                          | A walk-in and a booked patient go reception → nurse → doctor → bill in Loopwise |
-| **2. Pharmacy + follow-ups** | ~3 weeks | Item master, stock, dispense queue, alerts; follow-ups loop and nurse worklist                                            | An Rx is dispensed from stock; an abnormal result ends as a closed follow-up    |
+| **2. Pharmacy + follow-ups** | ~3 weeks | Item master, stock, dispense queue, alerts; follow-up list and reminders                                                  | An Rx is dispensed from stock; a follow-up date becomes a booked appointment    |
 | **3. Patients**              | ~2 weeks | Portal, SMS reminders, inbox with Wise reply drafts, approved result explanations                                         | A patient books, gets reminded and reads their visit summary on a phone         |
 | **4. Pilot readiness**       | ~3 weeks | Billing extensions, BIR invoices, HMO, owner dashboard, DPA compliance pack, backups, deploy, onboarding/import tools     | One real clinic runs a week on Loopwise with synthetic-to-real data migration   |
 | **5. SaaS**                  | ongoing  | Multi-branch, subscriptions, PhilHealth eClaims / Konsulta, Messenger, telemedicine, FHIR API                             | Second and third paying clinics                                                 |
@@ -170,11 +168,9 @@ Still to do:
 - Dormant base code inside live modules: stories, MCP stand-ins, citations, chat query rows / query grouping in
   `lib/ai.ts`, subagent flags, user groups and clinic saved prompts (each threaded through the agent core; one
   focused session each).
-- Planned pages built for the old loop (`/cases`, `/referrals`, `/worklist`, `/dashboard`) get re-scoped to §4.5 and
-  §4.8 or removed; page registry updated.
-- Encounter note form doesn't send `expectedVersion`; ICD-10 search as a combobox; registration form lacks barangay.
+- Encounter note form doesn't send `expectedVersion`; ICD-10 search as a combobox.
 - Break-glass access (§8.5 of DESIGN.md) — still needed for a multi-doctor clinic.
-- Reseed a clean demo database.
+- Phase 0 schema adoption: done (see `docs/NEXT.md`); the dev database is reset and reseeded at merge.
 
 Dropped from the old plan: Hack2skill registration and submission, the 3-facility Bohol demo story, the equity
 dashboard as a headline, MicroK8s/ArgoCD as a requirement for the first pilot.
@@ -187,10 +183,10 @@ dashboard as a headline, MicroK8s/ArgoCD as a requirement for the first pilot.
 - LLM hosting for patient data: cloud provider with a DPA, or a local model option from day one?
 - Speech-to-text quality for Taglish / Cebuano — which provider, and do we need a local fallback?
 - Pilot clinic: which one, which specialties, how many doctors?
-- Does HL7 stay a selling point (clinics with an outside lab), or does an in-house lab module come first?
+- When does a clinic with its own LIS need an interface again (HL7 or FHIR)?
 
 ## 9. Docs
 
-Updated for the clinic product on 5 Nov 2026: `docs/DESIGN.md` (technical design; planned models in §5.4, follow-ups
-in §6, metrics in §10), `CLAUDE.md` (product description and clinical feature list), `docs/NEXT.md` (handoff with
+Updated for the clinic product on 5 Nov 2026: `docs/DESIGN.md` (technical design; API structure in §4.5, data model
+in §5, follow-ups in §6, metrics in §10), `CLAUDE.md` (product description and clinical feature list), `docs/NEXT.md` (handoff with
 Phase 0–1), `README.md`. Keep them in step as each phase lands.

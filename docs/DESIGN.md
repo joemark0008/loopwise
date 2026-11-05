@@ -4,10 +4,10 @@
 
 Loopwise is an AI-powered system for Philippine outpatient clinics: front desk, nurse, doctor, lab, pharmacy, cashier
 and the patient, with **Wise** (the AI assistant) drafting the work at every desk and a person confirming it. Every
-actionable result and follow-up has an owner until it is closed.
+visit is an encounter, and everything recorded during it hangs off that encounter.
 
-This document is the technical design: architecture, data model, the follow-up state machine, Wise, access control and
-integration. The product, its users, the module list and the phases are in [PLAN.md](PLAN.md); what is built and what
+This document is the technical design: architecture, the API structure, the data model, follow-ups, Wise, access
+control and integration. The product, its users, the module list and the phases are in [PLAN.md](PLAN.md); what is built and what
 comes next is in [NEXT.md](NEXT.md).
 
 ---
@@ -17,10 +17,10 @@ comes next is in [NEXT.md](NEXT.md).
 - **Customer:** private and multi-doctor outpatient clinics in the Philippines (1–10 doctors); later clinic chains,
   diagnostic centers and RHUs. Problem and users: [PLAN.md](PLAN.md) §1–2.
 - **What we sell:** less typing, fewer dropped patients, cleaner records. Every desk gets a Wise draft it confirms in
-  one click; every result and follow-up has an owner until it is closed.
+  one click; every result reaches the doctor who ordered it.
 - **Rules that never bend:** AI drafts, a person confirms (§7.1); deny-by-default access through care relationships
-  and Postgres row-level security (§8); every clinical change is an event and every view or action is audited;
-  critical values always reach a clinician first; synthetic data only outside a real deployment.
+  and Postgres row-level security (§8); every view and every change is audited (§8.6); critical values always reach a
+  clinician first and never get an automated patient message; synthetic data only outside a real deployment.
 - **Regulatory frame:** Data Privacy Act (RA 10173) and NPC registration, PRC licenses on issued documents, PhilHealth
   (ICD-10, packages, eClaims later), BIR invoicing, senior citizen / PWD discounts.
 
@@ -35,24 +35,24 @@ The flow Loopwise supports end to end. Built parts are marked; the rest is plann
 3. **Consult with the AI scribe.** The doctor dictates or records the visit; Wise drafts the SOAP note, diagnoses
    (ICD-10), prescription, lab orders, medical certificate and a patient summary as separate proposal cards, each
    confirmed by the doctor (the cards: built; one-pass scribe: planned).
-4. **Lab.** Orders go to the in-house lab worklist or an outside lab over HL7; results come back, the rules engine
-   evaluates them and the doctor reviews them in the results inbox (built).
-5. **Pharmacy.** The issued prescription lands in the dispense queue; the pharmacist dispenses from stock, which posts
-   charges to the bill and counts as evidence that treatment started (planned).
-6. **Cashier.** Charges from the visit, discounts, PhilHealth / HMO, payment and invoice (bill, finalize, pay: built;
-   HMO, invoices: planned).
-7. **Follow-up.** An abnormal result, a follow-up date or a referral opens a follow-up with an owner and a due date;
-   the patient is reminded; the follow-up closes on evidence or a clinician's sign-off (planned, §6).
+4. **Lab (in-house).** The doctor orders tests from the clinic's catalog; the medtech collects the specimen, enters the
+   results on the lab worklist (flags from the parameter's reference range) and releases them; the doctor reviews them
+   in the results inbox, critical first (built). Send-out tests are flagged `is_outsourced` / `is_external`.
+5. **Pharmacy.** The issued prescription lands in the dispense queue; the pharmacist dispenses from stock (FEFO lots),
+   which writes the stock ledger and posts charges to the invoice (schema ready; module planned).
+6. **Cashier.** The visit's invoice: lines, SC/PWD discount with the ID shown, VAT split, PhilHealth package, issue
+   with the BIR invoice number, split-tender payment, void (built). HMO LOAs and cashier shifts: schema ready.
+7. **Follow-up.** The doctor sets the encounter's follow-up date and disposition, or refers the patient (to a
+   colleague or an outside doctor or facility); reminders come with appointments (§6).
 
 Exceptions that matter:
 
-| Situation                               | What happens                                                              |
-| --------------------------------------- | ------------------------------------------------------------------------- |
-| Result not reviewed in 48 h             | Escalates to the owner, then the clinic's clinical lead                   |
-| Critical value (e.g. K⁺ 6.5, HbA1c 12%) | Skips the queue, alerts a clinician at once; no automated patient message |
-| Patient doesn't respond to reminders    | SMS resend → nurse call → marked `lost_to_follow_up`, still counted       |
-| Referral rejected (specialist full)     | Back to the sender with the reason → re-route; never ownerless            |
-| Someone tries to close early            | Blocked unless evidence exists or a named clinician signs off             |
+| Situation                                     | What happens                                                                                                               |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Critical value (e.g. K⁺ 6.5, HbA1c 12%)       | Top of the results inbox for the ordering doctor; no automated patient message; reviewing it from a Wise card needs a note |
+| A released result needs correcting            | The medtech re-enters it: the item goes back to in progress, the release and the review are cleared                        |
+| An issued Rx, certificate or invoice is wrong | It is voided with a reason (a trigger refuses any other change); a new one is drafted                                      |
+| Patient misses the follow-up date             | Shows on the follow-up list from `encounters.follow_up_date` (reminders: planned)                                          |
 
 ## 3. Patient communication principles
 
@@ -75,172 +75,200 @@ The patient never learns bad news from a machine.
 
 ### 4.1 Deployment model
 
-- **One hub, multi-tenant.** Each clinic group (a company running one or more branches), lab or pharmacy is an
-  **organization (tenant)**; clinical data is scoped by the organization (`orgId`). Each branch is a **clinic** inside
-  the organization, holding the staff's chats, LLM settings, saved prompts, members and user groups. Each staff member
-  is a **user** with a role at that facility. (Clinics were called projects before; the `project*` tables and columns
-  keep their names.)
-- Clinics without their own lab use the hub's lab worklist; an outside lab connects over HL7 (§9).
-- From one codebase: **cloud SaaS** for independent clinics, or a **self-hosted hub** for a chain or a group that
-  must keep data on its own infrastructure.
+- **One hub, multi-tenant.** Each clinic group (a company running one or more branches) is an **organization**
+  (tenant): it owns its patients (`patients.organization_id`, the MRN `patient_no` unique per organization) and its
+  catalogs (tests, services, inventory items, HMO providers). Each branch is a **clinic** inside the organization: it
+  has its BIR branch code, DOH license and PhilHealth accreditation, its document numbering, its visits, invoices and
+  stock, and it is also the staff's Wise workspace (chats, LLM settings, saved prompts, user groups). Staff hold
+  **roles per clinic** (`user_clinic_roles`: doctor, nurse, medtech, cashier, …) and optionally an organization role
+  (`organization_members`: admin, member, viewer).
+- **Everything in-house.** The lab is the clinic's own: tests come from the organization's catalog and results are
+  entered on the lab worklist. A send-out test is flagged (`diagnostic_tests.is_outsourced`,
+  `diagnostic_orders.is_external`); a walk-in with an outside doctor's request is a `LAB_ONLY` encounter with
+  `external_physician`. There is no HL7 interface and no cross-organization ordering.
+- From one codebase: **cloud SaaS** for independent clinics, or a **self-hosted** install for a chain that must keep
+  data on its own infrastructure.
 - A single Docker image: the API also serves the built frontend (`docker-compose.prod.yml`).
 
 ### 4.2 Components
 
 ```
- Outside lab (LIS)                 Patient (SMS, portal)
-        │ HL7 v2 over HTTPS                │
- ┌──────▼─────────────────────────────────▼───────────────────┐
- │ Loopwise hub (NestJS modular monolith)                     │
+ Patient (SMS, portal: planned)
+        │
+ ┌──────▼─────────────────────────────────────────────────────┐
+ │ Loopwise (NestJS modular monolith)                         │
  │                                                            │
- │  HL7 ingest + patient matching ──► clinical events         │
- │  Rules engine ──► follow-ups (owners, SLAs, escalation)    │
- │  Clinic modules: patients, encounters, orders, results,    │
- │   prescriptions, billing (+ appointments, queue, pharmacy, │
- │   inventory, portal: planned)                              │
+ │  Clinic modules: patients, practitioners, encounters,      │
+ │   diagnostics (lab), prescriptions, documents, billing     │
+ │   (+ scheduling, queue, pharmacy, inventory, PhilHealth,   │
+ │   HMO: schema ready, modules planned)                      │
  │  Wise agent (proposal cards)   GraphQL API (auth, roles)   │
- │  Postgres (RLS, audit)         pg-boss (timers, reminders) │
+ │  Postgres (RLS, audit)         pg-boss (reminders)         │
  └────────────────────────────────────────────────────────────┘
         │                      │                      │
    Staff web app          Wise chat / dock      Owner dashboard
 ```
 
-### 4.3 Data flow
+### 4.3 Data flow (a visit)
 
-1. A result arrives (HL7 `POST /api/hl7/messages`, or entered at the lab worklist); the ingest matches the patient and
-   stores it.
-2. `ClinicalEventsService` (`apps/api/src/clinical/events/`, in process) publishes `result.received` after commit.
-3. `ResultEvaluationSubscriber` runs `RulesService.evaluateAndStore`: the pure `RulesEngine.evaluate`
-   (`@loopwise/shared/rules-engine`) against the active pathways, stores a `ResultEvaluation` and publishes
-   `result.evaluated` (classification, urgency, next state, SLA).
-4. The follow-up engine (planned) opens or advances the follow-up, assigns the owner and starts the SLA timer.
-5. Reminders and patient messages go out; replies come back as events.
-6. pg-boss checks SLAs and sends reminders; overdue steps escalate.
-7. Staff act in the web app or through Wise; every action is audited, every follow-up transition is a `CaseEvent`.
+1. The front desk registers the patient (organization MRN from the clinic's `PATIENT` sequence, data-privacy consent)
+   and opens an **encounter** at the clinic (`encounter_no`, type, status `OPEN`).
+2. The doctor (`practitioner_id`) takes the visit (`IN_PROGRESS`), records the SOAP note, vitals and ICD-10 diagnoses,
+   orders tests (`diagnostic_orders` → one `diagnostic_order_items` row per test), drafts and issues the prescription
+   and certificate. Wise drafts each of these as a card the doctor confirms (§7.1).
+3. The medtech works the lab worklist: collects (accession no.), enters results (`diagnostic_results` +
+   `diagnostic_result_values` with flags), releases them. The doctor reviews them in the results inbox.
+4. The visit goes `FOR_BILLING`; the cashier drafts and issues the invoice and records the payment; the visit is
+   `COMPLETED`, with a follow-up date and disposition.
+5. Every step is one transaction that also writes its `audit_logs` row with the request's correlation id (§4.5).
 
 ### 4.4 Key decisions
 
 | Decision                                              | Why                                                | Trade-off                                   |
 | ----------------------------------------------------- | -------------------------------------------------- | ------------------------------------------- |
-| Shared DB + Postgres RLS (not DB per tenant)          | Simple; referrals across facilities are easy       | Isolation depends on correct RLS; test hard |
-| Modular monolith in NestJS                            | Fast to build; modules talk through events         | One deployable                              |
-| In-process events (`ClinicalEventsService`)           | No extra infrastructure; a broker can replace it   | Events don't survive a crash mid-handler    |
-| HL7 v2 at the edges, FHIR-shaped model inside         | Works with existing LIS, modern core               | Mapping layer                               |
+| Shared DB + Postgres RLS (not DB per tenant)          | Simple; one schema for every clinic group          | Isolation depends on correct RLS; test hard |
+| Modular monolith in NestJS, one module per domain     | Fast to build; modules talk through services       | One deployable                              |
+| The PH clinic reference schema, encounter-centric     | Patient and clinic of a record can never disagree  | RLS reaches child rows through a join       |
+| In-house lab only, no HL7                             | The clinics we serve run their own lab or send out | An outside LIS needs an integration later   |
 | Rules-first decisions; AI for language and assistance | Safe, explainable                                  | Less "AI magic"                             |
 | Built on an existing agent base                       | Agent, chat UI, auth, orgs and jobs already worked | Leftover base code to keep pruning          |
 
+### 4.5 API structure
+
+**Module map.** One NestJS module per schema domain under `apps/api/src/clinical/` (the reference's file names):
+
+| Module                             | Covers                                                                                                                                  |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `clinics`                          | document numbering (`document-sequences/`); organizations and clinic roles live in `src/organizations` and `src/clinics` (to move here) |
+| `reference`                        | ICD-10 search and validation, PSGC barangays                                                                                            |
+| `practitioners`                    | the practitioner profile (PRC, PTR, S2, PhilHealth PAN), the signatory printed on documents                                             |
+| `patients`                         | registration (MRN, consent, duplicates), the chart, contact updates, allergies, identifications                                         |
+| `encounters`                       | the visit and its status, the SOAP note, vitals, diagnoses, the encounter record                                                        |
+| `diagnostics`                      | `catalog/`, `orders/`, `worklist/` (the lab desk), `results/` (the doctor's inbox)                                                      |
+| `prescriptions`                    | prescriptions and items (RA 6675, RA 9165)                                                                                              |
+| `documents`                        | `medical-certificates/`, `referrals/`                                                                                                   |
+| `billing`                          | `service-items/`, `invoices/` (with `InvoiceTotalsService`), `payments/`                                                                |
+| `audit`                            | `AuditService`, the one writer of `audit_logs`                                                                                          |
+| `wise-proposals`                   | settling Wise cards once (§7.1)                                                                                                         |
+| `insights`, `reports`, `analytics` | Wise's charts, summary reports and SQL analytics                                                                                        |
+| `rls`                              | `ClinicalDbService` (`asUser` / `asSystem`)                                                                                             |
+
+Domains of the schema without a feature yet (scheduling, immunizations, PhilHealth, HMO, inventory) get their module
+when the feature is built.
+
+**Layering.** Resolver (or REST controller) → service → repository → Prisma. Resolvers parse arguments (class-validator
+DTOs), check access with decorators (`@ClinicAccess({ staffRoles })`, `@ClinicAdmin()`, `@OrgAdmin()` …) and make one
+service call. Services hold the rules and every status flow, each through one transition function with guards
+(`encounter-status.ts`, `diagnostic-order-status.ts` mirroring the database trigger, `invoice-status.ts`). Repositories
+are the only Prisma users and run inside `ClinicalDbService.asUser` (row-level security as the user) or `asSystem`.
+Every multi-step write is one transaction, with its audit row. Modules use each other only through exported services
+(or a reader token for Wise); there are no circular imports. Errors are domain errors (`DomainError` subclasses such as
+`InvoiceAlreadyIssuedError`) with a stable `extensions.errorCode`; Postgres refusals map to stable codes too
+(`ROW_SECURITY_DENIED`, `CHECK_VIOLATION`, `FOREIGN_KEY_VIOLATION`, `INVALID_ID`).
+
+**Tracing a request.** Each request gets a correlation id (an inbound `x-request-id`, else a UUIDv7), kept in an
+AsyncLocalStorage request context with the ip and user agent, echoed in the response header and in GraphQL error
+`extensions.requestId`, prefixed to every Nest `Logger` line (`[req:<id> user:<id>]`) and stored in
+`audit_logs.request_id`. Names match end to end, so a request can be followed with grep: GraphQL `issueInvoice` →
+`InvoicesResolver.issueInvoice` → `InvoiceService.issue` → `InvoiceRepository` → `invoices`, and the audit row with
+`event = 'invoice.issue'` and the same `request_id`.
+
 ## 5. Data model
 
-Prisma schema split by domain in `apps/api/prisma/schema/*.prisma`.
+The Prisma schema follows the PH clinic reference schema (`docs/schema-reference/clinic-prisma-schema/`, kept
+verbatim) and is split the same way in `apps/api/prisma/schema/*.prisma`. Conventions: plural snake_case tables,
+UPPERCASE enum values, UUIDv7 ids (`@default(uuid(7)) @db.Uuid`, better-auth generates UUIDv7 too), instants as
+`timestamptz(3)`, calendar dates as `date`, clinic hours as `time`, money as `numeric(12,2)` in PHP. The reference's
+`Branch` is **`Clinic`** here (`clinics`, `clinic_id`, `UserClinicRole`, `PractitionerClinic`, `ClinicServicePrice`).
+`*_by_id` columns that point at a user are plain uuids, as in the reference; the audit log is the trail.
 
-### 5.1 Clinical core
+Migrations: `0000_init` is generated by Prisma from the schema; `0001_rls_and_triggers` holds what Prisma cannot
+express: roles and grants, the row-level security helpers and policies (§8), the triggers below, check constraints,
+and the `analytics` schema with its views. `prisma migrate diff` between the migrated database and the schema is empty.
 
-| Model               | Key fields                                                                                         |
-| ------------------- | -------------------------------------------------------------------------------------------------- |
-| `Organization`      | type: clinic, lab, imaging, hospital, pharmacy, program; `usesHl7Connector`                        |
-| `Patient`           | name, birthDate, sex, phone, preferredLanguage, barangay, consentAt                                |
-| `PatientIdentifier` | patientId, orgId, system (MRN, PhilHealth ID), value — the patient index                           |
-| `CareRelationship`  | patientId, userId, orgId, reason (encounter, order, referral, case_owner), expiresAt               |
-| `Encounter`         | patientId, doctorId, orgId, reason, SOAP fields, startedAt, sourceChatId, version                  |
-| `ClinicalOrder`     | encounterId, patientId, orderingDoctorId, targetOrgId, code (LOINC/local), priority, status        |
-| `Result`            | orderId?, patientId, sourceOrgId, code, value, unit, refRange, flag, rawHl7, resultedAt            |
-| `Pathway`           | key (diabetes, breast, potassium), rules (JSON), steps, SLAs, closure requirements                 |
-| `ResultEvaluation`  | resultId, pathwayKey, ruleVersion, classification, urgency, reason, guideline, nextState, slaHours |
-| `CareCase`          | patientId, pathwayId, triggerResultId, state, urgency, ownerUserId, ownerOrgId, dueAt, closedAt    |
-| `CaseEvent`         | caseId, type, fromState, toState, actorUserId/actorOrgId/system, payload, createdAt (append-only)  |
-| `Referral`          | caseId, fromOrgId, toOrgId, toUserId?, status (sent/accepted/rejected/booked/seen), reason, apptAt |
-| `Task`              | caseId, title, ownerUserId/ownerOrgId, dueAt, status                                               |
-| `Evidence`          | caseId, type (result, visit_note, dispense, signoff), refId, recordedBy                            |
-| `PatientMessage`    | caseId, patientId, channel, templateKey, language, body, status, ackAt, reply                      |
-| `ClinicalDocument`  | a saved report version frozen with its data (append-only)                                          |
-| `Hl7Message`        | inbound HL7, idempotent per (org, MSH-10)                                                          |
-| `Hl7Outbox`         | outbound ORM^O01 waiting for the lab system's pull                                                 |
-| `AuditLog`          | userId, action, patientId?, resource, reason?, origin (e.g. Wise), at (append-only)                |
+### 5.1 Encounter-centric
 
-`CareCase`, `CaseEvent`, `Referral`, `Task`, `Evidence` and `PatientMessage` are in the schema from the original
-screening-loop design and now serve the **follow-ups loop** (§6); their modules are not built yet.
+Every clinical record hangs off an **encounter** (the visit hub: clinic, patient, practitioner, appointment,
+`encounter_no`, type, status). The children store only `encounter_id` (NOT NULL, with a foreign key), never the
+patient or the clinic again, so the two can never disagree; queries go through the encounter
+(`where: { encounter: { patientId } }`) and so does row-level security.
 
-Order status: `draft → sent → accepted → collected → resulted → reviewed`, with exits `rejected` (the target facility
-refuses, with a reason) and `cancelled` (the ordering doctor, before collection, with a reason). A lab without worklist
-steps may result straight from `sent` or `accepted`. The edges live in `apps/api/src/clinical/orders/order-status.ts`
-and, for every writer, in the `check_order_transition` trigger (migration `0018_hl7_outbox`).
+| `encounter_id` required                                                                                                                                     | optional (as in the reference)                                                                                                                                                                                                                    | not an encounter child (patient master data)                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| vital_signs, encounter_diagnoses, encounter_procedures, diagnostic_orders, prescriptions, medical_certificates, immunizations, referrals, philhealth_claims | queue_tickets (set at check-in), patient_consents (patient-level consents), patient_documents, hmo_loas, invoices (null only for a consolidated corporate/HMO bill; its lines carry the visit), invoice_lines, professional_fees, stock_movements | patient_addresses, patient_contacts, patient_identifications, patient_allergies, patient_problems, patient_histories, philhealth_memberships, patient_hmo_coverages |
 
-### 5.2 Pathway rules
+Results reach their encounter through their order: `diagnostic_result_values` → `diagnostic_results` →
+`diagnostic_order_items` → `diagnostic_orders` → `encounters`.
 
-`apps/shared/src/pathway-rules.ts`, schema version 2, validated by zod on every load and in the seed. A pathway lists
-**triggers**: a result code (LOINC) with either numeric **bands** (`min ≤ x < below`, in one canonical unit, contiguous
-from −∞ to +∞ so every value lands in exactly one band; unit aliases and linear conversions such as IFCC mmol/mol →
-NGSP % or mmol/L → mg/dL) or coded bands (a value pattern extracts the code, e.g. BI-RADS "Category 4A" → 4). Each band
-concludes a classification (`normal` / `actionable` / `critical`), an urgency (`routine` / `soon` / `urgent` /
-`critical`), a reason, the guideline it cites, the next state and optionally its own SLA. Plus `criticalFlag` (where a
-lab-flagged critical result goes when its band says less), the **steps** (§6) with their SLAs, pathway SLAs (result
-review, critical alert) and **closure** requirements.
+### 5.2 Domains
 
-The rules engine is pure: it normalises units, applies the band, raises any `critical_low` / `critical_high` lab flag
-to at least actionable and urgent, and sends a value it cannot read (unknown unit, unreadable value or code) to a
-clinician's review instead of dropping it. When several pathways match, the most serious result wins, then the pathway
-key. Seeded (synthetic, cited, to be signed off by clinicians): `diabetes` v2 (HbA1c and fasting glucose, ADA 2025;
-HbA1c ≥ 12 % critical), `breast` v2 (BI-RADS 0–6, ACR BI-RADS 5th ed.; 4 and 5 go straight to `referred`),
-`potassium` v1 (UKKA 2020; K⁺ ≥ 6.5 critical). `result_evaluation` (migration `0019_result_evaluation`) is
-append-only, one row per result and rule version, written by system work, readable by exactly the users who can read
-the result. `/pathways` shows every band, step and SLA read-only.
+| File                     | Models                                                                                                                                                                                                                                                                            |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `organization`           | Organization (TIN, VAT registration), Clinic (BIR branch code, DOH LTO, PhilHealth accreditation; + Wise workspace settings), User (+ better-auth), UserClinicRole, DocumentSequence; Loopwise: OrganizationMember, ClinicLlmConfig, ClinicSavedPrompt, UserGroup, UserPreference |
+| `reference`              | Region, Province, CityMunicipality, Barangay (PSGC), Icd10Code (WHO), RvsCode, PhilHealthCaseRate                                                                                                                                                                                 |
+| `practitioner`           | Practitioner (PRC, PTR, S2, PhilHealth PAN, TIN, e-signature), PractitionerClinic, PractitionerSchedule, PractitionerLeave                                                                                                                                                        |
+| `patient`                | Patient (per organization, `patient_no`), PatientAddress, PatientContact, PatientIdentification (SC / PWD / PhilSys …), PatientAllergy, PatientProblem, PatientHistory, PatientConsent (RA 10173)                                                                                 |
+| `scheduling`             | Appointment (1:1 with its encounter), QueueTicket (priority lane, RA 9994 / RA 10754)                                                                                                                                                                                             |
+| `clinical`               | Encounter (SOAP), VitalSigns, EncounterDiagnosis (ICD-10, one primary), EncounterProcedure (RVS)                                                                                                                                                                                  |
+| `diagnostics`            | DiagnosticTest, DiagnosticTestParameter (sex-specific ranges), DiagnosticOrder → Item → Result → ResultValue                                                                                                                                                                      |
+| `prescription`           | Prescription (RA 6675 generic name, RA 9165 S2 / quantity in words), PrescriptionItem                                                                                                                                                                                             |
+| `immunization`           | Immunization (NIP/EPI, lot, next due, historical entries)                                                                                                                                                                                                                         |
+| `documents`              | MedicalCertificate (verification code), Referral (from a visit to a practitioner or an outside doctor/facility), PatientDocument                                                                                                                                                  |
+| `philhealth`             | PhilHealthMembership, KonsultaEnrollment, PhilHealthClaim                                                                                                                                                                                                                         |
+| `hmo`                    | HmoProvider, PatientHmoCoverage, HmoLoa, HmoTransmittal                                                                                                                                                                                                                           |
+| `billing`                | ServiceItem, ClinicServicePrice, CorporateAccount, InvoiceSeries, Invoice, InvoiceLine, InvoiceDiscount, Payment, PaymentAllocation, CashierShift, ProfessionalFee                                                                                                                |
+| `inventory`              | InventoryItem (FDA CPR), Supplier, InventoryLot (FEFO), StockMovement (signed ledger), StockReceipt, StockReceiptItem                                                                                                                                                             |
+| `audit`                  | AuditLog (`action`, `entity_type`, `entity_id`, `changes`, ip, user agent)                                                                                                                                                                                                        |
+| `loopwise`               | CareRelationship (the access rule), ClinicalDocument (saved Wise reports), WiseProposalOutcome, WiseToolSetting, DocumentStatus                                                                                                                                                   |
+| `chats`, `auth`, `usage` | Wise chats and messages, better-auth accounts / sessions / verifications, LLM usage                                                                                                                                                                                               |
 
-### 5.3 Encounter record
+**Loopwise additions to reference models** (marked `Loopwise:` in the schema): on Encounter `notes`,
+`patient_instructions`, `version`, `source_chat_id`; on VitalSigns, EncounterDiagnosis and PatientAllergy the void
+columns (wrong entries are voided, never deleted; diagnoses also `recorded_by_id` / `recorded_at` and the
+one-primary partial unique index); on Prescription and MedicalCertificate `document_status` (DRAFT → ISSUED),
+`signatory` (prescriber and letterhead as printed), void columns, `version`, `created_at` / `updated_at`; on
+DiagnosticOrderItem `status_reason` / `cancelled_at`; on DiagnosticResult `reviewed_at` / `reviewed_by_id` (the
+doctor's review); on Invoice `version`; on AuditLog `event`, `reason`, `origin` (a confirmed Wise card) and
+`request_id`; on Organization `slug` and Google sign-in settings; on Clinic the Wise workspace columns (`kind`, `path`,
+agent / display / map settings, default models); on User the better-auth and base-app columns. StaffRole gains
+`MEMBER`, `VIEWER` and `CONTEXT_ADMIN` (access roles).
 
-Migration `0011_encounter_record`. Each visit carries its own record:
+**Numbering.** `DocumentSequenceService.next(tx, clinic, key)` issues per-clinic numbers that restart yearly (Asia/
+Manila) and carry the clinic code: `TAG-PT-2026-000001` (patient no.), `TAG-ENC-…`, `TAG-LAB-…`, `TAG-RX-…`, `TAG-MC-…`,
+`TAG-PAY-…`. Invoice numbers come from the clinic's active BIR `InvoiceSeries` (ATP / CAS range), else the `INVOICE`
+sequence.
 
-| Model                       | Key fields                                                                                                                                                                   |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Encounter` (SOAP)          | reason (chief complaint), history, physicalExam, assessment, plan, patientInstructions, followUpOn                                                                           |
-| `VitalSigns`                | encounterId, BP, HR, RR, temperatureC, spo2Pct, weightKg, heightCm, bmi (computed), CBG, pain, recordedAt                                                                    |
-| `EncounterDiagnosis`        | encounterId, icd10Code (WHO ICD-10 2010, as PhilHealth), display, certainty, isPrimary (one per visit)                                                                       |
-| `PatientAllergy`            | patientId, substance, kind, reaction, severity; Rx items are checked against it                                                                                              |
-| `Prescription` / `…Item`    | status draft/issued/voided, rxNumber, prescriber + facility snapshot; items: generic (RA 6675), brand?, strength, form, dose, route, frequency, days, quantity, refills, sig |
-| `MedicalCertificate`        | status, certificateNumber, examinedOn, diagnosisText, fitness, restFrom/restDays, remarks, purpose, doctor snapshot                                                          |
-| `EncounterBill` / `…Charge` | status draft/finalized/paid/voided, charges, senior/PWD discount, PhilHealth package, OR number; one non-voided bill per visit                                               |
-| `ClinicianProfile`          | userId, credentials, prcLicenseNumber, ptrNumber (printed on documents; issuing needs the license)                                                                           |
+### 5.3 Rules the database enforces
 
-Record rows carry `patientId` and `orgId` and reference the encounter by `(encounter_id, patient_id)`, so they never
-point at another patient's visit. Row-level security reaches them through the patient (`app_can_see_patient`); only
-staff at the visit's facility write. Wrong entries are voided, never deleted. Issued prescriptions and certificates,
-and finalized bills, are locked by triggers (only voiding, or paying a bill, is allowed), even for system work. Every
-view and change writes an `AuditLog` row. A pharmacy dispense will point at a `PrescriptionItem` and become `Evidence`
-(type `dispense`).
+- **Append-only:** `audit_logs`, `clinical_documents`, `wise_proposal_outcomes` and the stock ledger `stock_movements`
+  (a trigger rejects UPDATE and DELETE, for every role).
+- **Row versions:** `encounters`, `prescriptions`, `medical_certificates` and `invoices` bump `version` on every update;
+  a Wise card saves against the version it showed.
+- **Issued documents are frozen:** once a prescription or certificate leaves DRAFT, only voiding moves (and, for a
+  prescription, dispensing: its `status` and its items' `dispensed_qty`); an invoice after DRAFT only takes payments
+  and voiding, and its lines and discounts are frozen (BIR). Drafts alone can be deleted.
+- **Diagnostic order status machine** on the order and each item: REQUESTED → PAID | SPECIMEN_COLLECTED | IN_PROGRESS
+  | RESULTED | CANCELLED; PAID → SPECIMEN_COLLECTED | IN_PROGRESS | RESULTED | CANCELLED; SPECIMEN_COLLECTED →
+  IN_PROGRESS | RESULTED | CANCELLED; IN_PROGRESS → RESULTED | CANCELLED; RESULTED → RELEASED | IN_PROGRESS (a
+  correction); RELEASED → IN_PROGRESS. The API mirrors it in
+  `apps/api/src/clinical/diagnostics/orders/diagnostic-order-status.ts`; the order's status follows its items.
+- **Checks:** one primary diagnosis per encounter (partial unique index); a referral names a target; a practitioner's
+  day of week is 0–6; a queue number is positive; a pain score is 0–10; message parts carry the fields their type
+  needs; a local Wise workspace has a path; a Wise tool setting belongs to an organization or a user, not both.
 
-### 5.4 Planned models
+## 6. Follow-ups
 
-Sketch for [PLAN.md](PLAN.md) §4; each lands with its module and migration.
+The follow-up (care-case) engine of the original screening-loop design is removed: no pathways, rules engine, cases,
+tasks or evidence. A follow-up is now part of the visit:
 
-| Area                | Models                                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Staff roles         | role on the facility membership (`receptionist`, `nurse`, `doctor`, `lab`, `pharmacist`, `cashier`, `admin`) |
-| Clinic setup        | branch, room, service / fee schedule, doctor schedule, PF rules                                              |
-| Appointments, queue | `Appointment` (type, slot, status, encounterId), `QueueTicket` (number, station, status)                     |
-| Pharmacy, inventory | `Item`, `StockLot` (lot, expiry, quantity), `StockMovement`, `Dispense` (→ `PrescriptionItem`)               |
-| Patient portal      | portal account (OTP / magic link), message template, reminder                                                |
-
-## 6. Follow-up state machine
-
-The current `CaseState` enum, from the screening-loop design:
-
-```
-open → notified → acknowledged → confirming → referred → accepted → seen → treatment_started → closed
-                                                              │
-   any state ──► escalated ──► (back to the stuck state once resolved)
-   any state ──► lost_to_follow_up (still visible, counted)
-```
-
-- Each pathway defines which states apply (e.g. no `confirming` if the result is already diagnostic: diabetes has
-  `confirming`, breast doesn't, and a BI-RADS 4 goes straight to `referred`). The schema checks that steps run from
-  `open` to `closed`, each once, and that every band's next state is one of them (or `escalated`).
-- Each state has an SLA and an escalation rule. The rules engine's evaluation carries the next state and its SLA (the
-  band's own, else the step's; `escalated` uses the pathway's critical alert SLA); the follow-up engine applies them.
-- `closed` requires `Evidence` (confirmatory result, visit note, dispense) **or** a clinician `signoff` with a reason.
-- Normal results: `reviewed → notified → closed` (short loop).
-- Follow-ups also come from the scribe's follow-up date and from referrals, not only from results.
-
-[PLAN.md](PLAN.md) §4.5 proposes a smaller clinic-facing set (`open → contacted → booked → seen → closed`, plus
-`overdue` and `lost`). Whether to trim the enum or map the clinic labels onto it is decided when the module is built.
+- **`encounters.follow_up_date` and `disposition`** (sent home, for follow-up, referred, admitted, transferred to the
+  ER, expired) record what the doctor decided. A follow-up list and reminders come with appointments (Phase 1): the
+  reminder books an `Appointment`, which becomes the next encounter on check-in (`encounters.appointment_id`, 1:1).
+- **Referrals** are written from a visit (`referrals.encounter_id` required): to a practitioner of the organization
+  (who then gets a `REFERRAL` care relationship) or to an outside doctor or facility, with specialty, clinical summary
+  and urgency. Statuses: DRAFT, SENT, ACCEPTED, COMPLETED, DECLINED, CANCELLED.
+- **Results** are reviewed by the doctor in the results inbox; abnormal and critical flags come from the lab. Critical
+  values reach the doctor first and never get an automated patient message.
 
 ## 7. Wise — the assistant
 
@@ -248,8 +276,7 @@ Staff run their work by chat (text or voice):
 
 - _"New encounter: Maria Santos, 45F, fatigue, BP 140/90. Order HbA1c, FBS, lipids."_
 - _"Any results for me to review?"_
-- _"Explain Maria's results and suggest next steps."_
-- _"Which of my patients are overdue for follow-up?"_
+- _"Summarise Maria's results since her last visit."_
 - _"How many patients did we see this month, by age group, as a chart?"_
 
 **The patient chart is the hub.** `/patients/:id` shows the patient, their encounters and, beside them, **one Wise
@@ -265,7 +292,7 @@ patients.
 
 Every change to a record — creating, editing or voiding it — is a **proposal card** with Confirm / Edit / Cancel.
 Only the confirm button calls the real GraphQL mutation, as the user (RLS and authorization apply). The agent never
-saves anything, sends orders, referrals or patient messages, or closes a follow-up by itself, and never says something
+saves anything, sends orders, referrals or patient messages by itself, and never says something
 is saved before the clinician confirms it (system prompt rule; every propose tool tells the model "Nothing is saved
 yet").
 
@@ -285,7 +312,7 @@ How it is enforced:
 - **The API settles each card once.** Confirm sends `wiseOrigin { chatId, toolCallId, toolName, edited }` with the
   normal mutation. `WiseProposalService` checks the tool call is in the user's own chat, made by a tool that may confirm
   that mutation, about the same patient, and not settled; then, in the mutation's transaction, writes
-  `wise_proposal_outcome` (unique per tool call, append-only) and the audit row with `audit_log.origin`. A second
+  `wise_proposal_outcomes` (unique per tool call, append-only) and the audit row with `audit_logs.origin`. A second
   Confirm or a Confirm after Cancel (`cancelWiseProposal`) is refused with CONFLICT. `wiseProposalOutcomes(chatId)`
   lets a reopened chat show its cards settled.
 - **No stale overwrite.** An update card carries the record's version (bumped by a trigger on every update). The
@@ -298,22 +325,20 @@ Built:
 
 | Kind     | Tools                                                                                                                                                                                                                   |
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| read     | `find_patient`, `explain_result`, `list_results_to_review`, `list_lab_orders`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search`              |
+| read     | `find_patient`, `list_results_to_review`, `list_lab_orders`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search`                                |
 | navigate | `open_page`                                                                                                                                                                                                             |
 | display  | `report`, `clarification`, `suggest_follow_ups`                                                                                                                                                                         |
 | propose  | `propose_patient_registration`, `propose_patient_update`, `propose_encounter`, `propose_encounter_note`, `propose_prescription`, `propose_medical_certificate`, `propose_charges`, the actions of §7.3, `propose_skill` |
 
 Planned with the clinic modules: `propose_appointment` / `propose_reschedule`, the scribe's one-pass card set,
-`propose_dispense`, `propose_follow_up`, `propose_referral`, `propose_patient_message`, `propose_close_follow_up`,
-`list_my_follow_ups`, `get_patient_timeline`.
+`propose_dispense`, `propose_referral`, `propose_patient_message`, `get_patient_timeline`.
 
 Notes on the built tools:
 
 - **Encounter record.** `propose_encounter` also takes stated vitals and ICD-10 diagnoses; `propose_encounter_note`,
   `propose_prescription` (allergy warning), `propose_medical_certificate` and `propose_charges` name an encounter by the
-  id in the patient record, and Confirm saves a **draft**; issuing a document or finalizing a bill is a separate
-  confirm. They become update cards (before → after) when a draft already exists, and save against its `version`
-  (migration `0014_wise_record_versions`). The vitals and diagnoses of a confirmed `propose_encounter` are saved right
+  id in the patient record, and Confirm saves a **draft**; issuing a document or an invoice is a separate confirm. They
+  become update cards (before → after) when a draft already exists, and save against its `version`. The vitals and diagnoses of a confirmed `propose_encounter` are saved right
   after the encounter with the same `wiseOrigin` (`WiseProposalService.verifyFollowUp`).
 - **Registration.** `propose_patient_registration` extracts the details from the conversation, runs the duplicate
   check, and its Confirm calls the same `registerPatient` mutation as the form, after consent.
@@ -329,10 +354,8 @@ Notes on the built tools:
 - **Analytics** (`apps/api/src/clinical/analytics/`, safety model in §8). `describe_analytics`, `run_analytics_sql`
   (one validated SELECT run as the user; the model gets 50 rows, the card up to 5,000) and `get_metric` (certified
   metrics, §10). Both draw any Recharts chart type from the result's own columns (`@loopwise/shared/analytics-chart`,
-  server-checked); thresholds are asked for by key (a pathway's LOINC code, or "bp"), never as numbers.
-- **Explaining a result.** `explain_result(resultId)` returns the rules engine's evaluation (stored, or computed by the
-  same engine), read as the user and audited `result_evaluation.view`. Wise quotes the reason and the guideline; it
-  never classifies a result itself.
+  server-checked); thresholds are asked for by key (HbA1c, fasting glucose or "bp"; fixed guideline cut-offs:
+  HbA1c 5.7 / 6.5 %, FBS 100 / 126 mg/dL, BP 140/90), never as numbers.
 - **Reports in a side panel** (`agent/tools/report.ts`, `clinical/reports/`, `feature/reports/`). The `report` tool
   writes markdown with blocks that embed tool results of the same chat (`<chart ref/>`, `<table ref/>`,
   `<sections ref/>`, and `<kpi ref column compare label/>` for a headline number: the last row of a column, with the
@@ -343,7 +366,7 @@ Notes on the built tools:
   `report-kpi` in the panel and the PDF alike. **`/reports`** lists the latest version of every report in the user's own
   chats (`myReports`; patient names only while RLS shows them) and opens one in its chat (`?report=<id>`). Each call is
   a new version; the panel has a version menu, Print and PDF. **Save to chart** freezes a patient report version into
-  `clinical_document` (append-only, audited `document.create`).
+  `clinical_documents` (append-only, audited `document.create`).
 - Old chats may still hold cards of tools no longer offered to the model (`display_chart`, `display_map`,
   `chart_facility_panel`); their cards still render.
 
@@ -354,42 +377,42 @@ mutation(s) that confirm it, the record it is about (encounter, patient or resul
 destructive), the confirm strength (standard, reason, strong) and a loose input schema for the model.
 `createActionTool(def)` (`agent/tools/action-tool.ts`) turns it into a `propose` tool; `propose-action.tsx` and
 `propose-record-actions.tsx` render it on the shared `ProposalCard`. The mutation accepts the card only from the tools
-the registry names for it (`wiseActionToolsFor(mutation)`), verified at the record's facility and settled in its own
-transaction (`WiseProposalService.verifyAction` / `settleAction`). Adding an action: a definition, one `wiseOrigin` on
+the registry names for it (`wiseActionToolsFor(mutation)`), verified at the record's organization and settled in its own
+transaction (`WiseProposalService.verifyAction` / `settleAction`, checked against the record's organization). Adding an action: a definition, one `wiseOrigin` on
 its mutation, the card's body.
 
-| Tool                     | Confirms with                                                           | Mode / confirm                                       |
-| ------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------- |
-| `propose_vitals`         | `recordVitals` (a visit that exists)                                    | create / standard                                    |
-| `propose_void_vitals`    | `voidVitals`                                                            | destructive / reason                                 |
-| `propose_allergy`        | `addAllergy`                                                            | create / standard                                    |
-| `propose_remove_allergy` | `voidAllergy`                                                           | destructive / reason                                 |
-| `propose_diagnosis`      | `addDiagnosis` / `updateDiagnosis`                                      | create                                               |
-| `propose_void_diagnosis` | `voidDiagnosis`                                                         | destructive / reason                                 |
-| `propose_order`          | `createEncounterOrders` (batch)                                         | create / standard; the clinician picks the lab       |
-| `propose_cancel_order`   | `cancelOrder`                                                           | destructive / reason (the ordering doctor)           |
-| `propose_lab_order_step` | `acceptOrder` / `markOrderCollected` / `rejectOrder`                    | lab staff, general chat; reject is destructive       |
-| `propose_result_review`  | `reviewResult`                                                          | update / standard; critical: strong + note           |
-| `propose_issue_document` | `issuePrescription` / `issueMedicalCertificate`                         | strong (signs with the PRC license)                  |
-| `propose_void_document`  | `voidPrescription` / `voidMedicalCertificate`                           | destructive / reason                                 |
-| `propose_bill_step`      | `finalizeEncounterBill` / `markEncounterBillPaid` / `voidEncounterBill` | finalize strong; pay needs the OR no.; void a reason |
-| `propose_save_report`    | `saveReportToChart`                                                     | create                                               |
-| `propose_patient_update` | `updatePatient`                                                         | contact details only; clinic or hospital staff       |
+| Tool                     | Confirms with                                                                                              | Mode / confirm                                                   |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `propose_vitals`         | `recordVitals` (a visit that exists)                                                                       | create / standard                                                |
+| `propose_void_vitals`    | `voidVitals`                                                                                               | destructive / reason                                             |
+| `propose_allergy`        | `addAllergy`                                                                                               | create / standard                                                |
+| `propose_remove_allergy` | `voidAllergy`                                                                                              | destructive / reason                                             |
+| `propose_diagnosis`      | `addDiagnosis` / `updateDiagnosis`                                                                         | create                                                           |
+| `propose_void_diagnosis` | `voidDiagnosis`                                                                                            | destructive / reason                                             |
+| `propose_order`          | `createDiagnosticOrder` (the tests of one request)                                                         | create / standard; from the clinic's catalog                     |
+| `propose_cancel_order`   | `cancelDiagnosticOrder` (per test)                                                                         | destructive / reason (requesting doctor or lab desk)             |
+| `propose_lab_order_step` | `markSpecimenCollected` / `startDiagnosticOrderItem` / `releaseDiagnosticResult` / `cancelDiagnosticOrder` | lab desk, general chat; cancel is destructive                    |
+| `propose_result_review`  | `reviewResult`                                                                                             | update / standard; critical: strong + note                       |
+| `propose_issue_document` | `issuePrescription` / `issueMedicalCertificate`                                                            | strong (signs with the PRC license)                              |
+| `propose_void_document`  | `voidPrescription` / `voidMedicalCertificate`                                                              | destructive / reason                                             |
+| `propose_bill_step`      | `issueInvoice` / `recordPayment` / `voidInvoice`                                                           | issue strong; payment needs the method and amount; void a reason |
+| `propose_save_report`    | `saveReportToChart`                                                                                        | create                                                           |
+| `propose_patient_update` | `updatePatient`                                                                                            | contact details only; clinic or hospital staff                   |
 
-`updatePatient` changes contact details only (phone, preferred language, barangay); names, birth date, sex and
-identifiers drive the duplicate match and stay with registration. Never from chat: users, passwords, facility keys,
-LLM config, and the tool settings.
+`updatePatient` changes contact details only (mobile no., preferred language, address and barangay); names, birth
+date, sex and IDs drive the duplicate match and stay with registration. Never from chat: users, passwords, roles, LLM
+config, and the tool settings.
 
-**Wise tool settings** (Settings → Wise tools, `apps/api/src/wise-tools/`, migration `0020_wise_tool_settings`).
-`@loopwise/shared/wise-tools` catalogues every tool: label, summary, kind, category, `locked`, `comingSoon`, and its
-default per facility type. A facility's admin turns tools on or off; a user can turn a tool off for themselves, never
-on past their facility. `wise_tool_setting` stores overrides only; each change is audited. `clarification`,
+**Wise tool settings** (Settings → Wise tools, `apps/api/src/wise-tools/`).
+`@loopwise/shared/wise-tools` catalogues every tool: label, summary, kind, category, `locked`, `comingSoon`, and
+whether it is on by default. An organization's admin turns tools on or off; a user can turn a tool off for themselves,
+never on past their organization. `wise_tool_settings` stores overrides only; each change is audited. `clarification`,
 `find_patient` and `open_page` are locked on. Confirmation is not a setting: nothing turns off the Confirm.
 
 Enforced on the server: the agent leaves turned-off tools out of the model's tool set on every run, the system prompt
 lists them so Wise says so rather than fail, and `WiseProposalService.verify` refuses to confirm a card whose tool is
-off at the record's facility. `registry.spec.ts` fails when a tool the model can get is missing from the catalogue.
-Per-role defaults come with staff roles ([PLAN.md](PLAN.md) §4.1).
+off at the record's organization. `registry.spec.ts` fails when a tool the model can get is missing from the catalogue.
+Per-role defaults can follow the staff roles (`user_clinic_roles`) later.
 
 ### 7.4 Clinical system prompt (essentials)
 
@@ -400,73 +423,67 @@ Per-role defaults come with staff roles ([PLAN.md](PLAN.md) §4.1).
 
 ## 8. Access control and data governance
 
-1. **Deny by default.** A user sees a patient only with a `CareRelationship` (encounter, order, accepted referral,
-   case owner).
-2. **Postgres row-level security** (migration `0006_clinical_rls`, `apps/api/src/clinical/rls/`). `asUser` switches
-   to role `loopwise_app` for the transaction with the user bound; `SECURITY DEFINER` helpers (`app_user_id()`,
-   `app_org_ids()`, `app_can_see_patient()`, `app_can_see_case()`) back the policies on every clinical table.
-   Registration, HL7 ingest and jobs use `asSystem`. App bugs can't leak other patients.
-3. **Agent scoped the same way.** Tools run with the user's identity. Wise analytics (migration `0015_analytics`) runs
-   SQL over curated `analytics` views with four locks Postgres enforces itself: its own login role `loopwise_analyst`
-   (SELECT on `analytics.*` and EXECUTE on `analytics.bind` only, a separate pool), views owned by
-   `loopwise_analytics_owner` so the base tables' RLS still filters every row, an identity bound per transaction by a
-   one-time token (`app_private`), and a read-only transaction with a 5 s timeout and a 5,000-row cap. In front of
-   that, a validator on the real Postgres parser (`libpg-query`) accepts one SELECT over the views with allowlisted
-   functions. `pg_stat_activity` is revoked from PUBLIC. Program-office users get counts under 5 as "<5". Every query
-   is audited (`analytics.query` / `.rejected` / `.failed`). Tests: `test/analytics-security.e2e-spec.ts`.
-4. **Tenant isolation.** Labs see only orders sent to them; pharmacies only their prescriptions.
-5. **Break-glass** (not built). Access without a relationship requires a reason, is time-limited, logged and flagged.
-6. **Audit everything.** Every view and action → `AuditLog`; every follow-up transition → `CaseEvent`. Both are
-   append-only (a trigger rejects UPDATE and DELETE).
-7. **Consent.** Captured at registration (and for recording a consult, with the scribe); patients will see who
-   accessed their record in the portal.
+1. **Deny by default.** A user sees a patient only through:
+    - their own unexpired `CareRelationship` (an encounter they opened or took, a referral to them, a logged
+      `BREAK_GLASS` row with a note and an expiry);
+    - a desk role at a clinic where the patient has a visit (`RECEPTIONIST`, `NURSE`, `MIDWIFE`, `CASHIER`,
+      `BILLING_CLERK`) or an appointment (front desk, nurses, midwives);
+    - a lab role (`MEDTECH`, `RADTECH`) at a clinic where the patient has a diagnostic order.
+2. **Postgres row-level security** (migration `0001_rls_and_triggers`, `apps/api/src/clinical/rls/`). `asUser` sets
+   `app.user_id` and switches to role `loopwise_app` for the transaction. `SECURITY DEFINER` helpers back the policies:
+   `app_user_id()`, `app_org_ids()`, `app_clinic_ids()`, `app_clinic_ids_with_role(roles)`, `app_can_see_patient()`,
+   and for encounter children `app_can_see_encounter()` (read) and `app_can_write_encounter()` (the visit is also at one
+   of the user's clinics). Patient master data goes through its patient; rows below a parent (Rx items, order items,
+   results, result values, invoice lines, allocations) through the parent; clinic operations (appointments, queue,
+   invoices, payments, stock, schedules) through the clinic; catalogs through the organization. Registration duplicate
+   checks, opening a visit (which writes the care relationship), jobs and seeds use `asSystem`. Tests:
+   `test/clinical-rls.e2e-spec.ts`, `test/foundation.e2e-spec.ts`.
+3. **Agent scoped the same way.** Tools run with the user's identity. Wise analytics runs SQL over curated `analytics`
+   views with four locks Postgres enforces itself: its own login role `loopwise_analyst` (SELECT on `analytics.*` and
+   EXECUTE on `analytics.bind` only, a separate pool), views owned by `loopwise_analytics_owner` so the base tables'
+   RLS still filters every row, an identity bound per transaction by a one-time token (`app_private`), and a read-only
+   transaction with a 5 s timeout and a 5,000-row cap. In front of that, a validator on the real Postgres parser
+   (`libpg-query`) accepts one SELECT over the views with allowlisted functions. `pg_stat_activity` is revoked from
+   PUBLIC. Viewer-only users get counts under 5 as "<5". Every query is audited (`analytics.query` / `.rejected` /
+   `.failed`). Tests: `test/analytics-security.e2e-spec.ts`.
+4. **Tenant isolation.** Patients, catalogs and clinics belong to one organization; nothing is shared across
+   organizations.
+5. **Break-glass** (API not built). The `BREAK_GLASS` care relationship reason exists: a reason, an expiry, an audit
+   row.
+6. **Audit everything.** Every view and change goes through `AuditService` into `audit_logs` (the reference's action,
+   entity and before/after changes, plus the specific `event`, the reason, the Wise `origin` and the request's
+   correlation id). The log is append-only (a trigger rejects UPDATE and DELETE).
+7. **Consent.** A `DATA_PRIVACY` consent (RA 10173) is recorded at registration (`patient_consents`, with the version of
+   the text); visit-specific consents (procedure, telemedicine, recording a consult) attach to the encounter.
 8. **Synthetic data only** in seeds, fixtures and demos.
 9. **Data Privacy Act.** Purpose limitation, NPC registration, breach process, and a choice of LLM provider (including
    a self-hosted option) per clinic.
 
 ## 9. Integration
 
-| Direction            | Standard                                              | Notes                                             |
-| -------------------- | ----------------------------------------------------- | ------------------------------------------------- |
-| Orders → outside lab | HL7 v2 ORM^O01 via the outbox                         | Or the lab worklist for labs without a system     |
-| Results → hub        | HL7 v2 ORU^R01 over HTTPS (`POST /api/hl7/messages`)  | Lab (LOINC where available) and radiology reports |
-| Internal model       | FHIR-shaped (Patient, ServiceRequest, Observation, …) | Ready for FHIR APIs later                         |
-| Patient messaging    | SMS gateway (provider TBD), later Messenger           | Planned ([PLAN.md](PLAN.md) §4.6)                 |
-| Claims               | PhilHealth eClaims / Konsulta                         | Planned (Phase 5)                                 |
+| Direction         | Standard                                                            | Notes                                                     |
+| ----------------- | ------------------------------------------------------------------- | --------------------------------------------------------- |
+| Internal model    | The PH clinic reference schema, FHIR-shaped                         | Ready for FHIR APIs later                                 |
+| Reference data    | PSGC (PSA), ICD-10 (WHO, as PhilHealth), PhilHealth RVS, case rates | Seeded samples; load the full publications before a pilot |
+| Patient messaging | SMS gateway (provider TBD), later Messenger                         | Planned ([PLAN.md](PLAN.md) §4.6)                         |
+| Claims            | PhilHealth eClaims / Konsulta                                       | Schema ready (`philhealth_claims`); planned               |
+| HMO               | LOA / approval codes, SOA transmittals                              | Schema ready (`hmo_*`); planned                           |
 
-Lab systems authenticate with a **facility key**: an org admin issues it with `createFacilityKey` (shown once; only
-its sha256 hash is stored, `apps/api/src/facility-keys/`), and the REST endpoints take it as
-`Authorization: Bearer <key>` (`@FacilityKey()`). An MLLP edge connector was built and later removed (5 Nov 2026); a
-lab system that only speaks MLLP needs an MLLP-to-HTTPS bridge in front of these endpoints.
-
-**Ingest contract.** `POST /api/hl7/messages` with a `text/plain` body holding one HL7 v2 message (segments separated
-by `\r`, no MLLP framing). The answer is 200 with an HL7 ACK (MSH + MSA, ERR on errors): `AA` stored, `AE` a valid
-message that could not be stored (e.g. no matching patient), `AR` not a message the hub takes. AE and AR are final;
-senders retry only on 5xx. A resend of the same MSH-10 from the same facility gets the same ACK and stores nothing twice
-(`hl7_message`, migration `0017_hl7_ingest`). Patients are matched deterministically: an identifier the sending
-facility issued, then a PhilHealth number, then the patient of the order the message answers (placer number = the
-Loopwise order id); any conflict is an AE left for review. Each stored result writes an audit row and publishes
-`result.received`.
-
-**Orders out.** An order for a facility with `uses_hl7_connector` is queued as HL7 v2.3.1 ORM^O01 in `hl7_outbox` in
-the transaction that sends it (ORC-1 `NW`; `CA` when the doctor cancels). PID-3 carries the patient's identifier at
-the target facility first, then the MRN, PhilHealth and the hub id (`LOOPWISE`, type `PI`); ORC-2 and OBR-2 carry the
-order id as placer number; OBR-4 the LOINC code (`LN`). The lab system pulls `GET /api/hl7/outbox?limit=20` with its
-facility key and posts its ACK to `POST /api/hl7/outbox/:id/ack` (`AA` → delivered, `AE`/`AR` → failed; a message
-stays pending until acknowledged). Status updates from the lab system (ORM/OML, ORC-1 `SC` with ORC-5 `IP`/`CM`) map to
-accepted/collected (`OrderService.applyLabStatus`). Facilities without HL7 use the lab worklist (`/orders`).
+There is no HL7 interface: the lab is in-house and results are entered on the lab worklist. The HL7 ingest and
+outbox, facility API keys and the MLLP edge connector were built earlier and removed. A clinic that runs its own LIS
+would need a new interface (results into `diagnostic_results` / `diagnostic_result_values`, which keep
+`hl7_message_id` and the parameters' `lis_code` for that).
 
 ## 10. Metrics
 
 Owner dashboard ([PLAN.md](PLAN.md) §4.8): patients seen, revenue, no-show rate, wait time, top diagnoses, stock value,
-open and overdue follow-ups. Follow-ups loop: time to result review, to patient contact and to the next visit;
-documented closure rate; drop-off by step; the same split by sex, age group and barangay to spot gaps.
+results awaiting review, follow-up dates passed without a visit; the same split by sex, age group and barangay to spot
+gaps.
 
 Certified metrics (`apps/api/src/clinical/analytics/metrics.ts`, built): one fixed SQL definition per headline number
 over the analytics views (panel size, patients by age band / sex / barangay, new patients, encounters per period, top
-diagnoses, results awaiting review, open orders by age, overdue follow-ups, prescriptions issued, billing totals,
-`screening_funnel`). Wise's `get_metric` uses them; the dashboard and reports call the same definitions rather than
-repeat the SQL.
+diagnoses, results awaiting review, open orders by age, prescriptions issued, billing totals). Wise's `get_metric`
+uses them; the dashboard and reports call the same definitions rather than repeat the SQL.
 
 ## 11. Base code
 
@@ -475,21 +492,23 @@ Loopwise is built on an agent base (credited in `NOTICE`). Kept from it:
 - Agent core, LLM providers (OpenAI, Anthropic, Gemini, Mistral, OpenRouter, OpenAI-compatible), streaming, chat UI.
 - `clarification`, `suggest-follow-ups`, `load-skill`, skills (clinical guidelines), memory.
 - Attachments (upload previous results as PDF), voice transcription (`apps/api/src/transcribe/`, the scribe's input).
-- Auth (better-auth), organizations (facilities), users, clinics (formerly projects: the branches of an organization).
-- pg-boss jobs (`@Job`: SLA timers, escalations, reminders).
-- Charts and analytics (de-identified counts for program views).
+- Auth (better-auth, UUIDv7 ids), organizations and their clinics (the base app's projects), users.
+- pg-boss jobs (`@Job`: reminders).
+- Charts and analytics.
 
-Module conventions are in [CLAUDE.md](../CLAUDE.md): one folder per feature under `apps/api/src/clinical/`, thin
-resolvers, logic in services, Prisma only in repositories, kebab-case files.
+Module conventions are in [CLAUDE.md](../CLAUDE.md) and §4.5. Modules of the base app that predate those rules
+(agent, chats, attachments, charts, skills, user management) are listed in [NEXT.md](NEXT.md) where they differ.
 
 ## 12. Assumptions and limitations
 
-- Synthetic data only; clinical thresholds from published guidelines, to be validated by clinicians before a pilot.
-- Patient matching is deterministic: the facility MRN or the PhilHealth number is an exact match and is never
-  registered twice; the same name, birth date and sex is a possible match the clinician confirms. A match the
-  clinician cannot see yet is shown masked and can be linked, which adds a care relationship and an audit row.
+- Synthetic data only; clinical cut-offs from published guidelines, to be validated by clinicians before a pilot.
+- The PSGC, ICD-10 and RVS rows are samples (the curated ICD-10 list of `@loopwise/shared/icd10`); load the PSA, WHO
+  and PhilHealth publications before a pilot. A diagnosis code must exist in `icd10_codes`.
+- Duplicate checks run within an organization: the patient number or a PhilHealth ID is an exact match and is never
+  registered twice; the same name, birth date and sex is a possible match the clinician confirms.
+- Tax rules (VAT treatment of medical services, EWT on professional fees) follow the reference's notes; check them
+  with an accountant.
 - Patient messaging is not live yet; real delivery depends on an SMS gateway and local regulation.
-- Facilities without HL7 use web screens.
 - Wise does not make clinical decisions; every action is confirmed by a person.
 - Speech-to-text quality for Taglish and Cebuano is unproven ([PLAN.md](PLAN.md) §8).
 - Not a medical device.

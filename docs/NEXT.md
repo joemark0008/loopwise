@@ -1,6 +1,6 @@
 # Next steps (handoff)
 
-Where the Loopwise work stands, so any session can pick it up. The product is now an AI-powered clinic system
+Where the Loopwise work stands, so any session can pick it up. The product is an AI-powered clinic system
 ([PLAN.md](PLAN.md)); the technical design is [DESIGN.md](DESIGN.md). Branch: `main` (the user's servers run from it on
 :5006 / :3000; feature work merges in through an `integration` worktree).
 
@@ -9,130 +9,96 @@ Where the Loopwise work stands, so any session can pick it up. The product is no
 All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
 
 - **Local stack:** `docker compose up -d --wait` → `loopwise_postgres` on :5435, databases `loopwise` /
-  `loopwise_test`.
-- **Clinical schema and RLS** (§5, §8): migrations `0005_clinical`, `0006_clinical_rls`; `clinical/rls/`
-  (`ClinicalDbService.asUser` / `asSystem`); append-only `case_event` / `audit_log`; tests
-  `test/clinical-schema.e2e-spec.ts`, `test/clinical-rls.e2e-spec.ts`.
-- **Synthetic seed:** `prisma/seed-clinical.ts`, `seed-trends.ts`, `seed-pathways.ts`, `seed-facility-keys.ts`. Bohol
-  facilities, staff `dr.reyes`, `nurse.santos`, `lab.bautista`, `dr.cruz`, `pharm.garcia`, `program` @loopwise.test
-  (password `test1234`); `test@test.test` works at the health center too.
-- **Patients:** registration with duplicate checks and consent, link existing patient, contact updates
-  (`clinical/patients/`, `apps/shared/src/patient-registration.ts`, `/patients`, `/patients/new`).
-- **Patient chart:** `/patients/$patientId/*` layout with banner, allergies and the docked Wise chart chat
-  (migration `0010_patient_chart`).
-- **Encounter record** (§5.3): SOAP, vitals, ICD-10 diagnoses, allergies, prescriptions, medical certificates, billing,
-  clinician profile, print views (migrations `0011`, `0013`, `0014`; `clinical/encounters/`, `prescriptions/`,
-  `medical-certificates/`, `billing/`, `clinicians/`).
-- **Orders and lab worklist:** order lifecycle with the `check_order_transition` trigger, `/orders` for lab staff,
-  ORM^O01 out through `hl7_outbox` (migration `0018`, `clinical/orders/`).
-- **HL7 ingest and results inbox** (§9): facility keys (`facility-keys/`), `POST /api/hl7/messages`, deterministic
-  matching, `/results` with review (migration `0017`, `hl7/`, `clinical/results/`). Demo: `npm run hl7:sample`.
-- **Rules engine and pathways** (§5.2): `apps/shared/src/{pathway-rules,rules-engine}.ts`, `diabetes` / `breast` /
-  `potassium`, `result_evaluation` (migration `0019`), `/pathways`, `explain_result`.
-- **Wise** (§7): tool kinds and read-only facades, proposal cards with settle-once and versions (migration `0012`,
-  `clinical/wise-proposals/`), Wise actions and tool settings (migration `0020`, `wise-tools/`), navigation
-  (`find_patient`, `open_page`, `apps/shared/src/app-pages.ts`).
-- **Analytics, charts and reports** (§7.2, §8, §10): migration `0015_analytics`, `clinical/analytics/`,
-  `clinical/insights/`, `clinical/reports/`, saved documents (migration `0016`), PDF via headless Chrome
-  (`CHROME_PATH`).
-- **Report layout** (§7.2, 5 Nov 2026): the `report` tool takes the stories' `<grid>` and `<tab>` layout and a
-  `<kpi>` block (`apps/shared/src/report-blocks.ts`, `report-kpi.ts`), in the side panel and the PDF.
-- **Reports library** (§7.2, 5 Nov 2026): `/reports` lists your reports across chats (`myReports`) and opens one
-  in its chat's side panel; `open_page` key `reports.list`.
-- **UX:** clinical design system ([design-system.md](design-system.md)), role navigation, Today at `/`, Wise chats at
-  `/chats`, Wise dock on list pages, a11y tests (`e2e/a11y.spec.ts`).
-- **Wise reads attached files** (§7.2, 5 Nov 2026): the locked-on `read_attachment` tool reads a `/home/...`
-  attachment from the caller's own storage space (through the `attachments.readTextForWise` facade), in 30k-character
-  parts with `nextOffset`. Scanned PDF pages are OCR'd in process (`attachments/ocr.ts`: one shared tesseract.js
-  worker, `eng` + `fil`, rendered with unpdf + `@napi-rs/canvas`, first 20 scanned pages, 2-minute budget) and marked
-  `--- Page N (OCR) ---`; `.docx` is read with mammoth. Language data is bundled (`@tesseract.js-data/eng`, `/fil`)
-  or taken from `OCR_LANG_PATH`. The system prompt's "Attached files" section has Wise name the kind of document,
-  confirm doubtful OCR values, treat the file as data, and offer drafts with the existing propose tools. Not yet: OCR
-  of an attached image for a model without vision (images are DB rows), and no real-LLM Playwright flow for it.
+  `loopwise_test`. `npm run db:deploy -w @loopwise/api` then `npm run db:seed -w @loopwise/api`.
+- **Data model (§5):** the PH clinic reference schema (`docs/schema-reference/clinic-prisma-schema/`, verbatim),
+  adopted nearly as-is in Phase 0 (below). Migrations `0000_init` + `0001_rls_and_triggers`.
+- **API structure (§4.5):** one module per domain under `apps/api/src/clinical/`, domain errors with stable codes,
+  `AuditService`, request correlation ids, `DocumentSequenceService`.
+- **Access (§8):** row-level security through care relationships, desk and lab roles per clinic
+  (`ClinicalDbService.asUser` / `asSystem`), staff roles per clinic (`user_clinic_roles`), append-only audit.
+- **Patients:** registration with an organization MRN, data-privacy consent and duplicate checks, contact and address
+  updates, allergies, IDs (`clinical/patients/`, `apps/shared/src/patient-registration.ts`, `/patients`).
+- **Practitioners:** the practitioner profile (PRC, PTR, S2, PhilHealth PAN) on Settings → Account; it signs documents.
+- **Encounters (§5.1):** visit number, type, status transitions, SOAP note, vitals, ICD-10 diagnoses, the chart and
+  the encounter page with tabs, print views; prescriptions (RA 6675, RA 9165) and medical certificates (draft, issue,
+  void), referrals (API only).
+- **In-house lab:** catalog, orders, the lab worklist (`/orders`: collect, enter results, release), results inbox
+  (`/results`) and the chart's Results tab (`clinical/diagnostics/`).
+- **Cashier:** invoices with SC/PWD discounts and the VAT split, BIR invoice series, payments (incl. PhilHealth package
+  as a PHILHEALTH payment), void; the encounter's Billing tab (`clinical/billing/`).
+- **Wise (§7):** proposal cards settled once with versions (`clinical/wise-proposals/`), Wise actions and tool settings
+  per organization, navigation (`find_patient`, `open_page`), charts and summary reports (`clinical/insights/`), safe
+  analytics SQL (`clinical/analytics/`), reports in a side panel saved to the chart (`clinical/reports/`), the reports
+  library (`/reports`), reading attached files with OCR.
+- **UX:** clinical design system ([design-system.md](design-system.md)), the desk navigation from the user's staff
+  roles (doctor, nurse, lab, front desk, cashier; admins can open every desk), Today at `/`, Wise chats at `/chats`,
+  Wise dock on list pages, a11y tests (`e2e/a11y.spec.ts`).
 
-Removed: the MLLP edge connector (`apps/connector`, 5 Nov 2026). The hub's HL7 REST ingest, outbox and facility keys
-stay.
+## Phase 0: the clinic schema (5 Nov 2026)
 
-Flaky tests: `test/usage.e2e-spec.ts` › "rejects a range above the chart bucket limit" (inherited, known failure);
-`clinic-identifier.test.tsx` failed once under full-suite load and passed on rerun; real-LLM Playwright specs
-(`navigation`, `patient-chart` encounter wording) can flake on model wording.
+The database now follows the PH clinic reference schema. What changed, for anyone reading older code or notes:
 
-Note: through RLS a facility sees the cases of patients it can see (a lab sees the cases of patients it ran tests for).
-Narrow `app_can_see_case` if that is too broad.
+- **Conventions:** plural snake_case tables, UPPERCASE enum values, UUIDv7 ids everywhere (better-auth generates
+  UUIDv7; the web client generates UUID chat message ids), `timestamptz(3)`. The reference's Branch is `Clinic`.
+- **Organization and clinics:** an organization (clinic group) owns its patients and catalogs; a clinic (branch) has its
+  code, BIR / DOH / PhilHealth details and numbering, and is also the Wise workspace. Staff hold roles per clinic
+  (`StaffRole`, plus MEMBER / VIEWER / CONTEXT_ADMIN for access) and optionally an organization role (`OrgRole`). The
+  `project*` database names and stored values are gone (`clinics`, `clinic_id`, `shared_chats.visibility = 'clinic'`,
+  `clinicSharing`, `clinicPreferences`, `./clinics`, `clinics/<id>/` storage keys) with their translation shims.
+- **Encounter-centric:** every clinical record hangs off an encounter; children keep only `encounter_id` and RLS goes
+  through the encounter (DESIGN.md §5.1 lists required / optional / patient-level tables).
+- **Removed:** the HL7 ingest and outbox, facility API keys and cross-organization ordering (labs are in-house); the
+  follow-up engine (pathways, rules engine, result evaluations, care cases, case events, tasks, evidence, patient
+  messages, case referrals, clinical events, `explain_result`, the `/pathways`, `/cases`, `/worklist`, `/referrals`,
+  `/dashboard` and patient cases / messages pages); EncounterBill / EncounterCharge (now Invoice); ClinicalOrder /
+  Result (now the diagnostics models); ClinicianProfile (now Practitioner); PatientIdentifier and `consentAt` (now
+  PatientIdentification and PatientConsent); `Organization.type` and facility types.
+- **Seeded logins** (password `test1234`, organization `tagbilaran-hc`, clinic TAG "Tagbilaran City Health Center"):
+  `test@test.test` (org ADMIN; SUPER_ADMIN, ADMIN, DOCTOR; practitioner), `dr.reyes@loopwise.test` (DOCTOR),
+  `dr.cruz@loopwise.test` (DOCTOR, internal medicine), `nurse.santos@loopwise.test` (NURSE),
+  `lab.bautista@loopwise.test` (MEDTECH), `pharm.garcia@loopwise.test` (PHARMACIST), `cashier.dela.cruz@loopwise.test`
+  (CASHIER), `front.desk@loopwise.test` (RECEPTIONIST). Reference data: a PSGC sample (Region VII, Bohol, Tagbilaran and
+  its barangays), the curated ICD-10 list, a few RVS codes — codes marked to be checked against the PSA / PhilHealth
+  publications.
+- **Merging into main:** the `loopwise` database must be dropped, recreated, migrated and reseeded; its chats and the
+  clinic's LLM config row do not survive. Re-enter the LLM key in Settings → Clinic → Agent as `test@test.test`.
 
-## Cleanup (5 Nov 2026)
-
-- **Edge connector** (`apps/connector`) deleted with its lockfile entries and README section. The hub's HL7 REST
-  ingest, outbox and facility keys stay.
-- **Unreachable code** (found by an import-reachability scan from the API, seed, frontend and route entry points):
-  83 files removed, among them old duplicates in `apps/api/src/agent/services/` (`file-text`, `image`,
-  `storage/user-files`), `project-path-error.service`, `keyed-lock`, `virtual-directory`, `query-rows.tsx`,
-  `file-tree-catalog`; the frontend query workbench context, MCP app views, sidebar chat list / filter / community /
-  version notice, newsletter, user-group picker and chips, date-range picker, unused hooks and UI primitives; the
-  shared `story-*` modules, `billing.ts` (SaaS subscription statuses) and `member-budget.ts`, with their exports and
-  tests. Kept on purpose: `components/clinical/action-bar.tsx` (design system), `hl7/oru-samples.ts` and the attachment
-  fixtures (used by tests).
-- **Schema:** migration `0021_drop_unused_base_tables` drops `activity`, `analytics_event`, `automation`,
-  `automation_run`, `keyed_lock`, `log`, `notification`, `notification_unsubscribe`, `user_group_member` and the OAuth
-  provider / JWT tables (`oauth_*`, `jwks`); all were empty and unused. The clinical case/referral/evidence/message
-  models stay for the follow-ups loop. Known drift left alone: `prisma migrate diff` still wants to drop
-  `wise_tool_setting`'s hand-written partial unique indexes and foreign keys (Prisma cannot model them).
-- **API:** `Chat.automationRun` and the `recentFeedbacks` query removed (frontend polling of automation runs too).
-- **Frontend:** Borna fonts deleted; `e2e/record-baseline.spec.ts`, `e2e/routes.ts`, `e2e/baseline-inventory.json`
-  (base-app parity recorder) deleted; `e2e/flows.spec.ts` updated to the current UI and passes (11/11).
-- **Comments:** DESIGN.md section references across `apps/` renumbered to the rewritten DESIGN.md.
-- **Not yet:** dormant base code inside live modules (stories, MCP stand-ins, citations, chat query rows, subagent
-  flags, user groups, saved prompts), see PLAN.md §7.
-
-## Project renamed to Clinic (5 Nov 2026)
-
-Organization = the clinic group (tenant, still the scope of clinical data); clinic = one branch inside it (chats, LLM
-configs, saved prompts, members, user groups, settings). Renamed across Prisma models (`Clinic`, `ClinicLlmConfig`,
-`ClinicMember`, `ClinicSavedPrompt`, `clinicId`), GraphQL (`clinic`, `clinics`, `clinicId` args), decorators
-(`@ClinicAccess()`, `@ClinicAdmin()`, `@ClinicNonViewer()`), `apps/api/src/clinics/`, the frontend
-(`/settings/clinic/...`, `clinic-selector`, `clinicApi`), the `x-loopwise-clinic-id` header, the
-`loopwise.active-clinic-id` local storage key and the env vars `LOOPWISE_CLINICS_DIR` / `LOOPWISE_DEFAULT_CLINIC_PATH`
-(were `LOOPWISE_PROJECTS_DIR` / `LOOPWISE_DEFAULT_PROJECT_PATH`). No migration: tables, columns, indexes and FKs keep
-their `project*` names through `@@map` / `@map`. Stored values kept: `shared_chat.visibility = 'project'` (the API says
-`clinic`, mapped in `SharedChatRepository`), the `projectSharing` key in `user_group.feature_grants` (read as
-`clinicSharing`), `projectPreferences` in `user_preference.preferences`, storage keys under `projects/<clinicId>/`, the
-default folder `./projects`, and the example clinic id `system-example-project`. An existing database keeps its seeded
-"Test Project" name.
-
-## Next: Phase 0 — realign
-
-From [PLAN.md](PLAN.md) §6–7.
-
-- **Staff roles in the API** (PLAN §4.1): a role per facility membership (`receptionist`, `nurse`, `doctor`, `lab`,
-  `pharmacist`, `cashier`, `admin`), a role decorator, and `useStaffRole` reading it instead of guessing from the
-  facility type; role-based navigation and Wise tool defaults per role.
-- Re-scope or remove the planned pages built for the old loop (`/cases`, `/referrals`, `/worklist`, `/dashboard`) and
-  update the page registry.
-- Small fixes: the encounter page's own note form doesn't send `expectedVersion`; ICD-10 search as a combobox; the
-  registration form doesn't capture barangay.
-- Reseed a clean demo database (Maria's seed visit has piled-up e2e and test data).
+Flaky tests: real-LLM Playwright specs can flake on model wording; `a11y` (aria-prohibited-attr on the context-window
+ring) and the results-inbox ordering are known flakes. `test/user-management.e2e-spec.ts` expects
+`BETTER_AUTH_URL=http://localhost:3000` (a worktree on another port must set it for that spec).
 
 ## Next: Phase 1 — front desk and AI scribe
 
-- Clinic setup: branches, rooms, services and fee schedule, doctor schedules, PF rules.
-- Appointments and queue: booking / reschedule / cancel / no-show, walk-in queue with numbers, status board, triage at
-  the nurse station; appointment → encounter on check-in; reminder jobs.
-- AI scribe: dictation or recording → one structured card set (SOAP, vitals, diagnoses, Rx, orders, med cert,
-  follow-up date, patient summary), each confirmed separately; recording consent per visit; allergy, interaction and
-  dose checks on drafted Rx.
+- **Clinic setup** (the `clinics` domain): clinic profile (BIR, DOH, PhilHealth, address with PSGC), rooms, services and
+  prices (`service_items`, `clinic_service_prices`), practitioner clinics, schedules and leaves; move
+  `apps/api/src/clinics` and `apps/api/src/organizations` under `clinical/clinics/`.
+- **Appointments and queue** (`scheduling`): booking / reschedule / cancel / no-show, walk-in queue with the priority
+  lane (RA 9994, RA 10754), status board, triage at the nurse station; appointment → encounter on check-in
+  (`encounters.appointment_id`); reminder jobs.
+- **AI scribe:** dictation or recording → one structured card set (SOAP, vitals, diagnoses, Rx, orders, med cert,
+  follow-up date, patient summary), each confirmed separately; recording consent per visit (`patient_consents` with
+  `encounter_id`).
 
-## Later follow-ups
+## Later
 
-- Results inbox: show `ResultEvaluationBadge` (via a `ResolveField` / DataLoader), a review screen for `hl7_message`
-  rows left as AE (unmatched patient), Wise summarising a result.
-- Orders: a Cancel button for the ordering doctor (API exists); the lab's view of failed outbox messages with resend; a
-  facility setting for `uses_hl7_connector`; a short order number if a strict LIS truncates the 45-character placer id.
-- Reports: a PDF of a saved document; saving panel-level reports; one filled button in the report panel header.
-- Rules: a `ckd` pathway (eGFR needs age and sex); re-evaluate results when a pathway version changes.
-- Encounter record: referral letter, PhilHealth eClaims, pharmacy dispense linking a `PrescriptionItem` to `Evidence`.
-- Wise: the seven older propose tools could move onto the generic card; `propose_skill` onto `ProposalCard` +
-  `wiseOrigin`.
-- Break-glass access (DESIGN §8.5): reason, expiry, flag.
-- Deploy: Chromium in the API Dockerfile (`apt-get install chromium`, `CHROME_PATH`) for PDF export.
+- **Pharmacy and inventory** (`inventory`): items (FDA CPR, dangerous drugs), lots (FEFO), receipts, the dispense queue
+  writing `stock_movements` and `prescription_items.dispensed_qty` (the issued-Rx lock already allows those columns).
+- **Billing:** cashier shifts (X/Z reading), professional fees with EWT, corporate accounts and consolidated invoices,
+  HMO LOAs and transmittals, PhilHealth claims (`philhealth_claims`, Konsulta enrollment), a printed invoice.
+- **Follow-ups:** a list from `encounters.follow_up_date` / `disposition`, reminders that book appointments; referral
+  responses (accept / decline / complete) and a referral letter print (the API creates and cancels referrals only).
+- **Patient master UI:** contacts, problems, history, documents (schema ready; registration captures address and IDs).
+- **Immunizations** (`immunizations`), **procedures** (`encounter_procedures` with RVS).
+- **Reference data:** load the full PSGC, ICD-10 (WHO) and PhilHealth RVS / case rates; ICD-10 search from
+  `icd10_codes` (it still searches the curated shared list) and as a combobox.
+- **Wise:** per-role tool defaults; `chart_facility_panel`'s `facilityId` now means a clinic id; the seven older
+  propose tools could move onto the generic card; `propose_skill` onto `ProposalCard` + `wiseOrigin`.
+- **Access:** break-glass (`BREAK_GLASS` care relationships with a reason and expiry; no API yet).
+- **Base-app modules that predate the API structure rules** (listed, not changed in Phase 0): charts, chats, agent,
+  skills and attachments inject `ClinicRepository`; auth and setup inject `OrganizationRepository`; user management
+  reads clinic roles in its own repository; platform modules throw `HandlerError` rather than domain errors; the wise
+  tool settings service drives its own transaction; `chat.repository.ts` is ~1000 lines.
+- **Small:** the encounter page's own note form doesn't send `expectedVersion`; a PDF of a saved document; saving
+  panel-level reports; deploy with Chromium in the API image (`CHROME_PATH`) for PDF export.
 
 Verify with `npm run lint`, `npm test`, `npm run format:check` (see [CLAUDE.md](../CLAUDE.md)).
