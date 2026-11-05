@@ -4,7 +4,7 @@ import type { ConfigService } from '../config/config.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UserRepository } from '../users/user.repository.js';
 import { UsageRepository } from './usage.repository.js';
-import type { UsagePeriodRange, UserProjectPreferences } from './usage.types.js';
+import type { UsagePeriodRange, UserClinicPreferences } from './usage.types.js';
 import { usagePeriodRangeSchema } from './usage.types.js';
 import { buildModelCostRows } from './usage-costs.js';
 import { formatDate } from './usage-date.js';
@@ -14,19 +14,19 @@ let prisma: PrismaService;
 let usage: UsageRepository;
 let users: UserRepository;
 
-// Upstream mocks the project's LLM configs away: catalogue prices only.
+// Upstream mocks the clinic's LLM configs away: catalogue prices only.
 const COSTS = buildModelCostRows([]);
 
 const getMessagesUsage = (
-	projectId: string,
+	clinicId: string,
 	filter: Parameters<UsageRepository['getMessagesUsage']>[1],
 	userId?: string,
-) => usage.getMessagesUsage(projectId, filter, COSTS, userId);
+) => usage.getMessagesUsage(clinicId, filter, COSTS, userId);
 const getMessagesUsageByUser = (
-	projectId: string,
+	clinicId: string,
 	filter: Parameters<UsageRepository['getMessagesUsageByUser']>[1],
 	userId?: string,
-) => usage.getMessagesUsageByUser(projectId, filter, COSTS, userId);
+) => usage.getMessagesUsageByUser(clinicId, filter, COSTS, userId);
 const getTotalUsage = (...args: Parameters<UsageRepository['getTotalUsage']>) => usage.getTotalUsage(...args);
 const getUsedProviders = (...args: Parameters<UsageRepository['getUsedProviders']>) => usage.getUsedProviders(...args);
 const getUserPreferences = (userId: string) => users.getUserPreferences(userId);
@@ -35,8 +35,8 @@ const updateUserPreferences = (...args: Parameters<UserRepository['updateUserPre
 const mutateUserPreferences = (...args: Parameters<UserRepository['mutateUserPreferences']>) =>
 	users.mutateUserPreferences(...args);
 
-const PROJECT_ID = 'usage-project';
-const OTHER_PROJECT_ID = 'usage-project-other';
+const CLINIC_ID = 'usage-clinic';
+const OTHER_CLINIC_ID = 'usage-clinic-other';
 const USER_ID = 'usage-user';
 const OTHER_USER_ID = 'usage-user-other';
 const CHAT_ID = 'usage-chat';
@@ -56,23 +56,23 @@ describe('usage query results', () => {
 				{ id: OTHER_USER_ID, name: 'Other Usage User', email: 'other-usage@example.com' },
 			],
 		});
-		await prisma.project.createMany({
+		await prisma.clinic.createMany({
 			data: [
-				{ id: PROJECT_ID, name: 'Usage Project', type: 'local', path: '/tmp/usage-project' },
-				{ id: OTHER_PROJECT_ID, name: 'Other Usage Project', type: 'local', path: '/tmp/usage-project-other' },
+				{ id: CLINIC_ID, name: 'Usage Clinic', type: 'local', path: '/tmp/usage-clinic' },
+				{ id: OTHER_CLINIC_ID, name: 'Other Usage Clinic', type: 'local', path: '/tmp/usage-clinic-other' },
 			],
 		});
 		await prisma.chat.createMany({
 			data: [
-				{ id: CHAT_ID, projectId: PROJECT_ID, userId: USER_ID },
-				{ id: OTHER_USER_CHAT_ID, projectId: PROJECT_ID, userId: OTHER_USER_ID },
+				{ id: CHAT_ID, clinicId: CLINIC_ID, userId: USER_ID },
+				{ id: OTHER_USER_CHAT_ID, clinicId: CLINIC_ID, userId: OTHER_USER_ID },
 			],
 		});
 	});
 
 	beforeEach(async () => {
 		await prisma.userPreference.deleteMany({ where: { userId: { in: [USER_ID, OTHER_USER_ID] } } });
-		await prisma.llmInference.deleteMany({ where: { projectId: PROJECT_ID } });
+		await prisma.llmInference.deleteMany({ where: { clinicId: CLINIC_ID } });
 		await prisma.chatMessage.deleteMany({ where: { chatId: { in: [CHAT_ID, OTHER_USER_CHAT_ID] } } });
 	});
 
@@ -93,7 +93,7 @@ describe('usage query results', () => {
 			],
 		});
 
-		await expect(getTotalUsage(PROJECT_ID, { period: { value: 15, unit: 'day' } })).resolves.toEqual({
+		await expect(getTotalUsage(CLINIC_ID, { period: { value: 15, unit: 'day' } })).resolves.toEqual({
 			totalMessages: 2,
 			uniqueUsers: 1,
 		});
@@ -107,7 +107,7 @@ describe('usage query results', () => {
 	] satisfies [UsagePeriodRange, number][])(
 		'returns one data point per period within the natural granularity cap',
 		async (period, expectedLength) => {
-			await expect(getMessagesUsage(PROJECT_ID, { period })).resolves.toHaveLength(expectedLength);
+			await expect(getMessagesUsage(CLINIC_ID, { period })).resolves.toHaveLength(expectedLength);
 		},
 	);
 
@@ -134,8 +134,8 @@ describe('usage query results', () => {
 		});
 
 		const [records, total] = await Promise.all([
-			getMessagesUsage(PROJECT_ID, { period }),
-			getTotalUsage(PROJECT_ID, { period }),
+			getMessagesUsage(CLINIC_ID, { period }),
+			getTotalUsage(CLINIC_ID, { period }),
 		]);
 
 		expect(records[0]?.date).toBe('2026-08-20');
@@ -143,39 +143,39 @@ describe('usage query results', () => {
 		expect(total.totalMessages).toBe(1);
 	});
 
-	it('stores period preferences independently for each user and project', async () => {
+	it('stores period preferences independently for each user and clinic', async () => {
 		const usagePeriod = { mode: '6m' as const };
 		const savedUsagePeriods = [{ id: 'year', days: 365, granularity: 'month' as const }];
-		const projectPreferences = { usagePeriod, savedUsagePeriods };
+		const clinicPreferences = { usagePeriod, savedUsagePeriods };
 
 		await updateUserPreferences(USER_ID, {
 			projectPreferences: {
-				[PROJECT_ID]: projectPreferences,
+				[CLINIC_ID]: clinicPreferences,
 			},
 		});
 
 		await expect(getUserPreferences(USER_ID)).resolves.toEqual({
 			projectPreferences: {
-				[PROJECT_ID]: projectPreferences,
+				[CLINIC_ID]: clinicPreferences,
 			},
 		});
 		await expect(getUserPreferences(OTHER_USER_ID)).resolves.toEqual({});
-		expect((await getUserPreferences(USER_ID)).projectPreferences?.[OTHER_PROJECT_ID]).toBeUndefined();
+		expect((await getUserPreferences(USER_ID)).projectPreferences?.[OTHER_CLINIC_ID]).toBeUndefined();
 	});
 
-	it('serializes concurrent project preference transforms', async () => {
+	it('serializes concurrent clinic preference transforms', async () => {
 		await updateUserPreferences(USER_ID, { toolCallDensity: 'detailed' });
 		await Promise.all([
 			mutateUserPreferences(USER_ID, (current) => {
-				const projectPreferences = (current.projectPreferences?.[PROJECT_ID] ?? {}) as UserProjectPreferences;
+				const clinicPreferences = (current.projectPreferences?.[CLINIC_ID] ?? {}) as UserClinicPreferences;
 				return {
 					...current,
 					projectPreferences: {
 						...current.projectPreferences,
-						[PROJECT_ID]: {
-							...projectPreferences,
+						[CLINIC_ID]: {
+							...clinicPreferences,
 							savedUsagePeriods: [
-								...(projectPreferences.savedUsagePeriods ?? []),
+								...(clinicPreferences.savedUsagePeriods ?? []),
 								{ id: 'first', days: 30, granularity: 'day' },
 							],
 						},
@@ -183,15 +183,15 @@ describe('usage query results', () => {
 				};
 			}),
 			mutateUserPreferences(USER_ID, (current) => {
-				const projectPreferences = (current.projectPreferences?.[PROJECT_ID] ?? {}) as UserProjectPreferences;
+				const clinicPreferences = (current.projectPreferences?.[CLINIC_ID] ?? {}) as UserClinicPreferences;
 				return {
 					...current,
 					projectPreferences: {
 						...current.projectPreferences,
-						[PROJECT_ID]: {
-							...projectPreferences,
+						[CLINIC_ID]: {
+							...clinicPreferences,
 							savedUsagePeriods: [
-								...(projectPreferences.savedUsagePeriods ?? []),
+								...(clinicPreferences.savedUsagePeriods ?? []),
 								{ id: 'second', days: 365, granularity: 'month' },
 							],
 						},
@@ -201,10 +201,10 @@ describe('usage query results', () => {
 		]);
 
 		const preferences = await getUserPreferences(USER_ID);
-		const projectPreferences = preferences.projectPreferences?.[PROJECT_ID] as UserProjectPreferences | undefined;
+		const clinicPreferences = preferences.projectPreferences?.[CLINIC_ID] as UserClinicPreferences | undefined;
 		expect(preferences.toolCallDensity).toBe('detailed');
-		expect(projectPreferences?.savedUsagePeriods).toHaveLength(2);
-		expect(projectPreferences?.savedUsagePeriods).toEqual(
+		expect(clinicPreferences?.savedUsagePeriods).toHaveLength(2);
+		expect(clinicPreferences?.savedUsagePeriods).toEqual(
 			expect.arrayContaining([
 				{ id: 'first', days: 30, granularity: 'day' },
 				{ id: 'second', days: 365, granularity: 'month' },
@@ -225,7 +225,7 @@ describe('usage query results', () => {
 		vi.setSystemTime(new Date('2026-09-03T10:00:00Z'));
 
 		await expect(
-			getMessagesUsage(PROJECT_ID, {
+			getMessagesUsage(CLINIC_ID, {
 				period: { value: 365, unit: 'day' },
 				granularity: 'month',
 			}),
@@ -256,7 +256,7 @@ describe('usage query results', () => {
 			})),
 		});
 
-		const records = await getMessagesUsage(PROJECT_ID, { period: { value: 15, unit: 'day' } });
+		const records = await getMessagesUsage(CLINIC_ID, { period: { value: 15, unit: 'day' } });
 		const record = records.find((item) => item.date === formatDate(now, 'day'));
 
 		expect(record).toMatchObject({
@@ -306,7 +306,7 @@ describe('usage query results', () => {
 			data: [
 				{
 					id: 'union-inference-current',
-					projectId: PROJECT_ID,
+					clinicId: CLINIC_ID,
 					userId: USER_ID,
 					chatId: CHAT_ID,
 					type: 'title_generation',
@@ -320,7 +320,7 @@ describe('usage query results', () => {
 				},
 				{
 					id: 'union-inference-previous',
-					projectId: PROJECT_ID,
+					clinicId: CLINIC_ID,
 					userId: USER_ID,
 					type: 'compaction',
 					llmProvider: 'openai',
@@ -333,7 +333,7 @@ describe('usage query results', () => {
 			],
 		});
 
-		const records = await getMessagesUsage(PROJECT_ID, { period: { value: 15, unit: 'day' } });
+		const records = await getMessagesUsage(CLINIC_ID, { period: { value: 15, unit: 'day' } });
 
 		expect(records.find((item) => item.date === formatDate(now, 'day'))).toMatchObject({
 			messageCount: 1,
@@ -378,7 +378,7 @@ describe('usage query results', () => {
 		await prisma.llmInference.createMany({
 			data: {
 				id: 'by-other-user-inference',
-				projectId: PROJECT_ID,
+				clinicId: CLINIC_ID,
 				userId: OTHER_USER_ID,
 				chatId: OTHER_USER_CHAT_ID,
 				type: 'title_generation',
@@ -390,7 +390,7 @@ describe('usage query results', () => {
 			},
 		});
 
-		const records = await getMessagesUsageByUser(PROJECT_ID, { period: { value: 15, unit: 'day' } });
+		const records = await getMessagesUsageByUser(CLINIC_ID, { period: { value: 15, unit: 'day' } });
 
 		expect(records).toHaveLength(15);
 		expect(records.every((record) => Array.isArray(record.users))).toBe(true);
@@ -428,7 +428,7 @@ describe('usage query results', () => {
 		await prisma.llmInference.createMany({
 			data: {
 				id: 'other-inference',
-				projectId: PROJECT_ID,
+				clinicId: CLINIC_ID,
 				userId: OTHER_USER_ID,
 				chatId: OTHER_USER_CHAT_ID,
 				type: 'title_generation',
@@ -441,10 +441,10 @@ describe('usage query results', () => {
 		const period = { value: 15, unit: 'day' as const };
 
 		const [usage, byUser, total, providers] = await Promise.all([
-			getMessagesUsage(PROJECT_ID, { period }, USER_ID),
-			getMessagesUsageByUser(PROJECT_ID, { period }, USER_ID),
-			getTotalUsage(PROJECT_ID, { period }, USER_ID),
-			getUsedProviders(PROJECT_ID, USER_ID),
+			getMessagesUsage(CLINIC_ID, { period }, USER_ID),
+			getMessagesUsageByUser(CLINIC_ID, { period }, USER_ID),
+			getTotalUsage(CLINIC_ID, { period }, USER_ID),
+			getUsedProviders(CLINIC_ID, USER_ID),
 		]);
 
 		expect(usage.reduce((sum, record) => sum + record.messageCount, 0)).toBe(1);
@@ -455,7 +455,7 @@ describe('usage query results', () => {
 	});
 
 	it('counts the chats of each user for the users filter', async () => {
-		await expect(usage.getUserChatCounts(PROJECT_ID)).resolves.toEqual([
+		await expect(usage.getUserChatCounts(CLINIC_ID)).resolves.toEqual([
 			{ userName: 'Other Usage User', chatCount: 1 },
 			{ userName: 'Usage User', chatCount: 1 },
 		]);
@@ -471,7 +471,7 @@ describe('usage query results', () => {
 			],
 		});
 
-		const byUser = await getMessagesUsageByUser(PROJECT_ID, {
+		const byUser = await getMessagesUsageByUser(CLINIC_ID, {
 			period: { value: 15, unit: 'day' },
 			userNames: ['Usage User'],
 			sources: ['slack'],
@@ -484,8 +484,8 @@ describe('usage query results', () => {
 
 async function cleanup() {
 	await prisma.userPreference.deleteMany({ where: { userId: { in: [USER_ID, OTHER_USER_ID] } } });
-	await prisma.llmInference.deleteMany({ where: { projectId: { in: [PROJECT_ID, OTHER_PROJECT_ID] } } });
-	await prisma.chat.deleteMany({ where: { projectId: { in: [PROJECT_ID, OTHER_PROJECT_ID] } } });
-	await prisma.project.deleteMany({ where: { id: { in: [PROJECT_ID, OTHER_PROJECT_ID] } } });
+	await prisma.llmInference.deleteMany({ where: { clinicId: { in: [CLINIC_ID, OTHER_CLINIC_ID] } } });
+	await prisma.chat.deleteMany({ where: { clinicId: { in: [CLINIC_ID, OTHER_CLINIC_ID] } } });
+	await prisma.clinic.deleteMany({ where: { id: { in: [CLINIC_ID, OTHER_CLINIC_ID] } } });
 	await prisma.user.deleteMany({ where: { id: { in: [USER_ID, OTHER_USER_ID] } } });
 }

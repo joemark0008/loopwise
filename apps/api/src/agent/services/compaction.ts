@@ -33,7 +33,7 @@ interface CompactionResult {
 }
 
 interface CompactConversationOptions {
-	chat: { id: string; projectId: string; userId: string };
+	chat: { id: string; clinicId: string; userId: string };
 	provider: LlmProvider;
 	modelId: string;
 	messages: ModelMessage[];
@@ -248,16 +248,16 @@ export class CompactionService {
 		provider: LlmProvider,
 		selectedModelId: string,
 	): Promise<ResolvedCompactionLLM | undefined> {
-		const pinned = await this.llmService.resolveDefaultModelSelection(chat.projectId, 'compaction');
+		const pinned = await this.llmService.resolveDefaultModelSelection(chat.clinicId, 'compaction');
 		const effectiveProvider = pinned?.provider ?? provider;
 		const modelId =
 			pinned?.modelId ??
 			(await this.llmService.resolveAnnotationModelId(
-				chat.projectId,
+				chat.clinicId,
 				{ provider, modelId: selectedModelId },
 				getProviderMeta(provider).extractorModelId,
 			));
-		const model = await this.llmService.resolveProviderModel(chat.projectId, effectiveProvider, modelId, false);
+		const model = await this.llmService.resolveProviderModel(chat.clinicId, effectiveProvider, modelId, false);
 		if (!model) {
 			return undefined;
 		}
@@ -305,7 +305,7 @@ export class CompactionService {
 	): void {
 		this.inferences.scheduleSave({
 			type: 'compaction',
-			projectId: opts.chat.projectId,
+			clinicId: opts.chat.clinicId,
 			userId: opts.chat.userId,
 			chatId: opts.chat.id,
 			llmProvider: provider,

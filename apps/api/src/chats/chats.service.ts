@@ -35,7 +35,7 @@ export class ChatsService {
 		}
 		return {
 			id: chat.id,
-			projectId: chat.projectId,
+			clinicId: chat.clinicId,
 			userId: chat.userId,
 			title: chat.title,
 			isStarred: chat.isStarred,

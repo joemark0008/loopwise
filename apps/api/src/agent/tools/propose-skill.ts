@@ -10,7 +10,7 @@ export default createTool<proposeSkill.Input, proposeSkill.Output>({
 	inputSchema: proposeSkill.InputSchema,
 	outputSchema: proposeSkill.OutputSchema,
 	execute: async ({ name }, context) => {
-		if (findInternalSkill(name) || context.services.skills.getSkill(context.projectId, name)) {
+		if (findInternalSkill(name) || context.services.skills.getSkill(context.clinicId, name)) {
 			throw new Error(`A skill called '${name}' already exists. Choose another name.`);
 		}
 		return { _version: '1' as const, success: true as const };

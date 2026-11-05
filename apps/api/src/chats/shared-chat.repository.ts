@@ -9,32 +9,44 @@ export type SharedChatWithDetails = SharedChat & {
 	authorName: string;
 	title: string;
 	userId: string;
-	projectId: string;
+	clinicId: string;
 	forkMetadata?: ForkMetadata;
 	messageBubbles?: MessageBubble[];
 };
+
+/**
+ * `shared_chat.visibility` stores a clinic-wide share as `'project'`, the value written before clinics were called
+ * clinics; the API speaks `'clinic'`. These two map between them at the repository boundary.
+ */
+const STORED_CLINIC_VISIBILITY = 'project';
+
+const toStoredVisibility = (visibility: string): string =>
+	visibility === 'clinic' ? STORED_CLINIC_VISIBILITY : visibility;
+
+const fromStoredVisibility = <T extends { visibility: string }>(row: T): T =>
+	row.visibility === STORED_CLINIC_VISIBILITY ? { ...row, visibility: 'clinic' } : row;
 
 /** Port of upstream `queries/shared-chat.queries.ts`. */
 @Injectable()
 export class SharedChatRepository {
 	constructor(private readonly prisma: PrismaService) {}
 
-	async listUserSharedChats(projectIds: string[], userId: string): Promise<SharedChatWithDetails[]> {
-		if (projectIds.length === 0) {
+	async listUserSharedChats(clinicIds: string[], userId: string): Promise<SharedChatWithDetails[]> {
+		if (clinicIds.length === 0) {
 			return [];
 		}
 		const chats = await this.prisma.$queryRaw<SharedChatWithDetails[]>`
-			SELECT s.id, c.project_id AS "projectId", c.user_id AS "userId", s.chat_id AS "chatId", s.visibility,
+			SELECT s.id, c.project_id AS "clinicId", c.user_id AS "userId", s.chat_id AS "chatId", s.visibility,
 				s.created_at AS "createdAt", u.name AS "authorName", c.title
 			FROM shared_chat s
 			JOIN chat c ON c.id = s.chat_id
 			JOIN "user" u ON u.id = c.user_id
 			LEFT JOIN shared_chat_access a ON a.shared_chat_id = s.id AND a.user_id = ${userId}
-			WHERE c.project_id = ANY(${projectIds}::text[])
+			WHERE c.project_id = ANY(${clinicIds}::text[])
 				AND (s.visibility = 'project' OR c.user_id = ${userId} OR a.user_id IS NOT NULL)
 			ORDER BY s.created_at DESC`;
 		const bubblesMap = await this.fetchMessageBubbles(chats.map((chat) => chat.chatId));
-		return chats.map((chat) => ({ ...chat, messageBubbles: bubblesMap.get(chat.chatId) }));
+		return chats.map((chat) => fromStoredVisibility({ ...chat, messageBubbles: bubblesMap.get(chat.chatId) }));
 	}
 
 	async createSharedChat(
@@ -42,13 +54,15 @@ export class SharedChatRepository {
 		allowedUserIds?: string[],
 	): Promise<SharedChat> {
 		return this.prisma.$transaction(async (tx) => {
-			const created = await tx.sharedChat.create({ data: chat });
+			const created = await tx.sharedChat.create({
+				data: { ...chat, visibility: toStoredVisibility(chat.visibility) },
+			});
 			if (chat.visibility === 'specific' && allowedUserIds && allowedUserIds.length > 0) {
 				await tx.sharedChatAccess.createMany({
 					data: allowedUserIds.map((userId) => ({ sharedChatId: created.id, userId })),
 				});
 			}
-			return created;
+			return fromStoredVisibility(created);
 		});
 	}
 
@@ -64,7 +78,7 @@ export class SharedChatRepository {
 		const share = await this.prisma.sharedChat.findUnique({
 			where: { id },
 			include: {
-				chat: { select: { projectId: true, userId: true, title: true, forkMetadata: true, user: true } },
+				chat: { select: { clinicId: true, userId: true, title: true, forkMetadata: true, user: true } },
 			},
 		});
 		if (!share) {
@@ -72,8 +86,8 @@ export class SharedChatRepository {
 		}
 		const { chat, ...row } = share;
 		return {
-			...row,
-			projectId: chat.projectId,
+			...fromStoredVisibility(row),
+			clinicId: chat.clinicId,
 			userId: chat.userId,
 			authorName: chat.user.name,
 			title: chat.title,
@@ -81,12 +95,13 @@ export class SharedChatRepository {
 		};
 	}
 
-	getShareIdByChatId(chatId: string, userId: string): Promise<{ id: string; visibility: string } | null> {
-		return this.prisma.sharedChat.findFirst({
+	async getShareIdByChatId(chatId: string, userId: string): Promise<{ id: string; visibility: string } | null> {
+		const share = await this.prisma.sharedChat.findFirst({
 			where: { chatId, chat: { userId } },
 			orderBy: { createdAt: 'desc' },
 			select: { id: true, visibility: true },
 		});
+		return share && fromStoredVisibility(share);
 	}
 
 	async getShareAllowedUserIds(shareId: string): Promise<string[]> {

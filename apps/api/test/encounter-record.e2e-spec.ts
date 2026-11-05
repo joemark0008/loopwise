@@ -67,7 +67,7 @@ describe('encounter record (e2e)', () => {
 			users[key] = { cookie: user.cookie, id: user.userId };
 		}
 		const workspace = await prisma.organization.findFirstOrThrow();
-		await prisma.project.create({ data: { name: 'Loopwise', type: 'local', path: '/tmp/x', orgId: workspace.id } });
+		await prisma.clinic.create({ data: { name: 'Loopwise', type: 'local', path: '/tmp/x', orgId: workspace.id } });
 		const org = (name: string, slug: string, type: 'clinic' | 'hospital' | 'lab') =>
 			prisma.organization.create({ data: { name, slug, type, address: `${name} Street, Tagbilaran` } });
 		facilities.healthCenter = (await org('Health Center', 'hc', 'clinic')).id;

@@ -4,14 +4,14 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-const projectPaths: Record<string, string> = {};
+const clinicPaths: Record<string, string> = {};
 
 vi.mock('node:fs', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('node:fs')>();
 	return { ...actual, watch: vi.fn(() => ({ close: vi.fn() })) };
 });
 
-import type { ProjectRepository } from '../../projects/project.repository.js';
+import type { ClinicRepository } from '../../clinics/clinic.repository.js';
 import { SkillService } from '../../skills/skill.service.js';
 import type {
 	ResolvedFilesContextAccess,
@@ -20,17 +20,17 @@ import type {
 import loadSkillTool from './load-skill.js';
 
 const skillService = new SkillService({
-	getProjectById: vi.fn(async (projectId: string) => ({ id: projectId, path: projectPaths[projectId] })),
-} as unknown as ProjectRepository);
+	getClinicById: vi.fn(async (clinicId: string) => ({ id: clinicId, path: clinicPaths[clinicId] })),
+} as unknown as ClinicRepository);
 
-const PROJECT_ID = 'load-skill-project';
+const CLINIC_ID = 'load-skill-clinic';
 
-describe('load_skill tool with project skills', () => {
-	let projectRoot: string;
+describe('load_skill tool with clinic skills', () => {
+	let clinicRoot: string;
 
 	beforeAll(async () => {
-		projectRoot = mkdtempSync(join(tmpdir(), 'loopwise-load-skill-'));
-		const skillsFolder = join(projectRoot, 'agent', 'skills');
+		clinicRoot = mkdtempSync(join(tmpdir(), 'loopwise-load-skill-'));
+		const skillsFolder = join(clinicRoot, 'agent', 'skills');
 		mkdirSync(skillsFolder, { recursive: true });
 		writeFileSync(
 			join(skillsFolder, 'revenue.md'),
@@ -44,34 +44,34 @@ describe('load_skill tool with project skills', () => {
 			join(skillsFolder, 'excel-handling.md'),
 			'---\nname: excel-handling\ndescription: Our own spreadsheet rules.\n---\n\nUse the Finance tab only.\n',
 		);
-		projectPaths[PROJECT_ID] = projectRoot;
-		await skillService.initializeSkills(PROJECT_ID);
+		clinicPaths[CLINIC_ID] = clinicRoot;
+		await skillService.initializeSkills(CLINIC_ID);
 	});
 
 	afterAll(() => {
-		rmSync(projectRoot, { recursive: true, force: true });
+		rmSync(clinicRoot, { recursive: true, force: true });
 	});
 
-	it('loads a project skill body without its frontmatter', async () => {
+	it('loads a clinic skill body without its frontmatter', async () => {
 		const output = await runLoadSkill('revenue', { skillsAccess: { mode: 'all' } });
 
 		expect(output).toEqual({ _version: '1', name: 'revenue', body: 'Always use net revenue.' });
 	});
 
-	it('still serves a built-in skill no project skill shadows', async () => {
+	it('still serves a built-in skill no clinic skill shadows', async () => {
 		const output = await runLoadSkill('pdf-handling', { skillsAccess: { mode: 'all' } });
 
 		expect(output.name).toBe('pdf-handling');
 		expect(output.body).toContain('--- Page N ---');
 	});
 
-	it('serves a project skill over the built-in skill of the same name', async () => {
+	it('serves a clinic skill over the built-in skill of the same name', async () => {
 		const output = await runLoadSkill('excel-handling', { skillsAccess: { mode: 'all' } });
 
 		expect(output.body).toBe('Use the Finance tab only.');
 	});
 
-	it('falls back to the built-in skill when the shadowing project skill is not granted', async () => {
+	it('falls back to the built-in skill when the shadowing clinic skill is not granted', async () => {
 		const output = await runLoadSkill('excel-handling', { skillsAccess: restrictedSkills(['revenue']) });
 
 		expect(output.body).not.toBe('Use the Finance tab only.');
@@ -112,8 +112,8 @@ describe('load_skill tool with project skills', () => {
 	) => {
 		const context = {
 			services: { skills: skillService },
-			projectId: PROJECT_ID,
-			projectFolder: projectRoot,
+			clinicId: CLINIC_ID,
+			clinicFolder: clinicRoot,
 			warehouseTableAccess: { enforced: false },
 			docsContextAccess: { enforced: false },
 			filesContextAccess: access.filesContextAccess ?? { enforced: false },

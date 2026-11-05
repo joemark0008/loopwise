@@ -120,7 +120,7 @@ describe('replaceEnvVars', () => {
 	it('replaces placeholders from extra env before process env', () => {
 		vi.stubEnv('DBT_TOKEN', 'from-process');
 
-		expect(replaceEnvVars('${DBT_TOKEN}', { DBT_TOKEN: 'from-project' })).toBe('from-project');
+		expect(replaceEnvVars('${DBT_TOKEN}', { DBT_TOKEN: 'from-clinic' })).toBe('from-clinic');
 	});
 
 	it('falls back to process env when extra env has no value', () => {
@@ -151,12 +151,12 @@ describe('getProcessEnvSourcedVarNames', () => {
 		vi.unstubAllEnvs();
 	});
 
-	it('returns names resolved from process env without a project override', () => {
+	it('returns names resolved from process env without a clinic override', () => {
 		vi.stubEnv('DB_PASSWORD', 'from-process');
 		vi.stubEnv('DBT_TOKEN', 'from-process');
 
 		expect(
-			getProcessEnvSourcedVarNames(['DB_PASSWORD', 'DBT_TOKEN', 'MISSING_TOKEN'], { DBT_TOKEN: 'from-project' }),
+			getProcessEnvSourcedVarNames(['DB_PASSWORD', 'DBT_TOKEN', 'MISSING_TOKEN'], { DBT_TOKEN: 'from-clinic' }),
 		).toEqual(['DB_PASSWORD']);
 	});
 

@@ -111,21 +111,21 @@ const USER_MESSAGE_COUNT = Prisma.sql`count(distinct case when cm.role = 'user' 
 /**
  * Port of upstream `queries/usage.queries.ts` on Postgres. Usage combines the tokens of assistant messages
  * (`chat_message`) with those of the other model calls (`llm_inference`); costs come from the `cost_lookup` table
- * the caller builds from the model catalogue and the project's custom model prices.
+ * the caller builds from the model catalogue and the clinic's custom model prices.
  */
 @Injectable()
 export class UsageRepository {
 	constructor(private readonly prisma: PrismaService) {}
 
 	async getMessagesUsage(
-		projectId: string,
+		clinicId: string,
 		filter: UsageFilter,
 		costs: ModelCostRow[],
 		userId?: string,
 	): Promise<UsageRecord[]> {
 		const { period } = filter;
 		const granularity = filter.granularity ?? resolveUsageChartGranularity(period);
-		const { messageWhere, inferenceWhere } = buildUsageWhere(projectId, filter, userId);
+		const { messageWhere, inferenceWhere } = buildUsageWhere(clinicId, filter, userId);
 		const zero = Prisma.sql`0`;
 
 		const messageColumns = [
@@ -177,14 +177,14 @@ export class UsageRepository {
 	}
 
 	async getMessagesUsageByUser(
-		projectId: string,
+		clinicId: string,
 		filter: UsageFilter,
 		costs: ModelCostRow[],
 		userId?: string,
 	): Promise<UsageByUserRecord[]> {
 		const { period } = filter;
 		const granularity = filter.granularity ?? resolveUsageChartGranularity(period);
-		const { messageWhere, inferenceWhere } = buildUsageWhere(projectId, filter, userId);
+		const { messageWhere, inferenceWhere } = buildUsageWhere(clinicId, filter, userId);
 
 		const rows = await this.prisma.$queryRaw<
 			Array<{
@@ -237,8 +237,8 @@ export class UsageRepository {
 		);
 	}
 
-	async getTotalUsage(projectId: string, filter: UsageFilter, userId?: string): Promise<TotalUsageRecord> {
-		const { messageWhere } = buildUsageWhere(projectId, filter, userId);
+	async getTotalUsage(clinicId: string, filter: UsageFilter, userId?: string): Promise<TotalUsageRecord> {
+		const { messageWhere } = buildUsageWhere(clinicId, filter, userId);
 		const [row] = await this.prisma.$queryRaw<Array<{ total_messages: unknown; unique_users: unknown }>>`
 			select ${USER_MESSAGE_COUNT} as total_messages, count(distinct ${MESSAGE_SENDER}) as unique_users
 			from chat_message cm
@@ -253,28 +253,28 @@ export class UsageRepository {
 	}
 
 	/** The users filter of the usage page (upstream took it from the chat replay facets): chat count per user name. */
-	async getUserChatCounts(projectId: string): Promise<Array<{ userName: string; chatCount: number }>> {
+	async getUserChatCounts(clinicId: string): Promise<Array<{ userName: string; chatCount: number }>> {
 		const rows = await this.prisma.$queryRaw<Array<{ user_name: string; chat_count: bigint }>>`
 			select u.name as user_name, count(distinct c.id) as chat_count
 			from chat c
 			join "user" u on c.user_id = u.id
-			where c.project_id = ${projectId}
+			where c.project_id = ${clinicId}
 			group by u.name
 			order by u.name`;
 		return rows.map((row) => ({ userName: row.user_name, chatCount: Number(row.chat_count) }));
 	}
 
-	async getUsedProviders(projectId: string, userId?: string): Promise<LlmProvider[]> {
+	async getUsedProviders(clinicId: string, userId?: string): Promise<LlmProvider[]> {
 		const [messageRows, inferenceRows] = await Promise.all([
 			this.prisma.$queryRaw<Array<{ provider: string }>>`
 				select distinct cm.llm_provider as provider
 				from chat_message cm
 				join chat c on cm.chat_id = c.id
-				where c.project_id = ${projectId}
+				where c.project_id = ${clinicId}
 					and cm.llm_provider is not null
 					${userId ? Prisma.sql`and ${MESSAGE_SENDER} = ${userId}` : Prisma.empty}`,
 			this.prisma.llmInference.findMany({
-				where: { projectId, ...(userId && { userId }) },
+				where: { clinicId, ...(userId && { userId }) },
 				distinct: ['llmProvider'],
 				select: { llmProvider: true },
 			}),
@@ -333,10 +333,10 @@ function lookbackOf(period: UsagePeriodRange): string {
 	return new Date(getLookbackTimestamp(period)).toISOString();
 }
 
-function buildUsageWhere(projectId: string, filter: UsageFilter, userId?: string) {
+function buildUsageWhere(clinicId: string, filter: UsageFilter, userId?: string) {
 	const lookback = lookbackOf(filter.period);
-	const message = [Prisma.sql`c.project_id = ${projectId}`, Prisma.sql`cm.created_at >= ${lookback}::timestamp`];
-	const inference = [Prisma.sql`li.project_id = ${projectId}`, Prisma.sql`li.created_at >= ${lookback}::timestamp`];
+	const message = [Prisma.sql`c.project_id = ${clinicId}`, Prisma.sql`cm.created_at >= ${lookback}::timestamp`];
+	const inference = [Prisma.sql`li.project_id = ${clinicId}`, Prisma.sql`li.created_at >= ${lookback}::timestamp`];
 
 	if (filter.provider) {
 		message.push(Prisma.sql`(${MESSAGE_USAGE_PROVIDER}) = ${filter.provider}`);

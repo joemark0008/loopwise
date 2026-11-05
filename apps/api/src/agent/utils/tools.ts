@@ -10,7 +10,7 @@ const MCP_TOOL_SEPARATOR = '__';
 
 /**
  * Top-level folder of the virtual tree holding the user's permanent storage.
- * The name is reserved: a project folder called `home` is never exposed, so a
+ * The name is reserved: a clinic folder called `home` is never exposed, so a
  * path under it always means permanent storage.
  */
 export const STORAGE_MOUNT = 'home';
@@ -65,9 +65,9 @@ export const createTool = <TInput, TOutput>({
 	);
 };
 
-/** The permanent-storage space a run may reach: the current user, in the current project. */
+/** The permanent-storage space a run may reach: the current user, in the current clinic. */
 export const toStorageScope = (context: ToolContext | McpToolContext): StorageScope => {
-	return { projectId: context.projectId, userId: context.userId };
+	return { clinicId: context.clinicId, userId: context.userId };
 };
 
 /** True when a virtual path addresses permanent storage: `/home`, `~` or anything below them. */
@@ -102,7 +102,7 @@ export const toStorageVirtualPath = (relativePath: string): string => {
 
 /**
  * True when a virtual path lives in the permanent-storage mount (`/home`)
- * rather than the project folder.
+ * rather than the clinic folder.
  */
 export const isMountPath = (virtualPath: string | undefined | null): boolean => {
 	return isStoragePath(virtualPath);
@@ -128,7 +128,7 @@ type LoopwiseignoreCacheEntry = {
 };
 
 /**
- * Cache for .loopwiseignore patterns per project folder.
+ * Cache for .loopwiseignore patterns per clinic folder.
  * Entries are invalidated automatically when the underlying file changes.
  */
 const loopwiseignoreCache = new Map<string, LoopwiseignoreCacheEntry>();
@@ -147,15 +147,15 @@ const getLoopwiseignoreSignature = (loopwiseignorePath: string): string | null =
 };
 
 /**
- * Loads and parses the .loopwiseignore file from the project folder.
- * Returns an array of patterns. Results are cached per project folder and
+ * Loads and parses the .loopwiseignore file from the clinic folder.
+ * Returns an array of patterns. Results are cached per clinic folder and
  * invalidated when the file's mtime or size changes.
  */
-export const loadLoopwiseignorePatterns = (projectFolder: string): string[] => {
-	const loopwiseignorePath = path.join(projectFolder, '.loopwiseignore');
+export const loadLoopwiseignorePatterns = (clinicFolder: string): string[] => {
+	const loopwiseignorePath = path.join(clinicFolder, '.loopwiseignore');
 	const signature = getLoopwiseignoreSignature(loopwiseignorePath);
 
-	const cached = loopwiseignoreCache.get(projectFolder);
+	const cached = loopwiseignoreCache.get(clinicFolder);
 	if (cached && cached.signature === signature) {
 		return cached.patterns;
 	}
@@ -173,7 +173,7 @@ export const loadLoopwiseignorePatterns = (projectFolder: string): string[] => {
 		}
 	}
 
-	loopwiseignoreCache.set(projectFolder, { signature, patterns });
+	loopwiseignoreCache.set(clinicFolder, { signature, patterns });
 	return patterns;
 };
 
@@ -186,12 +186,12 @@ export const clearLoopwiseignoreCache = (): void => {
 
 /**
  * Checks if a path matches any .loopwiseignore pattern.
- * @param relativePath - Path relative to the project folder (e.g., "templates/foo.md")
- * @param projectFolder - The project folder path
+ * @param relativePath - Path relative to the clinic folder (e.g., "templates/foo.md")
+ * @param clinicFolder - The clinic folder path
  * @returns true if the path should be ignored
  */
-export const isIgnoredByLoopwiseignore = (relativePath: string, projectFolder: string): boolean => {
-	const patterns = loadLoopwiseignorePatterns(projectFolder);
+export const isIgnoredByLoopwiseignore = (relativePath: string, clinicFolder: string): boolean => {
+	const patterns = loadLoopwiseignorePatterns(clinicFolder);
 
 	// Normalize the path (remove leading slash if present)
 	const normalizedPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
@@ -230,15 +230,15 @@ export const isIgnoredByLoopwiseignore = (relativePath: string, projectFolder: s
 /**
  * Checks if a real filesystem path should be ignored based on .loopwiseignore.
  * @param realPath - Absolute filesystem path
- * @param projectFolder - The project folder path
+ * @param clinicFolder - The clinic folder path
  * @returns true if the path should be ignored
  */
-export const isIgnoredPath = (realPath: string, projectFolder: string): boolean => {
+export const isIgnoredPath = (realPath: string, clinicFolder: string): boolean => {
 	const resolved = path.resolve(realPath);
-	const normalizedFolder = path.resolve(projectFolder);
+	const normalizedFolder = path.resolve(clinicFolder);
 	const relativePath = path.relative(normalizedFolder, resolved);
 
-	// Paths outside project folder are not subject to loopwiseignore
+	// Paths outside clinic folder are not subject to loopwiseignore
 	if (relativePath.startsWith('..')) {
 		return false;
 	}
@@ -273,11 +273,11 @@ const isEnvironmentFileName = (name: string): boolean => {
  * Checks if an entry should be excluded from directory listings.
  * Combines excluded directories and .loopwiseignore patterns.
  * @param entryName - The name of the entry (file or directory)
- * @param parentPath - The parent directory path relative to project folder
- * @param projectFolder - The project folder path
+ * @param parentPath - The parent directory path relative to clinic folder
+ * @param clinicFolder - The clinic folder path
  * @returns true if the entry should be excluded
  */
-export const shouldExcludeEntry = (entryName: string, parentPath: string, projectFolder: string): boolean => {
+export const shouldExcludeEntry = (entryName: string, parentPath: string, clinicFolder: string): boolean => {
 	// First check built-in exclusions
 	if (isExcludedEntry(entryName)) {
 		return true;
@@ -290,16 +290,16 @@ export const shouldExcludeEntry = (entryName: string, parentPath: string, projec
 
 	// Then check loopwiseignore patterns
 	const relativePath = parentPath ? `${parentPath}/${entryName}` : entryName;
-	return isIgnoredByLoopwiseignore(relativePath, projectFolder);
+	return isIgnoredByLoopwiseignore(relativePath, clinicFolder);
 };
 
 /**
- * Checks if a given path is within the project folder, not in an excluded directory,
+ * Checks if a given path is within the clinic folder, not in an excluded directory,
  * and not ignored by .loopwiseignore.
  */
-export const isWithinProjectFolder = (filePath: string, projectFolder: string): boolean => {
+export const isWithinClinicFolder = (filePath: string, clinicFolder: string): boolean => {
 	const resolved = path.resolve(filePath);
-	const normalizedFolder = path.resolve(projectFolder);
+	const normalizedFolder = path.resolve(clinicFolder);
 	const withinFolder = resolved === normalizedFolder || resolved.startsWith(normalizedFolder + path.sep);
 	if (!withinFolder) {
 		return false;
@@ -322,26 +322,26 @@ type ToRealPathOptions = {
 };
 
 /**
- * Converts a virtual path (where / = project folder) to a real filesystem path.
- * - `/foo/bar` → `{projectFolder}/foo/bar`
- * - `foo/bar` → `{projectFolder}/foo/bar`
- * - `/` or empty → `{projectFolder}`
+ * Converts a virtual path (where / = clinic folder) to a real filesystem path.
+ * - `/foo/bar` → `{clinicFolder}/foo/bar`
+ * - `foo/bar` → `{clinicFolder}/foo/bar`
+ * - `/` or empty → `{clinicFolder}`
  *
  * The guards run on the lexical path and again on the symlink-resolved path, so a
- * symlink inside the project cannot reach outside it or into a protected file.
- * @throws Error if the resolved path escapes the project folder or is ignored by .loopwiseignore
+ * symlink inside the clinic cannot reach outside it or into a protected file.
+ * @throws Error if the resolved path escapes the clinic folder or is ignored by .loopwiseignore
  */
-export const toRealPath = (virtualPath: string, projectFolder: string, options: ToRealPathOptions = {}): string => {
-	const normalizedFolder = path.resolve(projectFolder);
+export const toRealPath = (virtualPath: string, clinicFolder: string, options: ToRealPathOptions = {}): string => {
+	const normalizedFolder = path.resolve(clinicFolder);
 
 	assertNotMountPath(virtualPath, virtualPath);
 
-	// Strip leading slash to make it relative to project folder
+	// Strip leading slash to make it relative to clinic folder
 	const relativePath = virtualPath.startsWith('/') ? virtualPath.slice(1) : virtualPath;
 
 	// Resolve and normalize (this handles .. and .)
 	const resolvedPath = path.resolve(normalizedFolder, relativePath);
-	assertAllowedProjectPath(resolvedPath, normalizedFolder, virtualPath);
+	assertAllowedClinicPath(resolvedPath, normalizedFolder, virtualPath);
 
 	if (options.resolveSymlinks === false) {
 		return resolvedPath;
@@ -349,19 +349,19 @@ export const toRealPath = (virtualPath: string, projectFolder: string, options: 
 
 	const realPath = resolveSymlinks(resolvedPath);
 	if (realPath !== resolvedPath) {
-		assertAllowedProjectPath(realPath, resolveSymlinks(normalizedFolder), virtualPath);
+		assertAllowedClinicPath(realPath, resolveSymlinks(normalizedFolder), virtualPath);
 	}
 
 	return resolvedPath;
 };
 
-const assertAllowedProjectPath = (absolutePath: string, projectFolder: string, virtualPath: string): void => {
-	const withinFolder = absolutePath === projectFolder || absolutePath.startsWith(projectFolder + path.sep);
+const assertAllowedClinicPath = (absolutePath: string, clinicFolder: string, virtualPath: string): void => {
+	const withinFolder = absolutePath === clinicFolder || absolutePath.startsWith(clinicFolder + path.sep);
 	if (!withinFolder) {
-		throw new Error(`Access denied: path '${virtualPath}' is outside the project folder`);
+		throw new Error(`Access denied: path '${virtualPath}' is outside the clinic folder`);
 	}
 
-	assertNotMountPath(path.relative(projectFolder, absolutePath).replaceAll(path.sep, '/'), virtualPath);
+	assertNotMountPath(path.relative(clinicFolder, absolutePath).replaceAll(path.sep, '/'), virtualPath);
 
 	if (absolutePath.split(path.sep).some((part) => part.toLowerCase() === '.git')) {
 		throw new Error(`Access denied: path '${virtualPath}' targets protected .git metadata`);
@@ -375,14 +375,14 @@ const assertAllowedProjectPath = (absolutePath: string, projectFolder: string, v
 		throw new Error(`Access denied: path '${virtualPath}' is in an excluded directory`);
 	}
 
-	if (isIgnoredPath(absolutePath, projectFolder)) {
+	if (isIgnoredPath(absolutePath, clinicFolder)) {
 		throw new Error(`Access denied: path '${virtualPath}' is ignored by .loopwiseignore`);
 	}
 };
 
 const assertNotMountPath = (candidatePath: string, virtualPath: string): void => {
 	if (isStoragePath(candidatePath)) {
-		throw new Error(`Path '${virtualPath}' is in permanent storage, not in the project folder`);
+		throw new Error(`Path '${virtualPath}' is in permanent storage, not in the clinic folder`);
 	}
 };
 
@@ -417,20 +417,20 @@ export const isMissingPathError = (error: unknown): boolean => {
 	return code === 'ENOENT' || code === 'ENOTDIR';
 };
 
-export const resolveCanonicalProjectPath = (
+export const resolveCanonicalClinicPath = (
 	virtualPath: string,
-	projectFolder: string,
+	clinicFolder: string,
 ): { realPath: string; virtualPath: string } => {
-	const projectRoot = path.resolve(projectFolder);
-	const canonicalProjectRoot = fs.realpathSync.native(projectRoot);
-	const candidatePath = toRealPath(virtualPath, projectFolder);
+	const clinicRoot = path.resolve(clinicFolder);
+	const canonicalClinicRoot = fs.realpathSync.native(clinicRoot);
+	const candidatePath = toRealPath(virtualPath, clinicFolder);
 	const realPath = resolveExistingAncestor(candidatePath);
 
-	if (!isWithinProjectFolder(realPath, canonicalProjectRoot)) {
-		throw new Error(`Access denied: path '${virtualPath}' resolves outside the project folder`);
+	if (!isWithinClinicFolder(realPath, canonicalClinicRoot)) {
+		throw new Error(`Access denied: path '${virtualPath}' resolves outside the clinic folder`);
 	}
 
-	const relativePath = path.relative(canonicalProjectRoot, realPath).replaceAll(path.sep, '/');
+	const relativePath = path.relative(canonicalClinicRoot, realPath).replaceAll(path.sep, '/');
 	return {
 		realPath,
 		virtualPath: relativePath ? `/${relativePath}` : '/',
@@ -459,17 +459,17 @@ function resolveExistingAncestor(candidatePath: string): string {
 }
 
 /**
- * Converts a real filesystem path to a virtual path (where / = project folder).
- * - `{projectFolder}/foo/bar` → `/foo/bar`
- * - `{projectFolder}` → `/`
- * @throws Error if the path is outside the project folder
+ * Converts a real filesystem path to a virtual path (where / = clinic folder).
+ * - `{clinicFolder}/foo/bar` → `/foo/bar`
+ * - `{clinicFolder}` → `/`
+ * @throws Error if the path is outside the clinic folder
  */
-export const toVirtualPath = (realPath: string, projectFolder: string): string => {
+export const toVirtualPath = (realPath: string, clinicFolder: string): string => {
 	const resolved = path.resolve(realPath);
-	const normalizedFolder = path.resolve(projectFolder);
+	const normalizedFolder = path.resolve(clinicFolder);
 
-	if (!isWithinProjectFolder(resolved, normalizedFolder)) {
-		throw new Error(`Path '${realPath}' is outside the project folder`);
+	if (!isWithinClinicFolder(resolved, normalizedFolder)) {
+		throw new Error(`Path '${realPath}' is outside the clinic folder`);
 	}
 
 	if (resolved === normalizedFolder) {

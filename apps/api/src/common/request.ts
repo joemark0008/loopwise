@@ -4,15 +4,15 @@ import { type GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
 import type { Request } from 'express';
 
 import type { AuthSession, AuthUser } from '../auth/auth.service.js';
-import type { Organization, Project } from '../generated/prisma/client.js';
+import type { Clinic, Organization } from '../generated/prisma/client.js';
 import type { OrgRole } from '../organizations/organization.repository.js';
 
 /** What the `AuthGuard` attaches to the request, for both REST and GraphQL. */
 export interface LoopwiseRequest extends Request {
 	user?: AuthUser;
 	session?: AuthSession['session'];
-	/** Set by `@ProjectAccess()` / `@ProjectAdmin()`. */
-	project?: Project;
+	/** Set by `@ClinicAccess()` / `@ClinicAdmin()`. */
+	clinic?: Clinic;
 	userRole?: UserRole;
 	/** Set by `@OrgMember()` / `@OrgAdmin()`. */
 	organization?: Organization;

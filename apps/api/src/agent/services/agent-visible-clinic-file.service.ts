@@ -9,7 +9,7 @@ import type { ToolContext } from '../types/tools.js';
 
 export const isAgentVisibleRootRulesPath = isRootRulesPath;
 
-export function renderProjectTextForAgent(
+export function renderClinicTextForAgent(
 	virtualPath: string,
 	source: string,
 	context: Pick<ToolContext, 'userRulesGroupAccess'>,

@@ -19,25 +19,25 @@ type FileTreeScope = {
 	includesRootEntry: (entryName: string) => boolean;
 };
 
-/** Roots granted by their own permission, never by the project-file grants. */
+/** Roots granted by their own permission, never by the clinic-file grants. */
 const SCOPED_ROOT_NAMES = new Set(['databases', 'docs']);
 
 const DOCS_SCOPE: FileTreeScope = { rootRelativePath: 'docs', includesRootEntry: () => true };
-const PROJECT_FILES_SCOPE: FileTreeScope = {
+const CLINIC_FILES_SCOPE: FileTreeScope = {
 	rootRelativePath: '',
 	includesRootEntry: (entryName) => !SCOPED_ROOT_NAMES.has(entryName),
 };
 
-export function getDocsContextCatalog(projectFolder: string): FileTreeCatalog {
-	return getFileTreeCatalog(projectFolder, DOCS_SCOPE);
+export function getDocsContextCatalog(clinicFolder: string): FileTreeCatalog {
+	return getFileTreeCatalog(clinicFolder, DOCS_SCOPE);
 }
 
-export function getFilesContextCatalog(projectFolder: string): FileTreeCatalog {
-	return getFileTreeCatalog(projectFolder, PROJECT_FILES_SCOPE);
+export function getFilesContextCatalog(clinicFolder: string): FileTreeCatalog {
+	return getFileTreeCatalog(clinicFolder, CLINIC_FILES_SCOPE);
 }
 
-function getFileTreeCatalog(projectFolder: string, scope: FileTreeScope): FileTreeCatalog {
-	const rootFolder = path.join(projectFolder, scope.rootRelativePath);
+function getFileTreeCatalog(clinicFolder: string, scope: FileTreeScope): FileTreeCatalog {
+	const rootFolder = path.join(clinicFolder, scope.rootRelativePath);
 	let stats: fs.Stats;
 	try {
 		stats = fs.lstatSync(rootFolder);
@@ -51,29 +51,29 @@ function getFileTreeCatalog(projectFolder: string, scope: FileTreeScope): FileTr
 		return { syncState: 'missing', entries: [] };
 	}
 
-	return { syncState: 'ready', entries: scanFileTreeDirectory(rootFolder, '', projectFolder, scope) };
+	return { syncState: 'ready', entries: scanFileTreeDirectory(rootFolder, '', clinicFolder, scope) };
 }
 
 /** The agent can never read `loopwise_config.yaml` wherever it lives, so a grant on it would be unusable. */
-function isProjectConfigFile(entryName: string): boolean {
+function isClinicConfigFile(entryName: string): boolean {
 	return entryName.toLowerCase() === CONTEXT_CONFIG_FILENAME;
 }
 
 function scanFileTreeDirectory(
 	directory: string,
 	relativeDirectory: string,
-	projectFolder: string,
+	clinicFolder: string,
 	scope: FileTreeScope,
 ): FileTreeCatalogEntry[] {
-	const projectRelativeDirectory = [scope.rootRelativePath, relativeDirectory].filter(Boolean).join('/');
+	const clinicRelativeDirectory = [scope.rootRelativePath, relativeDirectory].filter(Boolean).join('/');
 	const entries = fs
 		.readdirSync(directory, { withFileTypes: true })
 		.filter(
 			(entry) =>
 				!entry.isSymbolicLink() &&
-				!isProjectConfigFile(entry.name) &&
+				!isClinicConfigFile(entry.name) &&
 				(relativeDirectory !== '' || scope.includesRootEntry(entry.name)) &&
-				!shouldExcludeEntry(entry.name, projectRelativeDirectory, projectFolder),
+				!shouldExcludeEntry(entry.name, clinicRelativeDirectory, clinicFolder),
 		)
 		.sort(
 			(left, right) =>
@@ -88,7 +88,7 @@ function scanFileTreeDirectory(
 		if (entry.isDirectory()) {
 			return [
 				{ kind: 'folder', path: relativePath },
-				...scanFileTreeDirectory(path.join(directory, entry.name), relativePath, projectFolder, scope),
+				...scanFileTreeDirectory(path.join(directory, entry.name), relativePath, clinicFolder, scope),
 			];
 		}
 		return entry.isFile() ? [{ kind: 'file', path: relativePath }] : [];

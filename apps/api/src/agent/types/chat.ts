@@ -30,7 +30,7 @@ export interface ForkMetadata {
 
 export interface UIChat {
 	id: string;
-	projectId: string;
+	clinicId: string;
 	title: string;
 	isStarred: boolean;
 	isOnboarding?: boolean;
@@ -53,7 +53,7 @@ export interface MessageModel {
 
 export interface ChatListItem {
 	id: string;
-	projectId: string;
+	clinicId: string;
 	title: string;
 	isStarred: boolean;
 	createdAt: number;

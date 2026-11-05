@@ -6,19 +6,19 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { listChartPlugins, readChartPlugin } from './chart-plugin.js';
 
-const projectFolders: string[] = [];
+const clinicFolders: string[] = [];
 
 afterEach(() => {
-	for (const folder of projectFolders) {
+	for (const folder of clinicFolders) {
 		rmSync(folder, { recursive: true, force: true });
 	}
-	projectFolders.length = 0;
+	clinicFolders.length = 0;
 });
 
 describe('chart plugins', () => {
 	it('discovers flat JavaScript modules with optional metadata', () => {
-		const project = createProject();
-		const chartsFolder = join(project, 'agent', 'charts');
+		const clinic = createClinic();
+		const chartsFolder = join(clinic, 'agent', 'charts');
 		writeFileSync(join(chartsFolder, 'bubble.js'), 'export function render() {}');
 		writeFileSync(
 			join(chartsFolder, 'bubble.json'),
@@ -26,7 +26,7 @@ describe('chart plugins', () => {
 		);
 		writeFileSync(join(chartsFolder, 'progress-bars.mjs'), 'export function render() {}');
 
-		expect(listChartPlugins(project)).toEqual([
+		expect(listChartPlugins(clinic)).toEqual([
 			{
 				type: 'bubble',
 				name: 'Bubble chart',
@@ -43,13 +43,13 @@ describe('chart plugins', () => {
 	});
 
 	it('returns source and changes the version when source changes', () => {
-		const project = createProject();
-		const file = join(project, 'agent', 'charts', 'bubble.js');
+		const clinic = createClinic();
+		const file = join(clinic, 'agent', 'charts', 'bubble.js');
 		writeFileSync(file, 'export function render() { return 1; }');
 
-		const first = readChartPlugin(project, 'bubble');
+		const first = readChartPlugin(clinic, 'bubble');
 		writeFileSync(file, 'export function render() { return 2; }');
-		const second = readChartPlugin(project, 'bubble');
+		const second = readChartPlugin(clinic, 'bubble');
 
 		expect(first?.source).toContain('return 1');
 		expect(second?.source).toContain('return 2');
@@ -57,9 +57,9 @@ describe('chart plugins', () => {
 	});
 
 	it('ignores built-ins, duplicate types, nested files, and symlinks', () => {
-		const project = createProject();
-		const chartsFolder = join(project, 'agent', 'charts');
-		const outsideFile = join(project, 'outside.js');
+		const clinic = createClinic();
+		const chartsFolder = join(clinic, 'agent', 'charts');
+		const outsideFile = join(clinic, 'outside.js');
 		writeFileSync(join(chartsFolder, 'bar.js'), 'export function render() {}');
 		writeFileSync(join(chartsFolder, 'duplicate.js'), 'export function render() {}');
 		writeFileSync(join(chartsFolder, 'duplicate.mjs'), 'export function render() {}');
@@ -68,36 +68,36 @@ describe('chart plugins', () => {
 		mkdirSync(join(chartsFolder, 'nested'));
 		writeFileSync(join(chartsFolder, 'nested', 'nested.js'), 'export function render() {}');
 
-		expect(listChartPlugins(project)).toEqual([]);
+		expect(listChartPlugins(clinic)).toEqual([]);
 	});
 
-	it('rejects a charts directory that links outside the project', () => {
-		const project = createProject(false);
-		const outside = createProject();
-		const agentFolder = join(project, 'agent');
+	it('rejects a charts directory that links outside the clinic', () => {
+		const clinic = createClinic(false);
+		const outside = createClinic();
+		const agentFolder = join(clinic, 'agent');
 		mkdirSync(agentFolder, { recursive: true });
 		symlinkSync(join(outside, 'agent', 'charts'), join(agentFolder, 'charts'));
 		writeFileSync(join(outside, 'agent', 'charts', 'leak.js'), 'export function render() {}');
 
-		expect(listChartPlugins(project)).toEqual([]);
+		expect(listChartPlugins(clinic)).toEqual([]);
 	});
 
-	it('keeps project discovery isolated without shared state', () => {
-		const firstProject = createProject();
-		const secondProject = createProject();
-		writeFileSync(join(firstProject, 'agent', 'charts', 'first.js'), 'export function render() {}');
-		writeFileSync(join(secondProject, 'agent', 'charts', 'second.js'), 'export function render() {}');
+	it('keeps clinic discovery isolated without shared state', () => {
+		const firstClinic = createClinic();
+		const secondClinic = createClinic();
+		writeFileSync(join(firstClinic, 'agent', 'charts', 'first.js'), 'export function render() {}');
+		writeFileSync(join(secondClinic, 'agent', 'charts', 'second.js'), 'export function render() {}');
 
-		expect(listChartPlugins(firstProject).map((plugin) => plugin.type)).toEqual(['first']);
-		expect(listChartPlugins(secondProject).map((plugin) => plugin.type)).toEqual(['second']);
+		expect(listChartPlugins(firstClinic).map((plugin) => plugin.type)).toEqual(['first']);
+		expect(listChartPlugins(secondClinic).map((plugin) => plugin.type)).toEqual(['second']);
 	});
 });
 
-function createProject(withChartsFolder = true): string {
-	const project = mkdtempSync(join(tmpdir(), 'loopwise-chart-plugin-'));
-	projectFolders.push(project);
+function createClinic(withChartsFolder = true): string {
+	const clinic = mkdtempSync(join(tmpdir(), 'loopwise-chart-plugin-'));
+	clinicFolders.push(clinic);
 	if (withChartsFolder) {
-		mkdirSync(join(project, 'agent', 'charts'), { recursive: true });
+		mkdirSync(join(clinic, 'agent', 'charts'), { recursive: true });
 	}
-	return project;
+	return clinic;
 }

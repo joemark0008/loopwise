@@ -2,7 +2,7 @@ import { isSkillGranted } from '@loopwise/shared';
 import { loadSkill } from '@loopwise/shared/tools';
 
 import type { Skill } from '../../skills/skill.service.js';
-import { isProjectContextPathAllowed } from '../services/project-context-path-access.service.js';
+import { isClinicContextPathAllowed } from '../services/clinic-context-path-access.service.js';
 import type { SkillCapabilities } from '../skills/index.js';
 import { findInternalSkill, internalSkillNames } from '../skills/index.js';
 import type { ToolContext } from '../types/tools.js';
@@ -14,9 +14,9 @@ export default createTool<loadSkill.Input, loadSkill.Output>({
 	inputSchema: loadSkill.InputSchema,
 	outputSchema: loadSkill.OutputSchema,
 	execute: async ({ name }, context) => {
-		const projectSkill = loadProjectSkill(name, context);
-		if (projectSkill) {
-			return projectSkill;
+		const clinicSkill = loadClinicSkill(name, context);
+		if (clinicSkill) {
+			return clinicSkill;
 		}
 
 		const internalSkill = findInternalSkill(name);
@@ -40,37 +40,37 @@ const skillCapabilities = (_context: ToolContext | undefined): SkillCapabilities
 };
 
 /**
- * A project skill shadows the built-in skill of the same name, as the prompt lists it in its place.
- * A project skill the run may not reach is reported as missing, so its existence does not leak.
+ * A clinic skill shadows the built-in skill of the same name, as the prompt lists it in its place.
+ * A clinic skill the run may not reach is reported as missing, so its existence does not leak.
  */
-const loadProjectSkill = (name: string, context: ToolContext | undefined): loadSkill.Output | null => {
-	if (!context?.projectId) {
+const loadClinicSkill = (name: string, context: ToolContext | undefined): loadSkill.Output | null => {
+	if (!context?.clinicId) {
 		return null;
 	}
 
-	const skill = context.services.skills.getSkill(context.projectId, name);
-	if (!skill || !isProjectSkillAllowed(skill, context)) {
+	const skill = context.services.skills.getSkill(context.clinicId, name);
+	if (!skill || !isClinicSkillAllowed(skill, context)) {
 		return null;
 	}
 
-	const body = context.services.skills.getSkillBody(context.projectId, skill.name);
+	const body = context.services.skills.getSkillBody(context.clinicId, skill.name);
 	return body ? { _version: '1' as const, name: skill.name, body } : null;
 };
 
 /** The same checks the read tool applies to the skill file, on top of the skill grant itself. */
-const isProjectSkillAllowed = (skill: Skill, context: ToolContext): boolean => {
+const isClinicSkillAllowed = (skill: Skill, context: ToolContext): boolean => {
 	return (
 		isSkillGranted(context.skillsAccess, skill.name) &&
-		isProjectContextPathAllowed(context, skill.location, skill.location, 'file')
+		isClinicContextPathAllowed(context, skill.location, skill.location, 'file')
 	);
 };
 
 const availableSkillNames = (context: ToolContext | undefined): string[] => {
-	const projectSkillNames = context?.projectId
+	const clinicSkillNames = context?.clinicId
 		? context.services.skills
-				.getSkills(context.projectId)
-				.filter((skill) => isProjectSkillAllowed(skill, context))
+				.getSkills(context.clinicId)
+				.filter((skill) => isClinicSkillAllowed(skill, context))
 				.map((skill) => skill.name)
 		: [];
-	return [...new Set([...internalSkillNames(), ...projectSkillNames])];
+	return [...new Set([...internalSkillNames(), ...clinicSkillNames])];
 };

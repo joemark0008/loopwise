@@ -1,32 +1,32 @@
 import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
 
-import type { Project } from '../../generated/prisma/client.js';
+import { ClinicRepository } from '../../clinics/clinic.repository.js';
+import type { Clinic } from '../../generated/prisma/client.js';
 import { OrganizationRepository, type UserOrgMembership } from '../../organizations/organization.repository.js';
-import { ProjectRepository } from '../../projects/project.repository.js';
 import { HandlerError } from '../errors/handler-error.js';
 
 /** Access checks behind the guard decorators (upstream `trpc/trpc.ts` procedure middlewares). */
 @Injectable()
 export class AccessService {
 	constructor(
-		private readonly projects: ProjectRepository,
+		private readonly clinics: ClinicRepository,
 		private readonly organizations: OrganizationRepository,
 	) {}
 
-	/** `projectProtectedProcedure`, plus the role checks of the admin / non-viewer procedures. */
-	async resolveProjectAccess(
+	/** `clinicProtectedProcedure`, plus the role checks of the admin / non-viewer procedures. */
+	async resolveClinicAccess(
 		userId: string,
-		selectedProjectId: string | null,
+		selectedClinicId: string | null,
 		roles?: readonly UserRole[],
-	): Promise<{ project: Project; userRole: UserRole }> {
-		const project = await this.projects.getProjectByUserId(userId, selectedProjectId);
-		if (!project) {
-			throw new HandlerError('BAD_REQUEST', 'No project configured');
+	): Promise<{ clinic: Clinic; userRole: UserRole }> {
+		const clinic = await this.clinics.getClinicByUserId(userId, selectedClinicId);
+		if (!clinic) {
+			throw new HandlerError('BAD_REQUEST', 'No clinic configured');
 		}
-		const userRole = await this.projects.getUserRoleInProject(project.id, userId);
+		const userRole = await this.clinics.getUserRoleInClinic(clinic.id, userId);
 		if (!userRole) {
-			throw new HandlerError('FORBIDDEN', 'You do not have access to this project.');
+			throw new HandlerError('FORBIDDEN', 'You do not have access to this clinic.');
 		}
 		if (roles && !roles.includes(userRole)) {
 			throw new HandlerError(
@@ -36,13 +36,13 @@ export class AccessService {
 					: 'Viewers cannot access this resource',
 			);
 		}
-		return { project, userRole };
+		return { clinic, userRole };
 	}
 
 	/** `resolveOrganizationMembership`. */
 	async resolveOrganizationMembership(
 		userId: string,
-		selectedProjectId: string | null,
+		selectedClinicId: string | null,
 		selectedOrganizationId: string | null,
 	): Promise<UserOrgMembership> {
 		if (selectedOrganizationId) {
@@ -53,10 +53,10 @@ export class AccessService {
 			return membership;
 		}
 
-		if (selectedProjectId) {
-			const membership = await this.organizations.getUserOrgMembershipByProject(userId, selectedProjectId);
+		if (selectedClinicId) {
+			const membership = await this.organizations.getUserOrgMembershipByClinic(userId, selectedClinicId);
 			if (!membership) {
-				throw new HandlerError('NOT_FOUND', 'Selected project organization was not found');
+				throw new HandlerError('NOT_FOUND', 'Selected clinic organization was not found');
 			}
 			return membership;
 		}

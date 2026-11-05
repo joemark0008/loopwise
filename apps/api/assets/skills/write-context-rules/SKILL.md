@@ -1,6 +1,6 @@
 ---
 name: write-context-rules
-description: Create or extend a loopwise project's RULES.md. Owns the RULES.md template. Use when the user wants to generate the initial RULES.md from synced metadata (called by setup-context), or improve their existing RULES.md. Do not use for first-time scope setup (use setup-context) or for diagnosing existing problems (use audit-context).
+description: Create or extend a loopwise clinic's RULES.md. Owns the RULES.md template. Use when the user wants to generate the initial RULES.md from synced metadata (called by setup-context), or improve their existing RULES.md. Do not use for first-time scope setup (use setup-context) or for diagnosing existing problems (use audit-context).
 ---
 
 # write-context-rules
@@ -33,7 +33,7 @@ Anything else (per-table schema, full metric semantics, domain-specific rules) b
 5. `## Key Metrics Reference` — **only if no semantic layer / metric docs exist elsewhere** (see Step 5). Otherwise a one-line routing pointer to it.
 6. `## Date filtering` — three example formulas (last X weeks / last X days / current month). Don't enumerate every period.
 7. `## Analysis Process` — adaptive: read semantic layer → read docs → select table → check `profiling.md` before filtering values → query → validate → context.
-8. `## Chart & Visualization Guidelines` — **only if the project produces charts/stories and the company has a brand palette.** The brand color palette for chart series + semantic good/bad colors, sourced from the company's design system / brand guidelines. Keeps every chart on-brand and consistent.
+8. `## Chart & Visualization Guidelines` — **only if the clinic produces charts/stories and the company has a brand palette.** The brand color palette for chart series + semantic good/bad colors, sourced from the company's design system / brand guidelines. Keeps every chart on-brand and consistent.
 
 ## Flow
 
@@ -68,7 +68,7 @@ The orchestrator's index of where context lives. Built from Step 0. Cover:
 - **Per-table context** — what each table folder under `databases/` contains (`columns.md`, `preview.md`, `profiling.md`, `query_history.md`, `ai_summary.md`) and one line on what each is for.
 - **Repos** — per repo, the key files and what they hold:
     ```
-    - `repos/dbt/` — dbt project. Column docs: `models/silver.yml`. Domain decisions: `models/silver/*_ANALYTICS_DECISIONS.md`. Semantic layer (metrics): `models/silver_semantic_layer.yml`.
+    - `repos/dbt/` — dbt clinic. Column docs: `models/silver.yml`. Domain decisions: `models/silver/*_ANALYTICS_DECISIONS.md`. Semantic layer (metrics): `models/silver_semantic_layer.yml`.
     ```
 - **Docs** — per file in `docs/`, one line on contents + when to read it:
     ```
@@ -122,7 +122,7 @@ Use the template's adaptive process. It must branch on what the inventory found.
 7. **Validate** — NULLs, sane counts.
 8. **Context** — what the numbers mean, trends, anomalies.
 
-The project-specific bit is step 4 (table routing), derived from Steps 4-5 above.
+The clinic-specific bit is step 4 (table routing), derived from Steps 4-5 above.
 
 ### Step 8 — Validate metrics with the user
 
@@ -174,7 +174,7 @@ For deeper diagnostics (MECE, schema drift, test failure root causes), route to 
 - **`### Tables detail` only if no richer table docs exist elsewhere.**
 - **`## Key Metrics Reference` only if no semantic layer / metric docs exist elsewhere.** Otherwise route.
 - **Don't invent metric sources.** Unclear → list for user validation in Step 8.
-- **`## Chart & Visualization Guidelines` only if the project renders charts/stories and the user has a real brand palette** — use their exact hex values, never invent them; if there's no brand palette, omit the section entirely.
+- **`## Chart & Visualization Guidelines` only if the clinic renders charts/stories and the user has a real brand palette** — use their exact hex values, never invent them; if there's no brand palette, omit the section entirely.
 - **Always check `profiling.md` before filtering on a column value** — bake this into the Analysis Process.
 - **`## Date filtering` keeps three examples max.**
 

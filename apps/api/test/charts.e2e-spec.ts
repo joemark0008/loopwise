@@ -40,7 +40,7 @@ vi.mock('../src/agent/utils/safe-fetch.js', async (importOriginal) => {
 });
 
 const OTHER_USER_ID = 'charts-other-user';
-const OTHER_PROJECT_ID = 'charts-other-project';
+const OTHER_CLINIC_ID = 'charts-other-clinic';
 const IMAGE_ID = '6f1d1f0e-8a0e-4a59-9f0b-6a5c2d7a9e11';
 const FOREIGN_IMAGE_ID = '0b5c8a0e-1f2d-4c3b-9a8e-7d6c5b4a3f21';
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -62,18 +62,18 @@ const MAP_CONFIG = {
 
 /**
  * Charts and maps on Postgres: `/c` chart PNGs, `/i` message images, `/api/map-boundaries`, and the GraphQL
- * operations ported from upstream tRPC `chart.*`, `map.*`, `chartPlugin.*` and `project.*MapBoundar*`.
+ * operations ported from upstream tRPC `chart.*`, `map.*`, `chartPlugin.*` and `clinic.*MapBoundar*`.
  */
 describe('charts and maps (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
 	let cookie: string[] = [];
 	let userId = '';
-	let projectId = '';
+	let clinicId = '';
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -82,11 +82,11 @@ describe('charts and maps (e2e)', () => {
 			email: 'ada@example.com',
 			password: 'Sup3r-secret!',
 		}));
-		const project = await graphql('mutation { createProject(input: { name: "Charts" }) { id } }');
-		if (!project.body.data) {
-			throw new Error(JSON.stringify(project.body.errors));
+		const clinic = await graphql('mutation { createClinic(input: { name: "Charts" }) { id } }');
+		if (!clinic.body.data) {
+			throw new Error(JSON.stringify(clinic.body.errors));
 		}
-		projectId = project.body.data.createProject.id;
+		clinicId = clinic.body.data.createClinic.id;
 		await seed();
 	});
 
@@ -98,17 +98,17 @@ describe('charts and maps (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	async function seed() {
 		await prisma.user.create({ data: { id: OTHER_USER_ID, name: 'Other', email: 'other@example.com' } });
-		await prisma.project.create({ data: { id: OTHER_PROJECT_ID, name: 'Other', type: 'local', path: '/tmp/x' } });
+		await prisma.clinic.create({ data: { id: OTHER_CLINIC_ID, name: 'Other', type: 'local', path: '/tmp/x' } });
 		await prisma.chat.createMany({
 			data: [
-				{ id: 'chat-own', userId, projectId, title: 'Mine' },
-				{ id: 'chat-colleague', userId: OTHER_USER_ID, projectId, title: 'Colleague' },
-				{ id: 'chat-foreign', userId: OTHER_USER_ID, projectId: OTHER_PROJECT_ID, title: 'Foreign' },
+				{ id: 'chat-own', userId, clinicId, title: 'Mine' },
+				{ id: 'chat-colleague', userId: OTHER_USER_ID, clinicId, title: 'Colleague' },
+				{ id: 'chat-foreign', userId: OTHER_USER_ID, clinicId: OTHER_CLINIC_ID, title: 'Foreign' },
 			],
 		});
 		await prisma.chatMessage.createMany({
@@ -225,7 +225,7 @@ describe('charts and maps (e2e)', () => {
 			expect(Buffer.from(res.body).toString()).toBe('png-bytes');
 		});
 
-		it('hides an image that only a chat of another project shows', async () => {
+		it('hides an image that only a chat of another clinic shows', async () => {
 			await request(app.getHttpServer()).get(`/i/${FOREIGN_IMAGE_ID}`).set('Cookie', cookie).expect(404);
 		});
 	});
@@ -240,7 +240,7 @@ describe('charts and maps (e2e)', () => {
 			expect(png.subarray(0, 8)).toEqual(PNG_SIGNATURE);
 		});
 
-		it("lets a project admin download a colleague's chart, which they can replay", async () => {
+		it("lets a clinic admin download a colleague's chart, which they can replay", async () => {
 			const res = await graphql('query ($id: String!) { chartDownload(toolCallId: $id) }', {
 				id: 'colleague-chart-call',
 			});
@@ -303,7 +303,7 @@ describe('charts and maps (e2e)', () => {
 			expect(invalid.body.errors[0].extensions.code).toBe('BAD_REQUEST');
 		});
 
-		it('lists no chart plugins for a project without a charts folder', async () => {
+		it('lists no chart plugins for a clinic without a charts folder', async () => {
 			const res = await graphql('{ chartPlugins }');
 			expect(res.body.data.chartPlugins).toEqual([]);
 			const source = await graphql('{ chartPluginSource(type: "funnel", version: "1") { source version } }');
@@ -375,30 +375,30 @@ describe('charts and maps (e2e)', () => {
 			expect(res.body.data.updateMapConfig).toBe(true);
 		});
 
-		it('serves a custom or built-in boundary set to project members', async () => {
+		it('serves a custom or built-in boundary set to clinic members', async () => {
 			const custom = await request(app.getHttpServer())
-				.get(`/api/map-boundaries/${projectId}/regions`)
+				.get(`/api/map-boundaries/${clinicId}/regions`)
 				.set('Cookie', cookie)
 				.expect(200);
 			expect(custom.body.features).toHaveLength(2);
 			expect(custom.headers['cache-control']).toBe('private, max-age=600');
 
 			await request(app.getHttpServer())
-				.get(`/api/map-boundaries/${projectId}/world_countries`)
+				.get(`/api/map-boundaries/${clinicId}/world_countries`)
 				.set('Cookie', cookie)
 				.expect(200);
 			await request(app.getHttpServer())
-				.get(`/api/map-boundaries/${projectId}/unknown_set`)
+				.get(`/api/map-boundaries/${clinicId}/unknown_set`)
 				.set('Cookie', cookie)
 				.expect(404);
 		});
 
-		it('refuses boundaries of a project the user is not in, and anonymous requests', async () => {
+		it('refuses boundaries of a clinic the user is not in, and anonymous requests', async () => {
 			await request(app.getHttpServer())
-				.get(`/api/map-boundaries/${OTHER_PROJECT_ID}/world_countries`)
+				.get(`/api/map-boundaries/${OTHER_CLINIC_ID}/world_countries`)
 				.set('Cookie', cookie)
 				.expect(403);
-			await request(app.getHttpServer()).get(`/api/map-boundaries/${projectId}/world_countries`).expect(401);
+			await request(app.getHttpServer()).get(`/api/map-boundaries/${clinicId}/world_countries`).expect(401);
 		});
 
 		it('proxies a GeoJSON URL', async () => {

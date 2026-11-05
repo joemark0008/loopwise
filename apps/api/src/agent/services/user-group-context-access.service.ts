@@ -10,7 +10,7 @@ export type ResolvedDocsContextAccess = ResolvedFileTreeAccess;
 export type ResolvedFilesContextAccess = ResolvedFileTreeAccess;
 export type ResolvedSkillsAccess = { mode: 'all' } | { mode: 'restricted'; skills: string[]; grantedFiles: string[] };
 
-export interface ProjectContextAccess {
+export interface ClinicContextAccess {
 	warehouseTableAccess: WarehouseTableAccess;
 	warehouseRowSecurity: WarehouseRowSecurity;
 	docsContextAccess: ResolvedDocsContextAccess;
@@ -23,10 +23,10 @@ export interface ProjectContextAccess {
 }
 
 /**
- * What a project member may reach. User groups (which narrow tables, docs, MCP servers, skills and rows) are
- * Phase 6; until then every member of the project gets the full context, as upstream's default "All Users" group.
+ * What a clinic member may reach. User groups (which narrow tables, docs, MCP servers, skills and rows) are
+ * Phase 6; until then every member of the clinic gets the full context, as upstream's default "All Users" group.
  */
-export function fullProjectContextAccess(): ProjectContextAccess {
+export function fullClinicContextAccess(): ClinicContextAccess {
 	return {
 		warehouseTableAccess: { enforced: false },
 		warehouseRowSecurity: { enforced: false },

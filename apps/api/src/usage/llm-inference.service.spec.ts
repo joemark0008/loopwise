@@ -6,7 +6,7 @@ import { LlmInferenceService } from './llm-inference.service.js';
 // Upstream has no tests for `scheduleSaveLlmInferenceRecord`; these cover the deferred save and its error guard.
 const record: NewLlmInference = {
 	type: 'subagent',
-	projectId: 'project-1',
+	clinicId: 'clinic-1',
 	userId: 'user-1',
 	chatId: 'chat-1',
 	llmProvider: 'openai',

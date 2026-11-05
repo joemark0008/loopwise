@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AgentModule } from '../agent/agent.module.js';
-import { ProjectsCoreModule } from '../projects/projects-core.module.js';
+import { ClinicsCoreModule } from '../clinics/clinics-core.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { ChatMessagesLoader } from './chat.loader.js';
 import { ChatForkService } from './chat-fork.service.js';
@@ -9,9 +9,9 @@ import { ChatsResolver } from './chats.resolver.js';
 import { ChatsService } from './chats.service.js';
 import { ChatsCoreModule } from './chats-core.module.js';
 import { CitationService } from './citation.service.js';
+import { ClinicSharingService } from './clinic-sharing.service.js';
 import { FeedbackRepository } from './feedback.repository.js';
 import { FeedbackService } from './feedback.service.js';
-import { ProjectSharingService } from './project-sharing.service.js';
 import { QueryRowsService } from './query-rows.service.js';
 import { SharedChatRepository } from './shared-chat.repository.js';
 import { SharedChatsResolver } from './shared-chats.resolver.js';
@@ -23,7 +23,7 @@ import { SharedChatsService } from './shared-chats.service.js';
  * `warehouse` (which the agent module imports).
  */
 @Module({
-	imports: [ChatsCoreModule, AgentModule, ProjectsCoreModule, UsersModule],
+	imports: [ChatsCoreModule, AgentModule, ClinicsCoreModule, UsersModule],
 	providers: [
 		ChatsService,
 		ChatsResolver,
@@ -31,7 +31,7 @@ import { SharedChatsService } from './shared-chats.service.js';
 		SharedChatRepository,
 		SharedChatsService,
 		SharedChatsResolver,
-		ProjectSharingService,
+		ClinicSharingService,
 		ChatForkService,
 		FeedbackRepository,
 		FeedbackService,

@@ -38,12 +38,12 @@ export class ImageRepository {
 	}
 
 	/** Chats (not deleted) whose messages reference the image. */
-	async listChatsReferencingImage(imageId: string): Promise<Array<{ chatId: string; projectId: string }>> {
+	async listChatsReferencingImage(imageId: string): Promise<Array<{ chatId: string; clinicId: string }>> {
 		const chats = await this.prisma.chat.findMany({
 			where: { deletedAt: null, chatMessages: { some: { messageParts: { some: { imageId } } } } },
-			select: { id: true, projectId: true },
+			select: { id: true, clinicId: true },
 		});
-		return chats.map((chat) => ({ chatId: chat.id, projectId: chat.projectId }));
+		return chats.map((chat) => ({ chatId: chat.id, clinicId: chat.clinicId }));
 	}
 
 	async getImageById(id: string): Promise<{ data: string; mediaType: string } | undefined> {

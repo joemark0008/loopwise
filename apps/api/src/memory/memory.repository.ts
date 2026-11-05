@@ -21,15 +21,15 @@ export class MemoryRepository {
 		return memories.map(toMemoryRecord);
 	}
 
-	async getIsMemoryEnabledForUserAndProject(userId: string, projectId: string): Promise<boolean> {
-		const [user, project] = await Promise.all([
+	async getIsMemoryEnabledForUserAndClinic(userId: string, clinicId: string): Promise<boolean> {
+		const [user, clinic] = await Promise.all([
 			this.prisma.user.findUnique({ where: { id: userId }, select: { memoryEnabled: true } }),
-			this.prisma.project.findUnique({ where: { id: projectId }, select: { agentSettings: true } }),
+			this.prisma.clinic.findUnique({ where: { id: clinicId }, select: { agentSettings: true } }),
 		]);
-		if (!user || !project) {
+		if (!user || !clinic) {
 			return false;
 		}
-		const agentSettings = project.agentSettings as { memoryEnabled?: boolean } | null;
+		const agentSettings = clinic.agentSettings as { memoryEnabled?: boolean } | null;
 		return user.memoryEnabled && (agentSettings?.memoryEnabled ?? true);
 	}
 
@@ -38,13 +38,13 @@ export class MemoryRepository {
 		return user?.memoryEnabled ?? true;
 	}
 
-	/** Upstream `projectQueries.getProjectMemoryEnabled`: the admin's `agentSettings.memoryEnabled`, on by default. */
-	async getProjectMemoryEnabled(projectId: string): Promise<boolean> {
-		const project = await this.prisma.project.findUnique({
-			where: { id: projectId },
+	/** Upstream `clinicQueries.getClinicMemoryEnabled`: the admin's `agentSettings.memoryEnabled`, on by default. */
+	async getClinicMemoryEnabled(clinicId: string): Promise<boolean> {
+		const clinic = await this.prisma.clinic.findUnique({
+			where: { id: clinicId },
 			select: { agentSettings: true },
 		});
-		return (project?.agentSettings as { memoryEnabled?: boolean } | null)?.memoryEnabled ?? true;
+		return (clinic?.agentSettings as { memoryEnabled?: boolean } | null)?.memoryEnabled ?? true;
 	}
 
 	async setUserMemoryEnabled(userId: string, memoryEnabled: boolean): Promise<void> {

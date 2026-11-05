@@ -13,7 +13,7 @@ const FILTER_PREDICATES: Record<ChatFilterType, (item: EnrichedChat) => boolean>
 const GROUP_STRATEGIES: Record<ChatGroupBy, (items: EnrichedChat[]) => ChatGroup[]> = {
 	star: groupByStar,
 	date: groupByDate,
-	project: groupByProject,
+	clinic: groupByClinic,
 	ownership: groupByOwnership,
 	sourcePlatform: groupBySourcePlatform,
 	none: (items) => [{ label: null, chats: toGroupedItems(items) }],
@@ -61,8 +61,8 @@ export function deriveSourcePlatform(threadIds: {
 }
 
 export interface EnrichedChat extends GroupedChatItem {
-	projectId: string;
-	projectName: string;
+	clinicId: string;
+	clinicName: string;
 	isSharedByMe: boolean;
 	sourcePlatform: SourcePlatform;
 }
@@ -130,8 +130,8 @@ function groupByKey(items: EnrichedChat[], keyFn: (item: EnrichedChat) => string
 		.map(([label, chats]) => ({ label, chats: toGroupedItems(chats) }));
 }
 
-function groupByProject(items: EnrichedChat[]) {
-	return groupByKey(items, (i) => i.projectName);
+function groupByClinic(items: EnrichedChat[]) {
+	return groupByKey(items, (i) => i.clinicName);
 }
 
 function groupByOwnership(items: EnrichedChat[]) {
@@ -170,7 +170,7 @@ function toGroupedItems(items: EnrichedChat[]): GroupedChatItem[] {
 	return items.map(
 		({
 			id,
-			projectId,
+			clinicId,
 			title,
 			isStarred,
 			isOnboarding,
@@ -181,7 +181,7 @@ function toGroupedItems(items: EnrichedChat[]): GroupedChatItem[] {
 			ownerName,
 		}): GroupedChatItem => ({
 			id,
-			projectId,
+			clinicId,
 			title,
 			isStarred,
 			isOnboarding,

@@ -14,7 +14,7 @@ export interface ModelCostRow {
 }
 
 /**
- * Upstream `getCostLookupTuples`: the catalogue prices of every known model, overridden by the prices a project
+ * Upstream `getCostLookupTuples`: the catalogue prices of every known model, overridden by the prices a clinic
  * declares for its custom models (Settings → Agent).
  */
 export function buildModelCostRows(

@@ -1,4 +1,4 @@
-// Organizations (tenants), users, projects and their memberships, user groups and preferences.
+// Organizations (tenants), users, clinics and their memberships, user groups and preferences.
 
 model OrgMember {
   orgId        String       @map("org_id")
@@ -31,7 +31,7 @@ model Organization {
   updatedAt          DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   apiKeys            ApiKey[]
   orgMembers         OrgMember[]
-  projects           Project[]
+  clinics            Clinic[]
   patientIdentifiers PatientIdentifier[]
   careRelationships  CareRelationship[]
   encounters         Encounter[]
@@ -56,39 +56,39 @@ model Organization {
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model Project {
-  id                  String               @id @default(uuid())
-  name                String
-  type                String
-  path                String?
-  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  orgId               String?              @map("org_id")
-  agentSettings       Json?                @map("agent_settings")
-  envVars             Json                 @default("{}") @map("env_vars")
-  displaySettings     Json?                @map("display_settings")
-  mapSettings         Json?                @map("map_settings")
-  defaultModels       Json?                @map("default_models")
-  activities          Activity[]
-  analyticsEvents     AnalyticsEvent[]
-  automations         Automation[]
-  chats               Chat[]
-  llmInferences       LlmInference[]
-  logs                Log[]
-  notifications       Notification[]
-  organization        Organization?        @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_org_id_organization_id_fk")
-  projectLlmConfigs   ProjectLlmConfig[]
-  projectMembers      ProjectMember[]
-  projectSavedPrompts ProjectSavedPrompt[]
-  userGroups          UserGroup[]
+model Clinic {
+  id                 String              @id @default(uuid())
+  name               String
+  type               String
+  path               String?
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  orgId              String?             @map("org_id")
+  agentSettings      Json?               @map("agent_settings")
+  envVars            Json                @default("{}") @map("env_vars")
+  displaySettings    Json?               @map("display_settings")
+  mapSettings        Json?               @map("map_settings")
+  defaultModels      Json?               @map("default_models")
+  activities         Activity[]
+  analyticsEvents    AnalyticsEvent[]
+  automations        Automation[]
+  chats              Chat[]
+  llmInferences      LlmInference[]
+  logs               Log[]
+  notifications      Notification[]
+  organization       Organization?       @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_org_id_organization_id_fk")
+  clinicLlmConfigs   ClinicLlmConfig[]
+  clinicMembers      ClinicMember[]
+  clinicSavedPrompts ClinicSavedPrompt[]
+  userGroups         UserGroup[]
 
   @@index([orgId], map: "project_orgId_idx")
   @@map("project")
 }
 
-model ProjectLlmConfig {
+model ClinicLlmConfig {
   id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
+  clinicId      String   @map("project_id")
   provider      String
   apiKey        String   @map("api_key")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(6)
@@ -98,36 +98,36 @@ model ProjectLlmConfig {
   credentials   Json?
   customModels  Json     @default("[]") @map("custom_models")
   modelSettings Json     @default("{}") @map("model_settings")
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_llm_config_project_id_project_id_fk")
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_llm_config_project_id_project_id_fk")
 
-  @@unique([projectId, provider], map: "project_llm_config_project_provider")
-  @@index([projectId], map: "project_llm_config_projectId_idx")
+  @@unique([clinicId, provider], map: "project_llm_config_project_provider")
+  @@index([clinicId], map: "project_llm_config_projectId_idx")
   @@map("project_llm_config")
 }
 
-model ProjectMember {
-  projectId String   @map("project_id")
+model ClinicMember {
+  clinicId  String   @map("project_id")
   userId    String   @map("user_id")
   role      String
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_member_project_id_project_id_fk")
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_member_project_id_project_id_fk")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_member_user_id_user_id_fk")
 
-  @@id([projectId, userId], map: "project_member_project_id_user_id_pk")
+  @@id([clinicId, userId], map: "project_member_project_id_user_id_pk")
   @@index([userId], map: "project_member_userId_idx")
   @@map("project_member")
 }
 
-model ProjectSavedPrompt {
+model ClinicSavedPrompt {
   id        String   @id @default(uuid())
-  projectId String   @map("project_id")
+  clinicId  String   @map("project_id")
   title     String
   prompt    String
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_saved_prompt_project_id_project_id_fk")
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_saved_prompt_project_id_project_id_fk")
 
-  @@index([projectId], map: "project_saved_prompt_projectId_idx")
+  @@index([clinicId], map: "project_saved_prompt_projectId_idx")
   @@map("project_saved_prompt")
 }
 
@@ -161,7 +161,7 @@ model User {
   oauthConsents            OauthConsent[]
   oauthRefreshTokens       OauthRefreshToken[]
   orgMembers               OrgMember[]
-  projectMembers           ProjectMember[]
+  clinicMembers            ClinicMember[]
   sessions                 Session[]
   sharedChatAccess         SharedChatAccess[]
   userGroupMembers         UserGroupMember[]
@@ -189,7 +189,7 @@ model User {
 
 model UserGroup {
   id               String            @id @default(uuid())
-  projectId        String            @map("project_id")
+  clinicId         String            @map("project_id")
   name             String
   isDefault        Boolean           @default(false) @map("is_default")
   featureGrants    Json              @default("{\"version\": 2, \"features\": [], \"toolCallDensity\": {\"canChange\": true, \"defaultDensity\": \"detailed\"}}") @map("feature_grants")
@@ -197,12 +197,12 @@ model UserGroup {
   rowPolicies      Json?             @map("row_policies")
   createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_group_project_id_project_id_fk")
+  clinic           Clinic            @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_group_project_id_project_id_fk")
   userGroupMembers UserGroupMember[]
 
-  @@unique([projectId], map: "user_group_project_default_unique", where: raw("(is_default = true)"))
-  @@unique([projectId, name], map: "user_group_project_name_unique")
-  @@index([projectId], map: "user_group_projectId_idx")
+  @@unique([clinicId], map: "user_group_project_default_unique", where: raw("(is_default = true)"))
+  @@unique([clinicId, name], map: "user_group_project_name_unique")
+  @@index([clinicId], map: "user_group_projectId_idx")
   @@map("user_group")
 }
 

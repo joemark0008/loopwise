@@ -9,15 +9,15 @@ import {
 	type SavedUsagePeriod,
 	savedUsagePeriodSchema,
 	usagePeriodSelectionSchema,
-	type UserProjectPreferences,
+	type UserClinicPreferences,
 } from './usage.types.js';
 
 type PeriodSettings = {
-	preferences: UserProjectPreferences;
+	preferences: UserClinicPreferences;
 	savedPeriods: SavedUsagePeriod[];
 };
 
-type PeriodSettingsTransform = (settings: PeriodSettings) => UserProjectPreferences;
+type PeriodSettingsTransform = (settings: PeriodSettings) => UserClinicPreferences;
 
 const legacySavedPeriodSelectionSchema = z.object({
 	mode: z.literal('saved'),
@@ -25,27 +25,27 @@ const legacySavedPeriodSelectionSchema = z.object({
 });
 
 /**
- * Port of upstream `services/usage-period-settings.service.ts`: the usage period each user picks per project, and
+ * Port of upstream `services/usage-period-settings.service.ts`: the usage period each user picks per clinic, and
  * the periods they save, stored in their preferences and repaired when malformed.
  */
 @Injectable()
 export class UsagePeriodSettingsService {
 	constructor(private readonly users: UserRepository) {}
 
-	async getAndRepairPeriodSettings(userId: string, projectId: string): Promise<PeriodSettings> {
+	async getAndRepairPeriodSettings(userId: string, clinicId: string): Promise<PeriodSettings> {
 		const userPreferences = await this.users.getUserPreferences(userId);
-		const current = getProjectPreferences(userPreferences, projectId);
+		const current = getClinicPreferences(userPreferences, clinicId);
 		const sanitized = sanitizePeriodSettings(current);
 		if (!sanitized.changed) {
 			return sanitized;
 		}
 
 		const repairedUserPreferences = await this.users.mutateUserPreferences(userId, (latest) => {
-			const preferences = getProjectPreferences(latest, projectId);
+			const preferences = getClinicPreferences(latest, clinicId);
 			const repaired = sanitizePeriodSettings(preferences).preferences;
-			return setProjectPreferences(latest, projectId, repaired);
+			return setClinicPreferences(latest, clinicId, repaired);
 		});
-		const preferences = getProjectPreferences(repairedUserPreferences, projectId);
+		const preferences = getClinicPreferences(repairedUserPreferences, clinicId);
 		return {
 			preferences,
 			savedPeriods: sanitizeSavedPeriods(preferences),
@@ -54,16 +54,16 @@ export class UsagePeriodSettingsService {
 
 	async mutatePeriodSettings(
 		userId: string,
-		projectId: string,
+		clinicId: string,
 		transform: PeriodSettingsTransform,
-	): Promise<UserProjectPreferences> {
+	): Promise<UserClinicPreferences> {
 		const userPreferences = await this.users.mutateUserPreferences(userId, (current) => {
-			const projectPreferences = getProjectPreferences(current, projectId);
-			const { preferences, savedPeriods } = sanitizePeriodSettings(projectPreferences);
+			const clinicPreferences = getClinicPreferences(current, clinicId);
+			const { preferences, savedPeriods } = sanitizePeriodSettings(clinicPreferences);
 			const updated = transform({ preferences, savedPeriods });
-			return setProjectPreferences(current, projectId, updated);
+			return setClinicPreferences(current, clinicId, updated);
 		});
-		return getProjectPreferences(userPreferences, projectId);
+		return getClinicPreferences(userPreferences, clinicId);
 	}
 }
 
@@ -73,28 +73,28 @@ export function assertSavedPeriodExists(savedPeriods: SavedUsagePeriod[], id: st
 	}
 }
 
-function getProjectPreferences(preferences: StoredUserPreferences, projectId: string): UserProjectPreferences {
-	const projectPreferences = preferences.projectPreferences?.[projectId];
-	return projectPreferences && typeof projectPreferences === 'object'
-		? (projectPreferences as UserProjectPreferences)
+function getClinicPreferences(preferences: StoredUserPreferences, clinicId: string): UserClinicPreferences {
+	const clinicPreferences = preferences.projectPreferences?.[clinicId];
+	return clinicPreferences && typeof clinicPreferences === 'object'
+		? (clinicPreferences as UserClinicPreferences)
 		: {};
 }
 
-function setProjectPreferences(
+function setClinicPreferences(
 	preferences: StoredUserPreferences,
-	projectId: string,
-	projectPreferences: UserProjectPreferences,
+	clinicId: string,
+	clinicPreferences: UserClinicPreferences,
 ): StoredUserPreferences {
 	return {
 		...preferences,
 		projectPreferences: {
 			...preferences.projectPreferences,
-			[projectId]: projectPreferences,
+			[clinicId]: clinicPreferences,
 		},
 	};
 }
 
-function sanitizePeriodSettings(preferences: UserProjectPreferences): PeriodSettings & { changed: boolean } {
+function sanitizePeriodSettings(preferences: UserClinicPreferences): PeriodSettings & { changed: boolean } {
 	const savedPeriods = sanitizeSavedPeriods(preferences);
 	const parsedSelection = parsePeriodSelection(preferences.usagePeriod);
 	const usagePeriod =
@@ -115,7 +115,7 @@ function sanitizePeriodSettings(preferences: UserProjectPreferences): PeriodSett
 	};
 }
 
-function sanitizeSavedPeriods(preferences: UserProjectPreferences): SavedUsagePeriod[] {
+function sanitizeSavedPeriods(preferences: UserClinicPreferences): SavedUsagePeriod[] {
 	if (!Array.isArray(preferences.savedUsagePeriods)) {
 		return [];
 	}
@@ -128,7 +128,7 @@ function sanitizeSavedPeriods(preferences: UserProjectPreferences): SavedUsagePe
 }
 
 function isValidPeriodSelection(
-	selection: NonNullable<UserProjectPreferences['usagePeriod']>,
+	selection: NonNullable<UserClinicPreferences['usagePeriod']>,
 	savedPeriods: SavedUsagePeriod[],
 ): boolean {
 	return selection.mode !== 'saved' || savedPeriods.some(({ id }) => id === selection.savedPeriodId);

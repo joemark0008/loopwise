@@ -1,11 +1,11 @@
 import { isSkillGranted } from '@loopwise/shared';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 
-import { fullProjectContextAccess } from '../agent/services/user-group-context-access.service.js';
-import { ProjectAccess } from '../common/decorators/access.decorator.js';
-import { CurrentProject } from '../common/decorators/current.decorator.js';
-import type { Project } from '../generated/prisma/client.js';
-import { ProjectContextAdmin } from './context-admin.decorator.js';
+import { fullClinicContextAccess } from '../agent/services/user-group-context-access.service.js';
+import { ClinicAccess } from '../common/decorators/access.decorator.js';
+import { CurrentClinic } from '../common/decorators/current.decorator.js';
+import type { Clinic } from '../generated/prisma/client.js';
+import { ClinicContextAdmin } from './context-admin.decorator.js';
 import { CreateSkillInput, DeleteSkillInput, UpdateSkillInput } from './dto/skill.input.js';
 import {
 	CreatedSkill,
@@ -29,55 +29,55 @@ export class SkillsResolver {
 		private readonly authoring: SkillAuthoringService,
 	) {}
 
-	@ProjectAccess()
-	@Query(() => [Skill], { description: 'The project skills the signed-in user may use (the `/` picker).' })
-	async skills(@CurrentProject() project: Project): Promise<Skill[]> {
-		await this.skillService.initializeSkills(project.id);
-		const { skillsAccess } = fullProjectContextAccess();
-		return this.skillService.getSkills(project.id).filter((skill) => isSkillGranted(skillsAccess, skill.name));
+	@ClinicAccess()
+	@Query(() => [Skill], { description: 'The clinic skills the signed-in user may use (the `/` picker).' })
+	async skills(@CurrentClinic() clinic: Clinic): Promise<Skill[]> {
+		await this.skillService.initializeSkills(clinic.id);
+		const { skillsAccess } = fullClinicContextAccess();
+		return this.skillService.getSkills(clinic.id).filter((skill) => isSkillGranted(skillsAccess, skill.name));
 	}
 
-	@ProjectContextAdmin()
-	@Query(() => [Skill], { description: 'Every project skill, for the admin settings.' })
-	async skillCatalog(@CurrentProject() project: Project): Promise<Skill[]> {
-		await this.skillService.initializeSkills(project.id);
-		return this.skillService.getSkills(project.id);
+	@ClinicContextAdmin()
+	@Query(() => [Skill], { description: 'Every clinic skill, for the admin settings.' })
+	async skillCatalog(@CurrentClinic() clinic: Clinic): Promise<Skill[]> {
+		await this.skillService.initializeSkills(clinic.id);
+		return this.skillService.getSkills(clinic.id);
 	}
 
-	@ProjectContextAdmin()
+	@ClinicContextAdmin()
 	@Query(() => [SkillLoadError])
-	async skillLoadErrors(@CurrentProject() project: Project): Promise<SkillLoadError[]> {
-		await this.skillService.initializeSkills(project.id);
-		return this.skillService.getSkillLoadErrors(project.id);
+	async skillLoadErrors(@CurrentClinic() clinic: Clinic): Promise<SkillLoadError[]> {
+		await this.skillService.initializeSkills(clinic.id);
+		return this.skillService.getSkillLoadErrors(clinic.id);
 	}
 
-	@ProjectContextAdmin()
+	@ClinicContextAdmin()
 	@Query(() => SkillSaveStatus)
-	skillSaveStatus(@CurrentProject() project: Project): SkillSaveStatus {
-		return this.authoring.getSaveStatus(project);
+	skillSaveStatus(@CurrentClinic() clinic: Clinic): SkillSaveStatus {
+		return this.authoring.getSaveStatus(clinic);
 	}
 
-	@ProjectContextAdmin()
+	@ClinicContextAdmin()
 	@Query(() => SkillDetail)
-	skillDetail(@CurrentProject() project: Project, @Args('name') name: string): Promise<SkillDetail> {
-		return this.authoring.getDetail(project, name);
+	skillDetail(@CurrentClinic() clinic: Clinic, @Args('name') name: string): Promise<SkillDetail> {
+		return this.authoring.getDetail(clinic, name);
 	}
 
-	@ProjectContextAdmin()
+	@ClinicContextAdmin()
 	@Mutation(() => CreatedSkill)
-	createSkill(@CurrentProject() project: Project, @Args('input') input: CreateSkillInput): Promise<CreatedSkill> {
-		return this.authoring.create(project, input);
+	createSkill(@CurrentClinic() clinic: Clinic, @Args('input') input: CreateSkillInput): Promise<CreatedSkill> {
+		return this.authoring.create(clinic, input);
 	}
 
-	@ProjectContextAdmin()
+	@ClinicContextAdmin()
 	@Mutation(() => UpdatedSkill)
-	updateSkill(@CurrentProject() project: Project, @Args('input') input: UpdateSkillInput): Promise<UpdatedSkill> {
-		return this.authoring.update(project, input);
+	updateSkill(@CurrentClinic() clinic: Clinic, @Args('input') input: UpdateSkillInput): Promise<UpdatedSkill> {
+		return this.authoring.update(clinic, input);
 	}
 
-	@ProjectContextAdmin()
+	@ClinicContextAdmin()
 	@Mutation(() => Boolean)
-	deleteSkill(@CurrentProject() project: Project, @Args('input') input: DeleteSkillInput): Promise<boolean> {
-		return this.authoring.delete(project, input);
+	deleteSkill(@CurrentClinic() clinic: Clinic, @Args('input') input: DeleteSkillInput): Promise<boolean> {
+		return this.authoring.delete(clinic, input);
 	}
 }

@@ -7,7 +7,7 @@ export type SsoGroupProvider = (typeof SSO_GROUP_PROVIDERS)[number];
 export interface UserGroupSsoMappings {
 	version: 1;
 	providers: Record<SsoGroupProvider, string[]>;
-	defaultProjectRole?: UserRole | null;
+	defaultClinicRole?: UserRole | null;
 }
 
 export type StoredUserGroupSsoMappings = UserGroupSsoMappings | Record<string, unknown> | null;
@@ -18,7 +18,7 @@ export const EMPTY_USER_GROUP_SSO_MAPPINGS: UserGroupSsoMappings = {
 		oidc: [],
 		microsoft: [],
 	},
-	defaultProjectRole: null,
+	defaultClinicRole: null,
 };
 
 export function normalizeUserGroupSsoMappings(value: unknown): UserGroupSsoMappings {
@@ -31,7 +31,7 @@ export function normalizeUserGroupSsoMappings(value: unknown): UserGroupSsoMappi
 			oidc: normalizeSsoGroupIdentifiers('oidc', providers?.oidc),
 			microsoft: normalizeSsoGroupIdentifiers('microsoft', providers?.microsoft),
 		},
-		defaultProjectRole: normalizeDefaultProjectRole(parsed),
+		defaultClinicRole: normalizeDefaultClinicRole(parsed),
 	};
 }
 
@@ -41,7 +41,7 @@ export function parseStoredUserGroupSsoMappings(value: unknown): UserGroupSsoMap
 
 export function serializeUserGroupSsoMappings(value: unknown): UserGroupSsoMappings {
 	const normalized = normalizeUserGroupSsoMappings(value);
-	return normalized.defaultProjectRole
+	return normalized.defaultClinicRole
 		? normalized
 		: {
 				version: normalized.version,
@@ -97,11 +97,11 @@ function getProviders(value: unknown): Record<string, unknown> | null {
 	return record;
 }
 
-function normalizeDefaultProjectRole(value: unknown): UserRole | null {
+function normalizeDefaultClinicRole(value: unknown): UserRole | null {
 	if (!value || typeof value !== 'object' || Array.isArray(value)) {
 		return null;
 	}
 
-	const role = (value as Record<string, unknown>).defaultProjectRole;
+	const role = (value as Record<string, unknown>).defaultClinicRole;
 	return typeof role === 'string' && (USER_ROLES as readonly string[]).includes(role) ? (role as UserRole) : null;
 }

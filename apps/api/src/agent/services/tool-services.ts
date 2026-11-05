@@ -1,6 +1,6 @@
 import type { AgentToolServices } from '../types/tools.js';
 
-/** The services that hold clinical and project data; tools get read methods of them only. */
+/** The services that hold clinical and clinic data; tools get read methods of them only. */
 type ReadSources = {
 	patients: AgentToolServices['patients'];
 	skills: AgentToolServices['skills'];

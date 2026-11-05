@@ -5,8 +5,8 @@ import { z } from 'zod/v4';
 
 import { getCachedBoundary, setCachedBoundary } from '../agent/utils/map-boundary-cache.js';
 import { parseAndValidateGeoJson, safeFetch } from '../agent/utils/safe-fetch.js';
+import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
-import { ProjectRepository } from '../projects/project.repository.js';
 
 const boundaryKeySchema = z
 	.string()
@@ -46,19 +46,19 @@ export const deleteMapBoundarySchema = z.object({ key: z.string().trim().min(1) 
 
 /**
  * Port of upstream `routes/map-boundaries.ts` (GeoJSON served to the map views) and the map-boundary procedures of
- * the tRPC `project` router (Settings → Display → custom boundary sets on `project.map_settings`).
+ * the tRPC `clinic` router (Settings → Display → custom boundary sets on `project.map_settings`).
  */
 @Injectable()
 export class MapBoundariesService {
-	constructor(private readonly projects: ProjectRepository) {}
+	constructor(private readonly clinics: ClinicRepository) {}
 
-	/** `GET /api/map-boundaries/:projectId/:key`: a built-in or custom boundary set of a project the user is in. */
-	async getProjectBoundary(projectId: string, key: string, userId: string): Promise<FeatureCollection> {
-		const userRole = await this.projects.getUserRoleInProject(projectId, userId);
+	/** `GET /api/map-boundaries/:clinicId/:key`: a built-in or custom boundary set of a clinic the user is in. */
+	async getClinicBoundary(clinicId: string, key: string, userId: string): Promise<FeatureCollection> {
+		const userRole = await this.clinics.getUserRoleInClinic(clinicId, userId);
 		if (!userRole) {
-			throw new HandlerError('FORBIDDEN', 'You do not have access to this project.');
+			throw new HandlerError('FORBIDDEN', 'You do not have access to this clinic.');
 		}
-		const customSets = await this.projects.getCustomBoundaries(projectId);
+		const customSets = await this.clinics.getCustomBoundaries(clinicId);
 		const resolved = resolveBoundary(key, customSets);
 		if (!resolved) {
 			throw new HandlerError('NOT_FOUND', `Boundary set "${key}" not found.`);
@@ -74,8 +74,8 @@ export class MapBoundariesService {
 		return this.fetchBoundary(url);
 	}
 
-	getMapBoundaries(projectId: string): Promise<CustomBoundarySet[]> {
-		return this.projects.getCustomBoundaries(projectId);
+	getMapBoundaries(clinicId: string): Promise<CustomBoundarySet[]> {
+		return this.clinics.getCustomBoundaries(clinicId);
 	}
 
 	async validateMapBoundaryUrl(rawInput: unknown) {
@@ -91,10 +91,10 @@ export class MapBoundariesService {
 		}
 	}
 
-	async addMapBoundary(projectId: string, rawInput: unknown): Promise<CustomBoundarySet[]> {
+	async addMapBoundary(clinicId: string, rawInput: unknown): Promise<CustomBoundarySet[]> {
 		const input = parse(addMapBoundarySchema, rawInput);
 		const featureCount = await validateBoundarySource(input.url);
-		return this.projects.addCustomBoundary(projectId, {
+		return this.clinics.addCustomBoundary(clinicId, {
 			key: input.key,
 			label: input.label,
 			url: input.url,
@@ -104,7 +104,7 @@ export class MapBoundariesService {
 		});
 	}
 
-	async updateMapBoundary(projectId: string, rawInput: unknown): Promise<CustomBoundarySet[]> {
+	async updateMapBoundary(clinicId: string, rawInput: unknown): Promise<CustomBoundarySet[]> {
 		const input = parse(updateMapBoundarySchema, rawInput);
 		const patch: Partial<CustomBoundarySet> = {};
 		if (input.newKey) {
@@ -123,12 +123,12 @@ export class MapBoundariesService {
 			patch.url = input.url;
 			patch.featureCount = await validateBoundarySource(input.url);
 		}
-		return this.projects.updateCustomBoundary(projectId, input.key, patch);
+		return this.clinics.updateCustomBoundary(clinicId, input.key, patch);
 	}
 
-	deleteMapBoundary(projectId: string, rawInput: unknown): Promise<CustomBoundarySet[]> {
+	deleteMapBoundary(clinicId: string, rawInput: unknown): Promise<CustomBoundarySet[]> {
 		const input = parse(deleteMapBoundarySchema, rawInput);
-		return this.projects.deleteCustomBoundary(projectId, input.key);
+		return this.clinics.deleteCustomBoundary(clinicId, input.key);
 	}
 
 	private async fetchBoundary(url: string): Promise<FeatureCollection> {

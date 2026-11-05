@@ -1,22 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EnvValidationError, parseEnv } from '../../config/env.js';
+import type { ClinicLlmConfigRepository } from './clinic-llm-config.repository.js';
 import { getEnvProviders, hasEnvApiKey, isProviderDisabled, LlmService } from './llm.service.js';
-import type { ProjectLlmConfigRepository } from './project-llm-config.repository.js';
 
 /**
  * Ports of upstream `tests/disabled-providers.test.ts`, `tests/annotation-model.test.ts` and
- * `tests/project-available-models.test.ts` (the parts covering `utils/llm.ts`). Upstream's query modules
- * are replaced by a mocked `ProjectLlmConfigRepository`. Loopwise drops the managed `loopwise` provider (billing)
+ * `tests/clinic-available-models.test.ts` (the parts covering `utils/llm.ts`). Upstream's query modules
+ * are replaced by a mocked `ClinicLlmConfigRepository`. Loopwise drops the managed `loopwise` provider (billing)
  * and the `llm` block of `loopwise_config.yaml`, so the cases about those are not ported.
  */
 const mocks = vi.hoisted(() => ({
-	getProjectLlmConfigs: vi.fn(),
-	getProjectLlmConfigByProvider: vi.fn(),
+	getClinicLlmConfigs: vi.fn(),
+	getClinicLlmConfigByProvider: vi.fn(),
 	getDefaultModelSettings: vi.fn(),
 }));
 
-const llm = new LlmService(mocks as unknown as ProjectLlmConfigRepository);
+const llm = new LlmService(mocks as unknown as ClinicLlmConfigRepository);
 
 const BASE_ENV = { DATABASE_URL: 'postgresql://localhost/loopwise' };
 
@@ -30,8 +30,8 @@ describe('DISABLED_PROVIDERS', () => {
 	beforeEach(() => {
 		originalEnv = { ...process.env };
 		vi.clearAllMocks();
-		mocks.getProjectLlmConfigByProvider.mockResolvedValue(null);
-		mocks.getProjectLlmConfigs.mockResolvedValue([]);
+		mocks.getClinicLlmConfigByProvider.mockResolvedValue(null);
+		mocks.getClinicLlmConfigs.mockResolvedValue([]);
 	});
 
 	afterEach(() => {
@@ -92,24 +92,24 @@ describe('DISABLED_PROVIDERS', () => {
 	});
 
 	it('overrides credentials configured in the database', async () => {
-		mocks.getProjectLlmConfigByProvider.mockResolvedValue({
+		mocks.getClinicLlmConfigByProvider.mockResolvedValue({
 			apiKey: 'db-key',
 			baseUrl: null,
 			credentials: null,
 			modelSettings: {},
 		});
 		setDisabledProviders(undefined);
-		expect(await llm.resolveProviderSettings('project-1', 'bedrock')).not.toBeNull();
+		expect(await llm.resolveProviderSettings('clinic-1', 'bedrock')).not.toBeNull();
 
 		setDisabledProviders('bedrock');
-		expect(await llm.resolveProviderSettings('project-1', 'bedrock')).toBeNull();
+		expect(await llm.resolveProviderSettings('clinic-1', 'bedrock')).toBeNull();
 	});
 });
 
 describe('resolveAnnotationModelId', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mocks.getProjectLlmConfigByProvider.mockResolvedValue(null);
+		mocks.getClinicLlmConfigByProvider.mockResolvedValue(null);
 	});
 
 	afterEach(() => {
@@ -117,13 +117,13 @@ describe('resolveAnnotationModelId', () => {
 	});
 
 	it('uses the active model for a provider with a custom base URL', async () => {
-		mocks.getProjectLlmConfigByProvider.mockResolvedValue({
+		mocks.getClinicLlmConfigByProvider.mockResolvedValue({
 			baseUrl: 'http://litellm.test/v1',
 			enabledModels: ['gpt-4.1-mini', 'gpt-5.5'],
 		});
 
 		const modelId = await llm.resolveAnnotationModelId(
-			'project-1',
+			'clinic-1',
 			{ provider: 'openai', modelId: 'gpt-5.5' },
 			'gpt-4.1-mini',
 		);
@@ -132,13 +132,13 @@ describe('resolveAnnotationModelId', () => {
 	});
 
 	it('keeps the configured annotation model for a provider without a custom base URL', async () => {
-		mocks.getProjectLlmConfigByProvider.mockResolvedValue({
+		mocks.getClinicLlmConfigByProvider.mockResolvedValue({
 			baseUrl: null,
 			enabledModels: ['gpt-4.1-mini', 'gpt-5.5'],
 		});
 
 		const modelId = await llm.resolveAnnotationModelId(
-			'project-1',
+			'clinic-1',
 			{ provider: 'openai', modelId: 'gpt-5.5' },
 			'gpt-4.1-mini',
 		);
@@ -150,7 +150,7 @@ describe('resolveAnnotationModelId', () => {
 		vi.stubEnv('OPENAI_BASE_URL', 'http://litellm.test/v1');
 
 		const modelId = await llm.resolveAnnotationModelId(
-			'project-1',
+			'clinic-1',
 			{ provider: 'openai', modelId: 'gpt-5.5' },
 			'gpt-4.1-mini',
 		);
@@ -159,5 +159,5 @@ describe('resolveAnnotationModelId', () => {
 	});
 });
 
-// Upstream's `getProjectAvailableModels` cases are not ported: the managed `loopwise` provider (credits, BYOK alongside
+// Upstream's `getClinicAvailableModels` cases are not ported: the managed `loopwise` provider (credits, BYOK alongside
 // curated models) is dropped, and loopwise does not read named openai-compatible endpoints from loopwise_config.yaml.

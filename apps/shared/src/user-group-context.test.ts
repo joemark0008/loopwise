@@ -246,7 +246,7 @@ describe('user group database context access', () => {
 	});
 });
 
-describe('user group docs and project file context access', () => {
+describe('user group docs and clinic file context access', () => {
 	it('serializes v6 with independent database, docs, files, and MCP policies', () => {
 		const stored = serializeUserGroupContextAccess({
 			databaseAccess: { mode: 'all', strict: false },
@@ -373,7 +373,7 @@ describe('user group docs and project file context access', () => {
 		});
 	});
 
-	it('keeps project files unrestricted for versions that predate them', () => {
+	it('keeps clinic files unrestricted for versions that predate them', () => {
 		expect(
 			parseStoredUserGroupContextAccess(
 				{ version: 4, databaseAccess: { mode: 'all', strict: false }, docsAccess: EMPTY_DOCS_CONTEXT_ACCESS },
@@ -388,7 +388,7 @@ describe('user group docs and project file context access', () => {
 		});
 	});
 
-	it('fails malformed v4 sections closed independently while keeping project files unrestricted', () => {
+	it('fails malformed v4 sections closed independently while keeping clinic files unrestricted', () => {
 		expect(
 			parseStoredUserGroupContextAccess(
 				{

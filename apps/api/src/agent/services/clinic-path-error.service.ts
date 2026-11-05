@@ -2,28 +2,28 @@ import fs from 'fs';
 import path from 'path';
 
 import type { ToolContext } from '../types/tools.js';
-import { isMissingPathError, resolveCanonicalProjectPath } from '../utils/tools.js';
-import { isProjectContextPathAllowed, type ProjectPathKind } from './project-context-path-access.service.js';
+import { isMissingPathError, resolveCanonicalClinicPath } from '../utils/tools.js';
+import { type ClinicPathKind, isClinicContextPathAllowed } from './clinic-context-path-access.service.js';
 
 const PATH_FORMAT_HINT =
-	"Paths are relative to the project root, e.g. '/RULES.md', '/docs/<folder>/<file>.md' or " +
+	"Paths are relative to the clinic root, e.g. '/RULES.md', '/docs/<folder>/<file>.md' or " +
 	"'/databases/type=<type>/database=<database>/schema=<schema>/table=<table>/columns.md'.";
 
 const DATABASE_LAYOUT_KEYS = ['type', 'database', 'schema', 'table'];
 
 type PathAccessContext = Pick<
 	ToolContext,
-	'projectFolder' | 'warehouseTableAccess' | 'docsContextAccess' | 'filesContextAccess' | 'mcpAccess' | 'skillsAccess'
+	'clinicFolder' | 'warehouseTableAccess' | 'docsContextAccess' | 'filesContextAccess' | 'mcpAccess' | 'skillsAccess'
 >;
 
 /**
- * Rewrites filesystem errors raised while accessing a project path so the model only ever sees
+ * Rewrites filesystem errors raised while accessing a clinic path so the model only ever sees
  * the virtual path it asked for, never the host filesystem path, and gets a hint about the layout.
  */
-export function toProjectPathError(
+export function toClinicPathError(
 	error: unknown,
 	virtualPath: string,
-	kind: ProjectPathKind,
+	kind: ClinicPathKind,
 	context: PathAccessContext,
 ): unknown {
 	if (isMissingPathError(error)) {
@@ -35,20 +35,20 @@ export function toProjectPathError(
 	return error;
 }
 
-function buildMissingPathMessage(virtualPath: string, kind: ProjectPathKind, context: PathAccessContext): string {
+function buildMissingPathMessage(virtualPath: string, kind: ClinicPathKind, context: PathAccessContext): string {
 	const suggestion = suggestExistingPath(virtualPath, kind, context);
 	const suggestionText = suggestion ? ` Did you mean '${suggestion}'?` : '';
-	return `Not found: '${virtualPath}' does not exist in the project. ${PATH_FORMAT_HINT}${suggestionText}`;
+	return `Not found: '${virtualPath}' does not exist in the clinic. ${PATH_FORMAT_HINT}${suggestionText}`;
 }
 
-function suggestExistingPath(virtualPath: string, kind: ProjectPathKind, context: PathAccessContext): string | null {
-	const candidates = [stripLeadingProjectSegment(virtualPath), applyDatabaseLayoutPrefixes(virtualPath)];
+function suggestExistingPath(virtualPath: string, kind: ClinicPathKind, context: PathAccessContext): string | null {
+	const candidates = [stripLeadingClinicSegment(virtualPath), applyDatabaseLayoutPrefixes(virtualPath)];
 	return candidates.find((candidate) => candidate !== null && existsAndAllowed(candidate, kind, context)) ?? null;
 }
 
-function stripLeadingProjectSegment(virtualPath: string): string | null {
+function stripLeadingClinicSegment(virtualPath: string): string | null {
 	const segments = toSegments(virtualPath);
-	if (segments[0] !== 'project' || segments.length < 2) {
+	if (!['clinic', 'project'].includes(segments[0]) || segments.length < 2) {
 		return null;
 	}
 	return `/${segments.slice(1).join('/')}`;
@@ -70,12 +70,12 @@ function applyDatabaseLayoutPrefixes(virtualPath: string): string | null {
 	return candidate === `/${segments.join('/')}` ? null : candidate;
 }
 
-function existsAndAllowed(virtualPath: string, kind: ProjectPathKind, context: PathAccessContext): boolean {
+function existsAndAllowed(virtualPath: string, kind: ClinicPathKind, context: PathAccessContext): boolean {
 	try {
-		const canonical = resolveCanonicalProjectPath(virtualPath, context.projectFolder);
+		const canonical = resolveCanonicalClinicPath(virtualPath, context.clinicFolder);
 		return (
 			fs.existsSync(canonical.realPath) &&
-			isProjectContextPathAllowed(context, virtualPath, canonical.virtualPath, kind)
+			isClinicContextPathAllowed(context, virtualPath, canonical.virtualPath, kind)
 		);
 	} catch {
 		return false;

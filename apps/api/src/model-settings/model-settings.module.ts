@@ -4,7 +4,7 @@ import { AgentModule } from '../agent/agent.module.js';
 import { ModelSettingsResolver } from './model-settings.resolver.js';
 import { ModelSettingsService } from './model-settings.service.js';
 
-/** Project LLM providers, default models and agent settings (Settings → Models, Settings → Agent). */
+/** Clinic LLM providers, default models and agent settings (Settings → Models, Settings → Agent). */
 @Module({
 	imports: [AgentModule],
 	providers: [ModelSettingsService, ModelSettingsResolver],

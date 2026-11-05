@@ -139,7 +139,7 @@ describe('agent tool registry', () => {
 			},
 			touched,
 		);
-		const context = { userId: 'u', projectId: 'p', patientId: 'p1', services } as unknown as ToolContext;
+		const context = { userId: 'u', clinicId: 'p', patientId: 'p1', services } as unknown as ToolContext;
 		const inputs: Record<string, unknown> = {
 			propose_skill: { name: 'new-skill', description: 'd', body: 'b' },
 			propose_patient_registration: {

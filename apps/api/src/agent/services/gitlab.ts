@@ -1,4 +1,4 @@
-/** The two helpers of upstream `services/gitlab.ts` the project config reader uses (GitLab itself is Phase 7). */
+/** The two helpers of upstream `services/gitlab.ts` the clinic config reader uses (GitLab itself is Phase 7). */
 export function gitlabBaseUrl(): string {
 	return process.env.GITLAB_BASE_URL?.replace(/\/$/, '') || 'https://gitlab.com';
 }

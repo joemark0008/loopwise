@@ -6,14 +6,14 @@ import { Logger } from '@nestjs/common';
  */
 export interface LogOptions {
 	source: string;
-	projectId?: string;
+	clinicId?: string;
 	context?: Record<string, unknown>;
 }
 
 const nestLogger = new Logger('Agent');
 
 const format = (message: string, opts: LogOptions) =>
-	`[${opts.source}]${opts.projectId ? ` [project ${opts.projectId}]` : ''} ${message}${
+	`[${opts.source}]${opts.clinicId ? ` [clinic ${opts.clinicId}]` : ''} ${message}${
 		opts.context ? ` ${JSON.stringify(opts.context)}` : ''
 	}`;
 

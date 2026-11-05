@@ -90,7 +90,7 @@ describe('compactionService.compactConversationIfNeeded', () => {
 				{ role: 'user', content: 'Current turn' },
 			];
 			const result = await compactionService.compactConversationIfNeeded({
-				chat: { id: 'chat-gpt6', projectId: 'project-1', userId: 'user-1' },
+				chat: { id: 'chat-gpt6', clinicId: 'clinic-1', userId: 'user-1' },
 				provider: 'bedrock',
 				modelId,
 				messages,
@@ -124,7 +124,7 @@ describe('compactionService.compactConversationIfNeeded', () => {
 		];
 
 		const result = await compactionService.compactConversationIfNeeded({
-			chat: { id: 'chat-1', projectId: 'project-1', userId: 'user-1' },
+			chat: { id: 'chat-1', clinicId: 'clinic-1', userId: 'user-1' },
 			provider: 'openai',
 			modelId: 'gpt-5.5',
 			messages,
@@ -157,7 +157,7 @@ describe('compactionService.compactConversationIfNeeded', () => {
 		];
 
 		const result = await compactionService.compactConversationIfNeeded({
-			chat: { id: 'chat-2', projectId: 'project-2', userId: 'user-2' },
+			chat: { id: 'chat-2', clinicId: 'clinic-2', userId: 'user-2' },
 			provider: 'openai',
 			modelId: 'gpt-5.5',
 			messages,
@@ -171,7 +171,7 @@ describe('compactionService.compactConversationIfNeeded', () => {
 		expect(onCompactionStarted).toHaveBeenCalledOnce();
 		expect(onCompactionFinished).toHaveBeenCalledOnce();
 		expect(mocks.resolveAnnotationModelIdMock).toHaveBeenCalledWith(
-			'project-2',
+			'clinic-2',
 			{ provider: 'openai', modelId: 'gpt-5.5' },
 			'gpt-4.1-mini',
 		);
@@ -193,7 +193,7 @@ describe('compactionService.compactConversationIfNeeded', () => {
 		expect(messages[2]).toEqual({ role: 'user', content: 'Current turn' });
 		expect(mocks.scheduleSaveMock).toHaveBeenCalledExactlyOnceWith({
 			type: 'compaction',
-			projectId: 'project-2',
+			clinicId: 'clinic-2',
 			userId: 'user-2',
 			chatId: 'chat-2',
 			llmProvider: 'openai',
@@ -221,7 +221,7 @@ describe('compactionService.compactConversationIfNeeded', () => {
 		];
 
 		await compactionService.compactConversationIfNeeded({
-			chat: { id: 'chat-3', projectId: 'project-3', userId: 'user-3' },
+			chat: { id: 'chat-3', clinicId: 'clinic-3', userId: 'user-3' },
 			provider: 'openaiCompatible/litellm',
 			modelId: 'gemini-3.1-pro-preview',
 			messages,
@@ -365,7 +365,7 @@ describe('RunCompaction', () => {
 	];
 
 	const stepOptions = (messages: ModelMessage[]) => ({
-		chat: { id: 'chat-3', projectId: 'project-3', userId: 'user-3' },
+		chat: { id: 'chat-3', clinicId: 'clinic-3', userId: 'user-3' },
 		provider: 'openai' as const,
 		modelId: 'gpt-5.5',
 		messages,

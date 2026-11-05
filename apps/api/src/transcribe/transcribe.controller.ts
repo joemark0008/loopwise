@@ -1,10 +1,10 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { z } from 'zod/v4';
 
-import { ProjectAccess } from '../common/decorators/access.decorator.js';
-import { CurrentProject } from '../common/decorators/current.decorator.js';
+import { ClinicAccess } from '../common/decorators/access.decorator.js';
+import { CurrentClinic } from '../common/decorators/current.decorator.js';
 import { HandlerError } from '../common/errors/handler-error.js';
-import type { Project } from '../generated/prisma/client.js';
+import type { Clinic } from '../generated/prisma/client.js';
 import { TranscribeService } from './transcribe.service.js';
 
 const transcribeBodySchema = z.object({
@@ -21,17 +21,17 @@ const transcribeBodySchema = z.object({
 export class TranscribeController {
 	constructor(private readonly transcribeService: TranscribeService) {}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Post()
 	@HttpCode(200)
-	async transcribe(@CurrentProject() project: Project, @Body() rawBody: unknown): Promise<{ text: string }> {
+	async transcribe(@CurrentClinic() clinic: Clinic, @Body() rawBody: unknown): Promise<{ text: string }> {
 		const parsed = transcribeBodySchema.safeParse(rawBody);
 		if (!parsed.success) {
 			throw new HandlerError('BAD_REQUEST', parsed.error.issues.map((issue) => issue.message).join('; '));
 		}
 		const { audio, provider, modelId } = parsed.data;
 		try {
-			return { text: await this.transcribeService.transcribeAudio(project.id, audio, { provider, modelId }) };
+			return { text: await this.transcribeService.transcribeAudio(clinic.id, audio, { provider, modelId }) };
 		} catch (error) {
 			if (error instanceof HandlerError) {
 				throw error;

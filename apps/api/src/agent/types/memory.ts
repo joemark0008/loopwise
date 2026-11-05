@@ -35,7 +35,7 @@ export interface NewMemoryRecord {
 
 export interface MemoryExtractionOptions {
 	userId: string;
-	projectId: string;
+	clinicId: string;
 	chatId: string;
 	messages: UIMessage[];
 	provider: LlmProvider;

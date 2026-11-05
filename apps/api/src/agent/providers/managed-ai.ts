@@ -4,7 +4,7 @@
  */
 export interface ManagedAiUsageContext {
 	userId: string;
-	projectId: string;
+	clinicId: string;
 	chatId?: string;
 	messageId?: string;
 	runId: string;

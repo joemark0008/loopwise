@@ -9,7 +9,7 @@ interface AgentStreamDisconnectContext {
 	response: Pick<Response, 'once' | 'writableFinished'>;
 	agent: Pick<AgentManager, 'isStopped' | 'waitUntilFinished'>;
 	userId: string;
-	projectId: string | undefined;
+	clinicId: string | undefined;
 	chatId: string;
 	modelId: string;
 }
@@ -57,7 +57,7 @@ async function logUnlessStoppedByUser(context: AgentStreamDisconnectContext, tim
 	const { request } = context;
 	logger.error('Agent stream connection closed before the response was complete', {
 		source: 'agent',
-		projectId: context.projectId,
+		clinicId: context.clinicId,
 		context: {
 			chatId: context.chatId,
 			userId: context.userId,

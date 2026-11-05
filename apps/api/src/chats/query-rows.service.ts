@@ -33,8 +33,8 @@ export class QueryRowsService {
 	) {}
 
 	async getQueryRowsForUser(request: QueryRowsRequest, userId: string): Promise<QueryRowsPage> {
-		const projectId = await this.chats.getActiveChatProjectId(request.chatId);
-		if (!projectId || !(await this.chatAccess.canUserViewChatContent(request.chatId, projectId, userId))) {
+		const clinicId = await this.chats.getActiveChatClinicId(request.chatId);
+		if (!clinicId || !(await this.chatAccess.canUserViewChatContent(request.chatId, clinicId, userId))) {
 			throw new HandlerError('NOT_FOUND', `Chat with id ${request.chatId} not found.`);
 		}
 		const page = await this.getQueryRowsPage(request);

@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	compileRowSecurityConditions,
-	filterProjectRowSecurityByDatabaseContext,
+	filterClinicRowSecurityByDatabaseContext,
 	filterUserGroupRowPoliciesByDatabaseContext,
-	parseStoredProjectRowSecurity,
+	parseStoredClinicRowSecurity,
 	parseStoredUserGroupRowPolicies,
 	resolveWarehouseRowSecurity,
 	serializeUserGroupRowPolicies,
@@ -81,7 +81,7 @@ describe('user group row security', () => {
 		const orders = { ...table, constraintColumns: ['tenant_id'] };
 
 		expect(
-			filterProjectRowSecurityByDatabaseContext(
+			filterClinicRowSecurityByDatabaseContext(
 				{ version: 1, tables: [orders, customers] },
 				{ mode: 'restricted', strict: true, grants: [], patterns: ['main.cust*'] },
 			),
@@ -90,7 +90,7 @@ describe('user group row security', () => {
 			tables: [{ ...customers, constraintColumns: ['region', 'tenant_id'] }],
 		});
 		expect(
-			filterProjectRowSecurityByDatabaseContext(
+			filterClinicRowSecurityByDatabaseContext(
 				{ version: 1, tables: [orders] },
 				{ mode: 'restricted', strict: true, grants: [], patterns: ['private.*'] },
 			),
@@ -99,7 +99,7 @@ describe('user group row security', () => {
 
 	it('fails closed for malformed persisted security data', () => {
 		expect(() =>
-			parseStoredProjectRowSecurity({ version: 1, tables: [{ ...table, constraintColumns: [] }] }),
+			parseStoredClinicRowSecurity({ version: 1, tables: [{ ...table, constraintColumns: [] }] }),
 		).toThrow();
 		expect(() =>
 			parseStoredUserGroupRowPolicies({ version: 1, policies: [{ ...table, access: 'predicate' }] }),
@@ -486,17 +486,17 @@ describe('user group row security', () => {
 			mode: 'sql' as const,
 			predicate: `WHERE tenant_id = '${'x'.repeat(9_870)}'`,
 		};
-		const project = { version: 1 as const, tables: [{ ...table, constraintColumns: ['tenant_id'] }] };
+		const clinic = { version: 1 as const, tables: [{ ...table, constraintColumns: ['tenant_id'] }] };
 
 		expect(() =>
 			resolveWarehouseRowSecurity(
-				project,
+				clinic,
 				Array.from({ length: 101 }, () => ({ version: 1 as const, policies: [policy] })),
 			),
 		).not.toThrow();
 		expect(() =>
 			resolveWarehouseRowSecurity(
-				project,
+				clinic,
 				Array.from({ length: 102 }, () => ({ version: 1 as const, policies: [policy] })),
 			),
 		).toThrow('Combined row security predicate is too long.');

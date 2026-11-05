@@ -1,6 +1,6 @@
 /**
  * Internal skills are playbooks loopwise ships with itself, rather than ones a user writes in
- * their project. They exist to teach the loop how to handle something the tools alone do
+ * their clinic. They exist to teach the loop how to handle something the tools alone do
  * not explain — a file format with traps in it, typically.
  *
  * They are deliberately invisible to users: they never appear in the `/` picker, because

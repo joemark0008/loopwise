@@ -17,20 +17,20 @@ interface DiscoveredChartPlugin {
 	source: string;
 }
 
-export function listChartPlugins(projectFolder: string): ChartPluginManifestEntry[] {
-	return discoverChartPlugins(projectFolder).map((plugin) => plugin.entry);
+export function listChartPlugins(clinicFolder: string): ChartPluginManifestEntry[] {
+	return discoverChartPlugins(clinicFolder).map((plugin) => plugin.entry);
 }
 
-export function readChartPlugin(projectFolder: string, type: string): DiscoveredChartPlugin | null {
-	return discoverChartPlugins(projectFolder).find((plugin) => plugin.entry.type === type) ?? null;
+export function readChartPlugin(clinicFolder: string, type: string): DiscoveredChartPlugin | null {
+	return discoverChartPlugins(clinicFolder).find((plugin) => plugin.entry.type === type) ?? null;
 }
 
-export function hasChartPlugin(projectFolder: string, type: string): boolean {
-	return readChartPlugin(projectFolder, type) !== null;
+export function hasChartPlugin(clinicFolder: string, type: string): boolean {
+	return readChartPlugin(clinicFolder, type) !== null;
 }
 
-function discoverChartPlugins(projectFolder: string): DiscoveredChartPlugin[] {
-	const chartsFolder = resolveChartsFolder(projectFolder);
+function discoverChartPlugins(clinicFolder: string): DiscoveredChartPlugin[] {
+	const chartsFolder = resolveChartsFolder(clinicFolder);
 	if (!chartsFolder) {
 		return [];
 	}
@@ -83,10 +83,10 @@ function discoverChartPlugins(projectFolder: string): DiscoveredChartPlugin[] {
 		});
 }
 
-function resolveChartsFolder(projectFolder: string): string | null {
+function resolveChartsFolder(clinicFolder: string): string | null {
 	try {
-		const projectRoot = realpathSync(projectFolder);
-		const candidate = join(projectRoot, 'agent', 'charts');
+		const clinicRoot = realpathSync(clinicFolder);
+		const candidate = join(clinicRoot, 'agent', 'charts');
 		if (!existsSync(candidate)) {
 			return null;
 		}
@@ -95,7 +95,7 @@ function resolveChartsFolder(projectFolder: string): string | null {
 			return null;
 		}
 		const chartsFolder = realpathSync(candidate);
-		return isContainedBy(projectRoot, chartsFolder) ? chartsFolder : null;
+		return isContainedBy(clinicRoot, chartsFolder) ? chartsFolder : null;
 	} catch {
 		return null;
 	}

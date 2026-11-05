@@ -15,7 +15,7 @@ type SystemPromptProps = {
 	memories?: UserMemory[];
 	userRules?: string;
 	skills?: Skill[];
-	/** Project skills injected in full; they are left out of the regular skills listing. */
+	/** Clinic skills injected in full; they are left out of the regular skills listing. */
 	preloadedSkills?: PreloadedSkill[];
 	/** Defaults to every skill loopwise ships; only tests pass this. */
 	internalSkills?: InternalSkill[];
@@ -462,10 +462,10 @@ function excludePreloadedSkills(skills: Skill[], preloadedSkills: PreloadedSkill
 	return skills.filter((skill) => !preloadedNames.has(skill.name));
 }
 
-/** load_skill serves the project skill over a built-in one of the same name. */
-function excludeShadowedInternalSkills(internalSkills: InternalSkill[], projectSkills: Skill[]): InternalSkill[] {
-	const projectSkillNames = new Set(projectSkills.map((skill) => skill.name));
-	return internalSkills.filter((skill) => !projectSkillNames.has(skill.name));
+/** load_skill serves the clinic skill over a built-in one of the same name. */
+function excludeShadowedInternalSkills(internalSkills: InternalSkill[], clinicSkills: Skill[]): InternalSkill[] {
+	const clinicSkillNames = new Set(clinicSkills.map((skill) => skill.name));
+	return internalSkills.filter((skill) => !clinicSkillNames.has(skill.name));
 }
 
 function PreloadedSkillsBlock({ skills }: { skills: PreloadedSkill[] }) {
@@ -473,7 +473,7 @@ function PreloadedSkillsBlock({ skills }: { skills: PreloadedSkill[] }) {
 		<Block>
 			<Title level={2}>Preloaded Skills</Title>
 			<Span>
-				These project skills are already loaded below. Follow them whenever they are relevant. Very long skills
+				These clinic skills are already loaded below. Follow them whenever they are relevant. Very long skills
 				are truncated, so read a skill's file directly only when you need a part that is missing. Never call{' '}
 				<Bold>load_skill</Bold> for them.
 			</Span>
@@ -523,7 +523,7 @@ function CustomChartsBlock({ charts }: { charts: ChartPluginManifestEntry[] }) {
 		<Block>
 			<Title level={2}>Custom charts</Title>
 			<Span>
-				The project provides the custom chart types below. Use them through display_chart only when their
+				The clinic provides the custom chart types below. Use them through display_chart only when their
 				description fits the request. They render in interactive web chats only, so do not use them in stories
 				or exports.
 			</Span>

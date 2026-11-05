@@ -19,7 +19,7 @@ const MAX_QUERY_ROWS_PAGE_SIZE = 1000;
 
 @InputType()
 export class ChatListInput {
-	@Field({ defaultValue: 'none', description: 'star, date, project, ownership, sourcePlatform or none.' })
+	@Field({ defaultValue: 'none', description: 'star, date, clinic, ownership, sourcePlatform or none.' })
 	@IsOptional()
 	@IsIn(CHAT_GROUP_BY_OPTIONS)
 	groupBy: string;
@@ -116,9 +116,9 @@ export class CreateSharedChatInput {
 	@Field(() => ID)
 	chatId: string;
 
-	@Field({ defaultValue: 'project', description: 'project or specific.' })
-	@IsIn(['project', 'specific'])
-	visibility: 'project' | 'specific';
+	@Field({ defaultValue: 'clinic', description: 'clinic or specific.' })
+	@IsIn(['clinic', 'specific'])
+	visibility: 'clinic' | 'specific';
 
 	@Field(() => [String], { nullable: true })
 	@IsOptional()

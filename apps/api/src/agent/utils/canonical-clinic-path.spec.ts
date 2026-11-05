@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { resolveCanonicalProjectPath } from './tools.js';
+import { resolveCanonicalClinicPath } from './tools.js';
 
 const temporaryFolders: string[] = [];
 
@@ -13,29 +13,29 @@ afterEach(() => {
 	}
 });
 
-describe('canonical project paths', () => {
+describe('canonical clinic paths', () => {
 	it('resolves a symlinked existing ancestor before appending missing segments', () => {
 		const root = createTemporaryFolder();
-		const project = path.join(root, 'project');
-		const realDirectory = path.join(project, 'real');
+		const clinic = path.join(root, 'clinic');
+		const realDirectory = path.join(clinic, 'real');
 		fs.mkdirSync(realDirectory, { recursive: true });
-		fs.symlinkSync(realDirectory, path.join(project, 'alias'), directoryLinkType());
+		fs.symlinkSync(realDirectory, path.join(clinic, 'alias'), directoryLinkType());
 
-		expect(resolveCanonicalProjectPath('/alias/missing/report.md', project)).toEqual({
+		expect(resolveCanonicalClinicPath('/alias/missing/report.md', clinic)).toEqual({
 			realPath: path.join(fs.realpathSync.native(realDirectory), 'missing', 'report.md'),
 			virtualPath: '/real/missing/report.md',
 		});
 	});
 
-	it('rejects a missing target beneath a symlinked ancestor outside the project', () => {
+	it('rejects a missing target beneath a symlinked ancestor outside the clinic', () => {
 		const root = createTemporaryFolder();
-		const project = path.join(root, 'project');
+		const clinic = path.join(root, 'clinic');
 		const outside = path.join(root, 'outside');
-		fs.mkdirSync(project);
+		fs.mkdirSync(clinic);
 		fs.mkdirSync(outside);
-		fs.symlinkSync(outside, path.join(project, 'escape'), directoryLinkType());
+		fs.symlinkSync(outside, path.join(clinic, 'escape'), directoryLinkType());
 
-		expect(() => resolveCanonicalProjectPath('/escape/missing.md', project)).toThrow('outside the project folder');
+		expect(() => resolveCanonicalClinicPath('/escape/missing.md', clinic)).toThrow('outside the clinic folder');
 	});
 });
 

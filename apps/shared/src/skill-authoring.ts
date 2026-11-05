@@ -1,6 +1,6 @@
 import z from 'zod/v3';
 
-/** Project skills written from the app or drafted in chat: one Markdown file per skill in `agent/skills/`. */
+/** Clinic skills written from the app or drafted in chat: one Markdown file per skill in `agent/skills/`. */
 export const SKILL_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/;
 export const SKILL_DESCRIPTION_MAX_LENGTH = 1024;
 export const SKILL_BODY_MAX_LENGTH = 1_000_000;

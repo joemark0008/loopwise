@@ -5,16 +5,16 @@ import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-hos
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AuthService } from '../../auth/auth.service.js';
+import type { ClinicRepository } from '../../clinics/clinic.repository.js';
 import type { OrganizationRepository } from '../../organizations/organization.repository.js';
-import type { ProjectRepository } from '../../projects/project.repository.js';
-import { OrgAdmin, OrgMember, ProjectAccess, ProjectAdmin, ProjectNonViewer } from '../decorators/access.decorator.js';
+import { ClinicAccess, ClinicAdmin, ClinicNonViewer, OrgAdmin, OrgMember } from '../decorators/access.decorator.js';
 import { Public } from '../decorators/public.decorator.js';
 import type { LoopwiseRequest } from '../request.js';
 import { AccessService } from './access.service.js';
 import { AuthGuard } from './auth.guard.js';
 
 const USER = { id: 'user-1', email: 'user@example.com' };
-const PROJECT = { id: 'project-1', orgId: 'org-1', name: 'Project' };
+const CLINIC = { id: 'clinic-1', orgId: 'org-1', name: 'Clinic' };
 const ORGANIZATION = { id: 'org-1', name: 'Org' };
 
 class Handlers {
@@ -23,14 +23,14 @@ class Handlers {
 
 	protectedRoute() {}
 
-	@ProjectAccess()
-	projectRoute() {}
+	@ClinicAccess()
+	clinicRoute() {}
 
-	@ProjectNonViewer()
+	@ClinicNonViewer()
 	nonViewerRoute() {}
 
-	@ProjectAdmin()
-	projectAdminRoute() {}
+	@ClinicAdmin()
+	clinicAdminRoute() {}
 
 	@OrgMember()
 	orgMemberRoute() {}
@@ -46,8 +46,8 @@ type Route = Exclude<keyof Handlers, 'constructor'>;
 
 const state = {
 	signedIn: true,
-	projectRole: 'user' as UserRole | null,
-	hasProject: true,
+	clinicRole: 'user' as UserRole | null,
+	hasClinic: true,
 	orgRole: 'user' as string | null,
 };
 
@@ -55,10 +55,10 @@ const getSession = vi.fn(async () =>
 	state.signedIn ? { user: USER, session: { id: 'session-1', userId: USER.id } } : null,
 );
 
-const projects = {
-	getProjectByUserId: vi.fn(async () => (state.hasProject && state.projectRole ? PROJECT : null)),
-	getUserRoleInProject: vi.fn(async () => state.projectRole),
-} as unknown as ProjectRepository;
+const clinics = {
+	getClinicByUserId: vi.fn(async () => (state.hasClinic && state.clinicRole ? CLINIC : null)),
+	getUserRoleInClinic: vi.fn(async () => state.clinicRole),
+} as unknown as ClinicRepository;
 
 const organizations = {
 	getUserOrgMembership: vi.fn(async () =>
@@ -66,7 +66,7 @@ const organizations = {
 			? { orgId: ORGANIZATION.id, userId: USER.id, role: state.orgRole, organization: ORGANIZATION }
 			: null,
 	),
-	getUserOrgMembershipByProject: vi.fn(async () =>
+	getUserOrgMembershipByClinic: vi.fn(async () =>
 		state.orgRole
 			? { orgId: ORGANIZATION.id, userId: USER.id, role: state.orgRole, organization: ORGANIZATION }
 			: null,
@@ -76,7 +76,7 @@ const organizations = {
 const guard = new AuthGuard(
 	new Reflector(),
 	{ getSession } as unknown as AuthService,
-	new AccessService(projects, organizations),
+	new AccessService(clinics, organizations),
 );
 
 function contextFor(route: Route, headers: Record<string, string> = {}) {
@@ -92,7 +92,7 @@ async function run(route: Route, headers?: Record<string, string>) {
 }
 
 beforeEach(() => {
-	Object.assign(state, { signedIn: true, projectRole: 'user', hasProject: true, orgRole: 'user' });
+	Object.assign(state, { signedIn: true, clinicRole: 'user', hasClinic: true, orgRole: 'user' });
 	vi.clearAllMocks();
 });
 
@@ -121,43 +121,43 @@ describe('default (protected)', () => {
 	});
 });
 
-describe('@ProjectAccess()', () => {
-	it.each(['admin', 'user', 'viewer', 'context_admin'] as const)('allows a %s and sets the project', async (role) => {
-		state.projectRole = role;
-		const { result, req } = await run('projectRoute');
+describe('@ClinicAccess()', () => {
+	it.each(['admin', 'user', 'viewer', 'context_admin'] as const)('allows a %s and sets the clinic', async (role) => {
+		state.clinicRole = role;
+		const { result, req } = await run('clinicRoute');
 		expect(result).toBe(true);
-		expect(req.project).toEqual(PROJECT);
+		expect(req.clinic).toEqual(CLINIC);
 		expect(req.userRole).toBe(role);
 	});
 
-	it('passes the selected project header to the lookup', async () => {
-		await run('projectRoute', { 'x-loopwise-project-id': 'project-1' });
-		expect(projects.getProjectByUserId).toHaveBeenCalledWith(USER.id, 'project-1');
+	it('passes the selected clinic header to the lookup', async () => {
+		await run('clinicRoute', { 'x-loopwise-clinic-id': 'clinic-1' });
+		expect(clinics.getClinicByUserId).toHaveBeenCalledWith(USER.id, 'clinic-1');
 	});
 
-	it('rejects users without a project', async () => {
-		state.hasProject = false;
-		await expect(run('projectRoute')).rejects.toMatchObject({
+	it('rejects users without a clinic', async () => {
+		state.hasClinic = false;
+		await expect(run('clinicRoute')).rejects.toMatchObject({
 			codeMessage: 'BAD_REQUEST',
-			message: 'No project configured',
+			message: 'No clinic configured',
 		});
 	});
 
-	it('rejects anonymous requests before looking up the project', async () => {
+	it('rejects anonymous requests before looking up the clinic', async () => {
 		state.signedIn = false;
-		await expect(run('projectRoute')).rejects.toMatchObject({ codeMessage: 'UNAUTHORIZED' });
-		expect(projects.getProjectByUserId).not.toHaveBeenCalled();
+		await expect(run('clinicRoute')).rejects.toMatchObject({ codeMessage: 'UNAUTHORIZED' });
+		expect(clinics.getClinicByUserId).not.toHaveBeenCalled();
 	});
 });
 
-describe('@ProjectNonViewer()', () => {
+describe('@ClinicNonViewer()', () => {
 	it.each(['admin', 'user', 'context_admin'] as const)('allows a %s', async (role) => {
-		state.projectRole = role;
+		state.clinicRole = role;
 		await expect(run('nonViewerRoute')).resolves.toMatchObject({ result: true });
 	});
 
 	it('rejects a viewer', async () => {
-		state.projectRole = 'viewer';
+		state.clinicRole = 'viewer';
 		await expect(run('nonViewerRoute')).rejects.toMatchObject({
 			codeMessage: 'FORBIDDEN',
 			message: 'Viewers cannot access this resource',
@@ -165,15 +165,15 @@ describe('@ProjectNonViewer()', () => {
 	});
 });
 
-describe('@ProjectAdmin()', () => {
+describe('@ClinicAdmin()', () => {
 	it('allows an admin', async () => {
-		state.projectRole = 'admin';
-		await expect(run('projectAdminRoute')).resolves.toMatchObject({ result: true });
+		state.clinicRole = 'admin';
+		await expect(run('clinicAdminRoute')).resolves.toMatchObject({ result: true });
 	});
 
 	it.each(['user', 'viewer', 'context_admin'] as const)('rejects a %s', async (role) => {
-		state.projectRole = role;
-		await expect(run('projectAdminRoute')).rejects.toMatchObject({
+		state.clinicRole = role;
+		await expect(run('clinicAdminRoute')).rejects.toMatchObject({
 			codeMessage: 'FORBIDDEN',
 			message: 'Only admins can perform this action',
 		});
@@ -189,14 +189,14 @@ describe('@OrgMember()', () => {
 	});
 
 	it('resolves the organization from the selected organization header first', async () => {
-		await run('orgMemberRoute', { 'x-loopwise-organization-id': 'org-1', 'x-loopwise-project-id': 'project-1' });
+		await run('orgMemberRoute', { 'x-loopwise-organization-id': 'org-1', 'x-loopwise-clinic-id': 'clinic-1' });
 		expect(organizations.getUserOrgMembership).toHaveBeenCalledWith(USER.id, 'org-1');
-		expect(organizations.getUserOrgMembershipByProject).not.toHaveBeenCalled();
+		expect(organizations.getUserOrgMembershipByClinic).not.toHaveBeenCalled();
 	});
 
-	it('falls back to the selected project organization', async () => {
-		await run('orgMemberRoute', { 'x-loopwise-project-id': 'project-1' });
-		expect(organizations.getUserOrgMembershipByProject).toHaveBeenCalledWith(USER.id, 'project-1');
+	it('falls back to the selected clinic organization', async () => {
+		await run('orgMemberRoute', { 'x-loopwise-clinic-id': 'clinic-1' });
+		expect(organizations.getUserOrgMembershipByClinic).toHaveBeenCalledWith(USER.id, 'clinic-1');
 	});
 
 	it('rejects non-members with NOT_FOUND', async () => {
@@ -230,7 +230,7 @@ describe('@OrgAdmin()', () => {
 
 describe('session lookup', () => {
 	it('looks the session up once per request', async () => {
-		const { req, context } = contextFor('projectRoute');
+		const { req, context } = contextFor('clinicRoute');
 		await Promise.all([guard.canActivate(context), guard.canActivate(context)]);
 		expect(getSession).toHaveBeenCalledTimes(1);
 		expect(req.user).toEqual(USER);

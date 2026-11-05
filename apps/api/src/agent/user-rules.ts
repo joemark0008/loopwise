@@ -3,17 +3,17 @@ import { createHash } from 'crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 
-import { renderRootRulesForAgent } from './services/agent-visible-project-file.service.js';
+import { renderRootRulesForAgent } from './services/agent-visible-clinic-file.service.js';
 import { isDatabaseObjectAllowed, type WarehouseTableAccess } from './services/context-access.js';
 
 /**
- * Reads user-defined rules from RULES.md in the project folder if it exists
+ * Reads user-defined rules from RULES.md in the clinic folder if it exists
  */
 export function getUserRules(
-	projectFolder: string,
+	clinicFolder: string,
 	groupAccess: UserRulesGroupAccess = { enforced: false },
 ): string | undefined {
-	const rulesPath = join(projectFolder, 'RULES.md');
+	const rulesPath = join(clinicFolder, 'RULES.md');
 
 	if (!existsSync(rulesPath)) {
 		return undefined;
@@ -36,8 +36,8 @@ type Connection = {
 	database: string;
 };
 
-export function getConnections(projectFolder: string): Connection[] | undefined {
-	const databasesPath = join(projectFolder, 'databases');
+export function getConnections(clinicFolder: string): Connection[] | undefined {
+	const databasesPath = join(clinicFolder, 'databases');
 
 	if (!existsSync(databasesPath)) {
 		return undefined;
@@ -85,17 +85,17 @@ const databaseContextCatalogCache = new Map<
 	{ catalog: DatabaseContextCatalog; freshnessSignature: string | undefined; expiresAt: number }
 >();
 
-export function getDatabaseObjects(projectFolder: string): DatabaseObject[] {
+export function getDatabaseObjects(clinicFolder: string): DatabaseObject[] {
 	const now = Date.now();
 	evictExpiredEntries(databaseObjectsCache, now);
-	const freshnessSignature = getDatabaseFreshnessSignature(projectFolder);
-	const cached = databaseObjectsCache.get(projectFolder);
+	const freshnessSignature = getDatabaseFreshnessSignature(clinicFolder);
+	const cached = databaseObjectsCache.get(clinicFolder);
 	if (freshnessSignature !== undefined && cached?.freshnessSignature === freshnessSignature) {
 		return cached.objects;
 	}
 
-	const scan = scanDatabaseObjectsSafely(projectFolder);
-	setBoundedCacheEntry(databaseObjectsCache, projectFolder, {
+	const scan = scanDatabaseObjectsSafely(clinicFolder);
+	setBoundedCacheEntry(databaseObjectsCache, clinicFolder, {
 		objects: scan.objects,
 		freshnessSignature,
 		expiresAt: now + DATABASE_OBJECTS_TTL_MS,
@@ -104,20 +104,20 @@ export function getDatabaseObjects(projectFolder: string): DatabaseObject[] {
 }
 
 export function getDatabaseContextCatalog(
-	projectFolder: string,
+	clinicFolder: string,
 	options: { fresh?: boolean } = {},
 ): DatabaseContextCatalog {
 	const now = Date.now();
 	evictExpiredEntries(databaseContextCatalogCache, now);
-	const freshnessSignature = getDatabaseFreshnessSignature(projectFolder);
-	const cached = databaseContextCatalogCache.get(projectFolder);
+	const freshnessSignature = getDatabaseFreshnessSignature(clinicFolder);
+	const cached = databaseContextCatalogCache.get(clinicFolder);
 	if (!options.fresh && freshnessSignature !== undefined && cached?.freshnessSignature === freshnessSignature) {
 		return cached.catalog;
 	}
 
-	const scan = scanDatabaseObjects(projectFolder);
-	const catalog = readDatabaseContextCatalogFromDisk(projectFolder, scan);
-	setBoundedCacheEntry(databaseContextCatalogCache, projectFolder, {
+	const scan = scanDatabaseObjects(clinicFolder);
+	const catalog = readDatabaseContextCatalogFromDisk(clinicFolder, scan);
+	setBoundedCacheEntry(databaseContextCatalogCache, clinicFolder, {
 		catalog,
 		freshnessSignature,
 		expiresAt: now + DATABASE_OBJECTS_TTL_MS,
@@ -130,7 +130,7 @@ export function resetDatabaseContextCachesForTesting(): void {
 	databaseContextCatalogCache.clear();
 }
 
-function readDatabaseContextCatalogFromDisk(projectFolder: string, scan: DatabaseObjectScan): DatabaseContextCatalog {
+function readDatabaseContextCatalogFromDisk(clinicFolder: string, scan: DatabaseObjectScan): DatabaseContextCatalog {
 	return {
 		syncState: scan.syncState,
 		objects: scan.objects
@@ -139,7 +139,7 @@ function readDatabaseContextCatalogFromDisk(projectFolder: string, scan: Databas
 				database,
 				schema,
 				table,
-				columns: readDatabaseObjectColumns(projectFolder, { type, database, schema, table }),
+				columns: readDatabaseObjectColumns(clinicFolder, { type, database, schema, table }),
 			}))
 			.sort(
 				(left, right) =>
@@ -152,11 +152,11 @@ function readDatabaseContextCatalogFromDisk(projectFolder: string, scan: Databas
 }
 
 function readDatabaseObjectColumns(
-	projectFolder: string,
+	clinicFolder: string,
 	object: Pick<DatabaseObject, 'type' | 'database' | 'schema' | 'table'>,
 ): string[] {
 	const path = join(
-		projectFolder,
+		clinicFolder,
 		'databases',
 		`type=${object.type}`,
 		`database=${object.database}`,
@@ -282,19 +282,19 @@ function scanDatabaseObjects(folder: string): DatabaseObjectScan {
 	};
 }
 
-function getDatabaseFreshnessSignature(projectFolder: string): string | undefined {
+function getDatabaseFreshnessSignature(clinicFolder: string): string | undefined {
 	try {
 		const hash = createHash('sha256');
-		appendGeneratedDatabaseLayout(hash, projectFolder);
-		appendColumnCatalogMetadata(hash, projectFolder);
+		appendGeneratedDatabaseLayout(hash, clinicFolder);
+		appendColumnCatalogMetadata(hash, clinicFolder);
 		return hash.digest('hex');
 	} catch {
 		return undefined;
 	}
 }
 
-function appendGeneratedDatabaseLayout(hash: ReturnType<typeof createHash>, projectFolder: string): void {
-	const databasesPath = join(projectFolder, 'databases');
+function appendGeneratedDatabaseLayout(hash: ReturnType<typeof createHash>, clinicFolder: string): void {
+	const databasesPath = join(clinicFolder, 'databases');
 	if (!existsSync(databasesPath)) {
 		hash.update('databases:missing\n');
 		return;
@@ -309,8 +309,8 @@ function appendGeneratedDatabaseLayout(hash: ReturnType<typeof createHash>, proj
 	}
 }
 
-function appendColumnCatalogMetadata(hash: ReturnType<typeof createHash>, projectFolder: string): void {
-	const metadataPath = join(projectFolder, '.meta', 'databases');
+function appendColumnCatalogMetadata(hash: ReturnType<typeof createHash>, clinicFolder: string): void {
+	const metadataPath = join(clinicFolder, '.meta', 'databases');
 	if (!existsSync(metadataPath)) {
 		hash.update('metadata:missing\n');
 		return;
@@ -356,11 +356,11 @@ function setBoundedCacheEntry<T>(cache: Map<string, T>, key: string, value: T): 
 
 /** Fully qualified names of the tables of a `database.schema` the user may query. */
 export function listSchemaTableFqdns(
-	projectFolder: string,
+	clinicFolder: string,
 	schemaKey: string,
 	warehouseTableAccess: WarehouseTableAccess,
 ): string[] {
-	const fqdns = getDatabaseObjects(projectFolder)
+	const fqdns = getDatabaseObjects(clinicFolder)
 		.filter(
 			(object) =>
 				`${object.database}.${object.schema}` === schemaKey &&
@@ -371,11 +371,11 @@ export function listSchemaTableFqdns(
 }
 
 export function getTableColumnsContent(
-	projectFolder: string,
+	clinicFolder: string,
 	fqdn: string,
 	warehouseTableAccess: WarehouseTableAccess,
 ): string | undefined {
-	const obj = getDatabaseObjects(projectFolder).find(
+	const obj = getDatabaseObjects(clinicFolder).find(
 		(object) => object.fqdn === fqdn && isDatabaseObjectAllowed(warehouseTableAccess, object),
 	);
 	if (!obj) {
@@ -383,7 +383,7 @@ export function getTableColumnsContent(
 	}
 
 	const columnsPath = join(
-		projectFolder,
+		clinicFolder,
 		'databases',
 		`type=${obj.type}`,
 		`database=${obj.database}`,

@@ -1,5 +1,5 @@
 /**
- * Saved query tools: a named, parameterized SQL query on the project's warehouse that the agent calls as a tool.
+ * Saved query tools: a named, parameterized SQL query on the clinic's warehouse that the agent calls as a tool.
  * Parameters appear in the SQL template as `{{ name }}` and are sent to the warehouse as bind values (`$1`, `$2`…),
  * never pasted into the SQL text.
  */

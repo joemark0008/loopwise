@@ -5,7 +5,7 @@ export type UserRole = 'admin' | 'user' | 'viewer' | 'context_admin';
 
 export const USER_ROLES = ['admin', 'user', 'viewer', 'context_admin'] as const satisfies readonly UserRole[];
 
-/** Project roles available when editing organization members (org roles never include context_admin). */
+/** Clinic roles available when editing organization members (org roles never include context_admin). */
 export const ORG_MEMBER_ROLES = ['admin', 'user', 'viewer'] as const satisfies readonly UserRole[];
 
 /** `invited` until the user replaces their temporary password on first sign-in. */
@@ -125,7 +125,7 @@ export function isReservedSandboxSecretName(name: string): boolean {
 export const SEMANTIC_LAYER_MODES = ['exclusive', 'prioritized', 'disabled'] as const;
 
 /**
- * How the agent routes metric questions when the project declares a semantic layer.
+ * How the agent routes metric questions when the clinic declares a semantic layer.
  * - `exclusive`: every question goes through the layer; raw SQL is not exposed at all.
  * - `prioritized` (default): try the layer first, fall back to SQL when it cannot answer.
  * - `disabled`: definitions stay readable as context, but the semantic tool is not exposed.
@@ -187,7 +187,7 @@ export const providerLabels: Record<LlmProviderKind, string> = {
 /** One of loopwise's built-in provider integrations. */
 export type LlmProviderKind = (typeof LLM_PROVIDERS)[number];
 
-/** The only kind a project can declare several times, each instance under a name of its own. */
+/** The only kind a clinic can declare several times, each instance under a name of its own. */
 export const NAMED_PROVIDER_KIND = 'openaiCompatible';
 const NAMED_PROVIDER_SEPARATOR = '/';
 const PROVIDER_NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
@@ -196,7 +196,7 @@ const PROVIDER_NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 export type NamedLlmProvider = `${typeof NAMED_PROVIDER_KIND}/${string}`;
 
 /**
- * How a project addresses a provider, and how every model, message and budget refers to it: either
+ * How a clinic addresses a provider, and how every model, message and budget refers to it: either
  * a built-in kind, or a named instance of the kind that allows them.
  */
 export type LlmProvider = LlmProviderKind | NamedLlmProvider;
@@ -329,7 +329,7 @@ export type MemberBudgetPeriod = (typeof MEMBER_BUDGET_PERIODS)[number];
 
 export type CalendarPeriod = BudgetPeriod | MemberBudgetPeriod;
 
-export const SHARE_VISIBILITY = ['project', 'specific'] as const;
+export const SHARE_VISIBILITY = ['clinic', 'specific'] as const;
 export type Visibility = (typeof SHARE_VISIBILITY)[number];
 
 export type StorySharingInfo = {
@@ -354,7 +354,7 @@ export type StorySource = (typeof STORY_SOURCES)[number];
 export const STORY_FORMATS = ['classic', 'custom'] as const;
 export type StoryFormat = (typeof STORY_FORMATS)[number];
 
-export type ProjectChatReplayFacets<R extends string = string> = {
+export type ClinicChatReplayFacets<R extends string = string> = {
 	userNames: string[];
 	userNameCounts: Record<string, number>;
 	userRoles: (R | 'Former member')[];
@@ -366,7 +366,7 @@ export type ProjectChatReplayFacets<R extends string = string> = {
 	};
 };
 
-export type ProjectChatListItem = {
+export type ClinicChatListItem = {
 	id: string;
 	updatedAt: number;
 	userId: string;
@@ -433,7 +433,7 @@ export interface StoryBlockReference {
 
 export type MessageBubble = { role: 'user' | 'assistant'; charCount: number };
 
-export const CHAT_GROUP_BY_OPTIONS = ['star', 'date', 'project', 'ownership', 'sourcePlatform', 'none'] as const;
+export const CHAT_GROUP_BY_OPTIONS = ['star', 'date', 'clinic', 'ownership', 'sourcePlatform', 'none'] as const;
 export const CHAT_FILTER_OPTIONS = ['all', 'mine', 'starred', 'shared', 'shared_with_me'] as const;
 
 export type ChatGroupBy = (typeof CHAT_GROUP_BY_OPTIONS)[number];
@@ -441,7 +441,7 @@ export type ChatFilterType = (typeof CHAT_FILTER_OPTIONS)[number];
 
 export interface GroupedChatItem {
 	id: string;
-	projectId: string;
+	clinicId: string;
 	title: string;
 	isStarred: boolean;
 	isOnboarding: boolean;
@@ -474,7 +474,7 @@ export const MCP_EMBED_SANDBOX_HTML_FIELD = {
 export type EmbedTokenPayload = {
 	type: McpEmbedKind;
 	resourceId: string;
-	projectId: string;
+	clinicId: string;
 	exp: number;
 };
 
@@ -487,4 +487,4 @@ export const REPO_PROVIDERS = ['github', 'gitlab'] as const;
 export const BULK_ITEMS_LIMIT = 100;
 
 export type RepoProvider = (typeof REPO_PROVIDERS)[number];
-export type BulkStoryItem = { kind: 'own'; storyId: string } | { kind: 'shared-project'; storyId: string };
+export type BulkStoryItem = { kind: 'own'; storyId: string } | { kind: 'shared-clinic'; storyId: string };

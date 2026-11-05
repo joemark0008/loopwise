@@ -15,22 +15,22 @@ const MODEL_SETTINGS = {
 
 /**
  * Settings → Models on Postgres through GraphQL. The model-settings cases port upstream
- * `tests/project-llm-config-model-settings.test.ts` (a SQLite round-trip of the repository); upstream
- * `project-llm-config-override.test.ts` covers the `loopwise_config.yaml` `llm` block, which loopwise does not port.
+ * `tests/clinic-llm-config-model-settings.test.ts` (a SQLite round-trip of the repository); upstream
+ * `clinic-llm-config-override.test.ts` covers the `loopwise_config.yaml` `llm` block, which loopwise does not port.
  */
 describe('model settings (e2e)', () => {
 	let app: NestExpressApplication;
 	let cookie: string[] = [];
-	let projectId = '';
+	let clinicId = '';
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		({ cookie } = await createTestUser(app, { name: 'Ada', email: 'ada@example.com', password: 'Sup3r-secret!' }));
-		const project = await graphql('mutation { createProject(input: { name: "Models" }) { id } }');
-		projectId = project.body.data.createProject.id;
+		const clinic = await graphql('mutation { createClinic(input: { name: "Models" }) { id } }');
+		clinicId = clinic.body.data.createClinic.id;
 	});
 
 	afterAll(async () => {
@@ -41,7 +41,7 @@ describe('model settings (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	const upsert = (input: Record<string, unknown>) =>
@@ -49,7 +49,7 @@ describe('model settings (e2e)', () => {
 
 	const anthropicConfig = async () => {
 		const res = await graphql('{ llmConfigs }');
-		return res.body.data.llmConfigs.projectConfigs.find(
+		return res.body.data.llmConfigs.clinicConfigs.find(
 			(config: { provider: string }) => config.provider === 'anthropic',
 		);
 	};

@@ -26,7 +26,7 @@ const OUTCOMES = `query ($chatId: ID!) { wiseProposalOutcomes(chatId: $chatId) {
 describe('Wise confirmation (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
-	let projectId = '';
+	let clinicId = '';
 	let patientId = '';
 	let encounterId = '';
 	let chatId = '';
@@ -43,14 +43,14 @@ describe('Wise confirmation (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	const ask = (body: Record<string, unknown>) =>
 		request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', user.cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({ model: MODEL, ...body })
 			.buffer(true)
 			.parse((response, callback) => {
@@ -86,7 +86,7 @@ describe('Wise confirmation (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -99,9 +99,9 @@ describe('Wise confirmation (e2e)', () => {
 		const cruz = await createTestUser(app, { name: 'Dr. Cruz', email: 'cruz@example.com', password });
 		Object.assign(user, { cookie: reyes.cookie, id: reyes.userId });
 		Object.assign(other, { cookie: cruz.cookie, id: cruz.userId });
-		projectId = (await graphql(user.cookie, 'mutation { createProject(input: { name: "Clinic" }) { id } }')).body
-			.data.createProject.id;
-		await prisma.projectMember.create({ data: { projectId, userId: other.id, role: 'user' } });
+		clinicId = (await graphql(user.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }')).body.data
+			.createClinic.id;
+		await prisma.clinicMember.create({ data: { clinicId, userId: other.id, role: 'user' } });
 		const facility = await prisma.organization.create({
 			data: { name: 'Health Center', slug: 'hc', type: 'clinic' },
 		});

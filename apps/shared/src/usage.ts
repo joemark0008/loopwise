@@ -97,7 +97,7 @@ export const savedUsagePeriodsSchema = z
 	.array(savedUsagePeriodSchema)
 	.max(MAX_SAVED_USAGE_PERIODS, SAVED_USAGE_PERIOD_LIMIT_MESSAGE);
 
-export interface UserProjectPreferences {
+export interface UserClinicPreferences {
 	usagePeriod?: UsagePeriodSelection;
 	savedUsagePeriods?: SavedUsagePeriod[];
 }

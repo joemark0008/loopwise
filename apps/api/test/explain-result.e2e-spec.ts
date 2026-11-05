@@ -30,7 +30,7 @@ interface ScriptedCall {
 describe('explain_result (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
-	let projectId = '';
+	let clinicId = '';
 	let patientId = '';
 	let labId = '';
 	const script: ScriptedCall[][] = [];
@@ -43,7 +43,7 @@ describe('explain_result (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- SSE events of every type
@@ -52,7 +52,7 @@ describe('explain_result (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({ model: MODEL, message: { text: 'Why is this HbA1c flagged?' } })
 			.buffer(true)
 			.parse((response, callback) => {
@@ -81,7 +81,7 @@ describe('explain_result (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -96,13 +96,10 @@ describe('explain_result (e2e)', () => {
 		users.reyes = { cookie: reyes.cookie, id: reyes.userId };
 		users.cruz = { cookie: cruz.cookie, id: cruz.userId };
 
-		const project = await graphql(
-			users.reyes.cookie,
-			'mutation { createProject(input: { name: "Clinic" }) { id } }',
-		);
-		projectId = project.body.data.createProject.id;
-		await prisma.projectMember.createMany({
-			data: [{ projectId, userId: users.cruz.id, role: 'user' }],
+		const clinic = await graphql(users.reyes.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }');
+		clinicId = clinic.body.data.createClinic.id;
+		await prisma.clinicMember.createMany({
+			data: [{ clinicId, userId: users.cruz.id, role: 'user' }],
 			skipDuplicates: true,
 		});
 

@@ -75,8 +75,8 @@ const baseEnvSchema = z.object({
 	/** GitHub `owner/name` whose releases the update check compares against. Unset: no update check. */
 	LOOPWISE_RELEASES_REPOSITORY: optionalNonEmptyString,
 
-	LOOPWISE_DEFAULT_PROJECT_PATH: z.string().optional(),
-	LOOPWISE_PROJECTS_DIR: z.string().default('./projects'),
+	LOOPWISE_DEFAULT_CLINIC_PATH: z.string().optional(),
+	LOOPWISE_CLINICS_DIR: z.string().default('./projects'),
 	/** `off`: skills are managed as files only, the app and the agent's drafts can't save them. */
 	LOOPWISE_SKILL_AUTHORING: z.enum(['auto', 'off']).default('auto'),
 	/** Built frontend (`apps/frontend/dist`) served by the API, as in the Docker image. Unset in development (Vite). */
@@ -99,7 +99,7 @@ const baseEnvSchema = z.object({
 		.default(10),
 
 	/**
-	 * Default for the MCP endpoint toggle (Settings > MCP Endpoint) while a project has no stored
+	 * Default for the MCP endpoint toggle (Settings > MCP Endpoint) while a clinic has no stored
 	 * settings. Once an admin saves the settings, the stored value wins and this is ignored.
 	 */
 	MCP_ENDPOINT_ENABLED: z

@@ -9,16 +9,16 @@ import { MapBoundariesService } from './map-boundaries.service.js';
 export class MapBoundariesController {
 	constructor(private readonly boundaries: MapBoundariesService) {}
 
-	/** Declared first so `proxy` isn't read as a project id. */
+	/** Declared first so `proxy` isn't read as a clinic id. */
 	@Get('proxy')
 	@Header('Cache-Control', 'private, max-age=86400')
 	proxy(@Query('url') url: unknown) {
 		return this.boundaries.proxyBoundary(url);
 	}
 
-	@Get(':projectId/:key')
+	@Get(':clinicId/:key')
 	@Header('Cache-Control', 'private, max-age=600')
-	getBoundary(@CurrentUser() user: AuthUser, @Param('projectId') projectId: string, @Param('key') key: string) {
-		return this.boundaries.getProjectBoundary(projectId, key, user.id);
+	getBoundary(@CurrentUser() user: AuthUser, @Param('clinicId') clinicId: string, @Param('key') key: string) {
+		return this.boundaries.getClinicBoundary(clinicId, key, user.id);
 	}
 }

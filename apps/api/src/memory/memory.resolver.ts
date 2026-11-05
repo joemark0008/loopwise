@@ -1,15 +1,15 @@
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 
 import type { AuthUser } from '../auth/auth.service.js';
-import { ProjectAccess } from '../common/decorators/access.decorator.js';
-import { CurrentProject, CurrentUser } from '../common/decorators/current.decorator.js';
+import { ClinicAccess } from '../common/decorators/access.decorator.js';
+import { CurrentClinic, CurrentUser } from '../common/decorators/current.decorator.js';
 import { HandlerError } from '../common/errors/handler-error.js';
-import type { Project } from '../generated/prisma/client.js';
+import type { Clinic } from '../generated/prisma/client.js';
 import { EditMemoryInput } from './dto/memory.input.js';
 import { MemoryService } from './memory.service.js';
 import { Memory, MemorySettings } from './models/memory.model.js';
 
-/** Settings → Memory: upstream tRPC `memory.*`, `user.getMemories`, `user.getMemorySettings`, `project.getMemorySettings`. */
+/** Settings → Memory: upstream tRPC `memory.*`, `user.getMemories`, `user.getMemorySettings`, `clinic.getMemorySettings`. */
 @Resolver(() => Memory)
 export class MemoryResolver {
 	constructor(private readonly memory: MemoryService) {}
@@ -24,13 +24,13 @@ export class MemoryResolver {
 		return { memoryEnabled: await this.memory.isUserMemoryEnabled(user.id) };
 	}
 
-	@ProjectAccess()
-	@Query(() => MemorySettings, { description: 'Whether the project allows memory (admin agent setting).' })
-	async projectMemorySettings(@CurrentProject() project: Project): Promise<MemorySettings> {
-		return { memoryEnabled: await this.memory.isProjectMemoryEnabled(project.id) };
+	@ClinicAccess()
+	@Query(() => MemorySettings, { description: 'Whether the clinic allows memory (admin agent setting).' })
+	async clinicMemorySettings(@CurrentClinic() clinic: Clinic): Promise<MemorySettings> {
+		return { memoryEnabled: await this.memory.isClinicMemoryEnabled(clinic.id) };
 	}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Mutation(() => MemorySettings)
 	async setMemoryEnabled(
 		@CurrentUser() user: AuthUser,
@@ -40,7 +40,7 @@ export class MemoryResolver {
 		return { memoryEnabled };
 	}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Mutation(() => Memory)
 	async editMemory(@CurrentUser() user: AuthUser, @Args('input') input: EditMemoryInput): Promise<Memory> {
 		const content = this.memory.normalizeMemoryContent(input.content);
@@ -54,7 +54,7 @@ export class MemoryResolver {
 		return updated;
 	}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Mutation(() => Boolean)
 	async deleteMemory(
 		@CurrentUser() user: AuthUser,

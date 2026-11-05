@@ -29,7 +29,7 @@ export class FeedbackRepository {
 		});
 	}
 
-	listRecentFeedbacks(projectId: string, limit = 10): Promise<FeedbackWithDetails[]> {
+	listRecentFeedbacks(clinicId: string, limit = 10): Promise<FeedbackWithDetails[]> {
 		return this.prisma.$queryRaw<FeedbackWithDetails[]>`
 			SELECT f.message_id AS "messageId", f.vote, f.explanation, f.created_at AS "createdAt", u.name AS "userName",
 				t.aggregated_text AS "messageText"
@@ -41,7 +41,7 @@ export class FeedbackRepository {
 				SELECT message_id, string_agg(text, ' ' ORDER BY "order") AS aggregated_text
 				FROM message_part WHERE type = 'text' GROUP BY message_id
 			) t ON t.message_id = f.message_id
-			WHERE c.project_id = ${projectId}
+			WHERE c.project_id = ${clinicId}
 			ORDER BY f.created_at DESC
 			LIMIT ${limit}`;
 	}

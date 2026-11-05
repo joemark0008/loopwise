@@ -3,8 +3,8 @@ import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
 
 import { isStoragePath, toStorageRelativePath, toStorageVirtualPath } from '../agent/utils/tools.js';
+import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
-import { ProjectRepository } from '../projects/project.repository.js';
 import {
 	getStorageConfig,
 	getStorageHealth,
@@ -14,7 +14,7 @@ import {
 	STORAGE_DISABLED_MESSAGE,
 	type StorageScope,
 } from './storage/index.js';
-import { getProjectUsageByUser, getScopeUsage } from './storage/usage.js';
+import { getClinicUsageByUser, getScopeUsage } from './storage/usage.js';
 import { readUserFileBytes, saveUploadedFile, statUserFile } from './storage/user-files.js';
 
 export interface UploadedFile {
@@ -46,12 +46,12 @@ export interface AttachmentFile {
  */
 @Injectable()
 export class AttachmentsService {
-	constructor(private readonly projects: ProjectRepository) {}
+	constructor(private readonly clinics: ClinicRepository) {}
 
 	/** `POST /api/attachments`. */
 	async upload(
 		userId: string,
-		projectId: string,
+		clinicId: string,
 		userRole: UserRole,
 		file: UploadedFile | undefined,
 	): Promise<UploadedAttachment> {
@@ -78,7 +78,7 @@ export class AttachmentsService {
 			throw new HandlerError('BAD_REQUEST', `${file.originalname} is not a file type Loopwise accepts`);
 		}
 
-		const scope: StorageScope = { projectId, userId };
+		const scope: StorageScope = { clinicId, userId };
 		const stored = await saveUploadedFile(scope, safeName, file.buffer);
 		const relativePath = relativePathFromKey(scope, stored.key);
 
@@ -95,7 +95,7 @@ export class AttachmentsService {
 	 * from the message alone. Only the sender's own space is reachable, which is also the only space a chat's
 	 * attachments live in.
 	 */
-	async getFile(userId: string, projectId: string, path: string, withData: boolean): Promise<AttachmentFile> {
+	async getFile(userId: string, clinicId: string, path: string, withData: boolean): Promise<AttachmentFile> {
 		if (!isStorageEnabled()) {
 			throw new HandlerError('BAD_REQUEST', STORAGE_DISABLED_MESSAGE);
 		}
@@ -108,7 +108,7 @@ export class AttachmentsService {
 			throw new HandlerError('BAD_REQUEST', `${path} is not a path in permanent storage`);
 		}
 
-		const scope: StorageScope = { projectId, userId };
+		const scope: StorageScope = { clinicId, userId };
 		const stored = await statUserFile(scope, relativePath);
 		if (!stored) {
 			throw new HandlerError('NOT_FOUND', `No such file in permanent storage: ${path}`);
@@ -139,20 +139,20 @@ export class AttachmentsService {
 		return { enabled: isStorageEnabled(), maxFileSizeMb: getStorageMaxFileSizeMb() };
 	}
 
-	/** `storage.getUsage`: everyone sees their own space; admins also get the breakdown across the project. */
-	async getUsage(projectId: string, userId: string, userRole: UserRole) {
-		const own = await getScopeUsage({ projectId, userId });
+	/** `storage.getUsage`: everyone sees their own space; admins also get the breakdown across the clinic. */
+	async getUsage(clinicId: string, userId: string, userRole: UserRole) {
+		const own = await getScopeUsage({ clinicId, userId });
 		return {
 			own,
-			byUser: userRole === 'admin' ? await this.getNamedUsageByUser(projectId) : null,
+			byUser: userRole === 'admin' ? await this.getNamedUsageByUser(clinicId) : null,
 		};
 	}
 
 	/** Files outlive membership, so a space whose owner left is labelled by its user id. */
-	private async getNamedUsageByUser(projectId: string) {
+	private async getNamedUsageByUser(clinicId: string) {
 		const [usageByUser, members] = await Promise.all([
-			getProjectUsageByUser(projectId),
-			this.projects.listUsersWithProjectAccess(projectId),
+			getClinicUsageByUser(clinicId),
+			this.clinics.listUsersWithClinicAccess(clinicId),
 		]);
 		const nameByUserId = new Map(members.map((member) => [member.id, member.name || member.email]));
 

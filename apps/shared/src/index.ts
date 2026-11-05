@@ -1,4 +1,5 @@
-export const SYSTEM_EXAMPLE_PROJECT_ID = 'system-example-project';
+/** The example clinic's id; the value predates the rename from projects and is kept as stored. */
+export const SYSTEM_EXAMPLE_CLINIC_ID = 'system-example-project';
 
 export * from './assistant-tags';
 export * from './attachments';

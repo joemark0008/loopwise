@@ -1,6 +1,6 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 
-@ObjectType({ description: 'A project skill: a Markdown playbook in `agent/skills/`.' })
+@ObjectType({ description: 'A clinic skill: a Markdown playbook in `agent/skills/`.' })
 export class Skill {
 	@Field()
 	name: string;
@@ -8,7 +8,7 @@ export class Skill {
 	@Field()
 	description: string;
 
-	@Field({ description: 'Project path of the skill file, e.g. `/agent/skills/churn.md`.' })
+	@Field({ description: 'Clinic path of the skill file, e.g. `/agent/skills/churn.md`.' })
 	location: string;
 }
 
@@ -21,7 +21,7 @@ export class SkillLoadError {
 	message: string;
 }
 
-@ObjectType({ description: 'How this project saves skills written in the app.' })
+@ObjectType({ description: 'How this clinic saves skills written in the app.' })
 export class SkillSaveStatus {
 	@Field({ description: '`direct` or `disabled`.' })
 	mode: string;

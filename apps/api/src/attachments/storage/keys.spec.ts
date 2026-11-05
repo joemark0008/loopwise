@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { projectRoot, relativePathFromKey, sanitizeRelativePath, scopedKey, scopeRoot, userIdFromKey } from './keys.js';
+import { clinicRoot, relativePathFromKey, sanitizeRelativePath, scopedKey, scopeRoot, userIdFromKey } from './keys.js';
 
-const scope = { projectId: 'proj-1', userId: 'user-1' };
+const scope = { clinicId: 'proj-1', userId: 'user-1' };
 
-describe('projectRoot', () => {
-	it('covers every user space of the project', () => {
-		expect(projectRoot('proj-1')).toBe('projects/proj-1');
-		expect(scopeRoot(scope).startsWith(`${projectRoot('proj-1')}/`)).toBe(true);
+describe('clinicRoot', () => {
+	it('covers every user space of the clinic', () => {
+		expect(clinicRoot('proj-1')).toBe('projects/proj-1');
+		expect(scopeRoot(scope).startsWith(`${clinicRoot('proj-1')}/`)).toBe(true);
 	});
 
-	it('rejects an unsafe project id', () => {
-		expect(() => projectRoot('../other')).toThrow('Invalid project id');
-		expect(() => projectRoot('')).toThrow('Missing project id');
+	it('rejects an unsafe clinic id', () => {
+		expect(() => clinicRoot('../other')).toThrow('Invalid clinic id');
+		expect(() => clinicRoot('')).toThrow('Missing clinic id');
 	});
 });
 
@@ -29,17 +29,17 @@ describe('userIdFromKey', () => {
 });
 
 describe('scopeRoot', () => {
-	it('namespaces by project then user', () => {
+	it('namespaces by clinic then user', () => {
 		expect(scopeRoot(scope)).toBe('projects/proj-1/users/user-1');
 	});
 
 	it('rejects identifiers containing separators', () => {
-		expect(() => scopeRoot({ ...scope, projectId: '../other' })).toThrow('Invalid project id');
+		expect(() => scopeRoot({ ...scope, clinicId: '../other' })).toThrow('Invalid clinic id');
 		expect(() => scopeRoot({ ...scope, userId: 'a/b' })).toThrow('Invalid user id');
 	});
 
 	it('rejects missing identifiers', () => {
-		expect(() => scopeRoot({ ...scope, projectId: '' })).toThrow('Missing project id');
+		expect(() => scopeRoot({ ...scope, clinicId: '' })).toThrow('Missing clinic id');
 		expect(() => scopeRoot({ ...scope, userId: '  ' })).toThrow('Missing user id');
 	});
 });
@@ -99,12 +99,12 @@ describe('relativePathFromKey', () => {
 	});
 
 	it('rejects a key from another scope', () => {
-		const key = scopedKey({ projectId: 'proj-2', userId: 'user-1' }, 'reports/q1.csv');
+		const key = scopedKey({ clinicId: 'proj-2', userId: 'user-1' }, 'reports/q1.csv');
 		expect(() => relativePathFromKey(scope, key)).toThrow('does not belong to this scope');
 	});
 
-	it('rejects a key from another user in the same project', () => {
-		const key = scopedKey({ projectId: 'proj-1', userId: 'user-2' }, 'reports/q1.csv');
+	it('rejects a key from another user in the same clinic', () => {
+		const key = scopedKey({ clinicId: 'proj-1', userId: 'user-2' }, 'reports/q1.csv');
 		expect(() => relativePathFromKey(scope, key)).toThrow('does not belong to this scope');
 	});
 });

@@ -9,7 +9,7 @@ import { getArgs, getRequest, type LoopwiseRequest } from '../request.js';
 import { convertHeaders } from '../utils/auth-utils.js';
 import { AccessService } from './access.service.js';
 
-const PROJECT_HEADER = 'x-loopwise-project-id';
+const CLINIC_HEADER = 'x-loopwise-clinic-id';
 const ORGANIZATION_HEADER = 'x-loopwise-organization-id';
 
 /** One session lookup per request: GraphQL runs the guard once per resolver, possibly in parallel. */
@@ -17,7 +17,7 @@ const sessionLookups = new WeakMap<object, Promise<void>>();
 
 /**
  * Global guard. Every handler requires a session unless marked `@Public()` (upstream
- * `protectedProcedure` by default); the access decorators add project or organization checks.
+ * `protectedProcedure` by default); the access decorators add clinic or organization checks.
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -50,21 +50,21 @@ export class AuthGuard implements CanActivate {
 			return true;
 		}
 
-		const selectedProjectId = readSelection(getArgs(context).projectId) ?? readHeader(req.headers[PROJECT_HEADER]);
-		if (requirement.kind === 'project') {
-			const { project, userRole } = await this.access.resolveProjectAccess(
+		const selectedClinicId = readSelection(getArgs(context).clinicId) ?? readHeader(req.headers[CLINIC_HEADER]);
+		if (requirement.kind === 'clinic') {
+			const { clinic, userRole } = await this.access.resolveClinicAccess(
 				req.user.id,
-				selectedProjectId,
+				selectedClinicId,
 				requirement.roles,
 			);
-			req.project = project;
+			req.clinic = clinic;
 			req.userRole = userRole;
 			return true;
 		}
 
 		const membership = await this.access.resolveOrganizationMembership(
 			req.user.id,
-			selectedProjectId,
+			selectedClinicId,
 			readHeader(req.headers[ORGANIZATION_HEADER]),
 		);
 		if (requirement.adminOnly && membership.role !== 'admin') {

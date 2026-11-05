@@ -58,7 +58,7 @@ export async function seedClinicalDemo(
 	opts: {
 		adminUserId: string;
 		adminOrgId: string;
-		projectId: string;
+		clinicId: string;
 		createUser: (user: { name: string; email: string }) => Promise<string>;
 	},
 ): Promise<boolean> {
@@ -83,8 +83,8 @@ export async function seedClinicalDemo(
 			],
 			skipDuplicates: true,
 		});
-		await tx.projectMember.createMany({
-			data: [{ projectId: opts.projectId, userId, role: 'user' }],
+		await tx.clinicMember.createMany({
+			data: [{ clinicId: opts.clinicId, userId, role: 'user' }],
 			skipDuplicates: true,
 		});
 	}

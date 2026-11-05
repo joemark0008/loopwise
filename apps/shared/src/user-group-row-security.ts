@@ -15,7 +15,7 @@ export interface SensitiveTableDefinition extends RowSecurityTableIdentity {
 	constraintColumns: string[];
 }
 
-export interface ProjectRowSecurity {
+export interface ClinicRowSecurity {
 	version: 1;
 	tables: SensitiveTableDefinition[];
 }
@@ -79,13 +79,13 @@ export type WarehouseRowSecurity =
 			>;
 	  };
 
-export type StoredProjectRowSecurity = ProjectRowSecurity | Record<string, unknown> | null;
+export type StoredClinicRowSecurity = ClinicRowSecurity | Record<string, unknown> | null;
 export type StoredUserGroupRowPolicies = UserGroupRowPolicies | Record<string, unknown> | null;
 
-export const EMPTY_PROJECT_ROW_SECURITY: ProjectRowSecurity = { version: 1, tables: [] };
+export const EMPTY_CLINIC_ROW_SECURITY: ClinicRowSecurity = { version: 1, tables: [] };
 export const EMPTY_USER_GROUP_ROW_POLICIES: UserGroupRowPolicies = { version: 1, policies: [] };
 
-export function normalizeProjectRowSecurity(value: ProjectRowSecurity): ProjectRowSecurity {
+export function normalizeClinicRowSecurity(value: ClinicRowSecurity): ClinicRowSecurity {
 	const tables = value.tables.map(normalizeSensitiveTableDefinition);
 	assertNoNulls(tables, 'Invalid sensitive table definition.');
 	return {
@@ -118,11 +118,11 @@ export function filterUserGroupRowPoliciesByDatabaseContext(
 	};
 }
 
-export function filterProjectRowSecurityByDatabaseContext(
-	value: ProjectRowSecurity,
+export function filterClinicRowSecurityByDatabaseContext(
+	value: ClinicRowSecurity,
 	access: DatabaseContextAccess,
-): ProjectRowSecurity {
-	const normalized = normalizeProjectRowSecurity(value);
+): ClinicRowSecurity {
+	const normalized = normalizeClinicRowSecurity(value);
 	const normalizedAccess = normalizeDatabaseContextAccess(access);
 	return {
 		version: 1,
@@ -130,9 +130,9 @@ export function filterProjectRowSecurityByDatabaseContext(
 	};
 }
 
-export function parseStoredProjectRowSecurity(value: unknown): ProjectRowSecurity {
+export function parseStoredClinicRowSecurity(value: unknown): ClinicRowSecurity {
 	if (value === null || value === undefined) {
-		return EMPTY_PROJECT_ROW_SECURITY;
+		return EMPTY_CLINIC_ROW_SECURITY;
 	}
 	const parsed = parseJson(value);
 	if (
@@ -141,9 +141,9 @@ export function parseStoredProjectRowSecurity(value: unknown): ProjectRowSecurit
 		parsed.version !== 1 ||
 		!Array.isArray(parsed.tables)
 	) {
-		throw new Error('Stored project row security is malformed.');
+		throw new Error('Stored clinic row security is malformed.');
 	}
-	return normalizeProjectRowSecurity({ version: 1, tables: parsed.tables as SensitiveTableDefinition[] });
+	return normalizeClinicRowSecurity({ version: 1, tables: parsed.tables as SensitiveTableDefinition[] });
 }
 
 export function parseStoredUserGroupRowPolicies(value: unknown): UserGroupRowPolicies {
@@ -168,8 +168,8 @@ export function parseStoredUserGroupRowPolicies(value: unknown): UserGroupRowPol
 	});
 }
 
-export function serializeProjectRowSecurity(value: ProjectRowSecurity): ProjectRowSecurity {
-	return normalizeProjectRowSecurity(value);
+export function serializeClinicRowSecurity(value: ClinicRowSecurity): ClinicRowSecurity {
+	return normalizeClinicRowSecurity(value);
 }
 
 export function serializeUserGroupRowPolicies(value: UserGroupRowPolicies): UserGroupRowPolicies {
@@ -197,16 +197,16 @@ export function compileRowSecurityConditions(
 }
 
 export function resolveWarehouseRowSecurity(
-	project: ProjectRowSecurity,
+	clinic: ClinicRowSecurity,
 	groupPolicies: readonly UserGroupRowPolicies[],
 ): WarehouseRowSecurity {
-	if (project.tables.length === 0) {
+	if (clinic.tables.length === 0) {
 		return { enforced: false };
 	}
 	const policies = groupPolicies.flatMap((group) => group.policies);
 	return {
 		enforced: true,
-		tables: project.tables.map((table) => {
+		tables: clinic.tables.map((table) => {
 			const matching = policies.filter((policy) => tableKey(policy) === tableKey(table));
 			if (matching.some((policy) => policy.access === 'full')) {
 				return { ...table, access: 'full' as const };

@@ -7,8 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { scopedKey, scopeRoot } from './keys.js';
 import { LocalStorageProvider } from './local.provider.js';
 
-const scope = { projectId: 'proj-1', userId: 'user-1' };
-const otherUser = { projectId: 'proj-1', userId: 'user-2' };
+const scope = { clinicId: 'proj-1', userId: 'user-1' };
+const otherUser = { clinicId: 'proj-1', userId: 'user-2' };
 
 let root: string;
 let storage: LocalStorageProvider;
@@ -78,7 +78,7 @@ describe('LocalStorageProvider', () => {
 		]);
 	});
 
-	it('does not list another user in the same project', async () => {
+	it('does not list another user in the same clinic', async () => {
 		await storage.write(scopedKey(scope, 'mine.txt'), Buffer.from('mine'));
 		await storage.write(scopedKey(otherUser, 'theirs.txt'), Buffer.from('theirs'));
 

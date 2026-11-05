@@ -31,7 +31,7 @@ describe('analytics security (e2e)', () => {
 	let prisma: PrismaService;
 	let service: AnalyticsService;
 	let repository: AnalyticsRepository;
-	let projectId = '';
+	let clinicId = '';
 	let maria = '';
 	let juan = '';
 	const users = { a: { cookie: [] as string[], id: '' }, b: { cookie: [] as string[], id: '' } };
@@ -61,7 +61,7 @@ describe('analytics security (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -76,11 +76,11 @@ describe('analytics security (e2e)', () => {
 		const b = await createTestUser(app, { name: 'Dr. B', email: 'b@example.com', password });
 		users.a = { cookie: a.cookie, id: a.userId };
 		users.b = { cookie: b.cookie, id: b.userId };
-		const project = await request(app.getHttpServer())
+		const clinic = await request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', users.a.cookie)
-			.send({ query: 'mutation { createProject(input: { name: "Clinic" }) { id } }' });
-		projectId = project.body.data.createProject.id;
+			.send({ query: 'mutation { createClinic(input: { name: "Clinic" }) { id } }' });
+		clinicId = clinic.body.data.createClinic.id;
 
 		const healthCenter = await prisma.organization.create({
 			data: { name: 'Health Center', slug: 'hc', type: 'clinic' },
@@ -301,7 +301,7 @@ describe('analytics security (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', users.a.cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({ model: MODEL, message: { text: 'How many patients do I have, by age group?' } })
 			.buffer(true)
 			.parse((response, callback) => {
@@ -349,7 +349,7 @@ describe('analytics security (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', users.a.cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({ model: MODEL, message: { text: 'Make a report of my panel' } })
 			.buffer(true)
 			.parse((response, callback) => {

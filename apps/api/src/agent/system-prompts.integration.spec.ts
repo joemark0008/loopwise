@@ -6,61 +6,61 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getSystemPromptOverride, hasLoopwisePromptPlaceholder, injectLoopwisePrompt } from './system-prompts.js';
 
 describe('getSystemPromptOverride (real filesystem)', () => {
-	let projectFolder: string;
+	let clinicFolder: string;
 
 	beforeEach(() => {
-		projectFolder = mkdtempSync(join(tmpdir(), 'loopwise-prompts-'));
-		mkdirSync(join(projectFolder, 'agent', 'prompts'), { recursive: true });
+		clinicFolder = mkdtempSync(join(tmpdir(), 'loopwise-prompts-'));
+		mkdirSync(join(clinicFolder, 'agent', 'prompts'), { recursive: true });
 	});
 
 	afterEach(() => {
-		rmSync(projectFolder, { recursive: true, force: true });
+		rmSync(clinicFolder, { recursive: true, force: true });
 	});
 
 	function writePrompt(filename: string, content: string): void {
-		writeFileSync(join(projectFolder, 'agent', 'prompts', filename), content, 'utf-8');
+		writeFileSync(join(clinicFolder, 'agent', 'prompts', filename), content, 'utf-8');
 	}
 
 	it('returns undefined for an empty prompts folder', () => {
-		expect(getSystemPromptOverride(projectFolder)).toBeUndefined();
-		expect(getSystemPromptOverride(projectFolder, 'slack')).toBeUndefined();
+		expect(getSystemPromptOverride(clinicFolder)).toBeUndefined();
+		expect(getSystemPromptOverride(clinicFolder, 'slack')).toBeUndefined();
 	});
 
 	it('loads system.md for the web Bot and as the global fallback', () => {
 		writePrompt('system.md', 'You are the org default analyst.');
 
-		expect(getSystemPromptOverride(projectFolder)).toBe('You are the org default analyst.');
-		expect(getSystemPromptOverride(projectFolder, 'slack')).toBe('You are the org default analyst.');
-		expect(getSystemPromptOverride(projectFolder, 'teams')).toBe('You are the org default analyst.');
+		expect(getSystemPromptOverride(clinicFolder)).toBe('You are the org default analyst.');
+		expect(getSystemPromptOverride(clinicFolder, 'slack')).toBe('You are the org default analyst.');
+		expect(getSystemPromptOverride(clinicFolder, 'teams')).toBe('You are the org default analyst.');
 	});
 
 	it('loads a surface-specific prompt and prefers it over system.md', () => {
 		writePrompt('system.md', 'Global prompt');
 		writePrompt('slack.md', 'Slack-only prompt');
 
-		expect(getSystemPromptOverride(projectFolder, 'slack')).toBe('Slack-only prompt');
-		expect(getSystemPromptOverride(projectFolder, 'teams')).toBe('Global prompt');
-		expect(getSystemPromptOverride(projectFolder)).toBe('Global prompt');
+		expect(getSystemPromptOverride(clinicFolder, 'slack')).toBe('Slack-only prompt');
+		expect(getSystemPromptOverride(clinicFolder, 'teams')).toBe('Global prompt');
+		expect(getSystemPromptOverride(clinicFolder)).toBe('Global prompt');
 	});
 
 	it('ignores a README.md (not a recognized surface file)', () => {
 		writePrompt('README.md', '# How to use prompts');
 
-		expect(getSystemPromptOverride(projectFolder)).toBeUndefined();
-		expect(getSystemPromptOverride(projectFolder, 'slack')).toBeUndefined();
+		expect(getSystemPromptOverride(clinicFolder)).toBeUndefined();
+		expect(getSystemPromptOverride(clinicFolder, 'slack')).toBeUndefined();
 	});
 
-	it('refuses to follow a symlink that points outside the project folder', () => {
+	it('refuses to follow a symlink that points outside the clinic folder', () => {
 		const secretDir = mkdtempSync(join(tmpdir(), 'loopwise-secret-'));
 		const secretFile = join(secretDir, 'secret.md');
 		writeFileSync(secretFile, 'TOP SECRET HOST FILE', 'utf-8');
-		symlinkSync(secretFile, join(projectFolder, 'agent', 'prompts', 'system.md'));
+		symlinkSync(secretFile, join(clinicFolder, 'agent', 'prompts', 'system.md'));
 		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 		try {
-			expect(getSystemPromptOverride(projectFolder)).toBeUndefined();
+			expect(getSystemPromptOverride(clinicFolder)).toBeUndefined();
 			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('Refusing to read system prompt override outside the project folder'),
+				expect.stringContaining('Refusing to read system prompt override outside the clinic folder'),
 			);
 		} finally {
 			consoleSpy.mockRestore();
@@ -71,7 +71,7 @@ describe('getSystemPromptOverride (real filesystem)', () => {
 	it('composes the default prompt into a file that keeps the {{ loopwise_prompt }} placeholder', () => {
 		writePrompt('slack.md', '{{ loopwise_prompt }}\n\n## House rules\n- Answer in EUR.');
 
-		const override = getSystemPromptOverride(projectFolder, 'slack');
+		const override = getSystemPromptOverride(clinicFolder, 'slack');
 		expect(override).toBeDefined();
 		expect(hasLoopwisePromptPlaceholder(override!)).toBe(true);
 

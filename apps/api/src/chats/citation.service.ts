@@ -20,10 +20,10 @@ export class CitationService {
 
 	constructor(private readonly chats: ChatRepository) {}
 
-	async getCitation(projectId: string, queryId: string, column: string): Promise<CitationPayload> {
+	async getCitation(clinicId: string, queryId: string, column: string): Promise<CitationPayload> {
 		const part = await this.chats.getLatestQueryPartByQueryId(queryId);
-		if (part?.projectId !== projectId) {
-			throw new HandlerError('FORBIDDEN', 'Query does not belong to this project.');
+		if (part?.clinicId !== clinicId) {
+			throw new HandlerError('FORBIDDEN', 'Query does not belong to this clinic.');
 		}
 
 		const cacheKey = `${queryId}:${column}`;

@@ -2,9 +2,9 @@ import type { UserRole } from '@loopwise/shared/types';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 
 import type { AuthUser } from '../auth/auth.service.js';
-import { ProjectNonViewer } from '../common/decorators/access.decorator.js';
-import { CurrentProject, CurrentUser, CurrentUserRole } from '../common/decorators/current.decorator.js';
-import type { Project } from '../generated/prisma/client.js';
+import { ClinicNonViewer } from '../common/decorators/access.decorator.js';
+import { CurrentClinic, CurrentUser, CurrentUserRole } from '../common/decorators/current.decorator.js';
+import type { Clinic } from '../generated/prisma/client.js';
 import { ChatForkService } from './chat-fork.service.js';
 import { CreateSharedChatInput, ForkSharedChatInput } from './dto/chat.input.js';
 import { ChatIdResult, QuickQuestionChat } from './models/chat.model.js';
@@ -19,7 +19,7 @@ export class SharedChatsResolver {
 		private readonly forks: ChatForkService,
 	) {}
 
-	@Query(() => [SharedChat], { description: 'Chats shared in the projects the user can access.' })
+	@Query(() => [SharedChat], { description: 'Chats shared in the clinics the user can access.' })
 	sharedChats(@CurrentUser() user: AuthUser): Promise<SharedChat[]> {
 		return this.sharedChatsService.list(user.id);
 	}
@@ -48,18 +48,15 @@ export class SharedChatsResolver {
 		return this.sharedChatsService.listShareableMembers(chatId, user.id);
 	}
 
-	@ProjectNonViewer()
+	@ClinicNonViewer()
 	@Mutation(() => SharedChat)
 	async createSharedChat(
 		@CurrentUser() user: AuthUser,
-		@CurrentProject() project: Project,
+		@CurrentClinic() clinic: Clinic,
 		@CurrentUserRole() userRole: UserRole,
 		@Args('input') input: CreateSharedChatInput,
 	): Promise<SharedChat> {
-		const created = await this.sharedChatsService.create(
-			{ projectId: project.id, userId: user.id, userRole },
-			input,
-		);
+		const created = await this.sharedChatsService.create({ clinicId: clinic.id, userId: user.id, userRole }, input);
 		return this.sharedChatsService.getSharedChatDetails(created.id);
 	}
 
@@ -79,7 +76,7 @@ export class SharedChatsResolver {
 		return true;
 	}
 
-	@ProjectNonViewer()
+	@ClinicNonViewer()
 	@Mutation(() => ChatIdResult, {
 		description: 'Forks a shared chat, or a selection of it (upstream `chatFork.fork`).',
 	})
@@ -87,7 +84,7 @@ export class SharedChatsResolver {
 		return this.forks.forkSharedChat(input.shareId, user.id, input.selection, 'fork');
 	}
 
-	@ProjectNonViewer()
+	@ClinicNonViewer()
 	@Mutation(() => ChatIdResult, {
 		description: 'A quick question about a shared chat, kept out of the chat history.',
 	})

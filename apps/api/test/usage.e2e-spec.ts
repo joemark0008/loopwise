@@ -13,7 +13,7 @@ const FILTER = { period: { value: 15, unit: 'day' } };
 
 /**
  * Settings → Usage over GraphQL: chat messages and `llm_inference` records combined with their cost, scoped to
- * the caller unless they are a project admin, and the saved periods of each user.
+ * the caller unless they are a clinic admin, and the saved periods of each user.
  */
 describe('usage (e2e)', () => {
 	let app: NestExpressApplication;
@@ -21,11 +21,11 @@ describe('usage (e2e)', () => {
 	let adminCookie: string[] = [];
 	let memberCookie: string[] = [];
 	let viewerCookie: string[] = [];
-	let projectId = '';
+	let clinicId = '';
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -37,19 +37,19 @@ describe('usage (e2e)', () => {
 		const viewer = await signUp('Vic', 'vic@example.com');
 		viewerCookie = viewer.cookie;
 
-		const project = await graphql(adminCookie, 'mutation { createProject(input: { name: "Usage" }) { id } }');
-		projectId = project.body.data.createProject.id;
-		await prisma.projectMember.createMany({
+		const clinic = await graphql(adminCookie, 'mutation { createClinic(input: { name: "Usage" }) { id } }');
+		clinicId = clinic.body.data.createClinic.id;
+		await prisma.clinicMember.createMany({
 			data: [
-				{ projectId, userId: member.userId, role: 'user' },
-				{ projectId, userId: viewer.userId, role: 'viewer' },
+				{ clinicId, userId: member.userId, role: 'user' },
+				{ clinicId, userId: viewer.userId, role: 'viewer' },
 			],
 		});
 
 		await prisma.chat.createMany({
 			data: [
-				{ id: 'usage-admin-chat', projectId, userId: admin.userId },
-				{ id: 'usage-member-chat', projectId, userId: member.userId },
+				{ id: 'usage-admin-chat', clinicId, userId: admin.userId },
+				{ id: 'usage-member-chat', clinicId, userId: member.userId },
 			],
 		});
 		await prisma.chatMessage.createMany({
@@ -70,7 +70,7 @@ describe('usage (e2e)', () => {
 		});
 		await prisma.llmInference.create({
 			data: {
-				projectId,
+				clinicId,
 				userId: member.userId,
 				chatId: 'usage-member-chat',
 				type: 'title_generation',
@@ -92,7 +92,7 @@ describe('usage (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	const usage = (cookie: string[]) =>
@@ -124,7 +124,7 @@ describe('usage (e2e)', () => {
 			{ filter: FILTER },
 		);
 
-	it('shows project admins the whole project, with the cost of messages and other model calls', async () => {
+	it('shows clinic admins the whole clinic, with the cost of messages and other model calls', async () => {
 		const res = await usage(adminCookie);
 
 		expect(res.body.errors).toBeUndefined();
@@ -157,7 +157,7 @@ describe('usage (e2e)', () => {
 		expect(cost).toBeCloseTo(1);
 	});
 
-	it('lists the users of the project for the admin filters only', async () => {
+	it('lists the users of the clinic for the admin filters only', async () => {
 		const query = 'query { usageUserFacets { userName chatCount } }';
 
 		expect((await graphql(adminCookie, query)).body.data.usageUserFacets).toEqual([
@@ -187,15 +187,15 @@ describe('usage (e2e)', () => {
 		const created = await graphql(
 			memberCookie,
 			`
-				mutation ($projectId: ID!) {
-					createSavedUsagePeriod(projectId: $projectId, savedPeriod: { days: 365, granularity: "month" }) {
+				mutation ($clinicId: ID!) {
+					createSavedUsagePeriod(clinicId: $clinicId, savedPeriod: { days: 365, granularity: "month" }) {
 						id
 						days
 						granularity
 					}
 				}
 			`,
-			{ projectId },
+			{ clinicId },
 		);
 		expect(created.body.errors).toBeUndefined();
 		const savedPeriod = created.body.data.createSavedUsagePeriod;
@@ -204,8 +204,8 @@ describe('usage (e2e)', () => {
 			graphql(
 				cookie,
 				`
-					query ($projectId: ID!) {
-						usagePeriodSettings(projectId: $projectId) {
+					query ($clinicId: ID!) {
+						usagePeriodSettings(clinicId: $clinicId) {
 							selection {
 								mode
 								savedPeriodId
@@ -218,7 +218,7 @@ describe('usage (e2e)', () => {
 						}
 					}
 				`,
-				{ projectId },
+				{ clinicId },
 			);
 		expect((await settings(memberCookie)).body.data.usagePeriodSettings).toEqual({
 			selection: { mode: 'saved', savedPeriodId: savedPeriod.id },
@@ -232,8 +232,8 @@ describe('usage (e2e)', () => {
 		const deleted = await graphql(
 			memberCookie,
 			`
-				mutation ($projectId: ID!, $id: ID!) {
-					deleteSavedUsagePeriod(projectId: $projectId, id: $id) {
+				mutation ($clinicId: ID!, $id: ID!) {
+					deleteSavedUsagePeriod(clinicId: $clinicId, id: $id) {
 						id
 						selection {
 							mode
@@ -241,7 +241,7 @@ describe('usage (e2e)', () => {
 					}
 				}
 			`,
-			{ projectId, id: savedPeriod.id },
+			{ clinicId, id: savedPeriod.id },
 		);
 		expect(deleted.body.data.deleteSavedUsagePeriod).toEqual({ id: savedPeriod.id, selection: { mode: '15d' } });
 	});

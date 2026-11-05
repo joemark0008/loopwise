@@ -54,7 +54,7 @@ export interface McpServerStatus {
 	toolCount: number;
 	enabledToolCount: number;
 	tools: McpToolSummary[];
-	/** Virtual path (project-relative) of the server's generated specs folder. */
+	/** Virtual path (clinic-relative) of the server's generated specs folder. */
 	specPath: string;
 	/** Last connection error for this server, if any. */
 	error?: string;

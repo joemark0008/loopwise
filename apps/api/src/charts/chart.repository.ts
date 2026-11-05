@@ -45,14 +45,14 @@ export class ChartRepository {
 		return row.id;
 	}
 
-	/** Returns the project owner and parent chat of the chat that contains the given chart tool call. */
-	async getChartOwnerInfo(toolCallId: string): Promise<{ projectId: string; userId: string; chatId: string } | null> {
+	/** Returns the clinic owner and parent chat of the chat that contains the given chart tool call. */
+	async getChartOwnerInfo(toolCallId: string): Promise<{ clinicId: string; userId: string; chatId: string } | null> {
 		const part = await this.prisma.messagePart.findFirst({
 			where: displayChartToolCall(toolCallId),
-			select: { chatMessage: { select: { chat: { select: { id: true, projectId: true, userId: true } } } } },
+			select: { chatMessage: { select: { chat: { select: { id: true, clinicId: true, userId: true } } } } },
 		});
 		const chat = part?.chatMessage.chat;
-		return chat ? { projectId: chat.projectId, userId: chat.userId, chatId: chat.id } : null;
+		return chat ? { clinicId: chat.clinicId, userId: chat.userId, chatId: chat.id } : null;
 	}
 
 	async updateChartConfig(toolCallId: string, config: displayChart.Input): Promise<void> {
@@ -94,12 +94,12 @@ export class ChartRepository {
 	}
 
 	/** Chats (not deleted) with a message part that shows the image (upstream `listChatsReferencingImage`). */
-	async listChatsReferencingImage(imageId: string): Promise<{ chatId: string; projectId: string }[]> {
+	async listChatsReferencingImage(imageId: string): Promise<{ chatId: string; clinicId: string }[]> {
 		const chats = await this.prisma.chat.findMany({
 			where: { deletedAt: null, chatMessages: { some: { messageParts: { some: { imageId } } } } },
-			select: { id: true, projectId: true },
+			select: { id: true, clinicId: true },
 		});
-		return chats.map((chat) => ({ chatId: chat.id, projectId: chat.projectId }));
+		return chats.map((chat) => ({ chatId: chat.id, clinicId: chat.clinicId }));
 	}
 
 	async getImageById(id: string): Promise<{ data: string; mediaType: string } | null> {

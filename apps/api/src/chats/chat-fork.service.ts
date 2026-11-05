@@ -43,7 +43,7 @@ export class ChatForkService {
 			: seededMessages;
 
 		const savedChat = await this.chats.createForkedChat(
-			{ projectId: share.projectId, userId, title: share.title, forkMetadata },
+			{ clinicId: share.clinicId, userId, title: share.title, forkMetadata },
 			messages,
 		);
 		return { chatId: savedChat.id };

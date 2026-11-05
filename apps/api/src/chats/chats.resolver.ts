@@ -6,9 +6,9 @@ import type { UIMessage } from '../agent/types/chat.js';
 import type { AuthUser } from '../auth/auth.service.js';
 import { Loaders } from '../common/dataloader/loaders.decorator.js';
 import type { RequestLoaders } from '../common/dataloader/request-loaders.js';
-import { ProjectAccess, ProjectAdmin } from '../common/decorators/access.decorator.js';
-import { CurrentProject, CurrentUser } from '../common/decorators/current.decorator.js';
-import type { Project } from '../generated/prisma/client.js';
+import { ClinicAccess, ClinicAdmin } from '../common/decorators/access.decorator.js';
+import { CurrentClinic, CurrentUser } from '../common/decorators/current.decorator.js';
+import type { Clinic } from '../generated/prisma/client.js';
 import { UserLoader } from '../users/user.loader.js';
 import { ChatMessagesLoader } from './chat.loader.js';
 import { ChatsService } from './chats.service.js';
@@ -101,10 +101,10 @@ export class ChatsResolver {
 		return this.queryRowsService.getQueryRowsForUser(input, user.id);
 	}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Query(() => GraphQLJSON, { description: 'SQL and column lineage behind a cited value (upstream `citation.get`).' })
-	citation(@CurrentProject() project: Project, @Args('queryId') queryId: string, @Args('column') column: string) {
-		return this.citations.getCitation(project.id, queryId, column);
+	citation(@CurrentClinic() clinic: Clinic, @Args('queryId') queryId: string, @Args('column') column: string) {
+		return this.citations.getCitation(clinic.id, queryId, column);
 	}
 
 	@Mutation(() => Boolean)
@@ -155,18 +155,18 @@ export class ChatsResolver {
 		return true;
 	}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Mutation(() => MessageFeedback, { description: 'Upstream `feedback.submit`.' })
 	submitMessageFeedback(@CurrentUser() user: AuthUser, @Args('input') input: MessageFeedbackInput) {
 		return this.feedback.submit(user.id, input);
 	}
 
-	@ProjectAdmin()
+	@ClinicAdmin()
 	@Query(() => [RecentFeedback], { description: 'Upstream `feedback.getRecent`.' })
 	recentFeedbacks(
-		@CurrentProject() project: Project,
+		@CurrentClinic() clinic: Clinic,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
 	): Promise<RecentFeedback[]> {
-		return this.feedback.listRecent(project.id, limit ? Math.min(Math.max(limit, 1), 50) : 10);
+		return this.feedback.listRecent(clinic.id, limit ? Math.min(Math.max(limit, 1), 50) : 10);
 	}
 }

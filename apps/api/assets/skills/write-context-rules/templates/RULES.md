@@ -31,7 +31,7 @@
 
 **Repos:**
 
-- TODO: `repos/<dbt>/` — dbt project. Column docs: `models/<schema>.yml`. Domain decisions: `models/**/*.md`. Semantic layer (metrics): `models/<...>_semantic_layer.yml` (omit if none).
+- TODO: `repos/<dbt>/` — dbt clinic. Column docs: `models/<schema>.yml`. Domain decisions: `models/**/*.md`. Semantic layer (metrics): `models/<...>_semantic_layer.yml` (omit if none).
 
 **Docs:**
 
@@ -133,7 +133,7 @@ TODO
 
 ## Chart & Visualization Guidelines
 
-> How every chart should look, so the whole project stays on-brand and consistent.
+> How every chart should look, so the whole clinic stays on-brand and consistent.
 
 ### Color palette (brand)
 

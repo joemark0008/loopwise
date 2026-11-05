@@ -2,7 +2,7 @@ import { Field, ID, InputType } from '@nestjs/graphql';
 import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 @InputType()
-export class CreateProjectInput {
+export class CreateClinicInput {
 	@Field()
 	@IsString()
 	@MinLength(1)
@@ -11,10 +11,10 @@ export class CreateProjectInput {
 }
 
 @InputType()
-export class RenameProjectInput {
+export class RenameClinicInput {
 	@Field(() => ID)
 	@IsString()
-	projectId: string;
+	clinicId: string;
 
 	@Field()
 	@IsString()

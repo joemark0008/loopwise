@@ -124,7 +124,7 @@ enum ChargeKind {
   supply
 }
 
-"""Source of a project chart plugin (upstream `chartPlugin.source`)."""
+"""Source of a clinic chart plugin (upstream `chartPlugin.source`)."""
 type ChartPluginSource {
   source: String!
   version: String!
@@ -138,6 +138,7 @@ type Chat {
 
   """The automation run behind the chat (Phase 5)."""
   automationRun: JSON
+  clinicId: String!
   createdAt: Float!
 
   """Where the chat was forked from (`ForkMetadata`)."""
@@ -148,7 +149,6 @@ type Chat {
 
   """Active messages (`UIMessage[]`), query results cut to a preview."""
   messages: [JSON!]!
-  projectId: String!
   title: String!
   updatedAt: Float!
 }
@@ -178,12 +178,13 @@ input ChatListInput {
   """all, mine, starred, shared, shared_with_me."""
   filters: [String!]! = ["all"]
 
-  """star, date, project, ownership, sourcePlatform or none."""
+  """star, date, clinic, ownership, sourcePlatform or none."""
   groupBy: String! = "none"
 }
 
 """A chat in the sidebar list (`GroupedChatItem`)."""
 type ChatListItem {
+  clinicId: String!
   createdAt: Float!
   id: ID!
   isOnboarding: Boolean!
@@ -192,7 +193,6 @@ type ChatListItem {
   """own or shared."""
   kind: String!
   ownerName: String!
-  projectId: String!
   shareId: String
   title: String!
   updatedAt: Float!
@@ -211,6 +211,22 @@ type ChatShareOptions {
   allowedUserIds: [String!]!
   shareId: String
   visibility: String
+}
+
+"""A clinic the user can access, with their role in it."""
+type ClinicSummary {
+  createdAt: DateTime!
+  id: ID!
+  name: String!
+  orgId: String
+
+  """Folder holding the clinic context and `loopwise_config.yaml`."""
+  path: String
+  type: String!
+  updatedAt: DateTime!
+
+  """The user's role: admin, user, viewer or context_admin."""
+  userRole: String!
 }
 
 type ClinicalDocument {
@@ -277,6 +293,10 @@ type ContextUsage {
   tokensUsed: Int!
 }
 
+input CreateClinicInput {
+  name: String!
+}
+
 input CreateEncounterInput {
   """The facility of the visit (`myFacilities`)."""
   facilityId: ID!
@@ -328,10 +348,6 @@ input CreateFacilityKeyInput {
   name: String!
 }
 
-input CreateProjectInput {
-  name: String!
-}
-
 input CreateSharedChatInput {
   allowedUserIds: [String!]
   chatId: ID!
@@ -339,8 +355,8 @@ input CreateSharedChatInput {
   """Also notify recipients outside the app (Phase 5 notifications)."""
   notify: Boolean! = false
 
-  """project or specific."""
-  visibility: String! = "project"
+  """clinic or specific."""
+  visibility: String! = "clinic"
 }
 
 input CreateSkillInput {
@@ -370,7 +386,7 @@ type CreatedSkill {
   name: String!
 }
 
-"""A synced warehouse table (upstream `project.getDatabaseObjects`)."""
+"""A synced warehouse table (upstream `clinic.getDatabaseObjects`)."""
 type DatabaseObject {
   database: String!
   fqdn: String!
@@ -684,7 +700,7 @@ type ManagedUser {
   id: ID!
   name: String!
 
-  """Organization role: admin, user or viewer. Projects fall back to it."""
+  """Organization role: admin, user or viewer. Clinics fall back to it."""
   role: String!
   status: ManagedUserStatus!
 }
@@ -805,7 +821,7 @@ type Mutation {
   addAllergy(input: AddAllergyInput!): PatientAllergy!
   addDiagnosis(input: AddDiagnosisInput!): EncounterDiagnosis!
 
-  """Upstream `project.addMapBoundary`: the updated boundary sets."""
+  """Upstream `clinic.addMapBoundary`: the updated boundary sets."""
   addMapBoundary(input: JSON!): JSON!
 
   """A quick question about a shared chat, kept out of the chat history."""
@@ -825,6 +841,7 @@ type Mutation {
 
   """Creates the first admin; needs the setup token from the server log."""
   completeSetup(input: CompleteSetupInput!): Boolean!
+  createClinic(input: CreateClinicInput!): ClinicSummary!
   createEncounter(input: CreateEncounterInput!): Encounter!
 
   """Orders a test from the encounter and sends it to the facility."""
@@ -842,11 +859,10 @@ type Mutation {
   A new set-password link for the user (an invite or a reset); the user's earlier links stop working.
   """
   createPasswordLink(userId: ID!): PasswordLink!
-  createProject(input: CreateProjectInput!): ProjectSummary!
   createSavedPrompt(input: SavedPromptInput!): SavedPrompt!
 
   """Saves a period and selects it."""
-  createSavedUsagePeriod(projectId: ID!, savedPeriod: SavedUsagePeriodInput!): SavedUsagePeriod!
+  createSavedUsagePeriod(clinicId: ID!, savedPeriod: SavedUsagePeriodInput!): SavedUsagePeriod!
   createSharedChat(input: CreateSharedChatInput!): SharedChat!
   createSkill(input: CreateSkillInput!): CreatedSkill!
 
@@ -856,14 +872,14 @@ type Mutation {
   """Deletes every chat that is not starred; returns how many."""
   deleteAllNonStarredChats: Int!
   deleteChat(chatId: ID!): Boolean!
+  deleteClinic(clinicId: ID!): Boolean!
   deleteLlmConfig(provider: String!): Boolean!
 
-  """Upstream `project.deleteMapBoundary`: the updated boundary sets."""
+  """Upstream `clinic.deleteMapBoundary`: the updated boundary sets."""
   deleteMapBoundary(key: String!): JSON!
   deleteMemory(memoryId: ID!): Boolean!
-  deleteProject(projectId: ID!): Boolean!
   deleteSavedPrompt(promptId: ID!): Boolean!
-  deleteSavedUsagePeriod(id: ID!, projectId: ID!): DeletedSavedUsagePeriod!
+  deleteSavedUsagePeriod(clinicId: ID!, id: ID!): DeletedSavedUsagePeriod!
   deleteSharedChat(shareId: ID!): Boolean!
   deleteSkill(input: DeleteSkillInput!): Boolean!
   editMemory(input: EditMemoryInput!): Memory!
@@ -907,7 +923,7 @@ type Mutation {
   """The receiving facility refuses the order, with a reason."""
   rejectOrder(input: OrderReasonInput!): ClinicalOrder!
   renameChat(input: RenameChatInput!): Boolean!
-  renameProject(input: RenameProjectInput!): ProjectSummary!
+  renameClinic(input: RenameClinicInput!): ClinicSummary!
 
   """Marks a result reviewed (audited, with the optional note)."""
   reviewResult(input: ReviewResultInput!): ResultItem!
@@ -954,21 +970,21 @@ type Mutation {
   submitMessageFeedback(input: MessageFeedbackInput!): MessageFeedback!
   switchMessageVersion(chatId: ID!, messageId: ID!): Boolean!
 
-  """Upstream `project.updateAgentSettings`: merges each section."""
+  """Upstream `clinic.updateAgentSettings`: merges each section."""
   updateAgentSettings(input: JSON!): JSON!
 
   """Upstream `chart.updateConfig`: the chat owner edits a `display_chart`."""
   updateChartConfig(config: JSON!, toolCallId: String!): Boolean!
 
-  """Upstream `project.updateDefaultModels`."""
+  """Upstream `clinic.updateDefaultModels`."""
   updateDefaultModels(settings: JSON!): JSON!
   updateDiagnosis(input: UpdateDiagnosisInput!): EncounterDiagnosis!
 
-  """Upstream `project.updateDisplaySettings`."""
+  """Upstream `clinic.updateDisplaySettings`."""
   updateDisplaySettings(input: JSON!): JSON!
   updateEncounterNote(input: UpdateEncounterNoteInput!): Encounter!
 
-  """Upstream `project.updateMapBoundary`: the updated boundary sets."""
+  """Upstream `clinic.updateMapBoundary`: the updated boundary sets."""
   updateMapBoundary(input: JSON!): JSON!
 
   """Upstream `map.updateConfig`: the chat owner edits a `display_map`."""
@@ -979,19 +995,19 @@ type Mutation {
   updatePatient(input: UpdatePatientInput!): Patient!
   updateProfile(input: UpdateProfileInput!): User!
   updateSavedPrompt(input: UpdateSavedPromptInput!): SavedPrompt!
-  updateSavedUsagePeriod(projectId: ID!, savedPeriod: UpdateSavedUsagePeriodInput!): SavedUsagePeriod!
+  updateSavedUsagePeriod(clinicId: ID!, savedPeriod: UpdateSavedUsagePeriodInput!): SavedUsagePeriod!
   updateSharedChatAccess(allowedUserIds: [String!]!, shareId: ID!): Boolean!
   updateSkill(input: UpdateSkillInput!): UpdatedSkill!
-  updateUsagePeriodSelection(projectId: ID!, selection: UsagePeriodSelectionInput!): UsagePeriodSelection
+  updateUsagePeriodSelection(clinicId: ID!, selection: UsagePeriodSelectionInput!): UsagePeriodSelection
 
   """Upstream `user.updatePreferences`."""
   updateUserPreferences(input: UpdateUserPreferencesInput!): JSON!
   updateUserRole(input: UpdateUserRoleInput!): ManagedUser!
 
-  """Upstream `project.upsertLlmConfig`."""
+  """Upstream `clinic.upsertLlmConfig`."""
   upsertLlmConfig(input: JSON!): JSON!
 
-  """Upstream `project.validateMapBoundaryUrl`: keys, count, GeoJSON."""
+  """Upstream `clinic.validateMapBoundaryUrl`: keys, count, GeoJSON."""
   validateMapBoundaryUrl(url: String!): JSON!
   voidAllergy(input: VoidAllergyInput!): PatientAllergy!
   voidDiagnosis(input: VoidEntryInput!): EncounterDiagnosis!
@@ -1290,22 +1306,6 @@ input PrescriptionItemInput {
   strength: String
 }
 
-"""A project the user can access, with their role in it."""
-type ProjectSummary {
-  createdAt: DateTime!
-  id: ID!
-  name: String!
-  orgId: String
-
-  """Folder holding the project context and `loopwise_config.yaml`."""
-  path: String
-  type: String!
-  updatedAt: DateTime!
-
-  """The user's role: admin, user, viewer or context_admin."""
-  userRole: String!
-}
-
 type PublicConfig {
   authProviders: AuthProviders!
   betaAutomationsEnabled: Boolean!
@@ -1322,11 +1322,11 @@ type PublicConfig {
 }
 
 type Query {
-  """Upstream `project.getAgentSettings`, with the instance capabilities."""
+  """Upstream `clinic.getAgentSettings`, with the instance capabilities."""
   agentSettings: JSON!
 
   """
-  Models the project can use (upstream `project.listAvailableTranscribeModels`, despite its name).
+  Models the clinic can use (upstream `clinic.listAvailableTranscribeModels`, despite its name).
   """
   availableModels: JSON!
 
@@ -1336,7 +1336,7 @@ type Query {
   """Upstream `chartPlugin.source`."""
   chartPluginSource(type: String!, version: String!): ChartPluginSource!
 
-  """Upstream `chartPlugin.list`: the project `charts/` plugins."""
+  """Upstream `chartPlugin.list`: the clinic `charts/` plugins."""
   chartPlugins: JSON!
 
   """The user's own chat (upstream `chat.get`)."""
@@ -1360,25 +1360,34 @@ type Query {
   """SQL and column lineage behind a cited value (upstream `citation.get`)."""
   citation(column: String!, queryId: String!): JSON!
 
+  """Whether the clinic allows memory (admin agent setting)."""
+  clinicMemorySettings: MemorySettings!
+
+  """A clinic's saved prompts; empty when the user is not in it."""
+  clinicSavedPrompts(clinicId: ID!): [SavedPrompt!]!
+
   """One saved document; audited as `document.view`."""
   clinicalDocument(id: ID!): ClinicalDocument
+
+  """Clinics the signed-in user can access."""
+  clinics: [ClinicSummary!]!
+
+  """The selected clinic (`x-loopwise-clinic-id`)."""
+  currentClinic: ClinicSummary
 
   """The signed-in user's organization role: admin, user or viewer."""
   currentOrgRole: String!
 
-  """The selected project (`x-loopwise-project-id`)."""
-  currentProject: ProjectSummary
-
-  """Synced warehouse tables of the selected project (`@` mentions)."""
+  """Synced warehouse tables of the selected clinic (`@` mentions)."""
   databaseObjects: [DatabaseObject!]!
 
-  """Upstream `project.getDefaultChatModel`."""
+  """Upstream `clinic.getDefaultChatModel`."""
   defaultChatModel: JSON
 
-  """Upstream `project.getDefaultModels`."""
+  """Upstream `clinic.getDefaultModels`."""
   defaultModels: JSON!
 
-  """Upstream `project.getDisplaySettings`: the date format."""
+  """Upstream `clinic.getDisplaySettings`: the date format."""
   displaySettings: JSON!
 
   """Null when the encounter is not in your care."""
@@ -1395,7 +1404,7 @@ type Query {
   """
   hasUsers: Boolean!
 
-  """Models known per provider (upstream `project.getKnownModels`)."""
+  """Models known per provider (upstream `clinic.getKnownModels`)."""
   knownModels: JSON!
 
   """
@@ -1409,13 +1418,13 @@ type Query {
   """Orders sent to the user's facilities in one status, oldest first."""
   labOrders(status: OrderStatus!): [LabOrder!]!
 
-  """Upstream `project.getLlmConfigs`: provider configs, keys previewed."""
+  """Upstream `clinic.getLlmConfigs`: provider configs, keys previewed."""
   llmConfigs: JSON!
 
   """Every user of the organization (admins only)."""
   managedUsers: [ManagedUser!]!
 
-  """Upstream `project.getMapBoundaries`."""
+  """Upstream `clinic.getMapBoundaries`."""
   mapBoundaries: JSON!
 
   """The signed-in user."""
@@ -1470,15 +1479,6 @@ type Query {
 
   """For printing; null when not in your care."""
   prescription(id: ID!): Prescription
-
-  """Whether the project allows memory (admin agent setting)."""
-  projectMemorySettings: MemorySettings!
-
-  """A project's saved prompts; empty when the user is not in it."""
-  projectSavedPrompts(projectId: ID!): [SavedPrompt!]!
-
-  """Projects the signed-in user can access."""
-  projects: [ProjectSummary!]!
   publicConfig: PublicConfig!
 
   """Upstream `chat.getQueryRows`."""
@@ -1508,16 +1508,16 @@ type Query {
   sharedChat(shareId: ID!): SharedChatView!
   sharedChatQuickQuestions(shareId: ID!): [QuickQuestionChat!]!
 
-  """Chats shared in the projects the user can access."""
+  """Chats shared in the clinics the user can access."""
   sharedChats: [SharedChat!]!
 
-  """Every project skill, for the admin settings."""
+  """Every clinic skill, for the admin settings."""
   skillCatalog: [Skill!]!
   skillDetail(name: String!): SkillDetail!
   skillLoadErrors: [SkillLoadError!]!
   skillSaveStatus: SkillSaveStatus!
 
-  """The project skills the signed-in user may use (the `/` picker)."""
+  """The clinic skills the signed-in user may use (the `/` picker)."""
   skills: [Skill!]!
 
   """Upstream `storage.getConfig`: the storage backend, secrets masked."""
@@ -1537,13 +1537,13 @@ type Query {
 
   """Messages, tokens and cost per chart bucket."""
   usageMessages(filter: UsageFilterInput!): [UsageRecord!]!
-  usagePeriodSettings(projectId: ID!): UsagePeriodSettings!
+  usagePeriodSettings(clinicId: ID!): UsagePeriodSettings!
 
   """Providers that appear in the usage."""
   usageProviders: [String!]!
   usageTotal(filter: UsageFilterInput!): TotalUsage!
 
-  """Users with chats in the project and their chat count."""
+  """Users with chats in the clinic and their chat count."""
   usageUserFacets: [UsageUserFacet!]!
 
   """The signed-in user's preferences (upstream `user.getPreferences`)."""
@@ -1658,9 +1658,9 @@ input RenameChatInput {
   title: String!
 }
 
-input RenameProjectInput {
+input RenameClinicInput {
+  clinicId: ID!
   name: String!
-  projectId: ID!
 }
 
 type ReportPdf {
@@ -1878,7 +1878,7 @@ enum Sex {
 }
 
 """
-A project member a chat can be shared with (upstream `project.getProjectMembersByChatId`).
+A clinic member a chat can be shared with (upstream `clinic.getClinicMembersByChatId`).
 """
 type ShareableMember {
   email: String!
@@ -1891,15 +1891,15 @@ type ShareableMember {
 type SharedChat {
   authorName: String!
   chatId: String!
+  clinicId: String!
   createdAt: DateTime!
   forkMetadata: JSON
   id: ID!
   messageBubbles: [MessageBubble!]
-  projectId: String!
   title: String!
   userId: String!
 
-  """project or specific."""
+  """clinic or specific."""
   visibility: String!
 }
 
@@ -1909,11 +1909,11 @@ type SharedChatView {
   userRole: String
 }
 
-"""A project skill: a Markdown playbook in `agent/skills/`."""
+"""A clinic skill: a Markdown playbook in `agent/skills/`."""
 type Skill {
   description: String!
 
-  """Project path of the skill file, e.g. `/agent/skills/churn.md`."""
+  """Clinic path of the skill file, e.g. `/agent/skills/churn.md`."""
   location: String!
   name: String!
 }
@@ -1932,7 +1932,7 @@ type SkillLoadError {
   message: String!
 }
 
-"""How this project saves skills written in the app."""
+"""How this clinic saves skills written in the app."""
 type SkillSaveStatus {
   """Why saving is blocked, when `disabled`."""
   message: String
@@ -2098,7 +2098,7 @@ input UsagePeriodSelectionInput {
 }
 
 """
-The usage period the user picked in the project, and the periods they saved.
+The usage period the user picked in the clinic, and the periods they saved.
 """
 type UsagePeriodSettings {
   savedPeriods: [SavedUsagePeriod!]!
@@ -2133,7 +2133,7 @@ type UsageRecord {
   whatsappMessageCount: Int!
 }
 
-"""A user with chats in the project, for the usage filters."""
+"""A user with chats in the clinic, for the usage filters."""
 type UsageUserFacet {
   chatCount: Int!
   userName: String!

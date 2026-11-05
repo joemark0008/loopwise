@@ -22,7 +22,7 @@ export const InputSchema = z.object({
 		.string()
 		.optional()
 		.describe(
-			'Only when the user explicitly asked for a specific model to run this task. Omit otherwise: the project settings decide.',
+			'Only when the user explicitly asked for a specific model to run this task. Omit otherwise: the clinic settings decide.',
 		),
 });
 

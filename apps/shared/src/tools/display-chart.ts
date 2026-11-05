@@ -130,7 +130,7 @@ export const ColumnConditionalFormatsSchema = z
 
 export const ChartInputObjectSchema = z.object({
 	query_id: z.string().describe("The id of a previous `execute_sql` tool call's output to get data from."),
-	chart_type: ChartTypeSchema.describe('Built-in chart type or an available project custom chart type.'),
+	chart_type: ChartTypeSchema.describe('Built-in chart type or an available clinic custom chart type.'),
 	x_axis_key: z.string().describe('Column name for X-axis/category labels.'),
 	x_axis_type: XAxisTypeEnum.nullable().describe(
 		'Use "date" only when x-axis values parse as JS Date (YYYY-MM-DD). Use "category" for quarter_ending, fiscal periods, or labels. Use "number" for numeric x-axis.',
@@ -303,7 +303,7 @@ export type Output = z.infer<typeof OutputSchema>;
 
 export type BuiltinChartInput = Omit<ChartInput, 'chart_type'> & { chart_type: ChartType };
 
-/** Display types loopwise renders natively (as opposed to project-defined custom charts): builtins plus `table`. */
+/** Display types loopwise renders natively (as opposed to clinic-defined custom charts): builtins plus `table`. */
 export function isNativeDisplayType(type: string): boolean {
 	return type === 'table' || isBuiltinChartType(type);
 }

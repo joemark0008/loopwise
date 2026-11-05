@@ -41,11 +41,11 @@ export default createTool<displayChart.Input, displayChart.Output>({
 					error: 'Custom charts are only available in interactive web chats.',
 				};
 			}
-			if (!hasChartPlugin(context.projectFolder, chartType)) {
+			if (!hasChartPlugin(context.clinicFolder, chartType)) {
 				return {
 					_version: '1',
 					success: false,
-					error: `Custom chart "${chartType}" is not available in this project.`,
+					error: `Custom chart "${chartType}" is not available in this clinic.`,
 				};
 			}
 			return { _version: '1', success: true };

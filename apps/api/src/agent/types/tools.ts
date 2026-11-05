@@ -61,13 +61,13 @@ export interface AgentToolServices {
 		chatId: string,
 		queryId: string,
 	): Promise<{ columns: string[]; data: Record<string, unknown>[] } | null>;
-	/** `utils/llm` `getProjectAvailableModels` (subagent model resolution). */
-	getProjectAvailableModels(
-		projectId: string,
+	/** `utils/llm` `getClinicAvailableModels` (subagent model resolution). */
+	getClinicAvailableModels(
+		clinicId: string,
 	): Promise<Array<{ provider: LlmSelectedModel['provider']; modelId: string; name: string }>>;
 	/** `utils/llm` `resolveProviderModel` (subagent model resolution). */
 	resolveProviderModel(
-		projectId: string,
+		clinicId: string,
 		provider: LlmSelectedModel['provider'],
 		modelId: string,
 		applyUserSettings?: boolean,
@@ -203,15 +203,15 @@ interface PatientName {
 
 export interface ToolContext {
 	services: AgentToolServices;
-	projectFolder: string;
+	clinicFolder: string;
 	chatId: string;
 	userId: string;
-	projectId: string;
+	clinicId: string;
 	/** The patient of a chart chat (`chat.patient_id`); undefined for other chats. */
 	patientId?: string;
 	supportsCustomCharts: boolean;
 	agentSettings: AgentSettings | null;
-	/** The model the run itself uses; subagents inherit it unless the project pins another one. */
+	/** The model the run itself uses; subagents inherit it unless the clinic pins another one. */
 	modelSelection?: LlmSelectedModel;
 	usageRunId?: string;
 	managedAiBillingMode?: 'wallet' | 'unbilled';
@@ -222,11 +222,11 @@ export interface ToolContext {
 	filesContextAccess: ResolvedFilesContextAccess;
 	/** MCP servers and tools the user's groups grant; spec files of other servers are hidden too. */
 	mcpAccess: McpAccess;
-	/** Project skills the user's groups grant; files of other skills under agent/skills/ are hidden too. */
+	/** Clinic skills the user's groups grant; files of other skills under agent/skills/ are hidden too. */
 	skillsAccess: ResolvedSkillsAccess;
 	userGroupFeatures: UserGroupFeature[];
 	userRulesGroupAccess: UserRulesGroupAccess;
-	/** Project skills the user's groups load in full into the system prompt. */
+	/** Clinic skills the user's groups load in full into the system prompt. */
 	preloadedSkillNames?: string[];
 	/**
 	 * Database federation access token. Populated by the EE Microsoft/Azure AD

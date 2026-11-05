@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProjectLlmConfigRepository } from '../agent/llm/project-llm-config.repository.js';
+import type { ClinicLlmConfigRepository } from '../agent/llm/clinic-llm-config.repository.js';
 
 const mocks = vi.hoisted(() => ({
 	transcribe: vi.fn(async () => ({ text: 'hello' })),
@@ -19,8 +19,8 @@ vi.mock('./transcribe.providers.js', async (importOriginal) => ({
 
 import { TranscribeService } from './transcribe.service.js';
 
-const configs = { getAgentSettings: vi.fn(), getProjectLlmConfigByProvider: vi.fn() };
-const service = new TranscribeService(configs as unknown as ProjectLlmConfigRepository);
+const configs = { getAgentSettings: vi.fn(), getClinicLlmConfigByProvider: vi.fn() };
+const service = new TranscribeService(configs as unknown as ClinicLlmConfigRepository);
 
 describe('TranscribeService', () => {
 	const previousKey = process.env.OPENAI_API_KEY;
@@ -28,7 +28,7 @@ describe('TranscribeService', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		configs.getAgentSettings.mockResolvedValue(null);
-		configs.getProjectLlmConfigByProvider.mockResolvedValue(null);
+		configs.getClinicLlmConfigByProvider.mockResolvedValue(null);
 		process.env.OPENAI_API_KEY = 'sk-env';
 	});
 
@@ -37,7 +37,7 @@ describe('TranscribeService', () => {
 	});
 
 	it('uses the default OpenAI transcription model and the environment key', async () => {
-		await expect(service.transcribeAudio('project-1', Buffer.from('audio').toString('base64'))).resolves.toBe(
+		await expect(service.transcribeAudio('clinic-1', Buffer.from('audio').toString('base64'))).resolves.toBe(
 			'hello',
 		);
 		expect(mocks.createTranscribeModel).toHaveBeenCalledWith(
@@ -50,31 +50,31 @@ describe('TranscribeService', () => {
 
 	it('prefers the model saved in the agent settings, then a per-request override', async () => {
 		configs.getAgentSettings.mockResolvedValue({ transcribe: { provider: 'openai', modelId: 'whisper-1' } });
-		await service.transcribeAudio('project-1', '');
+		await service.transcribeAudio('clinic-1', '');
 		expect(mocks.createTranscribeModel).toHaveBeenLastCalledWith('openai', expect.anything(), 'whisper-1');
 
-		await service.transcribeAudio('project-1', '', { modelId: 'gpt-4o-transcribe' });
+		await service.transcribeAudio('clinic-1', '', { modelId: 'gpt-4o-transcribe' });
 		expect(mocks.createTranscribeModel).toHaveBeenLastCalledWith('openai', expect.anything(), 'gpt-4o-transcribe');
 	});
 
-	it("uses the project's provider config over the environment", async () => {
-		configs.getProjectLlmConfigByProvider.mockResolvedValue({ apiKey: 'sk-project', baseUrl: 'https://proxy' });
-		await service.transcribeAudio('project-1', '');
+	it("uses the clinic's provider config over the environment", async () => {
+		configs.getClinicLlmConfigByProvider.mockResolvedValue({ apiKey: 'sk-clinic', baseUrl: 'https://proxy' });
+		await service.transcribeAudio('clinic-1', '');
 		expect(mocks.createTranscribeModel).toHaveBeenCalledWith(
 			'openai',
-			{ apiKey: 'sk-project', baseURL: 'https://proxy' },
+			{ apiKey: 'sk-clinic', baseURL: 'https://proxy' },
 			'gpt-4o-mini-transcribe',
 		);
 	});
 
 	it('refuses to transcribe without a key', async () => {
 		delete process.env.OPENAI_API_KEY;
-		await expect(service.transcribeAudio('project-1', '')).rejects.toThrow('No API key configured for openai');
+		await expect(service.transcribeAudio('clinic-1', '')).rejects.toThrow('No API key configured for openai');
 		expect(mocks.transcribe).not.toHaveBeenCalled();
 	});
 
 	it('lists the transcription models with whether a key is available', async () => {
-		const models = await service.listAvailableTranscribeModels('project-1');
+		const models = await service.listAvailableTranscribeModels('clinic-1');
 		expect(models.openai.hasKey).toBe(true);
 		expect(models.openai.models[0]).toEqual({
 			id: 'gpt-4o-mini-transcribe',
@@ -84,6 +84,6 @@ describe('TranscribeService', () => {
 		});
 
 		delete process.env.OPENAI_API_KEY;
-		expect((await service.listAvailableTranscribeModels('project-1')).openai.hasKey).toBe(false);
+		expect((await service.listAvailableTranscribeModels('clinic-1')).openai.hasKey).toBe(false);
 	});
 });

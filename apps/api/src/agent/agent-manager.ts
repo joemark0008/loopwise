@@ -64,7 +64,7 @@ const MAX_SCHEMA_TABLES_NAMED = 200;
 
 export interface AgentChat {
 	id: string;
-	projectId: string;
+	clinicId: string;
 	userId: string;
 	forkMetadata?: ForkMetadata | null;
 }
@@ -76,7 +76,7 @@ export interface AgentProfile {
 	maxSteps?: number;
 	/** The run's tool set; defaults to the analytics tools. */
 	tools?: (context: { agentSettings: AgentSettings | null }) => Record<string, unknown>;
-	/** Replaces the project system prompt (RULES.md, memories, connections) for runs with a dedicated purpose. */
+	/** Replaces the clinic system prompt (RULES.md, memories, connections) for runs with a dedicated purpose. */
 	systemPrompt?: (context: { timezone?: string }) => string;
 	/** Background runs (context recommendations) don't extract memories from their own prompt. */
 	skipMemoryExtraction?: boolean;
@@ -90,9 +90,9 @@ export interface AgentManagerDependencies {
 	inferences: Pick<LlmInferenceService, 'scheduleSave'>;
 	/** `imageQueries.getImageById`: an attached image's data, inlined for the model. */
 	getImageById: (id: string) => Promise<{ data: string; mediaType: string } | undefined>;
-	/** Renders the project system prompt for the run (`_buildDefaultSystemPrompt`). */
+	/** Renders the clinic system prompt for the run (`_buildDefaultSystemPrompt`). */
 	buildSystemPrompt: (args: { toolNames: string[]; timezone?: string }) => Promise<string>;
-	/** `skillService.getSkillContent`: the raw file of a project skill mentioned with `/`. */
+	/** `skillService.getSkillContent`: the raw file of a clinic skill mentioned with `/`. */
 	getSkillContent?: (skillName: string) => string | null;
 	/** `memoryService.safeScheduleMemoryExtraction`, called once the request reaches the model. */
 	scheduleMemoryExtraction?: (args: { messages: UIMessage[]; provider: LlmProvider; modelId: string }) => void;
@@ -151,7 +151,7 @@ export class AgentManager {
 				sessionId: this.chat.id,
 				userId: this.chat.userId,
 				tags: [this._modelSelection.provider],
-				projectId: this.chat.projectId,
+				clinicId: this.chat.clinicId,
 				model: this._modelSelection.modelId,
 			}),
 		});
@@ -213,7 +213,7 @@ export class AgentManager {
 			error = err;
 			logger.error(`Agent stream error: ${String(err)}`, {
 				source: 'agent',
-				projectId: this.chat.projectId,
+				clinicId: this.chat.clinicId,
 				context: { chatId: this.chat.id, modelId: this._modelSelection.modelId },
 			});
 			return formatErrorMessageForUI(err);
@@ -266,7 +266,7 @@ export class AgentManager {
 				} catch (persistError) {
 					logger.error(`Failed to save the assistant message: ${String(persistError)}`, {
 						source: 'agent',
-						projectId: this.chat.projectId,
+						clinicId: this.chat.clinicId,
 						context: { chatId: this.chat.id },
 					});
 				} finally {
@@ -337,7 +337,7 @@ export class AgentManager {
 		this._generateTitle(userMessageText).catch((err) => {
 			logger.error(`Title generation failed: ${String(err)}`, {
 				source: 'agent',
-				projectId: this.chat.projectId,
+				clinicId: this.chat.clinicId,
 				context: { chatId: this.chat.id },
 			});
 		});
@@ -345,16 +345,16 @@ export class AgentManager {
 
 	private async _generateTitle(userMessageText: string): Promise<void> {
 		const { llm, chats } = this._deps;
-		const pinned = await llm.resolveDefaultModelSelection(this.chat.projectId, 'title');
+		const pinned = await llm.resolveDefaultModelSelection(this.chat.clinicId, 'title');
 		const provider: LlmProvider = pinned?.provider ?? this._modelSelection.provider;
 		const summaryModelId =
 			pinned?.modelId ??
 			(await llm.resolveAnnotationModelId(
-				this.chat.projectId,
+				this.chat.clinicId,
 				this._modelSelection,
 				getProviderMeta(provider).summaryModelId,
 			));
-		const modelResult = await llm.resolveProviderModel(this.chat.projectId, provider, summaryModelId, false);
+		const modelResult = await llm.resolveProviderModel(this.chat.clinicId, provider, summaryModelId, false);
 		if (!modelResult) {
 			return;
 		}
@@ -387,7 +387,7 @@ export class AgentManager {
 	private _trackTitleGenerationInference(provider: LlmProvider, modelId: string, usage: TokenUsage): void {
 		this._deps.inferences.scheduleSave({
 			type: 'title_generation',
-			projectId: this.chat.projectId,
+			clinicId: this.chat.clinicId,
 			userId: this.chat.userId,
 			chatId: this.chat.id,
 			llmProvider: provider,
@@ -485,7 +485,7 @@ export class AgentManager {
 
 	private _tableContext(fqdn: string): string | undefined {
 		const content = getTableColumnsContent(
-			this._toolContext.projectFolder,
+			this._toolContext.clinicFolder,
 			fqdn,
 			this._toolContext.warehouseTableAccess,
 		);
@@ -495,7 +495,7 @@ export class AgentManager {
 	/** Only the first tables of a large schema come with their columns, the next ones are named, the rest counted. */
 	private _schemaContext(schemaKey: string): string | undefined {
 		const fqdns = listSchemaTableFqdns(
-			this._toolContext.projectFolder,
+			this._toolContext.clinicFolder,
 			schemaKey,
 			this._toolContext.warehouseTableAccess,
 		);

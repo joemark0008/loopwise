@@ -104,14 +104,14 @@ export type ModelInferenceSettings = z.infer<typeof modelInferenceSettingsSchema
 export const modelSettingsMapSchema = z.record(z.string(), modelInferenceSettingsSchema);
 export type ModelSettingsMap = z.infer<typeof modelSettingsMapSchema>;
 
-/** Where a project's models and their credentials come from: its database config, loopwise_config.yaml, the environment, or loopwise. */
+/** Where a clinic's models and their credentials come from: its database config, loopwise_config.yaml, the environment, or loopwise. */
 export type ModelSource = {
 	/** Serves the providers loopwise runs on its own keys. */
 	readonly managed?: boolean;
-	listProviders(projectId: string): Promise<ProviderModelSource[]>;
+	listProviders(clinicId: string): Promise<ProviderModelSource[]>;
 	resolveModel(request: ModelRequest): Promise<ProviderModelResult | null>;
 	/** Credentials for calling the provider directly. A source that must wrap every call leaves it out. */
-	resolveSettings?(projectId: string, provider: LlmProvider): Promise<ProviderSettings | null>;
+	resolveSettings?(clinicId: string, provider: LlmProvider): Promise<ProviderSettings | null>;
 };
 
 export type ProviderModelSource = {
@@ -122,7 +122,7 @@ export type ProviderModelSource = {
 };
 
 export type ModelRequest = {
-	projectId: string;
+	clinicId: string;
 	provider: LlmProvider;
 	modelId: string;
 	applyUserSettings: boolean;
@@ -304,7 +304,7 @@ export type ProviderMeta<P extends LlmProviderKind> = {
 	defaultBaseUrl?: string;
 	/** Set when the provider has no vendor endpoint to fall back on, so a base URL must be supplied. */
 	requiresBaseUrl?: boolean;
-	/** Set when loopwise runs the provider on its own keys and bills it through credits, so projects cannot configure it. */
+	/** Set when loopwise runs the provider on its own keys and bills it through credits, so clinics cannot configure it. */
 	managed?: boolean;
 	models: readonly ProviderModel<P>[];
 	extractorModelId: string;

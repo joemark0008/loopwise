@@ -186,9 +186,9 @@ export const replaceEnvVars = (fileContent: string, extraEnv: Record<string, str
 	return replaced;
 };
 
-/** Names whose effective value comes from the process environment because the project does not override them. */
-export const getProcessEnvSourcedVarNames = (names: string[], projectEnv: Record<string, string>): string[] => {
-	return names.filter((name) => !projectEnv[name] && !!process.env[name]);
+/** Names whose effective value comes from the process environment because the clinic does not override them. */
+export const getProcessEnvSourcedVarNames = (names: string[], clinicEnv: Record<string, string>): string[] => {
+	return names.filter((name) => !clinicEnv[name] && !!process.env[name]);
 };
 
 /** Truncate a string to a maximum length and add an ellipsis in the middle. */

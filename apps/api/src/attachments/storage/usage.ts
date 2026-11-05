@@ -1,5 +1,5 @@
 import { getStorage, isStorageEnabled } from './index.js';
-import { projectRoot, scopeRoot, userIdFromKey } from './keys.js';
+import { clinicRoot, scopeRoot, userIdFromKey } from './keys.js';
 import type { StorageObject, StorageScope } from './types.js';
 
 export interface StorageUsage {
@@ -11,7 +11,7 @@ export interface UserStorageUsage extends StorageUsage {
 	userId: string;
 }
 
-/** What one user keeps in one project. */
+/** What one user keeps in one clinic. */
 export const getScopeUsage = async (scope: StorageScope): Promise<StorageUsage> => {
 	if (!isStorageEnabled()) {
 		return emptyUsage();
@@ -20,15 +20,15 @@ export const getScopeUsage = async (scope: StorageScope): Promise<StorageUsage> 
 	return sumUsage(await getStorage().list(scopeRoot(scope)));
 };
 
-/** What every user of a project keeps, heaviest space first. */
-export const getProjectUsageByUser = async (projectId: string): Promise<UserStorageUsage[]> => {
+/** What every user of a clinic keeps, heaviest space first. */
+export const getClinicUsageByUser = async (clinicId: string): Promise<UserStorageUsage[]> => {
 	if (!isStorageEnabled()) {
 		return [];
 	}
 
 	const usageByUser = new Map<string, UserStorageUsage>();
 
-	for (const object of await getStorage().list(projectRoot(projectId))) {
+	for (const object of await getStorage().list(clinicRoot(clinicId))) {
 		const userId = userIdFromKey(object.key);
 		if (!userId) {
 			continue;

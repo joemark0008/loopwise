@@ -17,7 +17,7 @@ import fs from 'fs/promises';
 import { getRipgrepPath } from '../../agent/utils/ripgrep.js';
 import {
 	BUILT_IN_EXCLUSION_GLOBS,
-	isWithinProjectFolder,
+	isWithinClinicFolder,
 	loadLoopwiseignorePatterns,
 	shouldExcludeEntry,
 	toRealPath,
@@ -48,12 +48,12 @@ type RipgrepMatchEntry = {
 	};
 };
 
-export async function getFileTree(projectFolder: string): Promise<FileTreeEntry[]> {
-	return readDirectoryRecursive(projectFolder, projectFolder);
+export async function getFileTree(clinicFolder: string): Promise<FileTreeEntry[]> {
+	return readDirectoryRecursive(clinicFolder, clinicFolder);
 }
 
-export async function readFileContent(filePath: string, projectFolder: string): Promise<FileContentResponse> {
-	const { realPath } = resolveAndValidatePath(filePath, projectFolder);
+export async function readFileContent(filePath: string, clinicFolder: string): Promise<FileContentResponse> {
+	const { realPath } = resolveAndValidatePath(filePath, clinicFolder);
 	const editability = getFileEditability(filePath, realPath);
 	const contentBuffer = await readValidatedFile(realPath, filePath);
 	return {
@@ -69,13 +69,13 @@ export async function writeFileContent(
 	filePath: string,
 	content: string,
 	expectedHash: string,
-	projectFolder: string,
+	clinicFolder: string,
 ): Promise<FileWriteResponse> {
 	validateExpectedHash(expectedHash);
 	const contentBuffer = Buffer.from(content, 'utf-8');
 	validateContentBuffer(contentBuffer);
 
-	const { realPath, root } = resolveAndValidatePath(filePath, projectFolder);
+	const { realPath, root } = resolveAndValidatePath(filePath, clinicFolder);
 	assertFileEditable(filePath, realPath);
 	const currentContent = await readValidatedFile(realPath, filePath);
 	assertExpectedHash(currentContent, expectedHash);
@@ -99,10 +99,10 @@ export async function writeFileContent(
 }
 
 /** A new file; parent folders are created. It never replaces an existing file. */
-export function createContextFile(filePath: string, content: string, projectRoot: string): void {
+export function createContextFile(filePath: string, content: string, clinicRoot: string): void {
 	validateContentBuffer(Buffer.from(content, 'utf-8'));
 	try {
-		const { realPath, root } = resolveAndValidatePath(filePath, projectRoot);
+		const { realPath, root } = resolveAndValidatePath(filePath, clinicRoot);
 		const assertFree = () => {
 			if (fsSync.existsSync(realPath)) {
 				throw new HandlerError('CONFLICT', `${filePath} already exists.`);
@@ -116,17 +116,17 @@ export function createContextFile(filePath: string, content: string, projectRoot
 	}
 }
 
-/** Replaces a file directly under `projectRoot`, unless it changed since it was read. Returns the new hash. */
+/** Replaces a file directly under `clinicRoot`, unless it changed since it was read. Returns the new hash. */
 export function overwriteContextFile(
 	filePath: string,
 	content: string,
 	expectedHash: string,
-	projectRoot: string,
+	clinicRoot: string,
 ): string {
 	const contentBuffer = Buffer.from(content, 'utf-8');
 	validateContentBuffer(contentBuffer);
 	try {
-		const { realPath, root } = resolveAndValidatePath(filePath, projectRoot);
+		const { realPath, root } = resolveAndValidatePath(filePath, clinicRoot);
 		const assertUnchanged = () =>
 			assertExpectedHash(readValidatedContextFileSync(realPath, filePath), expectedHash);
 		assertUnchanged();
@@ -137,10 +137,10 @@ export function overwriteContextFile(
 	return hashContent(contentBuffer);
 }
 
-/** Deletes a file directly under `projectRoot`, unless it changed since it was read. */
-export function removeContextFile(filePath: string, expectedHash: string, projectRoot: string): void {
+/** Deletes a file directly under `clinicRoot`, unless it changed since it was read. */
+export function removeContextFile(filePath: string, expectedHash: string, clinicRoot: string): void {
 	try {
-		const { realPath } = resolveAndValidatePath(filePath, projectRoot);
+		const { realPath } = resolveAndValidatePath(filePath, clinicRoot);
 		assertExpectedHash(readValidatedContextFileSync(realPath, filePath), expectedHash);
 		fsSync.rmSync(realPath);
 	} catch (error) {
@@ -149,7 +149,7 @@ export function removeContextFile(filePath: string, expectedHash: string, projec
 }
 
 export function getFileEditability(filePath: string, realPath: string): FileEditability {
-	const projectPath = normalizeProjectPath(filePath);
+	const clinicPath = normalizeClinicPath(filePath);
 	if (hasGeneratedFrontmatter(realPath)) {
 		const annotationsPath = siblingPathIfExists(filePath, realPath, 'annotations.md');
 		if (annotationsPath) {
@@ -176,10 +176,10 @@ export function getFileEditability(filePath: string, realPath: string): FileEdit
 		});
 	}
 	if (
-		projectPath.startsWith('repos/') ||
-		projectPath.startsWith('docs/notion/') ||
-		projectPath.startsWith('docs/confluence/') ||
-		projectPath.startsWith('docs/obsidian/')
+		clinicPath.startsWith('repos/') ||
+		clinicPath.startsWith('docs/notion/') ||
+		clinicPath.startsWith('docs/confluence/') ||
+		clinicPath.startsWith('docs/obsidian/')
 	) {
 		return readOnly('synced-source', {
 			message: 'This path is replaced by context sync. Change its source in loopwise_config.yaml.',
@@ -199,12 +199,12 @@ export function assertFileEditable(filePath: string, realPath: string): void {
 	throw new HandlerError('FORBIDDEN', editability.guidance?.message ?? 'This file is read-only.');
 }
 
-export async function searchFileContents(query: string, projectFolder: string): Promise<FileContentSearchResponse> {
-	const args = buildSearchArguments(query, projectFolder);
-	return runContentSearch(getRipgrepPath(), args, projectFolder);
+export async function searchFileContents(query: string, clinicFolder: string): Promise<FileContentSearchResponse> {
+	const args = buildSearchArguments(query, clinicFolder);
+	return runContentSearch(getRipgrepPath(), args, clinicFolder);
 }
 
-function buildSearchArguments(query: string, projectFolder: string): string[] {
+function buildSearchArguments(query: string, clinicFolder: string): string[] {
 	const args = [
 		'--json',
 		'--no-heading',
@@ -226,26 +226,26 @@ function buildSearchArguments(query: string, projectFolder: string): string[] {
 		args.push('--glob', exclusionGlob);
 	}
 
-	for (const ignorePattern of loadLoopwiseignorePatterns(projectFolder)) {
+	for (const ignorePattern of loadLoopwiseignorePatterns(clinicFolder)) {
 		const cleanPattern = ignorePattern.endsWith('/') ? ignorePattern.slice(0, -1) : ignorePattern;
 		args.push('--glob', `!${cleanPattern}`);
 		args.push('--glob', `!${cleanPattern}/**`);
 	}
 
 	args.push('--regexp', query);
-	args.push('--', projectFolder);
+	args.push('--', clinicFolder);
 	return args;
 }
 
 function runContentSearch(
 	ripgrepPath: string,
 	args: string[],
-	projectFolder: string,
+	clinicFolder: string,
 ): Promise<FileContentSearchResponse> {
 	return new Promise((resolve, reject) => {
 		const results = new Map<string, FileContentSearchResult>();
 		const ripgrep = spawn(ripgrepPath, args, {
-			cwd: projectFolder,
+			cwd: clinicFolder,
 			env: { ...process.env },
 		});
 		let stdoutBuffer = '';
@@ -283,11 +283,11 @@ function runContentSearch(
 				}
 
 				const filePath = entry.data.path.text;
-				if (!isWithinProjectFolder(filePath, projectFolder)) {
+				if (!isWithinClinicFolder(filePath, clinicFolder)) {
 					return;
 				}
 
-				const virtualPath = toVirtualPath(filePath, projectFolder);
+				const virtualPath = toVirtualPath(filePath, clinicFolder);
 				const existing = results.get(virtualPath);
 				if (existing) {
 					existing.count += entry.data.submatches.length;
@@ -350,20 +350,20 @@ function runContentSearch(
 	});
 }
 
-async function readDirectoryRecursive(dirPath: string, projectFolder: string): Promise<FileTreeEntry[]> {
+async function readDirectoryRecursive(dirPath: string, clinicFolder: string): Promise<FileTreeEntry[]> {
 	const dirEntries = await fs.readdir(dirPath, { withFileTypes: true });
 
-	const parentRelativePath = path.relative(projectFolder, dirPath);
-	const filtered = dirEntries.filter((entry) => !shouldExcludeEntry(entry.name, parentRelativePath, projectFolder));
+	const parentRelativePath = path.relative(clinicFolder, dirPath);
+	const filtered = dirEntries.filter((entry) => !shouldExcludeEntry(entry.name, parentRelativePath, clinicFolder));
 
 	const entries: FileTreeEntry[] = [];
 
 	for (const entry of filtered) {
 		const fullPath = path.join(dirPath, entry.name);
-		const virtualPath = '/' + path.relative(projectFolder, fullPath);
+		const virtualPath = '/' + path.relative(clinicFolder, fullPath);
 
 		if (entry.isDirectory()) {
-			const children = await readDirectoryRecursive(fullPath, projectFolder);
+			const children = await readDirectoryRecursive(fullPath, clinicFolder);
 			entries.push({
 				name: entry.name,
 				path: virtualPath,
@@ -389,9 +389,9 @@ async function readDirectoryRecursive(dirPath: string, projectFolder: string): P
 	return entries;
 }
 
-export function resolveAndValidatePath(virtualPath: string, projectFolder: string): { realPath: string; root: string } {
+export function resolveAndValidatePath(virtualPath: string, clinicFolder: string): { realPath: string; root: string } {
 	try {
-		const root = canonicalizeWriteRoot(projectFolder);
+		const root = canonicalizeWriteRoot(clinicFolder);
 		const realPath = toRealPath(virtualPath, root, { resolveSymlinks: false });
 		assertNoSymlinkInWritePath(root, realPath, virtualPath);
 		return { realPath, root };
@@ -515,11 +515,11 @@ function siblingPathIfExists(filePath: string, realPath: string, siblingName: st
 }
 
 function normalizeVirtualPath(filePath: string): string {
-	return `/${normalizeProjectPath(filePath)}`;
+	return `/${normalizeClinicPath(filePath)}`;
 }
 
-function normalizeProjectPath(projectPath: string): string {
-	return projectPath.replaceAll('\\', '/').replace(/^\/+/, '');
+function normalizeClinicPath(clinicPath: string): string {
+	return clinicPath.replaceAll('\\', '/').replace(/^\/+/, '');
 }
 
 function toFileError(error: unknown, filePath: string): HandlerError {
@@ -531,7 +531,7 @@ function toFileError(error: unknown, filePath: string): HandlerError {
 	if (code === 'ENOENT') {
 		return new HandlerError('NOT_FOUND', `File not found: ${filePath}`);
 	}
-	// These messages quote the absolute path, which project members must not see.
+	// These messages quote the absolute path, which clinic members must not see.
 	if (code === 'EACCES' || code === 'EPERM' || code === 'EROFS' || code === 'ENOSPC') {
 		return new HandlerError(
 			'BAD_REQUEST',
@@ -544,7 +544,7 @@ function toFileError(error: unknown, filePath: string): HandlerError {
 
 	const message = error instanceof Error ? error.message : '';
 	if (
-		message.includes('outside the project folder') ||
+		message.includes('outside the clinic folder') ||
 		message.includes('outside the repository') ||
 		message.includes('protected .git metadata') ||
 		message.includes('protected environment file') ||

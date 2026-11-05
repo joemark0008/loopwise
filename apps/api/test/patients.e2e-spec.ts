@@ -68,9 +68,9 @@ describe('patient registration (e2e)', () => {
 			users[key] = { cookie: user.cookie, id: user.userId };
 		}
 
-		// The workspace organization owns the project, as in the seed: it is not a facility.
+		// The workspace organization owns the clinic, as in the seed: it is not a facility.
 		const workspace = await prisma.organization.findFirstOrThrow();
-		await prisma.project.create({ data: { name: 'Loopwise', type: 'local', path: '/tmp/x', orgId: workspace.id } });
+		await prisma.clinic.create({ data: { name: 'Loopwise', type: 'local', path: '/tmp/x', orgId: workspace.id } });
 		facilities.healthCenter = (
 			await prisma.organization.create({ data: { name: 'Health Center', slug: 'hc', type: 'clinic' } })
 		).id;

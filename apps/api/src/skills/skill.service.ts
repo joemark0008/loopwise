@@ -6,7 +6,7 @@ import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
 import matter from 'gray-matter';
 
 import { truncateMiddle } from '../agent/utils/utils.js';
-import { ProjectRepository } from '../projects/project.repository.js';
+import { ClinicRepository } from '../clinics/clinic.repository.js';
 
 const logger = new Logger('SkillService');
 
@@ -32,8 +32,8 @@ const SKILLS_FOLDER_LOCATION = '/agent/skills';
 /** How long a load stays fresh without a watch event, which network volumes and other replicas never get. */
 const RELOAD_AFTER_MS = 5_000;
 
-interface ProjectSkills {
-	projectPath: string;
+interface ClinicSkills {
+	clinicPath: string;
 	skillsFolderPath: string;
 	skills: Skill[];
 	loadErrors: SkillLoadError[];
@@ -45,60 +45,60 @@ interface ProjectSkills {
 type SkillReadResult = { skill: Skill } | { loadError: SkillLoadError };
 
 /**
- * Port of upstream `services/skill.ts`: project skills are the Markdown files of `agent/skills/` (front matter
- * `name`/`description`), loaded once per project and reloaded by a file watcher. Editing them happens in the
+ * Port of upstream `services/skill.ts`: clinic skills are the Markdown files of `agent/skills/` (front matter
+ * `name`/`description`), loaded once per clinic and reloaded by a file watcher. Editing them happens in the
  * context explorer; this service only reads them.
  */
 @Injectable()
 export class SkillService implements OnModuleDestroy {
-	constructor(private readonly projects: ProjectRepository) {}
+	constructor(private readonly clinics: ClinicRepository) {}
 
-	private _projects = new Map<string, ProjectSkills>();
+	private _projects = new Map<string, ClinicSkills>();
 	private _initPromises = new Map<string, Promise<void>>();
 
-	public async initializeSkills(projectId: string): Promise<void> {
-		const known = this._projects.get(projectId);
+	public async initializeSkills(clinicId: string): Promise<void> {
+		const known = this._projects.get(clinicId);
 		if (known) {
 			if (Date.now() - known.loadedAt > RELOAD_AFTER_MS) {
-				this.reloadSkills(projectId);
+				this.reloadSkills(clinicId);
 			}
 			return;
 		}
 
-		let initPromise = this._initPromises.get(projectId);
+		let initPromise = this._initPromises.get(clinicId);
 		if (!initPromise) {
-			initPromise = this._initialize(projectId).catch((err) => {
-				this._initPromises.delete(projectId);
+			initPromise = this._initialize(clinicId).catch((err) => {
+				this._initPromises.delete(clinicId);
 				throw err;
 			});
-			this._initPromises.set(projectId, initPromise);
+			this._initPromises.set(clinicId, initPromise);
 		}
 
 		return initPromise;
 	}
 
 	/** Reads the skills folder now, and starts watching it if it only appeared after the first load. */
-	public reloadSkills(projectId: string): void {
-		this._loadSkills(projectId);
-		if (!this._projects.get(projectId)?.fileWatcher) {
-			this._setupFileWatcher(projectId);
+	public reloadSkills(clinicId: string): void {
+		this._loadSkills(clinicId);
+		if (!this._projects.get(clinicId)?.fileWatcher) {
+			this._setupFileWatcher(clinicId);
 		}
 	}
 
-	public getSkills(projectId: string): Skill[] {
-		return this._projects.get(projectId)?.skills ?? [];
+	public getSkills(clinicId: string): Skill[] {
+		return this._projects.get(clinicId)?.skills ?? [];
 	}
 
-	public getSkill(projectId: string, skillName: string): Skill | undefined {
-		return this.getSkills(projectId).find((skill) => skill.name === skillName.trim());
+	public getSkill(clinicId: string, skillName: string): Skill | undefined {
+		return this.getSkills(clinicId).find((skill) => skill.name === skillName.trim());
 	}
 
-	public getSkillLoadErrors(projectId: string): SkillLoadError[] {
-		return this._projects.get(projectId)?.loadErrors ?? [];
+	public getSkillLoadErrors(clinicId: string): SkillLoadError[] {
+		return this._projects.get(clinicId)?.loadErrors ?? [];
 	}
 
-	public getSkillContent(projectId: string, skillName: string): string | null {
-		const entry = this._projects.get(projectId);
+	public getSkillContent(clinicId: string, skillName: string): string | null {
+		const entry = this._projects.get(clinicId);
 		if (!entry) {
 			return null;
 		}
@@ -108,7 +108,7 @@ export class SkillService implements OnModuleDestroy {
 			return null;
 		}
 
-		const realFilePath = this._resolveSkillFile(entry, join(entry.projectPath, skill.location));
+		const realFilePath = this._resolveSkillFile(entry, join(entry.clinicPath, skill.location));
 		if (!realFilePath) {
 			return null;
 		}
@@ -121,8 +121,8 @@ export class SkillService implements OnModuleDestroy {
 		}
 	}
 
-	public getSkillBody(projectId: string, skillName: string): string | null {
-		const rawContent = this.getSkillContent(projectId, skillName);
+	public getSkillBody(clinicId: string, skillName: string): string | null {
+		const rawContent = this.getSkillContent(clinicId, skillName);
 		if (!rawContent) {
 			return null;
 		}
@@ -133,13 +133,13 @@ export class SkillService implements OnModuleDestroy {
 	 * Preloaded skills ride along in every request, so the set is capped: each skill body is truncated,
 	 * then skills are taken in the order the operator listed them, skipping any that no longer fit the total budget.
 	 */
-	public getPreloadedSkills(projectId: string, names: string[] = []): PreloadedSkill[] {
+	public getPreloadedSkills(clinicId: string, names: string[] = []): PreloadedSkill[] {
 		const preloaded: PreloadedSkill[] = [];
 		const dropped: string[] = [];
 		let totalChars = 0;
 
-		for (const skill of this._findSkillsByName(projectId, names)) {
-			const body = this.getSkillBody(projectId, skill.name);
+		for (const skill of this._findSkillsByName(clinicId, names)) {
+			const body = this.getSkillBody(clinicId, skill.name);
 			if (!body) {
 				continue;
 			}
@@ -163,34 +163,34 @@ export class SkillService implements OnModuleDestroy {
 		return preloaded;
 	}
 
-	private _findSkillsByName(projectId: string, names: string[]): Skill[] {
-		const skills = this.getSkills(projectId);
+	private _findSkillsByName(clinicId: string, names: string[]): Skill[] {
+		const skills = this.getSkills(clinicId);
 		return [...new Set(names)]
 			.map((name) => skills.find((skill) => skill.name === name))
 			.filter((skill): skill is Skill => skill !== undefined);
 	}
 
-	private async _initialize(projectId: string): Promise<void> {
-		const project = await this.projects.getProjectById(projectId);
-		const projectPath = project?.path || '';
-		const skillsFolderPath = join(projectPath, 'agent', 'skills');
+	private async _initialize(clinicId: string): Promise<void> {
+		const clinic = await this.clinics.getClinicById(clinicId);
+		const clinicPath = clinic?.path || '';
+		const skillsFolderPath = join(clinicPath, 'agent', 'skills');
 
-		this._projects.set(projectId, {
-			projectPath,
+		this._projects.set(clinicId, {
+			clinicPath,
 			skillsFolderPath,
 			skills: [],
 			loadErrors: [],
 			fileWatcher: null,
 			loadedAt: 0,
-			debouncedReload: debounce(() => this._loadSkills(projectId), 2000),
+			debouncedReload: debounce(() => this._loadSkills(clinicId), 2000),
 		});
 
-		this._loadSkills(projectId);
-		this._setupFileWatcher(projectId);
+		this._loadSkills(clinicId);
+		this._setupFileWatcher(clinicId);
 	}
 
-	private _loadSkills(projectId: string): void {
-		const entry = this._projects.get(projectId);
+	private _loadSkills(clinicId: string): void {
+		const entry = this._projects.get(clinicId);
 		if (!entry) {
 			return;
 		}
@@ -212,7 +212,7 @@ export class SkillService implements OnModuleDestroy {
 			}
 
 			const files = readdirSync(entry.skillsFolderPath).filter((f) => f.endsWith('.md'));
-			this._readSkills(projectId, files);
+			this._readSkills(clinicId, files);
 		} catch (error) {
 			logger.error(`Failed to load skills: ${String(error)}`);
 			entry.skills = [];
@@ -220,8 +220,8 @@ export class SkillService implements OnModuleDestroy {
 		}
 	}
 
-	private _readSkills(projectId: string, files: string[]): void {
-		const entry = this._projects.get(projectId);
+	private _readSkills(clinicId: string, files: string[]): void {
+		const entry = this._projects.get(clinicId);
 		if (!entry) {
 			return;
 		}
@@ -232,9 +232,9 @@ export class SkillService implements OnModuleDestroy {
 		entry.loadErrors = results.flatMap((result) => ('loadError' in result ? [result.loadError] : []));
 	}
 
-	private _readSkill(entry: ProjectSkills, file: string): SkillReadResult | null {
+	private _readSkill(entry: ClinicSkills, file: string): SkillReadResult | null {
 		const filePath = join(entry.skillsFolderPath, file);
-		const location = '/' + relative(entry.projectPath, filePath);
+		const location = '/' + relative(entry.clinicPath, filePath);
 		const realFilePath = this._resolveSkillFile(entry, filePath);
 		if (!realFilePath) {
 			return null;
@@ -257,14 +257,14 @@ export class SkillService implements OnModuleDestroy {
 
 	/**
 	 * Skill files, or the skills folder itself, may be symlinks from a synced repo,
-	 * so only files that really live in the skills folder inside the project are read.
+	 * so only files that really live in the skills folder inside the clinic are read.
 	 */
-	private _resolveSkillFile(entry: ProjectSkills, filePath: string): string | null {
+	private _resolveSkillFile(entry: ClinicSkills, filePath: string): string | null {
 		try {
 			const realFilePath = realpathSync(filePath);
-			const isInsideProject = isWithinDirectory(realpathSync(entry.projectPath), realFilePath);
+			const isInsideClinic = isWithinDirectory(realpathSync(entry.clinicPath), realFilePath);
 			const isInsideSkillsFolder = isWithinDirectory(realpathSync(entry.skillsFolderPath), realFilePath);
-			if (isInsideProject && isInsideSkillsFolder && statSync(realFilePath).isFile()) {
+			if (isInsideClinic && isInsideSkillsFolder && statSync(realFilePath).isFile()) {
 				return realFilePath;
 			}
 			logger.warn(`Ignoring skill file outside the skills folder: ${filePath}`);
@@ -281,8 +281,8 @@ export class SkillService implements OnModuleDestroy {
 		}
 	}
 
-	private _setupFileWatcher(projectId: string): void {
-		const entry = this._projects.get(projectId);
+	private _setupFileWatcher(clinicId: string): void {
+		const entry = this._projects.get(clinicId);
 		if (!entry || !existsSync(entry.skillsFolderPath)) {
 			return;
 		}
@@ -314,17 +314,17 @@ function dropDuplicateSkillNames(skills: Skill[]): Skill[] {
 
 /**
  * YAML errors append a multi-line excerpt of the file; the first line already carries the reason and position.
- * Filesystem errors quote the absolute path, which project members must not see, so the project root is masked.
+ * Filesystem errors quote the absolute path, which clinic members must not see, so the clinic root is masked.
  */
-function toLoadErrorMessage(error: unknown, entry: ProjectSkills): string {
+function toLoadErrorMessage(error: unknown, entry: ClinicSkills): string {
 	const message = error instanceof Error ? error.message : String(error);
 	const firstLine = message.split('\n')[0].trim();
-	return maskProjectPath(firstLine, entry.projectPath);
+	return maskClinicPath(firstLine, entry.clinicPath);
 }
 
-function maskProjectPath(message: string, projectPath: string): string {
-	const roots = new Set([projectPath, safeRealpath(projectPath)].filter((root) => root.length > 0));
-	return [...roots].reduce((masked, root) => masked.replaceAll(root, '<project>'), message);
+function maskClinicPath(message: string, clinicPath: string): string {
+	const roots = new Set([clinicPath, safeRealpath(clinicPath)].filter((root) => root.length > 0));
+	return [...roots].reduce((masked, root) => masked.replaceAll(root, '<clinic>'), message);
 }
 
 function safeRealpath(path: string): string {

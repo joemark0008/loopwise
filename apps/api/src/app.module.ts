@@ -24,6 +24,7 @@ import { PrescriptionsModule } from './clinical/prescriptions/prescriptions.modu
 import { ResultsModule } from './clinical/results/results.module.js';
 import { ClinicalDbModule } from './clinical/rls/clinical-db.module.js';
 import { WiseProposalsModule } from './clinical/wise-proposals/wise-proposals.module.js';
+import { ClinicsModule } from './clinics/clinics.module.js';
 import { RequestLoaders } from './common/dataloader/request-loaders.js';
 import { AllExceptionsFilter } from './common/errors/all-exceptions.filter.js';
 import type { GraphQLContext } from './common/graphql-context.js';
@@ -38,7 +39,6 @@ import { JobsModule } from './jobs/jobs.module.js';
 import { MemoryModule } from './memory/memory.module.js';
 import { ModelSettingsModule } from './model-settings/model-settings.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
-import { ProjectsModule } from './projects/projects.module.js';
 import { SetupModule } from './setup/setup.module.js';
 import { SkillsModule } from './skills/skills.module.js';
 import { SystemModule } from './system/system.module.js';
@@ -82,7 +82,7 @@ export const SCHEMA_FILE = path.join(import.meta.dirname, '..', 'schema.gql');
 		UsageModule,
 		UserManagementModule,
 		SystemModule,
-		ProjectsModule,
+		ClinicsModule,
 		AgentModule,
 		AttachmentsModule,
 		ChatsModule,

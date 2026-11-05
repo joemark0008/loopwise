@@ -9,8 +9,8 @@ import {
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod/v4';
 
+import { ClinicLlmConfigRepository } from '../agent/llm/clinic-llm-config.repository.js';
 import { getEnvApiKey, getEnvBaseUrls, getEnvProviders, LlmService } from '../agent/llm/llm.service.js';
-import { ProjectLlmConfigRepository } from '../agent/llm/project-llm-config.repository.js';
 import {
 	getDefaultModelId,
 	getProviderAuth,
@@ -28,7 +28,7 @@ import {
 import { extractConfiguredSemanticLayer } from '../agent/utils/loopwise-config.js';
 import { buildCredentialPreviews, previewApiKey } from '../agent/utils/utils.js';
 import { HandlerError } from '../common/errors/handler-error.js';
-import type { Prisma, Project, ProjectLlmConfig } from '../generated/prisma/client.js';
+import type { Clinic, ClinicLlmConfig, Prisma } from '../generated/prisma/client.js';
 
 const backgroundModelSelectionSchema = z.object({ provider: llmProviderSchema, modelId: z.string().min(1) });
 
@@ -87,10 +87,10 @@ interface ResolvedDefaultModel extends LlmSelectedModel {
 	name: string;
 }
 
-type AvailableModel = Awaited<ReturnType<LlmService['getProjectAvailableModels']>>[number];
+type AvailableModel = Awaited<ReturnType<LlmService['getClinicAvailableModels']>>[number];
 
 /**
- * Port of the model and agent settings procedures of upstream `trpc/project.routes.ts` (`getLlmConfigs`,
+ * Port of the model and agent settings procedures of upstream `trpc/clinic.routes.ts` (`getLlmConfigs`,
  * `upsertLlmConfig`, `deleteLlmConfig`, `getKnownModels`, `getDefaultModels`, `updateDefaultModels`,
  * `getDefaultChatModel`, `getAgentSettings`, `updateAgentSettings`) and of `services/default-models.service.ts`.
  * Not ported: the `llm` block of `loopwise_config.yaml` (no `configProviders`), messaging integrations (Phase 7, so no
@@ -99,14 +99,14 @@ type AvailableModel = Awaited<ReturnType<LlmService['getProjectAvailableModels']
 @Injectable()
 export class ModelSettingsService {
 	constructor(
-		private readonly configs: ProjectLlmConfigRepository,
+		private readonly configs: ClinicLlmConfigRepository,
 		private readonly llm: LlmService,
 	) {}
 
-	async getLlmConfigs(projectId: string) {
-		const configs = await this.configs.getProjectLlmConfigs(projectId);
+	async getLlmConfigs(clinicId: string) {
+		const configs = await this.configs.getClinicLlmConfigs(clinicId);
 		return {
-			projectConfigs: configs.map((config) => ({
+			clinicConfigs: configs.map((config) => ({
 				...toLlmConfig(config),
 				createdAt: config.createdAt,
 				updatedAt: config.updatedAt,
@@ -117,12 +117,12 @@ export class ModelSettingsService {
 		};
 	}
 
-	async upsertLlmConfig(projectId: string, rawInput: unknown) {
+	async upsertLlmConfig(clinicId: string, rawInput: unknown) {
 		const input = parse(upsertLlmConfigSchema, rawInput);
 		if (isManagedProvider(input.provider)) {
 			throw new HandlerError('BAD_REQUEST', 'The managed provider is configured by Loopwise.');
 		}
-		const existingConfig = await this.configs.getProjectLlmConfigByProvider(projectId, input.provider);
+		const existingConfig = await this.configs.getClinicLlmConfigByProvider(clinicId, input.provider);
 		const envApiKey = getEnvApiKey(input.provider);
 
 		const hasNewCredentials = Object.values(input.credentials ?? {}).some(Boolean);
@@ -156,8 +156,8 @@ export class ModelSettingsService {
 				)
 			: undefined;
 
-		const config = await this.configs.upsertProjectLlmConfig({
-			projectId,
+		const config = await this.configs.upsertClinicLlmConfig({
+			clinicId,
 			provider: input.provider,
 			apiKey,
 			credentials: credentials as Prisma.InputJsonValue | undefined,
@@ -169,8 +169,8 @@ export class ModelSettingsService {
 		return toLlmConfig(config);
 	}
 
-	async deleteLlmConfig(projectId: string, provider: unknown): Promise<void> {
-		await this.configs.deleteProjectLlmConfig(projectId, parse(llmProviderSchema, provider));
+	async deleteLlmConfig(clinicId: string, provider: unknown): Promise<void> {
+		await this.configs.deleteClinicLlmConfig(clinicId, parse(llmProviderSchema, provider));
 	}
 
 	getKnownModels() {
@@ -178,45 +178,45 @@ export class ModelSettingsService {
 	}
 
 	/** Upstream `getDefaultModels`: the overview, with no messaging integrations or MCP endpoint yet. */
-	async getDefaultModels(projectId: string) {
+	async getDefaultModels(clinicId: string) {
 		return {
-			...(await this.getDefaultModelsOverview(projectId)),
+			...(await this.getDefaultModelsOverview(clinicId)),
 			integrations: [],
 			mcpEndpointEnabled: false,
 			mcpSubAgentModel: null,
 		};
 	}
 
-	async updateDefaultModels(projectId: string, rawSettings: unknown): Promise<DefaultModelSettings> {
+	async updateDefaultModels(clinicId: string, rawSettings: unknown): Promise<DefaultModelSettings> {
 		const settings = parse(defaultModelSettingsSchema, rawSettings) as DefaultModelSettings;
-		await this.configs.updateDefaultModelSettings(projectId, settings as unknown as Prisma.InputJsonValue);
+		await this.configs.updateDefaultModelSettings(clinicId, settings as unknown as Prisma.InputJsonValue);
 		return settings;
 	}
 
-	getAvailableModels(projectId: string) {
-		return this.llm.getProjectAvailableModels(projectId);
+	getAvailableModels(clinicId: string) {
+		return this.llm.getClinicAvailableModels(clinicId);
 	}
 
-	getDefaultChatModel(projectId: string): Promise<LlmSelectedModel | null> {
-		return this.llm.resolveDefaultChatModel(projectId);
+	getDefaultChatModel(clinicId: string): Promise<LlmSelectedModel | null> {
+		return this.llm.resolveDefaultChatModel(clinicId);
 	}
 
-	async getAgentSettings(project: Project) {
-		const settings = (await this.configs.getAgentSettings(project.id)) as AgentSettings | null;
+	async getAgentSettings(clinic: Clinic) {
+		const settings = (await this.configs.getAgentSettings(clinic.id)) as AgentSettings | null;
 		return {
 			...settings,
 			capabilities: {
 				pythonSandbox: false,
 				sandbox: false,
-				semanticLayer: project.path ? extractConfiguredSemanticLayer(project.path) !== null : false,
+				semanticLayer: clinic.path ? extractConfiguredSemanticLayer(clinic.path) !== null : false,
 			},
 		};
 	}
 
 	/** Upstream's route merges each section into the stored settings, then `updateAgentSettings` merges again. */
-	async updateAgentSettings(projectId: string, rawInput: unknown): Promise<AgentSettings> {
+	async updateAgentSettings(clinicId: string, rawInput: unknown): Promise<AgentSettings> {
 		const input = parse(updateAgentSettingsSchema, rawInput);
-		const existing = ((await this.configs.getAgentSettings(projectId)) as AgentSettings | null) ?? {};
+		const existing = ((await this.configs.getAgentSettings(clinicId)) as AgentSettings | null) ?? {};
 		const merged: AgentSettings = {
 			memoryEnabled: input.memoryEnabled ?? existing.memoryEnabled,
 			mapEnabled: input.mapEnabled ?? existing.mapEnabled,
@@ -236,17 +236,17 @@ export class ModelSettingsService {
 			pythonExecution: { ...existing.pythonExecution, ...merged.pythonExecution },
 			subagent: { ...existing.subagent, ...merged.subagent },
 		};
-		await this.configs.updateAgentSettings(projectId, next as unknown as Prisma.InputJsonValue);
+		await this.configs.updateAgentSettings(clinicId, next as unknown as Prisma.InputJsonValue);
 		return next;
 	}
 
 	/** Port of upstream `getDefaultModelsOverview`: settings and catalog loaded once, every default derived. */
-	private async getDefaultModelsOverview(projectId: string) {
+	private async getDefaultModelsOverview(clinicId: string) {
 		const [settings, availableModels] = await Promise.all([
-			this.configs.getDefaultModelSettings(projectId) as Promise<DefaultModelSettings | null>,
-			this.llm.getProjectAvailableModels(projectId),
+			this.configs.getDefaultModelSettings(clinicId) as Promise<DefaultModelSettings | null>,
+			this.llm.getClinicAvailableModels(clinicId),
 		]);
-		const chat = await this.llm.resolveDefaultChatModel(projectId);
+		const chat = await this.llm.resolveDefaultChatModel(clinicId);
 		const named = (selection: LlmSelectedModel): ResolvedDefaultModel => ({
 			...selection,
 			name: nameModel(availableModels, selection),
@@ -257,21 +257,21 @@ export class ModelSettingsService {
 			chatModel: chat ? named(chat) : null,
 			builtInDefaults: {
 				chat: availableModels.length > 0 ? named(availableModels[0]) : null,
-				categories: chat ? await this.resolveBuiltInTaskModels(projectId, chat, named) : {},
+				categories: chat ? await this.resolveBuiltInTaskModels(clinicId, chat, named) : {},
 			},
 		};
 	}
 
 	/** Upstream `resolveBuiltInTaskModels`: what each background task falls back to when nothing is pinned. */
 	private async resolveBuiltInTaskModels(
-		projectId: string,
+		clinicId: string,
 		chat: LlmSelectedModel,
 		named: (selection: LlmSelectedModel) => ResolvedDefaultModel,
 	): Promise<Partial<Record<BackgroundModelCategory, ResolvedDefaultModel>>> {
-		const taskProvider = await this.llm.getProjectModelProvider(projectId);
+		const taskProvider = await this.llm.getClinicModelProvider(clinicId);
 		const annotationModel = async (fallbackModelId: string): Promise<LlmSelectedModel> => ({
 			provider: chat.provider,
-			modelId: await this.llm.resolveAnnotationModelId(projectId, chat, fallbackModelId),
+			modelId: await this.llm.resolveAnnotationModelId(clinicId, chat, fallbackModelId),
 		});
 		const [title, extractor] = await Promise.all([
 			taskProvider
@@ -291,7 +291,7 @@ export class ModelSettingsService {
 	}
 }
 
-function toLlmConfig(config: ProjectLlmConfig) {
+function toLlmConfig(config: ClinicLlmConfig) {
 	return {
 		id: config.id,
 		provider: config.provider as LlmProvider,
@@ -304,7 +304,7 @@ function toLlmConfig(config: ProjectLlmConfig) {
 	};
 }
 
-/** Names a model the way the picker does, falling back to the catalogue for models the project does not list. */
+/** Names a model the way the picker does, falling back to the catalogue for models the clinic does not list. */
 function nameModel(availableModels: AvailableModel[], { provider, modelId }: LlmSelectedModel): string {
 	const listed = availableModels.find((model) => model.provider === provider && model.modelId === modelId);
 	return listed?.name ?? getProviderMeta(provider).models.find((model) => model.id === modelId)?.name ?? modelId;

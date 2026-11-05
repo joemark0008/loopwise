@@ -23,20 +23,20 @@ const ANSWER = 'Attach the PDF and I will read the results from it.';
 describe('agent chat (e2e)', () => {
 	let app: NestExpressApplication;
 	let cookie: string[] = [];
-	let projectId = '';
+	let clinicId = '';
 	let chatId = '';
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		vi.spyOn(app.get(LlmService, { strict: false }), 'resolveProviderModel').mockResolvedValue(scriptedModel());
 
 		({ cookie } = await createTestUser(app, { name: 'Ada', email: 'ada@example.com', password: 'Sup3r-secret!' }));
 
-		const project = await graphql('mutation { createProject(input: { name: "Clinic" }) { id } }');
-		projectId = project.body.data.createProject.id;
+		const clinic = await graphql('mutation { createClinic(input: { name: "Clinic" }) { id } }');
+		clinicId = clinic.body.data.createClinic.id;
 	});
 
 	afterAll(async () => {
@@ -47,14 +47,14 @@ describe('agent chat (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	it('streams the run as an AI SDK UI message stream', async () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({ message: { text: 'Can you read my old lab results?' }, model: MODEL })
 			.buffer(true)
 			.parse((response, callback) => {

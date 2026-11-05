@@ -35,9 +35,9 @@ export type ConfiguredSemanticLayer = {
 	database: string | null;
 };
 
-export function extractRequiredEnvVars(projectFolder: string): string[] {
-	const configPath = path.join(projectFolder, 'loopwise_config.yaml');
-	const mcpConfigPath = path.join(projectFolder, 'agent', 'mcps', 'mcp.json');
+export function extractRequiredEnvVars(clinicFolder: string): string[] {
+	const configPath = path.join(clinicFolder, 'loopwise_config.yaml');
+	const mcpConfigPath = path.join(clinicFolder, 'agent', 'mcps', 'mcp.json');
 	const vars = new Set<string>();
 
 	addEnvVarsFromFile(configPath, LOOPWISE_CONFIG_ENV_PATTERN, vars);
@@ -66,36 +66,36 @@ function addEnvVarsFromFile(filePath: string, pattern: RegExp, vars: Set<string>
 	}
 }
 
-export function extractConfiguredRepos(projectFolder: string): LinkedContextRepo[] {
-	return configuredReposFrom(loadProjectConfig(projectFolder));
+export function extractConfiguredRepos(clinicFolder: string): LinkedContextRepo[] {
+	return configuredReposFrom(loadClinicConfig(clinicFolder));
 }
 
 /** Returns configured database templates, falling back to the default when unavailable. */
-export function extractConfiguredTemplates(projectFolder: string): string[] {
-	return configuredTemplatesFrom(loadProjectConfig(projectFolder));
+export function extractConfiguredTemplates(clinicFolder: string): string[] {
+	return configuredTemplatesFrom(loadClinicConfig(clinicFolder));
 }
 
-export function readProjectContext(projectFolder: string): {
+export function readClinicContext(clinicFolder: string): {
 	repos: LinkedContextRepo[];
 	templates: string[];
 	presence: ContextPresence;
 } {
-	const config = loadProjectConfig(projectFolder);
+	const config = loadClinicConfig(clinicFolder);
 	return {
 		repos: configuredReposFrom(config),
 		templates: configuredTemplatesFrom(config),
-		presence: extractContextPresence(projectFolder),
+		presence: extractContextPresence(clinicFolder),
 	};
 }
 
-/** Returns which filesystem-backed project context is available to read. */
-export function extractContextPresence(projectFolder: string): ContextPresence {
+/** Returns which filesystem-backed clinic context is available to read. */
+export function extractContextPresence(clinicFolder: string): ContextPresence {
 	return {
-		rules: fs.existsSync(path.join(projectFolder, 'RULES.md')),
-		semantics: hasDirectoryContent(path.join(projectFolder, 'semantics')),
-		docs: hasDirectoryContent(path.join(projectFolder, 'docs')),
-		notionDocs: hasDirectoryContent(path.join(projectFolder, 'docs', 'notion')),
-		databases: hasDirectoryContent(path.join(projectFolder, 'databases')),
+		rules: fs.existsSync(path.join(clinicFolder, 'RULES.md')),
+		semantics: hasDirectoryContent(path.join(clinicFolder, 'semantics')),
+		docs: hasDirectoryContent(path.join(clinicFolder, 'docs')),
+		notionDocs: hasDirectoryContent(path.join(clinicFolder, 'docs', 'notion')),
+		databases: hasDirectoryContent(path.join(clinicFolder, 'databases')),
 	};
 }
 
@@ -158,8 +158,8 @@ function configuredTemplatesFrom(config: unknown): string[] {
 	return resolvedTemplates.length > 0 ? resolvedTemplates : [...DEFAULT_DATABASE_TEMPLATES];
 }
 
-function loadProjectConfig(projectFolder: string): unknown {
-	const configPath = path.join(projectFolder, 'loopwise_config.yaml');
+function loadClinicConfig(clinicFolder: string): unknown {
+	const configPath = path.join(clinicFolder, 'loopwise_config.yaml');
 	return fs.existsSync(configPath) ? loadConfig(configPath) : null;
 }
 
@@ -192,8 +192,8 @@ function getDatabaseTemplates(database: Record<string, unknown>): string[] {
 	return templates.length === 0 || stringTemplates.length > 0 ? stringTemplates : [...DEFAULT_DATABASE_TEMPLATES];
 }
 
-export function extractConfiguredDatabases(projectFolder: string): ConfiguredDatabase[] {
-	const configPath = path.join(projectFolder, 'loopwise_config.yaml');
+export function extractConfiguredDatabases(clinicFolder: string): ConfiguredDatabase[] {
+	const configPath = path.join(clinicFolder, 'loopwise_config.yaml');
 	if (!fs.existsSync(configPath)) {
 		return [];
 	}
@@ -233,9 +233,9 @@ export function extractConfiguredDatabases(projectFolder: string): ConfiguredDat
 	});
 }
 
-/** The `semantic_layer` section of loopwise_config.yaml, or null when the project declares none. */
-export function extractConfiguredSemanticLayer(projectFolder: string): ConfiguredSemanticLayer | null {
-	const configPath = path.join(projectFolder, 'loopwise_config.yaml');
+/** The `semantic_layer` section of loopwise_config.yaml, or null when the clinic declares none. */
+export function extractConfiguredSemanticLayer(clinicFolder: string): ConfiguredSemanticLayer | null {
+	const configPath = path.join(clinicFolder, 'loopwise_config.yaml');
 	if (!fs.existsSync(configPath)) {
 		return null;
 	}

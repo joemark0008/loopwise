@@ -34,7 +34,7 @@ export class FeedbackService {
 		});
 	}
 
-	listRecent(projectId: string, limit = 10): Promise<FeedbackWithDetails[]> {
-		return this.feedbacks.listRecentFeedbacks(projectId, limit);
+	listRecent(clinicId: string, limit = 10): Promise<FeedbackWithDetails[]> {
+		return this.feedbacks.listRecentFeedbacks(clinicId, limit);
 	}
 }

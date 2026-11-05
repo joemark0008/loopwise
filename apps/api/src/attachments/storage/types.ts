@@ -5,10 +5,10 @@ export type StorageBackendSetting = StorageBackend | 'none';
 
 /**
  * Identifies the space a set of files belongs to. Every key is built from a
- * scope, so callers can never reach another user's or project's files.
+ * scope, so callers can never reach another user's or clinic's files.
  */
 export interface StorageScope {
-	projectId: string;
+	clinicId: string;
 	userId: string;
 }
 

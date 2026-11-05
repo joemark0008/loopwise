@@ -123,7 +123,7 @@ export class SavedUsagePeriod {
 	granularity: string;
 }
 
-@ObjectType({ description: 'The usage period the user picked in the project, and the periods they saved.' })
+@ObjectType({ description: 'The usage period the user picked in the clinic, and the periods they saved.' })
 export class UsagePeriodSettings {
 	@Field(() => UsagePeriodSelection, { nullable: true })
 	selection?: UsagePeriodSelection | null;
@@ -141,7 +141,7 @@ export class DeletedSavedUsagePeriod {
 	selection?: UsagePeriodSelection | null;
 }
 
-@ObjectType({ description: 'A user with chats in the project, for the usage filters.' })
+@ObjectType({ description: 'A user with chats in the clinic, for the usage filters.' })
 export class UsageUserFacet {
 	@Field()
 	userName: string;

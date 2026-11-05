@@ -3,19 +3,19 @@ import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 
 import { decryptSecret, encryptSecret } from '../../common/utils/encryption.js';
 import { ConfigService } from '../../config/config.service.js';
-import type { Prisma, ProjectLlmConfig } from '../../generated/prisma/client.js';
+import type { ClinicLlmConfig, Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
 /** Marks an encrypted value, so rows saved before encryption (plaintext) are told apart and still read. */
 const ENCRYPTED_PREFIX = 'enc:v1:';
 
 /**
- * Port of upstream `queries/project-llm-config.queries.ts`. `apiKey` and the `credentials` values are encrypted
+ * Port of upstream `queries/clinic-llm-config.queries.ts`. `apiKey` and the `credentials` values are encrypted
  * at rest with the app secret (like the warehouse credentials); every read here returns them decrypted.
  */
 @Injectable()
-export class ProjectLlmConfigRepository implements OnModuleInit {
-	private readonly logger = new Logger(ProjectLlmConfigRepository.name);
+export class ClinicLlmConfigRepository implements OnModuleInit {
+	private readonly logger = new Logger(ClinicLlmConfigRepository.name);
 
 	constructor(
 		private readonly prisma: PrismaService,
@@ -24,7 +24,7 @@ export class ProjectLlmConfigRepository implements OnModuleInit {
 
 	/** Encrypts rows saved before encryption at rest. Idempotent: encrypted values are skipped. */
 	async onModuleInit(): Promise<void> {
-		const rows = await this.prisma.projectLlmConfig.findMany({
+		const rows = await this.prisma.clinicLlmConfig.findMany({
 			select: { id: true, apiKey: true, credentials: true },
 		});
 		let count = 0;
@@ -34,7 +34,7 @@ export class ProjectLlmConfigRepository implements OnModuleInit {
 			if (isEncrypted(row.apiKey) && !plainCredentials) {
 				continue;
 			}
-			await this.prisma.projectLlmConfig.update({
+			await this.prisma.clinicLlmConfig.update({
 				where: { id: row.id },
 				data: {
 					apiKey: this.encrypt(row.apiKey),
@@ -48,21 +48,21 @@ export class ProjectLlmConfigRepository implements OnModuleInit {
 		}
 	}
 
-	async getProjectLlmConfigs(projectId: string): Promise<ProjectLlmConfig[]> {
-		const configs = await this.prisma.projectLlmConfig.findMany({ where: { projectId } });
+	async getClinicLlmConfigs(clinicId: string): Promise<ClinicLlmConfig[]> {
+		const configs = await this.prisma.clinicLlmConfig.findMany({ where: { clinicId } });
 		return configs.map((config) => this.decryptConfig(config));
 	}
 
-	async getProjectLlmConfigByProvider(projectId: string, provider: LlmProvider): Promise<ProjectLlmConfig | null> {
-		const config = await this.prisma.projectLlmConfig.findUnique({
-			where: { projectId_provider: { projectId, provider } },
+	async getClinicLlmConfigByProvider(clinicId: string, provider: LlmProvider): Promise<ClinicLlmConfig | null> {
+		const config = await this.prisma.clinicLlmConfig.findUnique({
+			where: { clinicId_provider: { clinicId, provider } },
 		});
 		return config && this.decryptConfig(config);
 	}
 
 	/** A null `apiKey` keeps the stored key. */
-	async upsertProjectLlmConfig(config: {
-		projectId: string;
+	async upsertClinicLlmConfig(config: {
+		clinicId: string;
 		provider: LlmProvider;
 		apiKey: string | null;
 		enabledModels: string[];
@@ -70,7 +70,7 @@ export class ProjectLlmConfigRepository implements OnModuleInit {
 		baseUrl: string | null;
 		credentials?: Prisma.InputJsonValue | null;
 		modelSettings?: Prisma.InputJsonValue;
-	}): Promise<ProjectLlmConfig> {
+	}): Promise<ClinicLlmConfig> {
 		const apiKey = config.apiKey === null ? null : this.encrypt(config.apiKey);
 		const shared = {
 			enabledModels: config.enabledModels,
@@ -87,10 +87,10 @@ export class ProjectLlmConfigRepository implements OnModuleInit {
 								? ({} as Prisma.InputJsonValue)
 								: this.encryptCredentials(config.credentials),
 					};
-		const saved = await this.prisma.projectLlmConfig.upsert({
-			where: { projectId_provider: { projectId: config.projectId, provider: config.provider } },
+		const saved = await this.prisma.clinicLlmConfig.upsert({
+			where: { clinicId_provider: { clinicId: config.clinicId, provider: config.provider } },
 			create: {
-				projectId: config.projectId,
+				clinicId: config.clinicId,
 				provider: config.provider,
 				apiKey: apiKey ?? '',
 				...shared,
@@ -101,37 +101,37 @@ export class ProjectLlmConfigRepository implements OnModuleInit {
 		return this.decryptConfig(saved);
 	}
 
-	async deleteProjectLlmConfig(projectId: string, provider: LlmProvider): Promise<void> {
-		await this.prisma.projectLlmConfig.deleteMany({ where: { projectId, provider } });
+	async deleteClinicLlmConfig(clinicId: string, provider: LlmProvider): Promise<void> {
+		await this.prisma.clinicLlmConfig.deleteMany({ where: { clinicId, provider } });
 	}
 
-	async getDefaultModelSettings(projectId: string): Promise<unknown> {
-		const project = await this.prisma.project.findUnique({
-			where: { id: projectId },
+	async getDefaultModelSettings(clinicId: string): Promise<unknown> {
+		const clinic = await this.prisma.clinic.findUnique({
+			where: { id: clinicId },
 			select: { defaultModels: true },
 		});
-		return project?.defaultModels ?? null;
+		return clinic?.defaultModels ?? null;
 	}
 
-	async getAgentSettings(projectId: string): Promise<unknown> {
-		const project = await this.prisma.project.findUnique({
-			where: { id: projectId },
+	async getAgentSettings(clinicId: string): Promise<unknown> {
+		const clinic = await this.prisma.clinic.findUnique({
+			where: { id: clinicId },
 			select: { agentSettings: true },
 		});
-		return project?.agentSettings ?? null;
+		return clinic?.agentSettings ?? null;
 	}
 
-	async updateDefaultModelSettings(projectId: string, settings: Prisma.InputJsonValue): Promise<void> {
-		await this.prisma.project.update({ where: { id: projectId }, data: { defaultModels: settings } });
+	async updateDefaultModelSettings(clinicId: string, settings: Prisma.InputJsonValue): Promise<void> {
+		await this.prisma.clinic.update({ where: { id: clinicId }, data: { defaultModels: settings } });
 	}
 
-	async updateAgentSettings(projectId: string, settings: Prisma.InputJsonValue): Promise<void> {
-		await this.prisma.project.update({ where: { id: projectId }, data: { agentSettings: settings } });
+	async updateAgentSettings(clinicId: string, settings: Prisma.InputJsonValue): Promise<void> {
+		await this.prisma.clinic.update({ where: { id: clinicId }, data: { agentSettings: settings } });
 	}
 
-	/** A configured anthropic, else openai, provider (first half of upstream `getProjectModelProvider`). */
-	async getConfiguredTaskProvider(projectId: string): Promise<LlmProvider | undefined> {
-		const configs = await this.getProjectLlmConfigs(projectId);
+	/** A configured anthropic, else openai, provider (first half of upstream `getClinicModelProvider`). */
+	async getConfiguredTaskProvider(clinicId: string): Promise<LlmProvider | undefined> {
+		const configs = await this.getClinicLlmConfigs(clinicId);
 		return (['anthropic', 'openai'] as LlmProvider[]).find((provider) =>
 			configs.some((config) => config.provider === provider),
 		);
@@ -171,7 +171,7 @@ export class ProjectLlmConfigRepository implements OnModuleInit {
 		);
 	}
 
-	private decryptConfig(config: ProjectLlmConfig): ProjectLlmConfig {
+	private decryptConfig(config: ClinicLlmConfig): ClinicLlmConfig {
 		const credentials = asStringRecord(config.credentials);
 		return {
 			...config,

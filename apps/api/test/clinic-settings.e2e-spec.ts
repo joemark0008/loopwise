@@ -9,25 +9,25 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
 
 /**
- * The project and user settings ported at cut-over (Phase 8): `databaseObjects`, `displaySettings`,
- * `userPreferences`, `chatShareMembers` and `chatDownload` (upstream `project.getDatabaseObjects`, `get/updateDisplaySettings`,
- * `user.get/updatePreferences`, `project.getProjectMembersByChatId`, `chat.download`). Upstream had no tests for these procedures.
+ * The clinic and user settings ported at cut-over (Phase 8): `databaseObjects`, `displaySettings`,
+ * `userPreferences`, `chatShareMembers` and `chatDownload` (upstream `clinic.getDatabaseObjects`, `get/updateDisplaySettings`,
+ * `user.get/updatePreferences`, `clinic.getClinicMembersByChatId`, `chat.download`). Upstream had no tests for these procedures.
  */
-describe('project and user settings (e2e)', () => {
+describe('clinic and user settings (e2e)', () => {
 	let app: NestExpressApplication;
 	let cookie: string[] = [];
-	let projectId = '';
-	let projectPath = '';
+	let clinicId = '';
+	let clinicPath = '';
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		({ cookie } = await createTestUser(app, { name: 'Ada', email: 'ada@example.com', password: 'Sup3r-secret!' }));
-		const project = await graphql('mutation { createProject(input: { name: "Settings" }) { id path } }');
-		projectId = project.body.data.createProject.id;
-		projectPath = project.body.data.createProject.path;
+		const clinic = await graphql('mutation { createClinic(input: { name: "Settings" }) { id path } }');
+		clinicId = clinic.body.data.createClinic.id;
+		clinicPath = clinic.body.data.createClinic.path;
 	});
 
 	afterAll(async () => {
@@ -38,14 +38,14 @@ describe('project and user settings (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
-	it('lists the synced tables of the project', async () => {
+	it('lists the synced tables of the clinic', async () => {
 		const empty = await graphql('{ databaseObjects { fqdn } }');
 		expect(empty.body.data.databaseObjects).toEqual([]);
 
-		await mkdir(path.join(projectPath, 'databases/type=postgres/database=warehouse/schema=public/table=orders'), {
+		await mkdir(path.join(clinicPath, 'databases/type=postgres/database=warehouse/schema=public/table=orders'), {
 			recursive: true,
 		});
 		const res = await graphql('{ databaseObjects { type database schema table fqdn } }');

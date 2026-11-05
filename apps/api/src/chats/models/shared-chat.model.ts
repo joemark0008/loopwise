@@ -21,12 +21,12 @@ export class SharedChat {
 	chatId: string;
 
 	@Field()
-	projectId: string;
+	clinicId: string;
 
 	@Field()
 	userId: string;
 
-	@Field({ description: 'project or specific.' })
+	@Field({ description: 'clinic or specific.' })
 	visibility: string;
 
 	@Field()
@@ -70,7 +70,7 @@ export class ChatShareOptions {
 }
 
 @ObjectType({
-	description: 'A project member a chat can be shared with (upstream `project.getProjectMembersByChatId`).',
+	description: 'A clinic member a chat can be shared with (upstream `clinic.getClinicMembersByChatId`).',
 })
 export class ShareableMember {
 	@Field(() => ID)

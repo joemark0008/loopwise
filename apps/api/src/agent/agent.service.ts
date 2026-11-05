@@ -17,17 +17,17 @@ import { RULES_READER } from '../clinical/pathways/rules-reader.token.js';
 import { PATIENT_READER } from '../clinical/patients/patient-reader.token.js';
 import { REPORTS_READER } from '../clinical/reports/reports-reader.token.js';
 import { RESULTS_READER } from '../clinical/results/results-reader.token.js';
+import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import { ConfigService } from '../config/config.service.js';
-import type { Project } from '../generated/prisma/client.js';
+import type { Clinic } from '../generated/prisma/client.js';
 import { MemoryService } from '../memory/memory.service.js';
-import { ProjectRepository } from '../projects/project.repository.js';
 import { SkillService } from '../skills/skill.service.js';
 import { LlmInferenceService } from '../usage/llm-inference.service.js';
 import { WiseToolSettingsService } from '../wise-tools/wise-tool-settings.service.js';
 import { type AgentChat, AgentManager, type AgentProfile } from './agent-manager.js';
+import { ClinicLlmConfigRepository } from './llm/clinic-llm-config.repository.js';
 import { LlmService } from './llm/llm.service.js';
-import { ProjectLlmConfigRepository } from './llm/project-llm-config.repository.js';
 import { renderToMarkdown } from './markdown/render-to-markdown.js';
 import { ChatForkContextPrompt } from './prompts/chat-fork-context-prompt.js';
 import { renderSystemPrompt } from './prompts/render-system-prompt.js';
@@ -36,7 +36,7 @@ import { listChartPlugins } from './services/chart-plugin.js';
 import { CompactionService } from './services/compaction.js';
 import { tokenCounter } from './services/token-counter.js';
 import { readOnlyToolServices } from './services/tool-services.js';
-import { fullProjectContextAccess } from './services/user-group-context-access.service.js';
+import { fullClinicContextAccess } from './services/user-group-context-access.service.js';
 import { getSystemPromptOverride, hasLoopwisePromptPlaceholder, injectLoopwisePrompt } from './system-prompts.js';
 import { assertToolKinds, createWebSearchTools, getTools } from './tools/index.js';
 import type { AgentSettings } from './types/agent-settings.js';
@@ -77,9 +77,9 @@ export class AgentService {
 
 	constructor(
 		private readonly chats: ChatRepository,
-		private readonly projects: ProjectRepository,
+		private readonly clinics: ClinicRepository,
 		private readonly llm: LlmService,
-		private readonly llmConfigs: ProjectLlmConfigRepository,
+		private readonly llmConfigs: ClinicLlmConfigRepository,
 		private readonly compaction: CompactionService,
 		private readonly config: ConfigService,
 		private readonly images: ImageRepository,
@@ -100,22 +100,22 @@ export class AgentService {
 	/** `POST /api/agent`: `authorizeAgentRun` + `handleAgentRoute`. */
 	async handleAgentRequest(
 		userId: string,
-		currentProject: Project | null,
+		currentClinic: Clinic | null,
 		body: AgentRequest,
 	): Promise<AgentRequestResult> {
-		const projectId = await this.resolveProjectId(currentProject, body);
+		const clinicId = await this.resolveClinicId(currentClinic, body);
 		if (body.mode !== 'default') {
 			throw new HandlerError('FORBIDDEN', `Invalid ${body.mode} conversation`);
 		}
-		const userRole = await this.projects.getUserRoleInProject(projectId, userId);
+		const userRole = await this.clinics.getUserRoleInClinic(clinicId, userId);
 		if (!userRole || userRole === 'viewer') {
 			throw new HandlerError('FORBIDDEN', 'Viewers cannot send messages');
 		}
-		const model = await this.resolveModelSelection(projectId, body.model);
+		const model = await this.resolveModelSelection(clinicId, body.model);
 
-		const { chat, chatId, isNewChat, newMessageId } = await this.persistUserMessage(userId, projectId, body);
+		const { chat, chatId, isNewChat, newMessageId } = await this.persistUserMessage(userId, clinicId, body);
 		const agent = await this.create(
-			{ id: chatId, projectId, userId, forkMetadata: chat.forkMetadata },
+			{ id: chatId, clinicId, userId, forkMetadata: chat.forkMetadata },
 			model,
 			analyticsAgent,
 		);
@@ -126,7 +126,7 @@ export class AgentService {
 				newChat: isNewChat
 					? {
 							id: chatId,
-							projectId,
+							clinicId,
 							title: chat.title,
 							isStarred: chat.isStarred,
 							createdAt: chat.createdAt,
@@ -143,7 +143,7 @@ export class AgentService {
 	async create(chat: AgentChat, modelSelection: LlmSelectedModel, profile: AgentProfile): Promise<AgentManager> {
 		this.disposeAgent(chat.id);
 		const modelConfig = await this.llm.resolveProviderModel(
-			chat.projectId,
+			chat.clinicId,
 			modelSelection.provider,
 			modelSelection.modelId,
 		);
@@ -151,18 +151,18 @@ export class AgentService {
 			throw new HandlerError('BAD_REQUEST', 'The selected model could not be resolved.');
 		}
 		const [agentSettings, customBoundaries] = await Promise.all([
-			this.llmConfigs.getAgentSettings(chat.projectId) as Promise<AgentSettings | null>,
-			this.projects.getCustomBoundaries(chat.projectId),
-			this.safeInitializeSkills(chat.projectId),
+			this.llmConfigs.getAgentSettings(chat.clinicId) as Promise<AgentSettings | null>,
+			this.clinics.getCustomBoundaries(chat.clinicId),
+			this.safeInitializeSkills(chat.clinicId),
 		]);
 		const toolContext = await this.buildToolContext({
-			projectId: chat.projectId,
+			clinicId: chat.clinicId,
 			chatId: chat.id,
 			userId: chat.userId,
 			agentSettings,
 			modelSelection,
 		});
-		const webTools = await this.resolveWebTools(chat.projectId, modelSelection.provider, agentSettings);
+		const webTools = await this.resolveWebTools(chat.clinicId, modelSelection.provider, agentSettings);
 		// The web profile's tool set (upstream `analyticsToolsExcluding([])`) unless the profile brings its own, less the
 		// tools turned off in Wise settings (DESIGN.md §9.4): the model is never offered them, and the AI SDK refuses a
 		// call to a tool outside this set. Computed per run, so a toggle applies from the next message.
@@ -195,7 +195,7 @@ export class AgentService {
 					if (profile.systemPrompt) {
 						return profile.systemPrompt({ timezone });
 					}
-					return this.buildProjectSystemPrompt(
+					return this.buildClinicSystemPrompt(
 						toolContext,
 						toolNames,
 						timezone,
@@ -203,14 +203,14 @@ export class AgentService {
 						disabledTools,
 					);
 				},
-				getSkillContent: (skillName) => this.skills.getSkillContent(chat.projectId, skillName),
+				getSkillContent: (skillName) => this.skills.getSkillContent(chat.clinicId, skillName),
 				// A chart chat is about one patient: memories apply to every chat, so none are taken from it.
 				scheduleMemoryExtraction: toolContext.patientId
 					? undefined
 					: ({ messages, provider, modelId }) =>
 							this.memory.safeScheduleMemoryExtraction({
 								userId: chat.userId,
-								projectId: chat.projectId,
+								clinicId: chat.clinicId,
 								chatId: chat.id,
 								messages,
 								provider,
@@ -247,11 +247,11 @@ export class AgentService {
 		chatId: string;
 		model?: { provider: LlmProvider; modelId: string };
 	}): Promise<ContextUsage | null> {
-		const projectId = await this.chats.getChatProjectId(opts.chatId);
-		if (!projectId) {
+		const clinicId = await this.chats.getChatClinicId(opts.chatId);
+		if (!clinicId) {
 			return null;
 		}
-		const agentSettings = (await this.llmConfigs.getAgentSettings(projectId)) as AgentSettings | null;
+		const agentSettings = (await this.llmConfigs.getAgentSettings(clinicId)) as AgentSettings | null;
 		const tools = getTools(agentSettings) as Record<string, Tool>;
 		const uiMessages = markSupersededExecuteSqlParts(await this.chats.getChatMessages(opts.chatId));
 		const systemMessage: Omit<UIMessage, 'id'> = {
@@ -267,60 +267,60 @@ export class AgentService {
 		};
 	}
 
-	/** Upstream `_resolveWebTools`: the provider's web search (and fetch) tools when the project enables them. */
+	/** Upstream `_resolveWebTools`: the provider's web search (and fetch) tools when the clinic enables them. */
 	private async resolveWebTools(
-		projectId: string,
+		clinicId: string,
 		provider: LlmProvider,
 		agentSettings: AgentSettings | null,
 	): Promise<Record<string, unknown> | null> {
 		if (!agentSettings?.webSearch?.enabled) {
 			return null;
 		}
-		const settings = await this.llm.resolveProviderSettings(projectId, provider);
+		const settings = await this.llm.resolveProviderSettings(clinicId, provider);
 		if (!settings) {
 			return null;
 		}
 		return createWebSearchTools(provider, settings);
 	}
 
-	/** The chat's model, else the project default (upstream `_getResolvedLlmSelectedModel`). */
-	async resolveModelSelection(projectId: string, modelSelection?: LlmSelectedModel): Promise<LlmSelectedModel> {
+	/** The chat's model, else the clinic default (upstream `_getResolvedLlmSelectedModel`). */
+	async resolveModelSelection(clinicId: string, modelSelection?: LlmSelectedModel): Promise<LlmSelectedModel> {
 		if (modelSelection) {
 			return modelSelection;
 		}
-		const defaultModel = await this.llm.resolveDefaultChatModel(projectId);
+		const defaultModel = await this.llm.resolveDefaultChatModel(clinicId);
 		if (defaultModel) {
 			return defaultModel;
 		}
 		throw new HandlerError('BAD_REQUEST', 'No model config found');
 	}
 
-	/** The tool context of a chat outside a run, with the project's agent settings. */
-	async buildChatToolContext(opts: { projectId: string; userId: string; chatId: string }): Promise<ToolContext> {
-		const agentSettings = (await this.llmConfigs.getAgentSettings(opts.projectId)) as AgentSettings | null;
+	/** The tool context of a chat outside a run, with the clinic's agent settings. */
+	async buildChatToolContext(opts: { clinicId: string; userId: string; chatId: string }): Promise<ToolContext> {
+		const agentSettings = (await this.llmConfigs.getAgentSettings(opts.clinicId)) as AgentSettings | null;
 		return this.buildToolContext({ ...opts, agentSettings });
 	}
 
 	/** Upstream `buildToolContext`. */
 	async buildToolContext(opts: {
-		projectId: string;
+		clinicId: string;
 		userId: string;
 		chatId: string;
 		agentSettings: AgentSettings | null;
 		modelSelection?: LlmSelectedModel;
 	}): Promise<ToolContext> {
-		const project = await this.projects.getProjectById(opts.projectId);
-		if (!project?.path) {
-			throw new HandlerError('BAD_REQUEST', 'Project path does not exist.');
+		const clinic = await this.clinics.getClinicById(opts.clinicId);
+		if (!clinic?.path) {
+			throw new HandlerError('BAD_REQUEST', 'Clinic path does not exist.');
 		}
-		const access = fullProjectContextAccess();
+		const access = fullClinicContextAccess();
 		const patientId = (await this.chats.getChatPatient(opts.chatId))?.patientId ?? undefined;
 		return {
 			services: {
 				getQueryResultByQueryId: (chatId, queryId) => this.chats.getQueryResultByQueryId(chatId, queryId),
-				getProjectAvailableModels: (projectId) => this.llm.getProjectAvailableModels(projectId),
-				resolveProviderModel: (projectId, provider, modelId, applyUserSettings) =>
-					this.llm.resolveProviderModel(projectId, provider, modelId, applyUserSettings),
+				getClinicAvailableModels: (clinicId) => this.llm.getClinicAvailableModels(clinicId),
+				resolveProviderModel: (clinicId, provider, modelId, applyUserSettings) =>
+					this.llm.resolveProviderModel(clinicId, provider, modelId, applyUserSettings),
 				getImagesByChatId: (chatId) => this.images.getImagesByChatId(chatId),
 				recordLlmInference: (record) => this.inferences.scheduleSave(record),
 				// Read methods only, never the services: a tool can't reach a write even at runtime (DESIGN.md §9.1).
@@ -336,10 +336,10 @@ export class AgentService {
 					rules: this.rules,
 				}),
 			},
-			projectFolder: project.path,
+			clinicFolder: clinic.path,
 			chatId: opts.chatId,
 			userId: opts.userId,
-			projectId: opts.projectId,
+			clinicId: opts.clinicId,
 			...(patientId && { patientId }),
 			supportsCustomCharts: true,
 			agentSettings: opts.agentSettings,
@@ -361,8 +361,8 @@ export class AgentService {
 		};
 	}
 
-	/** `_buildProjectSystemPrompt`: the project's prompt override, or loopwise's prompt (with `{{loopwise}}` injection). */
-	private async buildProjectSystemPrompt(
+	/** `_buildClinicSystemPrompt`: the clinic's prompt override, or loopwise's prompt (with `{{loopwise}}` injection). */
+	private async buildClinicSystemPrompt(
 		toolContext: ToolContext,
 		toolNames: string[],
 		timezone?: string,
@@ -379,19 +379,19 @@ export class AgentService {
 		timezone?: string,
 		disabledTools: string[] = [],
 	): Promise<string> {
-		const override = getSystemPromptOverride(toolContext.projectFolder);
+		const override = getSystemPromptOverride(toolContext.clinicFolder);
 		if (override && !hasLoopwisePromptPlaceholder(override)) {
 			return override;
 		}
 		const memories = await this.memory.safeGetUserMemories(
 			toolContext.userId,
-			toolContext.projectId,
+			toolContext.clinicId,
 			toolContext.chatId,
 		);
 		const skills = this.skills
-			.getSkills(toolContext.projectId)
+			.getSkills(toolContext.clinicId)
 			.filter((skill) => isSkillGranted(toolContext.skillsAccess, skill.name));
-		const preloadedSkills = this.skills.getPreloadedSkills(toolContext.projectId, toolContext.preloadedSkillNames);
+		const preloadedSkills = this.skills.getPreloadedSkills(toolContext.clinicId, toolContext.preloadedSkillNames);
 		const currentPatient = toolContext.patientId
 			? await this.patients.getChartSummary(toolContext.userId, toolContext.patientId)
 			: null;
@@ -400,8 +400,8 @@ export class AgentService {
 			memories,
 			skills,
 			preloadedSkills,
-			userRules: getUserRules(toolContext.projectFolder, toolContext.userRulesGroupAccess),
-			customCharts: toolContext.supportsCustomCharts ? listChartPlugins(toolContext.projectFolder) : [],
+			userRules: getUserRules(toolContext.clinicFolder, toolContext.userRulesGroupAccess),
+			customCharts: toolContext.supportsCustomCharts ? listChartPlugins(toolContext.clinicFolder) : [],
 			timezone,
 			toolNames,
 			disabledTools,
@@ -420,32 +420,32 @@ export class AgentService {
 	}
 
 	/** Upstream `safeInitializeSkills`: a broken skills folder must not block the run. */
-	private async safeInitializeSkills(projectId: string): Promise<void> {
+	private async safeInitializeSkills(clinicId: string): Promise<void> {
 		try {
-			await this.skills.initializeSkills(projectId);
+			await this.skills.initializeSkills(clinicId);
 		} catch (error) {
-			this.logger.warn(`Failed to initialize skills for project ${projectId}: ${String(error)}`);
+			this.logger.warn(`Failed to initialize skills for clinic ${clinicId}: ${String(error)}`);
 		}
 	}
 
-	private async resolveProjectId(currentProject: Project | null, body: AgentRequest): Promise<string> {
+	private async resolveClinicId(currentClinic: Clinic | null, body: AgentRequest): Promise<string> {
 		if (body.chatId) {
-			const chatProjectId = await this.chats.getChatProjectId(body.chatId);
-			if (!chatProjectId) {
+			const chatClinicId = await this.chats.getChatClinicId(body.chatId);
+			if (!chatClinicId) {
 				throw new HandlerError('NOT_FOUND', `Chat with id ${body.chatId} not found.`);
 			}
-			return chatProjectId;
+			return chatClinicId;
 		}
-		if (currentProject) {
-			return currentProject.id;
+		if (currentClinic) {
+			return currentClinic.id;
 		}
-		throw new HandlerError('BAD_REQUEST', 'No project configured: create a project first.');
+		throw new HandlerError('BAD_REQUEST', 'No clinic configured: create a clinic first.');
 	}
 
 	/** `persistUserMessage`: a new chat, or a message appended to (or replacing one of) an existing chat. */
-	private async persistUserMessage(userId: string, projectId: string, body: AgentRequest) {
+	private async persistUserMessage(userId: string, clinicId: string, body: AgentRequest) {
 		const { message, messageToEditId } = body;
-		const scope: StorageScope = { projectId, userId };
+		const scope: StorageScope = { clinicId, userId };
 		const source = analyticsAgent.source;
 		let chatId = body.chatId;
 		let newMessageId: string;
@@ -459,7 +459,7 @@ export class AgentService {
 				{
 					title: createChatTitle(message),
 					userId,
-					projectId,
+					clinicId,
 					...(body.patientId && { patientId: body.patientId, surface: 'patient' }),
 				},
 				{ text: message.text, citation: message.citation, source },

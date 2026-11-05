@@ -17,8 +17,8 @@ import {
 	writeUserFile,
 } from './user-files.js';
 
-const scope = { projectId: 'proj-1', userId: 'user-1' };
-const otherUser = { projectId: 'proj-1', userId: 'user-2' };
+const scope = { clinicId: 'proj-1', userId: 'user-1' };
+const otherUser = { clinicId: 'proj-1', userId: 'user-2' };
 
 let root: string;
 let originalEnv: typeof process.env;
@@ -219,13 +219,13 @@ describe('listUserDirectory', () => {
 		]);
 	});
 
-	it('never shows another user in the same project', async () => {
+	it('never shows another user in the same clinic', async () => {
 		const names = (await listUserDirectory(scope, '')).map((entry) => entry.name);
 		expect(names).not.toContain('theirs.md');
 	});
 
 	it('returns nothing for a space that has never been written to', async () => {
-		expect(await listUserDirectory({ projectId: 'proj-9', userId: 'user-9' }, '')).toEqual([]);
+		expect(await listUserDirectory({ clinicId: 'proj-9', userId: 'user-9' }, '')).toEqual([]);
 	});
 });
 

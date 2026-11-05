@@ -5,9 +5,9 @@ import { JsonToSseTransformStream, UI_MESSAGE_STREAM_HEADERS } from 'ai';
 import type { Request, Response } from 'express';
 
 import type { AuthUser } from '../auth/auth.service.js';
-import { CurrentUser, SelectedProjectId } from '../common/decorators/current.decorator.js';
+import { ClinicRepository } from '../clinics/clinic.repository.js';
+import { CurrentUser, SelectedClinicId } from '../common/decorators/current.decorator.js';
 import { HandlerError } from '../common/errors/handler-error.js';
-import { ProjectRepository } from '../projects/project.repository.js';
 import { AgentService } from './agent.service.js';
 import { AgentRequestSchema } from './types/chat.js';
 import { trackAgentStreamDisconnect } from './utils/agent-stream-disconnect.js';
@@ -25,13 +25,13 @@ const KEEP_ALIVE_INTERVAL_MS = 10_000;
 export class AgentController {
 	constructor(
 		private readonly agentService: AgentService,
-		private readonly projects: ProjectRepository,
+		private readonly clinics: ClinicRepository,
 	) {}
 
 	@Post()
 	async stream(
 		@CurrentUser() user: AuthUser,
-		@SelectedProjectId() selectedProjectId: string | null,
+		@SelectedClinicId() selectedClinicId: string | null,
 		@Body() rawBody: unknown,
 		@Req() request: Request,
 		@Res() response: Response,
@@ -40,15 +40,15 @@ export class AgentController {
 		if (!parsed.success) {
 			throw new HandlerError('BAD_REQUEST', parsed.error.issues.map((issue) => issue.message).join('; '));
 		}
-		const currentProject = await this.projects.getProjectByUserId(user.id, selectedProjectId);
-		const result = await this.agentService.handleAgentRequest(user.id, currentProject, parsed.data);
+		const currentClinic = await this.clinics.getClinicByUserId(user.id, selectedClinicId);
+		const result = await this.agentService.handleAgentRequest(user.id, currentClinic, parsed.data);
 
 		const sse = trackAgentStreamDisconnect(withQueryResultPreviewsInStream(result.stream), {
 			request,
 			response,
 			agent: result.agent,
 			userId: user.id,
-			projectId: currentProject?.id,
+			clinicId: currentClinic?.id,
 			chatId: result.chatId,
 			modelId: result.modelId,
 		}).pipeThrough(new JsonToSseTransformStream());

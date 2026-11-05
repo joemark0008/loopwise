@@ -4,9 +4,9 @@ export const USER_GROUP_FEATURES = ['storyCreation', 'customStoryCreation', 'aut
 
 export type UserGroupFeature = (typeof USER_GROUP_FEATURES)[number];
 
-export const PROJECT_SHARING_PERMISSIONS = ['inherit', 'allowed', 'blocked'] as const;
+export const CLINIC_SHARING_PERMISSIONS = ['inherit', 'allowed', 'blocked'] as const;
 
-export type ProjectSharingPermission = (typeof PROJECT_SHARING_PERMISSIONS)[number];
+export type ClinicSharingPermission = (typeof CLINIC_SHARING_PERMISSIONS)[number];
 
 export interface ToolCallDensityPolicy {
 	defaultDensity: ToolCallDensity;
@@ -17,7 +17,7 @@ export interface UserGroupConfig {
 	features: UserGroupFeature[];
 	toolCallDensity: ToolCallDensityPolicy;
 	showAllSettings: boolean;
-	projectSharing: ProjectSharingPermission;
+	clinicSharing: ClinicSharingPermission;
 	preloadedSkills: string[];
 }
 
@@ -28,7 +28,8 @@ export type StoredUserGroupConfig =
 			features: UserGroupFeature[];
 			toolCallDensity: ToolCallDensityPolicy;
 			showAllSettings?: boolean;
-			projectSharing?: ProjectSharingPermission;
+			/** Stored under the key used before clinics were called clinics; read and written as `clinicSharing`. */
+			projectSharing?: ClinicSharingPermission;
 			preloadedSkills?: string[];
 	  };
 
@@ -120,17 +121,17 @@ export function canRoleSeeAdvancedSettings(role: UserRole | null | undefined, gr
 }
 
 /** An explicit block on any of the user's groups wins over an explicit allow, which wins over the All Users default. */
-export function resolveProjectSharingPermission(
-	groups: ReadonlyArray<{ isDefault: boolean; projectSharing: ProjectSharingPermission }>,
+export function resolveClinicSharingPermission(
+	groups: ReadonlyArray<{ isDefault: boolean; clinicSharing: ClinicSharingPermission }>,
 ): boolean {
-	const overrides = groups.filter((group) => !group.isDefault).map((group) => group.projectSharing);
+	const overrides = groups.filter((group) => !group.isDefault).map((group) => group.clinicSharing);
 	if (overrides.includes('blocked')) {
 		return false;
 	}
 	if (overrides.includes('allowed')) {
 		return true;
 	}
-	return !groups.some((group) => group.isDefault && group.projectSharing === 'blocked');
+	return !groups.some((group) => group.isDefault && group.clinicSharing === 'blocked');
 }
 
 /**
@@ -165,7 +166,7 @@ export function parseStoredUserGroupConfig(value: unknown, isDefault = false): U
 				defaultDensity: 'detailed',
 				canChange: legacyFeatures.includes('compact-mode'),
 			},
-			projectSharing: 'inherit',
+			clinicSharing: 'inherit',
 			showAllSettings: isDefault,
 			preloadedSkills: [],
 		};
@@ -175,7 +176,7 @@ export function parseStoredUserGroupConfig(value: unknown, isDefault = false): U
 		return {
 			features: [],
 			toolCallDensity: { defaultDensity: 'detailed', canChange: false },
-			projectSharing: 'inherit',
+			clinicSharing: 'inherit',
 			showAllSettings: isDefault,
 			preloadedSkills: [],
 		};
@@ -192,7 +193,7 @@ export function parseStoredUserGroupConfig(value: unknown, isDefault = false): U
 			defaultDensity: policy.defaultDensity === 'compact' ? 'compact' : 'detailed',
 			canChange: policy.canChange === true,
 		},
-		projectSharing: parseProjectSharingPermission(value.projectSharing),
+		clinicSharing: parseClinicSharingPermission(value.projectSharing),
 		showAllSettings: typeof value.showAllSettings === 'boolean' ? value.showAllSettings : isDefault,
 		preloadedSkills: Array.isArray(value.preloadedSkills) ? normalizePreloadedSkills(value.preloadedSkills) : [],
 	};
@@ -201,7 +202,7 @@ export function parseStoredUserGroupConfig(value: unknown, isDefault = false): U
 export function serializeUserGroupConfig(
 	features: readonly string[],
 	toolCallDensity: ToolCallDensityPolicy,
-	projectSharing: ProjectSharingPermission = 'inherit',
+	clinicSharing: ClinicSharingPermission = 'inherit',
 	showAllSettings = false,
 	preloadedSkills: readonly string[] = [],
 ): StoredUserGroupConfig {
@@ -212,15 +213,15 @@ export function serializeUserGroupConfig(
 			defaultDensity: toolCallDensity.defaultDensity,
 			canChange: toolCallDensity.canChange,
 		},
-		projectSharing: parseProjectSharingPermission(projectSharing),
+		projectSharing: parseClinicSharingPermission(clinicSharing),
 		showAllSettings,
 		preloadedSkills: normalizePreloadedSkills(preloadedSkills),
 	};
 }
 
-function parseProjectSharingPermission(value: unknown): ProjectSharingPermission {
-	return PROJECT_SHARING_PERMISSIONS.includes(value as ProjectSharingPermission)
-		? (value as ProjectSharingPermission)
+function parseClinicSharingPermission(value: unknown): ClinicSharingPermission {
+	return CLINIC_SHARING_PERMISSIONS.includes(value as ClinicSharingPermission)
+		? (value as ClinicSharingPermission)
 		: 'inherit';
 }
 

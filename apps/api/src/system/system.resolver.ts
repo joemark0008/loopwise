@@ -1,6 +1,6 @@
 import { Query, Resolver } from '@nestjs/graphql';
 
-import { ProjectAdmin } from '../common/decorators/access.decorator.js';
+import { ClinicAdmin } from '../common/decorators/access.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { PublicConfig } from './models/public-config.model.js';
 import { AppVersion, UpdateCheck } from './models/version.model.js';
@@ -20,13 +20,13 @@ export class SystemResolver {
 		return this.system.getPublicConfig();
 	}
 
-	@ProjectAdmin()
+	@ClinicAdmin()
 	@Query(() => AppVersion)
 	version(): AppVersion {
 		return this.system.getVersion();
 	}
 
-	@ProjectAdmin()
+	@ClinicAdmin()
 	@Query(() => UpdateCheck)
 	checkUpdate(): Promise<UpdateCheck> {
 		return this.versionCheck.checkForUpdate();

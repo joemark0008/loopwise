@@ -49,8 +49,8 @@ export interface ChatListRow {
 	updatedAt: number;
 	kind: 'own' | 'shared';
 	shareId?: string;
-	projectId: string;
-	projectName: string;
+	clinicId: string;
+	clinicName: string;
 	isSharedByMe: boolean;
 	ownerName: string;
 	sourcePlatform: string;
@@ -92,7 +92,7 @@ export class ChatRepository {
 		return [
 			{
 				id: chatId,
-				projectId: chat.projectId,
+				clinicId: chat.clinicId,
 				title: chat.title,
 				isStarred: chat.isStarred,
 				isOnboarding: messages.some((message) => message.source === 'onboarding'),
@@ -138,14 +138,14 @@ export class ChatRepository {
 		return chat?.id ?? null;
 	}
 
-	async getChatProjectId(chatId: string): Promise<string | undefined> {
-		const chat = await this.prisma.chat.findUnique({ where: { id: chatId }, select: { projectId: true } });
-		return chat?.projectId;
+	async getChatClinicId(chatId: string): Promise<string | undefined> {
+		const chat = await this.prisma.chat.findUnique({ where: { id: chatId }, select: { clinicId: true } });
+		return chat?.clinicId;
 	}
 
 	/** Chat creation with its first user message (upstream `createChat`). */
 	createChat(
-		newChat: { userId: string; projectId: string; title: string; surface?: string; patientId?: string },
+		newChat: { userId: string; clinicId: string; title: string; surface?: string; patientId?: string },
 		newUserMessage: { text: string; source?: UIMessage['source']; citation?: CitationData },
 		additionalParts: UIMessagePart[] = [],
 	): Promise<[Chat, ChatMessage]> {
@@ -349,8 +349,8 @@ export class ChatRepository {
 		return message?.llmProvider && message.llmModelId ? `${message.llmProvider}/${message.llmModelId}` : undefined;
 	}
 
-	async deleteChat(chatId: string): Promise<{ projectId: string }> {
-		const chat = await this.prisma.chat.delete({ where: { id: chatId }, select: { projectId: true } });
+	async deleteChat(chatId: string): Promise<{ clinicId: string }> {
+		const chat = await this.prisma.chat.delete({ where: { id: chatId }, select: { clinicId: true } });
 		return chat;
 	}
 
@@ -363,8 +363,8 @@ export class ChatRepository {
 		await this.prisma.chat.update({ where: { id: chatId }, data: { isStarred } });
 	}
 
-	async renameChat(chatId: string, title: string): Promise<{ projectId: string }> {
-		return this.prisma.chat.update({ where: { id: chatId }, data: { title }, select: { projectId: true } });
+	async renameChat(chatId: string, title: string): Promise<{ clinicId: string }> {
+		return this.prisma.chat.update({ where: { id: chatId }, data: { title }, select: { clinicId: true } });
 	}
 
 	/** Own chats with the sidebar columns (upstream `listOwnChats`). */
@@ -374,7 +374,7 @@ export class ChatRepository {
 				exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source = 'onboarding') AS "isOnboarding",
 				(extract(epoch FROM c.created_at) * 1000)::float8 AS "createdAt",
 				(extract(epoch FROM c.updated_at) * 1000)::float8 AS "updatedAt",
-				'own' AS kind, c.project_id AS "projectId", p.name AS "projectName",
+				'own' AS kind, c.project_id AS "clinicId", p.name AS "clinicName",
 				exists(SELECT 1 FROM shared_chat s WHERE s.chat_id = c.id) AS "isSharedByMe",
 				u.name AS "ownerName", ${SOURCE_PLATFORM} AS "sourcePlatform"
 			FROM chat c
@@ -392,7 +392,7 @@ export class ChatRepository {
 			SELECT s.chat_id AS id, c.title, false AS "isStarred", false AS "isOnboarding",
 				(extract(epoch FROM c.created_at) * 1000)::float8 AS "createdAt",
 				(extract(epoch FROM c.updated_at) * 1000)::float8 AS "updatedAt",
-				'shared' AS kind, s.id AS "shareId", c.project_id AS "projectId", p.name AS "projectName",
+				'shared' AS kind, s.id AS "shareId", c.project_id AS "clinicId", p.name AS "clinicName",
 				false AS "isSharedByMe", u.name AS "ownerName", ${SOURCE_PLATFORM} AS "sourcePlatform"
 			FROM shared_chat s
 			JOIN chat c ON c.id = s.chat_id
@@ -631,21 +631,21 @@ export class ChatRepository {
 		}
 	}
 
-	/** Owner, project and title of a chat, deleted or not (upstream `getChatInfo`). */
-	getChatInfo(chatId: string): Promise<{ projectId: string; userId: string; title: string } | null> {
+	/** Owner, clinic and title of a chat, deleted or not (upstream `getChatInfo`). */
+	getChatInfo(chatId: string): Promise<{ clinicId: string; userId: string; title: string } | null> {
 		return this.prisma.chat.findUnique({
 			where: { id: chatId },
-			select: { projectId: true, userId: true, title: true },
+			select: { clinicId: true, userId: true, title: true },
 		});
 	}
 
-	/** Project of a chat that isn't deleted (upstream `getActiveChatProjectId`). */
-	async getActiveChatProjectId(chatId: string): Promise<string | undefined> {
+	/** Clinic of a chat that isn't deleted (upstream `getActiveChatClinicId`). */
+	async getActiveChatClinicId(chatId: string): Promise<string | undefined> {
 		const chat = await this.prisma.chat.findFirst({
 			where: { id: chatId, deletedAt: null },
-			select: { projectId: true },
+			select: { clinicId: true },
 		});
-		return chat?.projectId;
+		return chat?.clinicId;
 	}
 
 	async getForkMetadata(chatId: string): Promise<ForkMetadata | null> {
@@ -686,13 +686,13 @@ export class ChatRepository {
 
 	/** A chat seeded with copies of other messages; tool call ids are renewed (upstream `createForkedChat`). */
 	createForkedChat(
-		newChat: { projectId: string; userId: string; title: string; forkMetadata?: ForkMetadata },
+		newChat: { clinicId: string; userId: string; title: string; forkMetadata?: ForkMetadata },
 		messages: Array<Omit<UIMessage, 'id'>>,
 	): Promise<Chat> {
 		return this.prisma.$transaction(async (tx) => {
 			const chat = await tx.chat.create({
 				data: {
-					projectId: newChat.projectId,
+					clinicId: newChat.clinicId,
 					userId: newChat.userId,
 					title: newChat.title,
 					...(newChat.forkMetadata && {
@@ -738,10 +738,10 @@ export class ChatRepository {
 	/** Owner of the latest active part holding a query id, across chats (upstream `getExecuteSqlOwnerByQueryId`). */
 	async getLatestQueryPartByQueryId(
 		queryId: string,
-	): Promise<(StoredQueryPart & { projectId: string; userId: string; chatId: string }) | null> {
+	): Promise<(StoredQueryPart & { clinicId: string; userId: string; chatId: string }) | null> {
 		const [row] = await this.prisma.$queryRaw<
 			{
-				projectId: string;
+				clinicId: string;
 				userId: string;
 				chatId: string;
 				toolCallId: string | null;
@@ -751,7 +751,7 @@ export class ChatRepository {
 				source: string | null;
 			}[]
 		>`
-			SELECT c.project_id AS "projectId", c.user_id AS "userId", c.id AS "chatId", mp.tool_call_id AS "toolCallId",
+			SELECT c.project_id AS "clinicId", c.user_id AS "userId", c.id AS "chatId", mp.tool_call_id AS "toolCallId",
 				mp.tool_name AS "toolName", mp.tool_input AS "toolInput", mp.tool_output AS "toolOutput", m.source
 			FROM message_part mp
 			JOIN chat_message m ON m.id = mp.message_id
@@ -765,7 +765,7 @@ export class ChatRepository {
 			return null;
 		}
 		return {
-			projectId: row.projectId,
+			clinicId: row.clinicId,
 			userId: row.userId,
 			chatId: row.chatId,
 			toolCallId: row.toolCallId,

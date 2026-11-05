@@ -27,13 +27,13 @@ const PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk
 describe('attachments (e2e)', () => {
 	let app: NestExpressApplication;
 	let cookie: string[] = [];
-	let projectId = '';
+	let clinicId = '';
 	let storageRoot = '';
 	const prompts: LanguageModelV3CallOptions['prompt'][] = [];
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		storageRoot = await mkdtemp(path.join(tmpdir(), 'loopwise-storage-e2e-'));
 		process.env.LOOPWISE_STORAGE_BACKEND = 'local';
 		process.env.LOOPWISE_STORAGE_LOCAL_PATH = storageRoot;
@@ -46,8 +46,8 @@ describe('attachments (e2e)', () => {
 		);
 
 		({ cookie } = await createTestUser(app, { name: 'Ada', email: 'ada@example.com', password: 'Sup3r-secret!' }));
-		const project = await graphql('mutation { createProject(input: { name: "Files" }) { id } }');
-		projectId = project.body.data.createProject.id;
+		const clinic = await graphql('mutation { createClinic(input: { name: "Files" }) { id } }');
+		clinicId = clinic.body.data.createClinic.id;
 	});
 
 	afterAll(async () => {
@@ -62,14 +62,14 @@ describe('attachments (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	const upload = (data: Buffer | string, filename: string) =>
 		request(app.getHttpServer())
 			.post('/api/attachments')
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.attach('file', Buffer.from(data), filename);
 
 	const today = () => new Date().toISOString().slice(0, 10);
@@ -102,7 +102,7 @@ describe('attachments (e2e)', () => {
 		const empty = await request(app.getHttpServer())
 			.post('/api/attachments')
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.field('note', 'no file')
 			.expect(400);
 		expect(empty.body.error).toBe('No file uploaded');
@@ -119,7 +119,7 @@ describe('attachments (e2e)', () => {
 			.get('/api/attachments/file')
 			.query({ path: filePath })
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.buffer(true)
 			.parse((response, callback) => {
 				let body = '';
@@ -136,7 +136,7 @@ describe('attachments (e2e)', () => {
 			.head('/api/attachments/file')
 			.query({ path: filePath })
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.expect(200);
 		expect(head.headers['content-length']).toBe(String(CSV.length));
 
@@ -144,7 +144,7 @@ describe('attachments (e2e)', () => {
 			.get('/api/attachments/file')
 			.query({ path: '/home/nope.csv' })
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.expect(404);
 		expect(missing.body.error).toBe('No such file in permanent storage: /home/nope.csv');
 
@@ -152,7 +152,7 @@ describe('attachments (e2e)', () => {
 			.get('/api/attachments/file')
 			.query({ path: '/RULES.md' })
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.expect(400);
 	});
 
@@ -176,7 +176,7 @@ describe('attachments (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({
 				message: {
 					text: 'What is in these?',
@@ -219,7 +219,7 @@ describe('attachments (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({ message: { text: 'Read it', documents: ['/home/missing.csv'] }, model: MODEL })
 			.expect(400);
 		expect(res.body.error).toBe('Attached file not found: /home/missing.csv');

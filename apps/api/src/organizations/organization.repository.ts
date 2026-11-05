@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
+import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { ConfigService } from '../config/config.service.js';
 import type { Organization, OrgMember, Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { DbExecutor } from '../prisma/prisma.types.js';
-import { ProjectRepository } from '../projects/project.repository.js';
 
 export const ORG_ROLES = ['admin', 'user', 'viewer'] as const;
 export type OrgRole = (typeof ORG_ROLES)[number];
@@ -25,7 +25,7 @@ export class OrganizationRepository {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly config: ConfigService,
-		private readonly projects: ProjectRepository,
+		private readonly clinics: ClinicRepository,
 	) {}
 
 	getFirstOrganization(executor: DbExecutor = this.prisma): Promise<Organization | null> {
@@ -73,16 +73,16 @@ export class OrganizationRepository {
 		});
 	}
 
-	getUserOrgMembershipByProject(userId: string, projectId: string): Promise<UserOrgMembership | null> {
+	getUserOrgMembershipByClinic(userId: string, clinicId: string): Promise<UserOrgMembership | null> {
 		return this.prisma.orgMember.findFirst({
-			where: { userId, organization: { projects: { some: { id: projectId } } } },
+			where: { userId, organization: { clinics: { some: { id: clinicId } } } },
 			include: { organization: true },
 		});
 	}
 
 	/**
 	 * Setup of a self-hosted instance: creates the default organization with the user as admin and, when
-	 * LOOPWISE_DEFAULT_PROJECT_PATH is set, the default project with the user as admin. Does nothing when an
+	 * LOOPWISE_DEFAULT_CLINIC_PATH is set, the default clinic with the user as admin. Does nothing when an
 	 * organization exists. Runs on the caller's transaction.
 	 */
 	async initializeDefaultOrganization(userId: string, tx: Prisma.TransactionClient): Promise<void> {
@@ -93,24 +93,24 @@ export class OrganizationRepository {
 		const org = await tx.organization.create({ data: { name: 'Default Organization', slug: 'default' } });
 		await tx.orgMember.create({ data: { orgId: org.id, userId, role: 'admin' } });
 
-		const projectPath = this.config.env.LOOPWISE_DEFAULT_PROJECT_PATH;
-		if (projectPath && !(await this.projects.getProjectByPath(projectPath, tx))) {
-			const projectName = projectPath.split('/').pop() || 'Default Project';
-			const project = await this.projects.createProject(
-				{ name: projectName, type: 'local', path: projectPath, orgId: org.id },
+		const clinicPath = this.config.env.LOOPWISE_DEFAULT_CLINIC_PATH;
+		if (clinicPath && !(await this.clinics.getClinicByPath(clinicPath, tx))) {
+			const clinicName = clinicPath.split('/').pop() || 'Default Clinic';
+			const clinic = await this.clinics.createClinic(
+				{ name: clinicName, type: 'local', path: clinicPath, orgId: org.id },
 				tx,
 			);
-			await tx.projectMember.create({ data: { projectId: project.id, userId, role: 'admin' } });
+			await tx.clinicMember.create({ data: { clinicId: clinic.id, userId, role: 'admin' } });
 		}
 	}
 
 	/**
-	 * The facilities the user works at (DESIGN.md §6.1): their organizations that own no project. Staff are also
-	 * members of the workspace organization that owns the project, which is not a facility.
+	 * The facilities the user works at (DESIGN.md §6.1): their organizations that own no clinic. Staff are also
+	 * members of the workspace organization that owns the clinic, which is not a facility.
 	 */
 	getUserFacilities(userId: string): Promise<Organization[]> {
 		return this.prisma.organization.findMany({
-			where: { orgMembers: { some: { userId } }, projects: { none: {} } },
+			where: { orgMembers: { some: { userId } }, clinics: { none: {} } },
 			orderBy: { name: 'asc' },
 		});
 	}

@@ -5,8 +5,8 @@ import {
 	DEFAULT_TOOL_CALL_DENSITY_POLICY,
 	DEFAULT_USER_GROUP_CONFIG,
 	parseStoredUserGroupConfig,
+	resolveClinicSharingPermission,
 	resolvePreloadedSkills,
-	resolveProjectSharingPermission,
 	serializeUserGroupConfig,
 	USER_GROUP_FEATURES,
 } from './user-group-features';
@@ -48,7 +48,7 @@ describe('user group configuration', () => {
 		expect(USER_GROUP_FEATURES).toEqual(['storyCreation', 'customStoryCreation', 'automationCreation']);
 	});
 
-	it('serializes the project sharing permission', () => {
+	it('serializes the clinic sharing permission under its stored key', () => {
 		expect(serializeUserGroupConfig([], { defaultDensity: 'detailed', canChange: true }, 'blocked')).toMatchObject({
 			projectSharing: 'blocked',
 		});
@@ -98,7 +98,7 @@ describe('user group configuration', () => {
 				defaultDensity: 'compact',
 				canChange: true,
 			},
-			projectSharing: 'allowed',
+			clinicSharing: 'allowed',
 			showAllSettings: true,
 			preloadedSkills: [],
 		});
@@ -134,14 +134,12 @@ describe('user group configuration', () => {
 		expect(parseStoredUserGroupConfig(shown, false).showAllSettings).toBe(true);
 	});
 
-	it('inherits project sharing when the stored permission is missing or unknown', () => {
+	it('inherits clinic sharing when the stored permission is missing or unknown', () => {
 		const toolCallDensity = { defaultDensity: 'detailed', canChange: true };
-		expect(parseStoredUserGroupConfig({ version: 2, features: [], toolCallDensity }).projectSharing).toBe(
-			'inherit',
-		);
+		expect(parseStoredUserGroupConfig({ version: 2, features: [], toolCallDensity }).clinicSharing).toBe('inherit');
 		expect(
 			parseStoredUserGroupConfig({ version: 2, features: [], toolCallDensity, projectSharing: 'everyone' })
-				.projectSharing,
+				.clinicSharing,
 		).toBe('inherit');
 	});
 
@@ -152,7 +150,7 @@ describe('user group configuration', () => {
 				defaultDensity: 'detailed',
 				canChange: true,
 			},
-			projectSharing: 'inherit',
+			clinicSharing: 'inherit',
 			showAllSettings: false,
 			preloadedSkills: [],
 		});
@@ -165,7 +163,7 @@ describe('user group configuration', () => {
 				defaultDensity: 'detailed',
 				canChange: false,
 			},
-			projectSharing: 'inherit',
+			clinicSharing: 'inherit',
 			showAllSettings: false,
 			preloadedSkills: [],
 		});
@@ -183,7 +181,7 @@ describe('user group configuration', () => {
 				defaultDensity: 'detailed',
 				canChange: false,
 			},
-			projectSharing: 'inherit',
+			clinicSharing: 'inherit',
 			showAllSettings: false,
 			preloadedSkills: [],
 		});
@@ -196,7 +194,7 @@ describe('user group configuration', () => {
 				defaultDensity: 'detailed',
 				canChange: false,
 			},
-			projectSharing: 'inherit',
+			clinicSharing: 'inherit',
 			showAllSettings: false,
 			preloadedSkills: [],
 		});
@@ -233,21 +231,21 @@ describe('resolvePreloadedSkills', () => {
 	});
 });
 
-describe('resolveProjectSharingPermission', () => {
-	const allUsers = (projectSharing: 'inherit' | 'allowed' | 'blocked') => ({ isDefault: true, projectSharing });
-	const group = (projectSharing: 'inherit' | 'allowed' | 'blocked') => ({ isDefault: false, projectSharing });
+describe('resolveClinicSharingPermission', () => {
+	const allUsers = (clinicSharing: 'inherit' | 'allowed' | 'blocked') => ({ isDefault: true, clinicSharing });
+	const group = (clinicSharing: 'inherit' | 'allowed' | 'blocked') => ({ isDefault: false, clinicSharing });
 
 	it('falls back to the All Users default when no group overrides it', () => {
-		expect(resolveProjectSharingPermission([allUsers('inherit'), group('inherit')])).toBe(true);
-		expect(resolveProjectSharingPermission([allUsers('allowed')])).toBe(true);
-		expect(resolveProjectSharingPermission([allUsers('blocked'), group('inherit')])).toBe(false);
+		expect(resolveClinicSharingPermission([allUsers('inherit'), group('inherit')])).toBe(true);
+		expect(resolveClinicSharingPermission([allUsers('allowed')])).toBe(true);
+		expect(resolveClinicSharingPermission([allUsers('blocked'), group('inherit')])).toBe(false);
 	});
 
 	it('lets an explicit allow override a restrictive default', () => {
-		expect(resolveProjectSharingPermission([allUsers('blocked'), group('allowed')])).toBe(true);
+		expect(resolveClinicSharingPermission([allUsers('blocked'), group('allowed')])).toBe(true);
 	});
 
 	it('lets an explicit block win over any explicit allow', () => {
-		expect(resolveProjectSharingPermission([allUsers('allowed'), group('allowed'), group('blocked')])).toBe(false);
+		expect(resolveClinicSharingPermission([allUsers('allowed'), group('allowed'), group('blocked')])).toBe(false);
 	});
 });

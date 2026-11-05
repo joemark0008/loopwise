@@ -24,9 +24,9 @@ function getPromptFileCandidates(provider?: Provider): string[] {
 	return [`${provider}.md`, DEFAULT_PROMPT_FILE];
 }
 
-export function getSystemPromptOverride(projectFolder: string, provider?: Provider): string | undefined {
+export function getSystemPromptOverride(clinicFolder: string, provider?: Provider): string | undefined {
 	for (const filename of getPromptFileCandidates(provider)) {
-		const content = readPromptFile(projectFolder, filename);
+		const content = readPromptFile(clinicFolder, filename);
 		if (content) {
 			return content;
 		}
@@ -34,16 +34,16 @@ export function getSystemPromptOverride(projectFolder: string, provider?: Provid
 	return undefined;
 }
 
-function readPromptFile(projectFolder: string, filename: string): string | undefined {
-	const filePath = join(projectFolder, ...PROMPTS_FOLDER, filename);
+function readPromptFile(clinicFolder: string, filename: string): string | undefined {
+	const filePath = join(clinicFolder, ...PROMPTS_FOLDER, filename);
 	if (!existsSync(filePath)) {
 		return undefined;
 	}
 
 	try {
 		const realFilePath = realpathSync(filePath);
-		if (!isWithinDirectory(realpathSync(projectFolder), realFilePath)) {
-			console.error(`Refusing to read system prompt override outside the project folder: ${filename}`);
+		if (!isWithinDirectory(realpathSync(clinicFolder), realFilePath)) {
+			console.error(`Refusing to read system prompt override outside the clinic folder: ${filename}`);
 			return undefined;
 		}
 		const content = readFileSync(realFilePath, 'utf-8').trim();

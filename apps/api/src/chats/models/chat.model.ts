@@ -19,7 +19,7 @@ export class Chat {
 	id: string;
 
 	@Field()
-	projectId: string;
+	clinicId: string;
 
 	@Field()
 	title: string;
@@ -52,7 +52,7 @@ export class ChatListItem {
 	id: string;
 
 	@Field()
-	projectId: string;
+	clinicId: string;
 
 	@Field()
 	title: string;

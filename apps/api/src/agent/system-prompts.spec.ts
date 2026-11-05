@@ -10,7 +10,7 @@ const mockExistsSync = vi.mocked(existsSync);
 const mockReadFileSync = vi.mocked(readFileSync);
 const mockRealpathSync = vi.mocked(realpathSync);
 
-const ROOT = '/project';
+const ROOT = '/clinic';
 const promptPath = (filename: string) => join(ROOT, 'agent', 'prompts', filename);
 
 function setupPromptFiles(files: Record<string, string>): void {
@@ -91,7 +91,7 @@ describe('getSystemPromptOverride', () => {
 		expect(consoleSpy).toHaveBeenCalledWith('Error reading system prompt override system.md:', expect.any(Error));
 	});
 
-	it('refuses to read a prompt that resolves outside the project folder (symlink traversal)', () => {
+	it('refuses to read a prompt that resolves outside the clinic folder (symlink traversal)', () => {
 		mockExistsSync.mockImplementation((path) => path === promptPath('system.md'));
 		mockRealpathSync.mockImplementation((path) =>
 			path === promptPath('system.md') ? '/etc/passwd' : (path as string),
@@ -101,7 +101,7 @@ describe('getSystemPromptOverride', () => {
 		expect(getSystemPromptOverride(ROOT)).toBeUndefined();
 		expect(mockReadFileSync).not.toHaveBeenCalled();
 		expect(consoleSpy).toHaveBeenCalledWith(
-			expect.stringContaining('Refusing to read system prompt override outside the project folder'),
+			expect.stringContaining('Refusing to read system prompt override outside the clinic folder'),
 		);
 	});
 });

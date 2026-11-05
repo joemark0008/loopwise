@@ -33,33 +33,33 @@ describe('User Group SSO mappings', () => {
 		expect(parseStoredUserGroupSsoMappings('{"providers":{"oidc":["Team"]}}')).toEqual({
 			version: 1,
 			providers: { oidc: ['team'], microsoft: [] },
-			defaultProjectRole: null,
+			defaultClinicRole: null,
 		});
 		expect(parseStoredUserGroupSsoMappings({ oidc: ['Legacy'] })).toEqual({
 			version: 1,
 			providers: { oidc: ['legacy'], microsoft: [] },
-			defaultProjectRole: null,
+			defaultClinicRole: null,
 		});
 	});
 
-	it('normalizes default project roles while preserving legacy version-1 values', () => {
+	it('normalizes default clinic roles while preserving legacy version-1 values', () => {
 		expect(
 			parseStoredUserGroupSsoMappings({
 				version: 1,
 				providers: { oidc: [], microsoft: [] },
-				defaultProjectRole: 'context_admin',
+				defaultClinicRole: 'context_admin',
 			}),
 		).toEqual({
 			version: 1,
 			providers: { oidc: [], microsoft: [] },
-			defaultProjectRole: 'context_admin',
+			defaultClinicRole: 'context_admin',
 		});
 		expect(
 			parseStoredUserGroupSsoMappings({
 				version: 1,
 				providers: { oidc: [], microsoft: [] },
-				defaultProjectRole: 'owner',
-			}).defaultProjectRole,
+				defaultClinicRole: 'owner',
+			}).defaultClinicRole,
 		).toBeNull();
 	});
 

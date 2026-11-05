@@ -1,12 +1,12 @@
 import type { FilesContextAccess } from '@loopwise/shared';
 import { describe, expect, it } from 'vitest';
 
-import { isProjectContextPathAllowed as isAllowed } from './project-context-path-access.service.js';
+import { isClinicContextPathAllowed as isAllowed } from './clinic-context-path-access.service.js';
 
 type AccessContext = Parameters<typeof isAllowed>[0];
 
 // loopwise: typechecked specs — upstream's fixtures omit the required `skillsAccess` (absent means all skills).
-function isProjectContextPathAllowed(
+function isClinicContextPathAllowed(
 	context: Omit<AccessContext, 'skillsAccess'> & Partial<Pick<AccessContext, 'skillsAccess'>>,
 	...args: Parameters<typeof isAllowed> extends [unknown, ...infer Rest] ? Rest : never
 ): boolean {
@@ -27,17 +27,17 @@ function filesContext(access: FilesContextAccess) {
 	};
 }
 
-describe('project context path access', () => {
-	it('allows unaffected project paths and an unlicensed docs bypass', () => {
+describe('clinic context path access', () => {
+	it('allows unaffected clinic paths and an unlicensed docs bypass', () => {
 		const context = {
 			warehouseTableAccess: unrestrictedWarehouse,
 			docsContextAccess: unenforcedDocs,
 			filesContextAccess: unenforcedFiles,
 			mcpAccess: allMcpAccess,
 		};
-		expect(isProjectContextPathAllowed(context, '/RULES.md', '/RULES.md', 'file')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/docs/anything.md', '/docs/anything.md', 'file')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/alias.sql', '/models/orders.sql', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/RULES.md', '/RULES.md', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/docs/anything.md', '/docs/anything.md', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/alias.sql', '/models/orders.sql', 'file')).toBe(true);
 	});
 
 	it('allows granted docs files and required ancestors while hiding siblings', () => {
@@ -50,13 +50,13 @@ describe('project context path access', () => {
 			filesContextAccess: unenforcedFiles,
 			mcpAccess: allMcpAccess,
 		};
-		expect(isProjectContextPathAllowed(context, '/docs', '/docs', 'directory')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/docs/legal', '/docs/legal', 'directory')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/docs/legal/terms.md', '/docs/legal/terms.md', 'file')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/docs/legal/private.md', '/docs/legal/private.md', 'file')).toBe(
+		expect(isClinicContextPathAllowed(context, '/docs', '/docs', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/docs/legal', '/docs/legal', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/docs/legal/terms.md', '/docs/legal/terms.md', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/docs/legal/private.md', '/docs/legal/private.md', 'file')).toBe(
 			false,
 		);
-		expect(isProjectContextPathAllowed(context, '/docs/finance', '/docs/finance', 'directory')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/docs/finance', '/docs/finance', 'directory')).toBe(false);
 	});
 
 	it('rejects traversal and symlink aliases when lexical and canonical docs paths differ', () => {
@@ -66,9 +66,9 @@ describe('project context path access', () => {
 			filesContextAccess: unenforcedFiles,
 			mcpAccess: allMcpAccess,
 		};
-		expect(isProjectContextPathAllowed(context, '/docs/link.md', '/RULES.md', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/alias.md', '/docs/real.md', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/docs/../RULES.md', '/RULES.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/docs/link.md', '/RULES.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/alias.md', '/docs/real.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/docs/../RULES.md', '/RULES.md', 'file')).toBe(false);
 	});
 
 	it('rejects malformed paths without blocking genuine non-docs paths', () => {
@@ -78,9 +78,9 @@ describe('project context path access', () => {
 			filesContextAccess: unenforcedFiles,
 			mcpAccess: allMcpAccess,
 		};
-		expect(isProjectContextPathAllowed(context, '/notes\u0000.md', '/notes\u0000.md', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/notes\\private.md', '/notes\\private.md', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/notes.md', '/notes.md', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/notes\u0000.md', '/notes\u0000.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/notes\\private.md', '/notes\\private.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/notes.md', '/notes.md', 'file')).toBe(true);
 	});
 
 	it('hides loopwise_config.yaml wherever it lives and however it is addressed', () => {
@@ -90,18 +90,18 @@ describe('project context path access', () => {
 			filesContextAccess: unenforcedFiles,
 			mcpAccess: allMcpAccess,
 		};
-		expect(isProjectContextPathAllowed(context, '/loopwise_config.yaml', '/loopwise_config.yaml', 'file')).toBe(
+		expect(isClinicContextPathAllowed(context, '/loopwise_config.yaml', '/loopwise_config.yaml', 'file')).toBe(
 			false,
 		);
-		expect(isProjectContextPathAllowed(context, 'loopwise_config.yaml', '/loopwise_config.yaml', 'file')).toBe(
+		expect(isClinicContextPathAllowed(context, 'loopwise_config.yaml', '/loopwise_config.yaml', 'file')).toBe(
 			false,
 		);
-		expect(isProjectContextPathAllowed(context, '/LOOPWISE_CONFIG.YAML', '/LOOPWISE_CONFIG.YAML', 'file')).toBe(
+		expect(isClinicContextPathAllowed(context, '/LOOPWISE_CONFIG.YAML', '/LOOPWISE_CONFIG.YAML', 'file')).toBe(
 			false,
 		);
-		expect(isProjectContextPathAllowed(context, '/alias.yaml', '/loopwise_config.yaml', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/alias.yaml', '/loopwise_config.yaml', 'file')).toBe(false);
 		expect(
-			isProjectContextPathAllowed(
+			isClinicContextPathAllowed(
 				context,
 				'/repos/other/loopwise_config.yaml',
 				'/repos/other/loopwise_config.yaml',
@@ -109,7 +109,7 @@ describe('project context path access', () => {
 			),
 		).toBe(false);
 		expect(
-			isProjectContextPathAllowed(context, '/loopwise_config.yaml.md', '/loopwise_config.yaml.md', 'file'),
+			isClinicContextPathAllowed(context, '/loopwise_config.yaml.md', '/loopwise_config.yaml.md', 'file'),
 		).toBe(true);
 	});
 
@@ -123,8 +123,8 @@ describe('project context path access', () => {
 			filesContextAccess: unenforcedFiles,
 			mcpAccess: allMcpAccess,
 		};
-		expect(isProjectContextPathAllowed(context, '/docs/docs/nested.md', '/docs/docs/nested.md', 'file')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/docs/other.md', '/docs/other.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/docs/docs/nested.md', '/docs/docs/nested.md', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/docs/other.md', '/docs/other.md', 'file')).toBe(false);
 	});
 
 	it('composes docs and warehouse policies', () => {
@@ -139,7 +139,7 @@ describe('project context path access', () => {
 			mcpAccess: allMcpAccess,
 		};
 		expect(
-			isProjectContextPathAllowed(
+			isClinicContextPathAllowed(
 				context,
 				'/databases/type=postgres/database=app/schema=public/table=allowed/columns.md',
 				'/databases/type=postgres/database=app/schema=public/table=allowed/columns.md',
@@ -147,7 +147,7 @@ describe('project context path access', () => {
 			),
 		).toBe(true);
 		expect(
-			isProjectContextPathAllowed(
+			isClinicContextPathAllowed(
 				context,
 				'/databases/type=postgres/database=app/schema=public/table=denied/columns.md',
 				'/databases/type=postgres/database=app/schema=public/table=denied/columns.md',
@@ -157,13 +157,13 @@ describe('project context path access', () => {
 	});
 });
 
-describe('project file access', () => {
-	it('allows every non-docs path, including symlinks within the project, when the group is not restricted on files', () => {
+describe('clinic file access', () => {
+	it('allows every non-docs path, including symlinks within the clinic, when the group is not restricted on files', () => {
 		const context = filesContext({ mode: 'all' as const });
-		expect(isProjectContextPathAllowed(context, '/', '/', 'directory')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/models/orders.sql', '/models/orders.sql', 'file')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/models/link.sql', '/shared/orders.sql', 'file')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/models/link.md', '/docs/real.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/', '/', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/models/orders.sql', '/models/orders.sql', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/models/link.sql', '/shared/orders.sql', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/models/link.md', '/docs/real.md', 'file')).toBe(false);
 	});
 
 	it('authorizes granted files and folders while hiding siblings', () => {
@@ -174,12 +174,12 @@ describe('project file access', () => {
 				{ kind: 'file' as const, path: 'README.md' },
 			],
 		});
-		expect(isProjectContextPathAllowed(context, '/', '/', 'directory')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/models', '/models', 'directory')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/models/orders.sql', '/models/orders.sql', 'file')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/README.md', '/README.md', 'file')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/secrets.env', '/secrets.env', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/scripts', '/scripts', 'directory')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/', '/', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/models', '/models', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/models/orders.sql', '/models/orders.sql', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/README.md', '/README.md', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/secrets.env', '/secrets.env', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/scripts', '/scripts', 'directory')).toBe(false);
 	});
 
 	it('lets granted files be reached through their ancestor folders only', () => {
@@ -187,37 +187,37 @@ describe('project file access', () => {
 			mode: 'restricted' as const,
 			grants: [{ kind: 'file' as const, path: 'models/marts/orders.sql' }],
 		});
-		expect(isProjectContextPathAllowed(context, '/models', '/models', 'directory')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/models/marts', '/models/marts', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/models', '/models', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/models/marts', '/models/marts', 'directory')).toBe(true);
 		expect(
-			isProjectContextPathAllowed(context, '/models/marts/orders.sql', '/models/marts/orders.sql', 'file'),
+			isClinicContextPathAllowed(context, '/models/marts/orders.sql', '/models/marts/orders.sql', 'file'),
 		).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/models/staging', '/models/staging', 'directory')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/models/staging', '/models/staging', 'directory')).toBe(false);
 		expect(
-			isProjectContextPathAllowed(context, '/models/marts/customers.sql', '/models/marts/customers.sql', 'file'),
+			isClinicContextPathAllowed(context, '/models/marts/customers.sql', '/models/marts/customers.sql', 'file'),
 		).toBe(false);
 	});
 
-	it('keeps the project root listable when no project file is granted, since docs and databases live under it', () => {
+	it('keeps the clinic root listable when no clinic file is granted, since docs and databases live under it', () => {
 		const context = filesContext({ mode: 'restricted' as const, grants: [] });
-		expect(isProjectContextPathAllowed(context, '/', '/', 'directory')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '', '/', 'directory')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/', '/', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/notes.md', '/notes.md', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/models', '/models', 'directory')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/', '/', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '', '/', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/', '/', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/notes.md', '/notes.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/models', '/models', 'directory')).toBe(false);
 	});
 
-	it('keeps docs and project files as independent policies', () => {
+	it('keeps docs and clinic files as independent policies', () => {
 		const docsOnly = {
 			warehouseTableAccess: unrestrictedWarehouse,
 			docsContextAccess: { enforced: true as const, access: { mode: 'all' as const } },
 			filesContextAccess: { enforced: true as const, access: { mode: 'restricted' as const, grants: [] } },
 			mcpAccess: allMcpAccess,
 		};
-		expect(
-			isProjectContextPathAllowed(docsOnly, '/docs/handbook/leave.md', '/docs/handbook/leave.md', 'file'),
-		).toBe(true);
-		expect(isProjectContextPathAllowed(docsOnly, '/RULES.md', '/RULES.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(docsOnly, '/docs/handbook/leave.md', '/docs/handbook/leave.md', 'file')).toBe(
+			true,
+		);
+		expect(isClinicContextPathAllowed(docsOnly, '/RULES.md', '/RULES.md', 'file')).toBe(false);
 
 		const filesOnly = {
 			warehouseTableAccess: unrestrictedWarehouse,
@@ -225,16 +225,16 @@ describe('project file access', () => {
 			filesContextAccess: { enforced: true as const, access: { mode: 'all' as const } },
 			mcpAccess: allMcpAccess,
 		};
-		expect(isProjectContextPathAllowed(filesOnly, '/RULES.md', '/RULES.md', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(filesOnly, '/RULES.md', '/RULES.md', 'file')).toBe(true);
 		expect(
-			isProjectContextPathAllowed(filesOnly, '/docs/handbook/leave.md', '/docs/handbook/leave.md', 'file'),
+			isClinicContextPathAllowed(filesOnly, '/docs/handbook/leave.md', '/docs/handbook/leave.md', 'file'),
 		).toBe(false);
 	});
 
 	it('leaves warehouse context files to the warehouse policy', () => {
 		const context = filesContext({ mode: 'restricted' as const, grants: [] });
 		expect(
-			isProjectContextPathAllowed(
+			isClinicContextPathAllowed(
 				context,
 				'/databases/type=postgres/database=app/schema=public/table=allowed/columns.md',
 				'/databases/type=postgres/database=app/schema=public/table=allowed/columns.md',
@@ -243,15 +243,15 @@ describe('project file access', () => {
 		).toBe(true);
 	});
 
-	it('rejects project file traversal and cross-root retargeting', () => {
+	it('rejects clinic file traversal and cross-root retargeting', () => {
 		const context = filesContext({
 			mode: 'restricted' as const,
 			grants: [{ kind: 'folder' as const, path: 'models' }],
 		});
-		expect(isProjectContextPathAllowed(context, '/models/../secrets.env', '/secrets.env', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/models/orders.sql', '/secrets.env', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/RULES.md', '/docs/real.md', 'file')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/models/orders.sql', '/models/orders.sql', 'file')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/models/../secrets.env', '/secrets.env', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/models/orders.sql', '/secrets.env', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/RULES.md', '/docs/real.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/models/orders.sql', '/models/orders.sql', 'file')).toBe(true);
 	});
 
 	it('hides mcp.json from every user while keeping the tool specs reachable', () => {
@@ -262,14 +262,14 @@ describe('project file access', () => {
 			mcpAccess: allMcpAccess,
 		};
 		const allowed = (requested: string, canonical = requested) =>
-			isProjectContextPathAllowed(context, requested, canonical, 'file');
+			isClinicContextPathAllowed(context, requested, canonical, 'file');
 
 		expect(allowed('/agent/mcps/mcp.json')).toBe(false);
 		expect(allowed('/Agent/MCPS/MCP.json')).toBe(false);
 		expect(allowed('/agent/./mcps/mcp.json', '/agent/mcps/mcp.json')).toBe(false);
 		expect(allowed('/notes/servers.json', '/agent/mcps/mcp.json')).toBe(false);
 		expect(allowed('/agent/mcps/github/search.json')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/agent/mcps', '/agent/mcps', 'directory')).toBe(true);
+		expect(isClinicContextPathAllowed(context, '/agent/mcps', '/agent/mcps', 'directory')).toBe(true);
 	});
 
 	it('hides the MCP tool specs that the user groups do not grant', () => {
@@ -286,7 +286,7 @@ describe('project file access', () => {
 			},
 		};
 		const allowed = (virtualPath: string, kind: 'file' | 'directory' = 'file') =>
-			isProjectContextPathAllowed(context, virtualPath, virtualPath, kind);
+			isClinicContextPathAllowed(context, virtualPath, virtualPath, kind);
 
 		expect(allowed('/agent/mcps', 'directory')).toBe(true);
 		expect(allowed('/agent/mcps/mcp.json')).toBe(false);
@@ -302,7 +302,7 @@ describe('project file access', () => {
 		expect(allowed('/agent/mcps/notion', 'directory')).toBe(false);
 		expect(allowed('/agent/mcps/notion/search.json')).toBe(false);
 		expect(allowed('/Agent/MCPS/notion/search.json')).toBe(false);
-		expect(isProjectContextPathAllowed(context, '/models/x.json', '/agent/mcps/notion/search.json', 'file')).toBe(
+		expect(isClinicContextPathAllowed(context, '/models/x.json', '/agent/mcps/notion/search.json', 'file')).toBe(
 			false,
 		);
 	});
@@ -320,7 +320,7 @@ describe('project file access', () => {
 			},
 		};
 		const allowed = (virtualPath: string, kind: 'file' | 'directory' = 'file') =>
-			isProjectContextPathAllowed(context, virtualPath, virtualPath, kind);
+			isClinicContextPathAllowed(context, virtualPath, virtualPath, kind);
 
 		expect(allowed('/agent/skills', 'directory')).toBe(true);
 		expect(allowed('/agent/skills/revenue-playbook.md')).toBe(true);
@@ -329,9 +329,9 @@ describe('project file access', () => {
 		expect(allowed('/agent/skills/nested', 'directory')).toBe(false);
 		expect(allowed('/agent/skills/./churn.md')).toBe(false);
 		expect(allowed('/RULES.md')).toBe(true);
-		expect(isProjectContextPathAllowed(context, '/notes/alias.md', '/agent/skills/churn.md', 'file')).toBe(false);
+		expect(isClinicContextPathAllowed(context, '/notes/alias.md', '/agent/skills/churn.md', 'file')).toBe(false);
 		expect(
-			isProjectContextPathAllowed(
+			isClinicContextPathAllowed(
 				{ ...context, skillsAccess: { mode: 'all' as const } },
 				'/agent/skills/churn.md',
 				'/agent/skills/churn.md',

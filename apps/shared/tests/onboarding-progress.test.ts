@@ -27,7 +27,7 @@ describe('onboarding progress', () => {
 
 describe('onboarding command', () => {
 	it('preserves multiline commands', () => {
-		const command = 'cd <your-project-folder>\nloopwise debug';
+		const command = 'cd <your-clinic-folder>\nloopwise debug';
 		expect(onboardingCommand.InputSchema.parse({ command })).toEqual({ command });
 	});
 });

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { experimental_transcribe as transcribe } from 'ai';
 
+import { ClinicLlmConfigRepository } from '../agent/llm/clinic-llm-config.repository.js';
 import { getEnvApiKey } from '../agent/llm/llm.service.js';
-import { ProjectLlmConfigRepository } from '../agent/llm/project-llm-config.repository.js';
 import type { AgentSettings } from '../agent/types/agent-settings.js';
 import {
 	createTranscribeModel,
@@ -11,24 +11,24 @@ import {
 	type TranscribeProvider,
 } from './transcribe.providers.js';
 
-/** Port of upstream `services/transcribe.service.ts`: speech to text with the project's provider key. */
+/** Port of upstream `services/transcribe.service.ts`: speech to text with the clinic's provider key. */
 @Injectable()
 export class TranscribeService {
-	constructor(private readonly configs: ProjectLlmConfigRepository) {}
+	constructor(private readonly configs: ClinicLlmConfigRepository) {}
 
 	async transcribeAudio(
-		projectId: string,
+		clinicId: string,
 		audio: string,
 		overrides?: { provider?: TranscribeProvider; modelId?: string },
 	): Promise<string> {
-		const agentSettings = (await this.configs.getAgentSettings(projectId)) as AgentSettings | null;
+		const agentSettings = (await this.configs.getAgentSettings(clinicId)) as AgentSettings | null;
 		const savedProvider = agentSettings?.transcribe?.provider as TranscribeProvider | undefined;
 		const savedModelId = agentSettings?.transcribe?.modelId;
 
 		const provider: TranscribeProvider = overrides?.provider ?? savedProvider ?? 'openai';
 		const modelId = overrides?.modelId ?? savedModelId ?? getDefaultTranscribeModelId(provider);
 
-		const { apiKey, baseURL } = await this.resolveProviderSettings(projectId, provider);
+		const { apiKey, baseURL } = await this.resolveProviderSettings(clinicId, provider);
 		if (!apiKey) {
 			throw new Error(`No API key configured for ${provider}. Add one in Settings > Models.`);
 		}
@@ -38,7 +38,7 @@ export class TranscribeService {
 		return result.text;
 	}
 
-	async listAvailableTranscribeModels(projectId: string) {
+	async listAvailableTranscribeModels(clinicId: string) {
 		const available: Record<
 			string,
 			{
@@ -49,7 +49,7 @@ export class TranscribeService {
 
 		for (const [provider, config] of Object.entries(TRANSCRIBE_PROVIDERS)) {
 			const llmProvider = provider as 'openai';
-			const dbConfig = await this.configs.getProjectLlmConfigByProvider(projectId, llmProvider);
+			const dbConfig = await this.configs.getClinicLlmConfigByProvider(clinicId, llmProvider);
 			const hasKey = !!(dbConfig?.apiKey || getEnvApiKey(llmProvider));
 			available[provider] = {
 				models: config.models.map((model) => ({
@@ -66,11 +66,11 @@ export class TranscribeService {
 	}
 
 	private async resolveProviderSettings(
-		projectId: string,
+		clinicId: string,
 		provider: TranscribeProvider,
 	): Promise<{ apiKey: string | undefined; baseURL: string | undefined }> {
 		const llmProvider = provider as 'openai';
-		const config = await this.configs.getProjectLlmConfigByProvider(projectId, llmProvider);
+		const config = await this.configs.getClinicLlmConfigByProvider(clinicId, llmProvider);
 		if (config) {
 			return { apiKey: config.apiKey, baseURL: config.baseUrl ?? undefined };
 		}

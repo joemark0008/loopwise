@@ -40,7 +40,7 @@ export interface DateFormatSettings {
 }
 
 /**
- * Project-level display settings persisted on the project row.
+ * Clinic-level display settings persisted on the clinic row.
  *
  * Currently only carries the date format used in chart axes, tooltips,
  * legends and SQL query result tables, but is shaped as an object so we can

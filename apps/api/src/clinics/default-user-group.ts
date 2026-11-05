@@ -15,9 +15,9 @@ import { ALL_SKILLS_ACCESS } from '@loopwise/shared/user-group-skills';
 
 import type { Prisma } from '../generated/prisma/client.js';
 
-/** The "All Users" group every project gets on creation (upstream `defaultUserGroupValues`). */
-export const defaultUserGroupValues = (projectId: string): Prisma.UserGroupUncheckedCreateInput => ({
-	projectId,
+/** The "All Users" group every clinic gets on creation (upstream `defaultUserGroupValues`). */
+export const defaultUserGroupValues = (clinicId: string): Prisma.UserGroupUncheckedCreateInput => ({
+	clinicId,
 	name: DEFAULT_USER_GROUP_NAME,
 	isDefault: true,
 	featureGrants: serializeUserGroupConfig(

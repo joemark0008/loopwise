@@ -29,7 +29,7 @@ function memory(id: string, category: MemoryRecord['category'] = 'global_rule'):
 
 function createService(opts: { enabled?: boolean; existing?: MemoryRecord[] } = {}) {
 	const repository = {
-		getIsMemoryEnabledForUserAndProject: vi.fn(async () => opts.enabled ?? true),
+		getIsMemoryEnabledForUserAndClinic: vi.fn(async () => opts.enabled ?? true),
 		getUserMemories: vi.fn(async () => opts.existing ?? []),
 		upsertAndSupersedeMemories: vi.fn(async () => undefined),
 	};
@@ -49,7 +49,7 @@ function createService(opts: { enabled?: boolean; existing?: MemoryRecord[] } = 
 
 const extraction = {
 	userId: 'user-1',
-	projectId: 'project-1',
+	clinicId: 'clinic-1',
 	chatId: 'chat-1',
 	messages: [],
 	provider: 'anthropic' as const,
@@ -65,17 +65,17 @@ describe('MemoryService', () => {
 		expect(service.normalizeMemoryContent('   ')).toBe('');
 	});
 
-	it('injects nothing when memory is disabled for the user or the project', async () => {
+	it('injects nothing when memory is disabled for the user or the clinic', async () => {
 		const { service, repository } = createService({ enabled: false, existing: [memory('m1')] });
 
-		await expect(service.safeGetUserMemories('user-1', 'project-1')).resolves.toEqual([]);
+		await expect(service.safeGetUserMemories('user-1', 'clinic-1')).resolves.toEqual([]);
 		expect(repository.getUserMemories).not.toHaveBeenCalled();
 	});
 
 	it('injects the active memories, excluding the current chat', async () => {
 		const { service, repository } = createService({ existing: [memory('m1', 'personal_fact')] });
 
-		await expect(service.safeGetUserMemories('user-1', 'project-1', 'chat-1')).resolves.toEqual([
+		await expect(service.safeGetUserMemories('user-1', 'clinic-1', 'chat-1')).resolves.toEqual([
 			{ category: 'personal_fact', content: 'Memory m1.' },
 		]);
 		expect(repository.getUserMemories).toHaveBeenCalledWith('user-1', 'chat-1');
@@ -98,7 +98,7 @@ describe('MemoryService', () => {
 
 		expect(inferences.scheduleSave).toHaveBeenCalledExactlyOnceWith({
 			type: 'memory_extraction',
-			projectId: 'project-1',
+			clinicId: 'clinic-1',
 			userId: 'user-1',
 			chatId: 'chat-1',
 			llmProvider: 'anthropic',
@@ -133,7 +133,7 @@ describe('MemoryService', () => {
 
 		await service.extractMemory(extraction);
 
-		expect(llm.resolveProviderModel).toHaveBeenCalledWith('project-1', 'openai', 'gpt-4.1-mini', false);
+		expect(llm.resolveProviderModel).toHaveBeenCalledWith('clinic-1', 'openai', 'gpt-4.1-mini', false);
 		expect(llm.resolveAnnotationModelId).not.toHaveBeenCalled();
 	});
 

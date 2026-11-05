@@ -103,8 +103,8 @@ export interface StoryExportData {
 	state?: StoryStateSnapshot;
 }
 
-/** `user` rows are each viewer's own state; `project` rows are the state every viewer reads and writes together. */
-export const STORY_STATE_SCOPES = ['user', 'project'] as const;
+/** `user` rows are each viewer's own state; `clinic` rows are the state every viewer reads and writes together. */
+export const STORY_STATE_SCOPES = ['user', 'clinic'] as const;
 
 export type StoryStateScope = (typeof STORY_STATE_SCOPES)[number];
 

@@ -20,7 +20,7 @@ export class ManagedUser {
 	@Field()
 	email: string;
 
-	@Field({ description: 'Organization role: admin, user or viewer. Projects fall back to it.' })
+	@Field({ description: 'Organization role: admin, user or viewer. Clinics fall back to it.' })
 	role: string;
 
 	@Field(() => ManagedUserStatus)

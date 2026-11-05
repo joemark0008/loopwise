@@ -2,9 +2,9 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 
 import type { AuthUser } from '../auth/auth.service.js';
-import { ProjectAccess } from '../common/decorators/access.decorator.js';
-import { CurrentProject, CurrentUser, SelectedProjectId } from '../common/decorators/current.decorator.js';
-import type { Project } from '../generated/prisma/client.js';
+import { ClinicAccess } from '../common/decorators/access.decorator.js';
+import { CurrentClinic, CurrentUser, SelectedClinicId } from '../common/decorators/current.decorator.js';
+import type { Clinic } from '../generated/prisma/client.js';
 import { ChartsService } from './charts.service.js';
 import { ChartPluginSource } from './models/chart-plugin-source.model.js';
 
@@ -13,7 +13,7 @@ import { ChartPluginSource } from './models/chart-plugin-source.model.js';
 export class ChartsResolver {
 	constructor(private readonly charts: ChartsService) {}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Query(() => String, { description: 'Upstream `chart.download`: the chart rendered as a base64 PNG.' })
 	chartDownload(@CurrentUser() user: AuthUser, @Args('toolCallId') toolCallId: string) {
 		return this.charts.downloadChart(toolCallId, user.id);
@@ -32,27 +32,23 @@ export class ChartsResolver {
 	@Mutation(() => Boolean, { description: 'Upstream `map.updateConfig`: the chat owner edits a `display_map`.' })
 	async updateMapConfig(
 		@CurrentUser() user: AuthUser,
-		@SelectedProjectId() selectedProjectId: string | null,
+		@SelectedClinicId() selectedClinicId: string | null,
 		@Args('mapId') mapId: string,
 		@Args('config', { type: () => GraphQLJSON }) config: unknown,
 	) {
-		await this.charts.updateMapConfig(mapId, config, user.id, selectedProjectId);
+		await this.charts.updateMapConfig(mapId, config, user.id, selectedClinicId);
 		return true;
 	}
 
-	@ProjectAccess()
-	@Query(() => GraphQLJSON, { description: 'Upstream `chartPlugin.list`: the project `charts/` plugins.' })
-	chartPlugins(@CurrentProject() project: Project) {
-		return this.charts.listChartPlugins(project);
+	@ClinicAccess()
+	@Query(() => GraphQLJSON, { description: 'Upstream `chartPlugin.list`: the clinic `charts/` plugins.' })
+	chartPlugins(@CurrentClinic() clinic: Clinic) {
+		return this.charts.listChartPlugins(clinic);
 	}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Query(() => ChartPluginSource, { description: 'Upstream `chartPlugin.source`.' })
-	chartPluginSource(
-		@CurrentProject() project: Project,
-		@Args('type') type: string,
-		@Args('version') version: string,
-	) {
-		return this.charts.getChartPluginSource(project, { type, version });
+	chartPluginSource(@CurrentClinic() clinic: Clinic, @Args('type') type: string, @Args('version') version: string) {
+		return this.charts.getChartPluginSource(clinic, { type, version });
 	}
 }

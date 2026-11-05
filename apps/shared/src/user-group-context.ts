@@ -44,7 +44,7 @@ export type FileTreeAccess = { mode: 'all' } | { mode: 'restricted'; grants: Fil
 export type DocsContextGrant = FileTreeGrant;
 export type DocsContextAccess = FileTreeAccess;
 
-/** Grants over the project files outside `docs/` and `databases/`, relative to the project folder. */
+/** Grants over the clinic files outside `docs/` and `databases/`, relative to the clinic folder. */
 export type FilesContextGrant = FileTreeGrant;
 export type FilesContextAccess = FileTreeAccess;
 
@@ -188,7 +188,7 @@ export function serializeDatabaseContextAccess(access: DatabaseContextAccess): S
 }
 
 /**
- * Before MCP and skill grants existed every user reached every MCP server and project skill,
+ * Before MCP and skill grants existed every user reached every MCP server and clinic skill,
  * which the All Users group keeps granting.
  */
 export function parseStoredUserGroupContextAccess(value: unknown, isDefault: boolean): UserGroupContextAccessGrants {

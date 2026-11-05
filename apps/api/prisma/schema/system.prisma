@@ -2,7 +2,7 @@
 
 model Activity {
   id            String      @id @default(uuid())
-  projectId     String      @map("project_id")
+  clinicId      String      @map("project_id")
   userId        String?     @map("user_id")
   type          String
   status        String      @default("completed")
@@ -16,12 +16,12 @@ model Activity {
   startedAt     DateTime    @default(now()) @map("started_at") @db.Timestamp(6)
   completedAt   DateTime?   @map("completed_at") @db.Timestamp(6)
   chat          Chat?       @relation(fields: [chatId], references: [id], onUpdate: NoAction, map: "activity_chat_id_chat_id_fk")
-  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "activity_project_id_project_id_fk")
+  clinic        Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "activity_project_id_project_id_fk")
   sharedChat    SharedChat? @relation(fields: [sharedChatId], references: [id], onUpdate: NoAction, map: "activity_shared_chat_id_shared_chat_id_fk")
   user          User?       @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "activity_user_id_user_id_fk")
 
   @@index([chatId], map: "activity_chatId_idx")
-  @@index([projectId], map: "activity_projectId_idx")
+  @@index([clinicId], map: "activity_projectId_idx")
   @@index([sharedChatId], map: "activity_sharedChatId_idx")
   @@index([sharedStoryId], map: "activity_sharedStoryId_idx")
   @@index([startedAt], map: "activity_startedAt_idx")
@@ -34,7 +34,7 @@ model Activity {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model AnalyticsEvent {
   id            String      @id @default(uuid())
-  projectId     String      @map("project_id")
+  clinicId      String      @map("project_id")
   type          String
   assetType     String      @map("asset_type")
   actorUserId   String?     @map("actor_user_id")
@@ -46,13 +46,13 @@ model AnalyticsEvent {
   createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
   user          User?       @relation(fields: [actorUserId], references: [id], onUpdate: NoAction, map: "analytics_event_actor_user_id_user_id_fk")
   chat          Chat?       @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "analytics_event_chat_id_chat_id_fk")
-  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "analytics_event_project_id_project_id_fk")
+  clinic        Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "analytics_event_project_id_project_id_fk")
   sharedChat    SharedChat? @relation(fields: [sharedChatId], references: [id], onUpdate: NoAction, map: "analytics_event_shared_chat_id_shared_chat_id_fk")
 
   @@index([actorUserId], map: "analytics_event_actorUserId_idx")
   @@index([chatId], map: "analytics_event_chatId_idx")
-  @@index([projectId], map: "analytics_event_projectId_idx")
-  @@index([projectId, type, assetType, storyId], map: "analytics_event_project_type_asset_story_idx")
+  @@index([clinicId], map: "analytics_event_projectId_idx")
+  @@index([clinicId, type, assetType, storyId], map: "analytics_event_project_type_asset_story_idx")
   @@index([sharedChatId], map: "analytics_event_sharedChatId_idx")
   @@index([sharedStoryId], map: "analytics_event_sharedStoryId_idx")
   @@index([storyId], map: "analytics_event_storyId_idx")
@@ -62,7 +62,7 @@ model AnalyticsEvent {
 
 model Automation {
   id                  String          @id @default(uuid())
-  projectId           String          @map("project_id")
+  clinicId            String          @map("project_id")
   userId              String          @map("user_id")
   title               String
   prompt              String
@@ -76,11 +76,11 @@ model Automation {
   createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt           DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   webhookEnabled      Boolean         @default(false) @map("webhook_enabled")
-  project             Project         @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "automation_project_id_project_id_fk")
+  clinic              Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "automation_project_id_project_id_fk")
   user                User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "automation_user_id_user_id_fk")
   automationRuns      AutomationRun[]
 
-  @@index([projectId], map: "automation_projectId_idx")
+  @@index([clinicId], map: "automation_projectId_idx")
   @@index([userId], map: "automation_userId_idx")
   @@map("automation")
 }
@@ -118,20 +118,20 @@ model Log {
   message   String
   context   Json?
   source    String
-  projectId String?  @map("project_id")
+  clinicId  String?  @map("project_id")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "log_project_id_project_id_fk")
+  clinic    Clinic?  @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "log_project_id_project_id_fk")
 
   @@index([createdAt], map: "log_createdAt_idx")
   @@index([level])
-  @@index([projectId], map: "log_projectId_idx")
+  @@index([clinicId], map: "log_projectId_idx")
   @@map("log")
 }
 
 model Notification {
   id        String    @id @default(uuid())
   userId    String    @map("user_id")
-  projectId String    @map("project_id")
+  clinicId  String    @map("project_id")
   category  String
   title     String
   body      String?
@@ -139,11 +139,11 @@ model Notification {
   payload   Json?
   readAt    DateTime? @map("read_at") @db.Timestamp(6)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
-  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "notification_project_id_project_id_fk")
+  clinic    Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "notification_project_id_project_id_fk")
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "notification_user_id_user_id_fk")
 
   @@index([createdAt], map: "notification_createdAt_idx")
-  @@index([userId, projectId, readAt], map: "notification_user_project_read_idx")
+  @@index([userId, clinicId, readAt], map: "notification_user_project_read_idx")
   @@index([userId, readAt], map: "notification_user_read_idx")
   @@map("notification")
 }

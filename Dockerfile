@@ -37,7 +37,7 @@ ENV NODE_ENV=production \
 	MODE=prod \
 	PORT=5006 \
 	LOOPWISE_FRONTEND_DIST=/app/apps/frontend/dist \
-	LOOPWISE_PROJECTS_DIR=/data/projects \
+	LOOPWISE_CLINICS_DIR=/data/projects \
 	LOOPWISE_STORAGE_LOCAL_PATH=/data/storage
 
 VOLUME /data

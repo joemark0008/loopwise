@@ -32,9 +32,9 @@ export class MemoryService {
 	) {}
 
 	/** Safely gets active memories for a user to be injected into the system prompt. */
-	async safeGetUserMemories(userId: string, projectId: string, excludeChatId?: string): Promise<UserMemory[]> {
+	async safeGetUserMemories(userId: string, clinicId: string, excludeChatId?: string): Promise<UserMemory[]> {
 		try {
-			if (!(await this.memories.getIsMemoryEnabledForUserAndProject(userId, projectId))) {
+			if (!(await this.memories.getIsMemoryEnabledForUserAndClinic(userId, clinicId))) {
 				return [];
 			}
 			const memories = await this.memories.getUserMemories(userId, excludeChatId);
@@ -60,8 +60,8 @@ export class MemoryService {
 		return this.memories.getUserMemoryEnabled(userId);
 	}
 
-	isProjectMemoryEnabled(projectId: string): Promise<boolean> {
-		return this.memories.getProjectMemoryEnabled(projectId);
+	isClinicMemoryEnabled(clinicId: string): Promise<boolean> {
+		return this.memories.getClinicMemoryEnabled(clinicId);
 	}
 
 	setEnabled(userId: string, memoryEnabled: boolean): Promise<void> {
@@ -86,15 +86,14 @@ export class MemoryService {
 
 	/** Visible to tests: the extraction itself, without the error guard. */
 	async extractMemory(opts: MemoryExtractionOptions): Promise<void> {
-		if (!(await this.memories.getIsMemoryEnabledForUserAndProject(opts.userId, opts.projectId))) {
+		if (!(await this.memories.getIsMemoryEnabledForUserAndClinic(opts.userId, opts.clinicId))) {
 			return;
 		}
 
-		const pinned = await this.llm.resolveDefaultModelSelection(opts.projectId, 'other');
+		const pinned = await this.llm.resolveDefaultModelSelection(opts.clinicId, 'other');
 		const provider = pinned?.provider ?? opts.provider;
-		const modelId =
-			pinned?.modelId ?? (await this.getExtractorModelId(opts.projectId, opts.provider, opts.modelId));
-		const model = await this.resolveModel(opts.projectId, provider, modelId);
+		const modelId = pinned?.modelId ?? (await this.getExtractorModelId(opts.clinicId, opts.provider, opts.modelId));
+		const model = await this.resolveModel(opts.clinicId, provider, modelId);
 		if (!model) {
 			return;
 		}
@@ -106,7 +105,7 @@ export class MemoryService {
 		}
 		this.inferences.scheduleSave({
 			type: 'memory_extraction',
-			projectId: opts.projectId,
+			clinicId: opts.clinicId,
 			userId: opts.userId,
 			chatId: opts.chatId,
 			llmProvider: provider,
@@ -123,17 +122,17 @@ export class MemoryService {
 	}
 
 	private async resolveModel(
-		projectId: string,
+		clinicId: string,
 		provider: LlmProvider,
 		modelId: string,
 	): Promise<ProviderModelResult | null> {
-		const model = await this.llm.resolveProviderModel(projectId, provider, modelId, false);
+		const model = await this.llm.resolveProviderModel(clinicId, provider, modelId, false);
 		return model ? disableModelReasoning(provider, model) : null;
 	}
 
-	private getExtractorModelId(projectId: string, provider: LlmProvider, selectedModelId: string): Promise<string> {
+	private getExtractorModelId(clinicId: string, provider: LlmProvider, selectedModelId: string): Promise<string> {
 		return this.llm.resolveAnnotationModelId(
-			projectId,
+			clinicId,
 			{ provider, modelId: selectedModelId },
 			getProviderMeta(provider).extractorModelId,
 		);

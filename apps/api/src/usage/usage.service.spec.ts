@@ -12,8 +12,8 @@ import {
 import { UsagePeriodSettingsService } from './usage-period-settings.service.js';
 
 /**
- * Port of upstream `saved-usage-periods.routes.test.ts` on `UsageService`. Dropped: the stale-project check, as
- * `@ProjectAccess()` resolves the project from the same `projectId` argument.
+ * Port of upstream `saved-usage-periods.routes.test.ts` on `UsageService`. Dropped: the stale-clinic check, as
+ * `@ClinicAccess()` resolves the clinic from the same `clinicId` argument.
  */
 const state = vi.hoisted(() => ({
 	preferences: {} as Record<string, unknown>,
@@ -28,18 +28,18 @@ const usageMocks = {
 };
 
 const users = {
-	getUserPreferences: vi.fn(async () => ({ projectPreferences: { 'project-id': state.preferences } })),
+	getUserPreferences: vi.fn(async () => ({ projectPreferences: { 'clinic-id': state.preferences } })),
 	mutateUserPreferences: vi.fn(
 		async (_userId: string, transform: (current: StoredUserPreferences) => StoredUserPreferences) => {
-			const updated = transform({ projectPreferences: { 'project-id': state.preferences } });
+			const updated = transform({ projectPreferences: { 'clinic-id': state.preferences } });
 			state.preferences =
-				(updated.projectPreferences?.['project-id'] as Record<string, unknown> | undefined) ?? {};
+				(updated.projectPreferences?.['clinic-id'] as Record<string, unknown> | undefined) ?? {};
 			return updated;
 		},
 	),
 };
 
-const llm = { getProjectDeclaredModels: vi.fn(async () => []) };
+const llm = { getClinicDeclaredModels: vi.fn(async () => []) };
 
 const service = new UsageService(
 	usageMocks as unknown as UsageRepository,
@@ -54,53 +54,53 @@ describe('saved usage period routes', () => {
 		vi.clearAllMocks();
 	});
 
-	it('scopes regular users while leaving project admins organization-wide', async () => {
+	it('scopes regular users while leaving clinic admins organization-wide', async () => {
 		const input = { period: { value: 15, unit: 'day' as const } };
 		state.role = 'user';
 		await createCaller().getMessagesUsage(input);
-		expect(usageMocks.getMessagesUsage).toHaveBeenLastCalledWith('project-id', input, expect.any(Array), 'user-id');
+		expect(usageMocks.getMessagesUsage).toHaveBeenLastCalledWith('clinic-id', input, expect.any(Array), 'user-id');
 
 		state.role = 'admin';
 		await createCaller().getMessagesUsage(input);
-		expect(usageMocks.getMessagesUsage).toHaveBeenLastCalledWith('project-id', input, expect.any(Array), undefined);
+		expect(usageMocks.getMessagesUsage).toHaveBeenLastCalledWith('clinic-id', input, expect.any(Array), undefined);
 	});
 
 	it('creates, updates, selects, and deletes saved periods', async () => {
 		const caller = createCaller();
 		const created = await caller.createSavedPeriod({
-			projectId: 'project-id',
+			clinicId: 'clinic-id',
 			savedPeriod: { days: 5000, granularity: 'month' },
 		});
 
 		expect(created.id).toEqual(expect.any(String));
-		await expect(caller.getPeriodSettings({ projectId: 'project-id' })).resolves.toEqual({
+		await expect(caller.getPeriodSettings({ clinicId: 'clinic-id' })).resolves.toEqual({
 			selection: { mode: 'saved', savedPeriodId: created.id },
 			savedPeriods: [created],
 		});
 
 		const updated = await caller.updateSavedPeriod({
-			projectId: 'project-id',
+			clinicId: 'clinic-id',
 			savedPeriod: { ...created, days: 730, granularity: 'day' },
 		});
-		await expect(caller.getPeriodSettings({ projectId: 'project-id' })).resolves.toEqual({
+		await expect(caller.getPeriodSettings({ clinicId: 'clinic-id' })).resolves.toEqual({
 			selection: { mode: 'saved', savedPeriodId: created.id },
 			savedPeriods: [updated],
 		});
 
 		await caller.updatePeriodSelection({
-			projectId: 'project-id',
+			clinicId: 'clinic-id',
 			selection: { mode: 'saved', savedPeriodId: created.id },
 		});
-		await expect(caller.getPeriodSettings({ projectId: 'project-id' })).resolves.toEqual({
+		await expect(caller.getPeriodSettings({ clinicId: 'clinic-id' })).resolves.toEqual({
 			selection: { mode: 'saved', savedPeriodId: created.id },
 			savedPeriods: [updated],
 		});
 
-		await expect(caller.deleteSavedPeriod({ projectId: 'project-id', id: created.id })).resolves.toEqual({
+		await expect(caller.deleteSavedPeriod({ clinicId: 'clinic-id', id: created.id })).resolves.toEqual({
 			id: created.id,
 			selection: DEFAULT_USAGE_PERIOD_SELECTION,
 		});
-		await expect(caller.getPeriodSettings({ projectId: 'project-id' })).resolves.toEqual({
+		await expect(caller.getPeriodSettings({ clinicId: 'clinic-id' })).resolves.toEqual({
 			selection: DEFAULT_USAGE_PERIOD_SELECTION,
 			savedPeriods: [],
 		});
@@ -116,7 +116,7 @@ describe('saved usage period routes', () => {
 
 		await expect(
 			createCaller().createSavedPeriod({
-				projectId: 'project-id',
+				clinicId: 'clinic-id',
 				savedPeriod: { days: 30, granularity: 'day' },
 			}),
 		).rejects.toMatchObject({
@@ -138,7 +138,7 @@ describe('saved usage period routes', () => {
 			savedUsagePeriods: savedPeriods,
 		};
 
-		await expect(createCaller().getPeriodSettings({ projectId: 'project-id' })).resolves.toEqual({
+		await expect(createCaller().getPeriodSettings({ clinicId: 'clinic-id' })).resolves.toEqual({
 			selection: DEFAULT_USAGE_PERIOD_SELECTION,
 			savedPeriods: retainedSavedPeriods,
 		});
@@ -153,11 +153,11 @@ describe('saved usage period routes', () => {
 
 		await expect(
 			caller.updatePeriodSelection({
-				projectId: 'project-id',
+				clinicId: 'clinic-id',
 				selection: { mode: 'saved', savedPeriodId: 'missing' },
 			}),
 		).rejects.toMatchObject({ codeMessage: 'NOT_FOUND' });
-		await expect(caller.deleteSavedPeriod({ projectId: 'project-id', id: 'missing' })).rejects.toMatchObject({
+		await expect(caller.deleteSavedPeriod({ clinicId: 'clinic-id', id: 'missing' })).rejects.toMatchObject({
 			codeMessage: 'NOT_FOUND',
 		});
 	});
@@ -172,11 +172,11 @@ describe('saved usage period routes', () => {
 		const caller = createCaller();
 
 		const created = await caller.createSavedPeriod({
-			projectId: 'project-id',
+			clinicId: 'clinic-id',
 			savedPeriod: { days: 365, granularity: 'month' },
 		});
 
-		await expect(caller.getPeriodSettings({ projectId: 'project-id' })).resolves.toEqual({
+		await expect(caller.getPeriodSettings({ clinicId: 'clinic-id' })).resolves.toEqual({
 			selection: { mode: 'saved', savedPeriodId: created.id },
 			savedPeriods: [{ id: 'valid', days: 30, granularity: 'day' }, created],
 		});
@@ -188,7 +188,7 @@ describe('saved usage period routes', () => {
 			savedUsagePeriods: [{ id: 'invalid', days: 0, granularity: 'day' }],
 		};
 
-		await expect(createCaller().getPeriodSettings({ projectId: 'project-id' })).resolves.toEqual({
+		await expect(createCaller().getPeriodSettings({ clinicId: 'clinic-id' })).resolves.toEqual({
 			selection: DEFAULT_USAGE_PERIOD_SELECTION,
 			savedPeriods: [],
 		});
@@ -205,7 +205,7 @@ describe('saved usage period routes', () => {
 			savedUsagePeriods: [savedPeriod],
 		};
 
-		await expect(createCaller().getPeriodSettings({ projectId: 'project-id' })).resolves.toEqual({
+		await expect(createCaller().getPeriodSettings({ clinicId: 'clinic-id' })).resolves.toEqual({
 			selection: { mode: 'saved', savedPeriodId: savedPeriod.id },
 			savedPeriods: [savedPeriod],
 		});
@@ -222,7 +222,7 @@ describe('saved usage period routes', () => {
 			savedUsagePeriods: [validSavedPeriod, { id: 'invalid', days: 0, granularity: 'day' }],
 		};
 
-		await expect(createCaller().getPeriodSettings({ projectId: 'project-id' })).resolves.toEqual({
+		await expect(createCaller().getPeriodSettings({ clinicId: 'clinic-id' })).resolves.toEqual({
 			selection: DEFAULT_USAGE_PERIOD_SELECTION,
 			savedPeriods: [validSavedPeriod],
 		});
@@ -238,30 +238,30 @@ function createCaller() {
 	const viewer = () => ({ userId: 'user-id', role: state.role });
 	return {
 		getMessagesUsage: (input: Parameters<UsageService['getMessagesUsage']>[2]) =>
-			service.getMessagesUsage('project-id', viewer(), input),
-		getPeriodSettings: ({ projectId }: { projectId: string }) => service.getPeriodSettings('user-id', projectId),
+			service.getMessagesUsage('clinic-id', viewer(), input),
+		getPeriodSettings: ({ clinicId }: { clinicId: string }) => service.getPeriodSettings('user-id', clinicId),
 		updatePeriodSelection: ({
-			projectId,
+			clinicId,
 			selection,
 		}: {
-			projectId: string;
+			clinicId: string;
 			selection: Parameters<UsageService['updatePeriodSelection']>[2];
-		}) => service.updatePeriodSelection('user-id', projectId, selection),
+		}) => service.updatePeriodSelection('user-id', clinicId, selection),
 		createSavedPeriod: ({
-			projectId,
+			clinicId,
 			savedPeriod,
 		}: {
-			projectId: string;
+			clinicId: string;
 			savedPeriod: Parameters<UsageService['createSavedPeriod']>[2];
-		}) => service.createSavedPeriod('user-id', projectId, savedPeriod),
+		}) => service.createSavedPeriod('user-id', clinicId, savedPeriod),
 		updateSavedPeriod: ({
-			projectId,
+			clinicId,
 			savedPeriod,
 		}: {
-			projectId: string;
+			clinicId: string;
 			savedPeriod: Parameters<UsageService['updateSavedPeriod']>[2];
-		}) => service.updateSavedPeriod('user-id', projectId, savedPeriod),
-		deleteSavedPeriod: ({ projectId, id }: { projectId: string; id: string }) =>
-			service.deleteSavedPeriod('user-id', projectId, id),
+		}) => service.updateSavedPeriod('user-id', clinicId, savedPeriod),
+		deleteSavedPeriod: ({ clinicId, id }: { clinicId: string; id: string }) =>
+			service.deleteSavedPeriod('user-id', clinicId, id),
 	};
 }

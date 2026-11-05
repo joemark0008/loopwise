@@ -14,7 +14,7 @@ vi.mock('./components/generate-chart.js', () => ({ generateChartImage: mocks.gen
 
 import type { ChatRepository } from '../chats/chat.repository.js';
 import type { ChatAccessService } from '../chats/chat-access.service.js';
-import type { ProjectRepository } from '../projects/project.repository.js';
+import type { ClinicRepository } from '../clinics/clinic.repository.js';
 import type { ChartRepository } from './chart.repository.js';
 import { ChartsService } from './charts.service.js';
 
@@ -35,7 +35,7 @@ const service = new ChartsService(
 		listChatsReferencingImage: mocks.listChatsReferencingImage,
 	} as unknown as ChartRepository,
 	{ getExecuteSqlPartByQueryIdInChat: mocks.getExecuteSqlPartByQueryIdInChat } as unknown as ChatRepository,
-	{ getDisplaySettings: vi.fn(async () => ({ dateFormat: 'YYYY-MM-DD' })) } as unknown as ProjectRepository,
+	{ getDisplaySettings: vi.fn(async () => ({ dateFormat: 'YYYY-MM-DD' })) } as unknown as ClinicRepository,
 	{ canUserViewChatContent: mocks.canUserViewChatContent } as unknown as ChatAccessService,
 );
 
@@ -44,7 +44,7 @@ describe('chart.download', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mocks.getChartOwnerInfo.mockResolvedValue({
-			projectId: 'victim-project',
+			clinicId: 'victim-clinic',
 			userId: 'victim',
 			chatId: 'victim-chat',
 		});
@@ -61,7 +61,7 @@ describe('chart.download', () => {
 		await expect(service.downloadChart('victim-tool-call', CALLER_ID)).rejects.toMatchObject({
 			codeMessage: 'NOT_FOUND',
 		});
-		expect(mocks.canUserViewChatContent).toHaveBeenCalledWith('victim-chat', 'victim-project', CALLER_ID);
+		expect(mocks.canUserViewChatContent).toHaveBeenCalledWith('victim-chat', 'victim-clinic', CALLER_ID);
 		expect(mocks.getExecuteSqlPartByQueryIdInChat).not.toHaveBeenCalled();
 		expect(mocks.generateChartImage).not.toHaveBeenCalled();
 	});
@@ -98,7 +98,7 @@ const IMAGE_ID = '6f1d1f0e-8a0e-4a59-9f0b-6a5c2d7a9e11';
 describe('GET /i/:imageId', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mocks.listChatsReferencingImage.mockResolvedValue([{ chatId: 'chat-1', projectId: 'project-1' }]);
+		mocks.listChatsReferencingImage.mockResolvedValue([{ chatId: 'chat-1', clinicId: 'clinic-1' }]);
 		mocks.getImageById.mockResolvedValue({ mediaType: 'image/png', data: Buffer.from('png').toString('base64') });
 	});
 
@@ -106,7 +106,7 @@ describe('GET /i/:imageId', () => {
 		mocks.canUserViewChatContent.mockResolvedValue(false);
 
 		await expect(service.getImageForUser(IMAGE_ID, 'viewer-id')).rejects.toMatchObject({ code: 404 });
-		expect(mocks.canUserViewChatContent).toHaveBeenCalledWith('chat-1', 'project-1', 'viewer-id');
+		expect(mocks.canUserViewChatContent).toHaveBeenCalledWith('chat-1', 'clinic-1', 'viewer-id');
 		expect(mocks.getImageById).not.toHaveBeenCalled();
 	});
 

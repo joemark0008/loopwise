@@ -10,8 +10,8 @@ import { PathwaysModule } from '../clinical/pathways/pathways.module.js';
 import { PatientsModule } from '../clinical/patients/patients.module.js';
 import { ReportsModule } from '../clinical/reports/reports.module.js';
 import { ResultsModule } from '../clinical/results/results.module.js';
+import { ClinicsCoreModule } from '../clinics/clinics-core.module.js';
 import { MemoryModule } from '../memory/memory.module.js';
-import { ProjectsCoreModule } from '../projects/projects-core.module.js';
 import { SkillsModule } from '../skills/skills.module.js';
 import { WiseToolsModule } from '../wise-tools/wise-tools.module.js';
 import { AgentController } from './agent.controller.js';
@@ -23,7 +23,7 @@ import { CompactionService } from './services/compaction.js';
 @Module({
 	imports: [
 		AgentCoreModule,
-		ProjectsCoreModule,
+		ClinicsCoreModule,
 		ChatsCoreModule,
 		AttachmentsModule,
 		SkillsModule,

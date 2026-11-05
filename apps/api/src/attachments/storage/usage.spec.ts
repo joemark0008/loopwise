@@ -5,12 +5,12 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { __reloadEnvForTesting, __resetStorageForTesting } from './index.js';
-import { getProjectUsageByUser, getScopeUsage } from './usage.js';
+import { getClinicUsageByUser, getScopeUsage } from './usage.js';
 import { writeUserFile } from './user-files.js';
 
-const scope = { projectId: 'proj-1', userId: 'user-1' };
-const otherUser = { projectId: 'proj-1', userId: 'user-2' };
-const otherProject = { projectId: 'proj-2', userId: 'user-1' };
+const scope = { clinicId: 'proj-1', userId: 'user-1' };
+const otherUser = { clinicId: 'proj-1', userId: 'user-2' };
+const otherClinic = { clinicId: 'proj-2', userId: 'user-1' };
 
 let root: string;
 let originalEnv: typeof process.env;
@@ -36,9 +36,9 @@ describe('getScopeUsage', () => {
 		expect(await getScopeUsage(scope)).toEqual({ fileCount: 2, totalBytes: 6 });
 	});
 
-	it('ignores files of other users and other projects', async () => {
+	it('ignores files of other users and other clinics', async () => {
 		await writeUserFile(otherUser, 'theirs.csv', 'abcd');
-		await writeUserFile(otherProject, 'elsewhere.csv', 'abcd');
+		await writeUserFile(otherClinic, 'elsewhere.csv', 'abcd');
 
 		expect(await getScopeUsage(scope)).toEqual({ fileCount: 0, totalBytes: 0 });
 	});
@@ -49,26 +49,26 @@ describe('getScopeUsage', () => {
 	});
 });
 
-describe('getProjectUsageByUser', () => {
-	it('groups the project by user, heaviest space first', async () => {
+describe('getClinicUsageByUser', () => {
+	it('groups the clinic by user, heaviest space first', async () => {
 		await writeUserFile(scope, 'notes.md', 'ab');
 		await writeUserFile(otherUser, 'reports/q1.csv', 'abcd');
 		await writeUserFile(otherUser, 'reports/q2.csv', 'a');
 
-		expect(await getProjectUsageByUser('proj-1')).toEqual([
+		expect(await getClinicUsageByUser('proj-1')).toEqual([
 			{ userId: 'user-2', fileCount: 2, totalBytes: 5 },
 			{ userId: 'user-1', fileCount: 1, totalBytes: 2 },
 		]);
 	});
 
-	it('leaves out other projects', async () => {
-		await writeUserFile(otherProject, 'elsewhere.csv', 'abcd');
-		expect(await getProjectUsageByUser('proj-1')).toEqual([]);
+	it('leaves out other clinics', async () => {
+		await writeUserFile(otherClinic, 'elsewhere.csv', 'abcd');
+		expect(await getClinicUsageByUser('proj-1')).toEqual([]);
 	});
 
 	it('reports nothing when storage is disabled', async () => {
 		useBackend('none');
-		expect(await getProjectUsageByUser('proj-1')).toEqual([]);
+		expect(await getClinicUsageByUser('proj-1')).toEqual([]);
 	});
 });
 

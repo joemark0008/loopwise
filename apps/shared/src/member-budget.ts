@@ -22,7 +22,7 @@ export const MEMBER_BUDGET_SOURCE_LABELS: Record<MemberBudgetSource, string> = {
 	default: 'Workspace default limit',
 };
 
-/* personal budget > most permissive budget among their groups > project default */
+/* personal budget > most permissive budget among their groups > clinic default */
 export function resolveMemberBudgetLimit(
 	personalLimitUsd: number | null | undefined,
 	groupLimitsUsd: number[],

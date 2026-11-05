@@ -147,7 +147,7 @@ describe('SystemPrompt built-in skills', () => {
 		expect(markdown).not.toContain('Built-in Skills');
 	});
 
-	it('leaves out a built-in skill that a project skill of the same name shadows', () => {
+	it('leaves out a built-in skill that a clinic skill of the same name shadows', () => {
 		const skills = [{ name: 'pdf-handling', description: 'Our PDF rules.', location: '/agent/skills/pdf.md' }];
 		const markdown = renderToMarkdown(SystemPrompt({ internalSkills, skills }));
 
@@ -205,7 +205,7 @@ describe('SystemPrompt preloaded skills', () => {
 	});
 });
 
-describe('SystemPrompt project skills', () => {
+describe('SystemPrompt clinic skills', () => {
 	const skills = [{ name: 'revenue', description: 'How to compute revenue.', location: '/agent/skills/revenue.md' }];
 
 	it('tells the agent to load a listed skill with load_skill', () => {

@@ -1,13 +1,13 @@
 import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
 
+import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import type { SharedChat } from '../generated/prisma/client.js';
-import { ProjectRepository } from '../projects/project.repository.js';
 import { ChatRepository } from './chat.repository.js';
 import { ChatsService } from './chats.service.js';
+import { ClinicSharingService } from './clinic-sharing.service.js';
 import type { Chat } from './models/chat.model.js';
-import { ProjectSharingService } from './project-sharing.service.js';
 import { SharedChatRepository, type SharedChatWithDetails } from './shared-chat.repository.js';
 
 /**
@@ -19,34 +19,34 @@ export class SharedChatsService {
 	constructor(
 		private readonly chats: ChatRepository,
 		private readonly sharedChats: SharedChatRepository,
-		private readonly projects: ProjectRepository,
-		private readonly sharing: ProjectSharingService,
+		private readonly clinics: ClinicRepository,
+		private readonly sharing: ClinicSharingService,
 		private readonly chatsService: ChatsService,
 	) {}
 
 	async list(userId: string): Promise<SharedChatWithDetails[]> {
-		const projects = await this.projects.listUserProjectsWithRoles(userId);
+		const clinics = await this.clinics.listUserClinicsWithRoles(userId);
 		return this.sharedChats.listUserSharedChats(
-			projects.map(({ project }) => project.id),
+			clinics.map(({ clinic }) => clinic.id),
 			userId,
 		);
 	}
 
 	async create(
-		ctx: { projectId: string; userId: string; userRole: UserRole },
-		input: { chatId: string; visibility: 'project' | 'specific'; allowedUserIds?: string[] },
+		ctx: { clinicId: string; userId: string; userRole: UserRole },
+		input: { chatId: string; visibility: 'clinic' | 'specific'; allowedUserIds?: string[] },
 	): Promise<SharedChat> {
 		const chatInfo = await this.chats.getChatInfo(input.chatId);
-		if (!chatInfo || chatInfo.projectId !== ctx.projectId) {
+		if (!chatInfo || chatInfo.clinicId !== ctx.clinicId) {
 			throw new HandlerError('NOT_FOUND', 'Chat not found.');
 		}
 		if (chatInfo.userId !== ctx.userId && ctx.userRole !== 'admin') {
 			throw new HandlerError('FORBIDDEN', 'Only the creator or an admin can share this.');
 		}
-		if (input.visibility === 'project') {
-			await this.sharing.assertCanShareToProject(ctx.projectId, ctx.userId);
+		if (input.visibility === 'clinic') {
+			await this.sharing.assertCanShareToClinic(ctx.clinicId, ctx.userId);
 		} else {
-			await this.sharing.assertCanShareWith(ctx.projectId, ctx.userId, { userIds: input.allowedUserIds });
+			await this.sharing.assertCanShareWith(ctx.clinicId, ctx.userId, { userIds: input.allowedUserIds });
 		}
 		return this.sharedChats.createSharedChat(
 			{ chatId: input.chatId, visibility: input.visibility },
@@ -82,7 +82,7 @@ export class SharedChatsService {
 		if (!chatInfo) {
 			throw new HandlerError('NOT_FOUND', 'Chat not found.');
 		}
-		await this.requireProjectRole(chatInfo.projectId, userId);
+		await this.requireClinicRole(chatInfo.clinicId, userId);
 
 		const share = await this.sharedChats.getShareIdByChatId(chatId, userId);
 		if (!share) {
@@ -94,19 +94,19 @@ export class SharedChatsService {
 	}
 
 	/**
-	 * Upstream `project.getProjectMembersByChatId`: who the chat can be shared with. Every member of the chat's project
-	 * until user groups narrow share audiences (Phase 6, `ProjectSharingService`).
+	 * Upstream `clinic.getClinicMembersByChatId`: who the chat can be shared with. Every member of the chat's clinic
+	 * until user groups narrow share audiences (Phase 6, `ClinicSharingService`).
 	 */
 	async listShareableMembers(
 		chatId: string,
 		userId: string,
 	): Promise<{ id: string; name: string; email: string; role: string }[]> {
-		const projectId = await this.chats.getChatProjectId(chatId);
-		if (!projectId) {
+		const clinicId = await this.chats.getChatClinicId(chatId);
+		if (!clinicId) {
 			return [];
 		}
-		await this.requireProjectRole(projectId, userId);
-		return this.projects.listUsersWithProjectAccess(projectId);
+		await this.requireClinicRole(clinicId, userId);
+		return this.clinics.listUsersWithClinicAccess(clinicId);
 	}
 
 	async updateAccess(shareId: string, userId: string, allowedUserIds: string[]): Promise<void> {
@@ -117,11 +117,11 @@ export class SharedChatsService {
 		}
 
 		const previousAllowedUserIds = await this.sharedChats.getShareAllowedUserIds(shareId);
-		await this.sharing.assertCanShareWith(share.projectId, userId, {
+		await this.sharing.assertCanShareWith(share.clinicId, userId, {
 			userIds: allowedUserIds.filter((id) => !previousAllowedUserIds.includes(id)),
 		});
 
-		const accessibleUsers = await this.projects.listUsersWithProjectAccess(share.projectId);
+		const accessibleUsers = await this.clinics.listUsersWithClinicAccess(share.clinicId);
 		const accessibleUserIds = new Set(accessibleUsers.map((member) => member.id));
 		const validUserIds = allowedUserIds.filter((id) => accessibleUserIds.has(id));
 		if (allowedUserIds.length > 0 && validUserIds.length === 0) {
@@ -140,7 +140,7 @@ export class SharedChatsService {
 	}
 
 	/**
-	 * Upstream `resolveSharedChat` (chat-fork routes): the share, when the user is in its project and, for a
+	 * Upstream `resolveSharedChat` (chat-fork routes): the share, when the user is in its clinic and, for a
 	 * `specific` share, a recipient or the owner.
 	 */
 	async resolveSharedChatForFork(shareId: string, userId: string): Promise<SharedChatWithDetails> {
@@ -148,9 +148,9 @@ export class SharedChatsService {
 		if (!share) {
 			throw new HandlerError('NOT_FOUND', 'Shared chat not found.');
 		}
-		const userRole = await this.projects.getUserRoleInProject(share.projectId, userId);
+		const userRole = await this.clinics.getUserRoleInClinic(share.clinicId, userId);
 		if (!userRole) {
-			throw new HandlerError('FORBIDDEN', 'You do not have access to this project.');
+			throw new HandlerError('FORBIDDEN', 'You do not have access to this clinic.');
 		}
 		if (share.visibility === 'specific' && share.userId !== userId) {
 			if (!(await this.sharedChats.canUserAccessSharedChat(share.id, userId))) {
@@ -160,7 +160,7 @@ export class SharedChatsService {
 		return share;
 	}
 
-	/** Upstream `resourceProjectProcedure('shareId', getSharedChatInfo, 'Shared chat', checkAccess?)`. */
+	/** Upstream `resourceClinicProcedure('shareId', getSharedChatInfo, 'Shared chat', checkAccess?)`. */
 	private async resolveShare(
 		shareId: string,
 		userId: string,
@@ -170,7 +170,7 @@ export class SharedChatsService {
 		if (!share) {
 			throw new HandlerError('NOT_FOUND', 'Shared chat not found.');
 		}
-		const userRole = await this.requireProjectRole(share.projectId, userId);
+		const userRole = await this.requireClinicRole(share.clinicId, userId);
 		if (checkRecipientAccess && share.visibility === 'specific') {
 			const isOwner = (await this.chats.getChatOwnerId(share.chatId)) === userId;
 			if (!isOwner && !(await this.sharedChats.canUserAccessSharedChat(share.id, userId))) {
@@ -180,10 +180,10 @@ export class SharedChatsService {
 		return { share, userRole };
 	}
 
-	private async requireProjectRole(projectId: string, userId: string): Promise<UserRole> {
-		const userRole = await this.projects.getUserRoleInProject(projectId, userId);
+	private async requireClinicRole(clinicId: string, userId: string): Promise<UserRole> {
+		const userRole = await this.clinics.getUserRoleInClinic(clinicId, userId);
 		if (!userRole) {
-			throw new HandlerError('FORBIDDEN', 'You do not have access to this project.');
+			throw new HandlerError('FORBIDDEN', 'You do not have access to this clinic.');
 		}
 		return userRole;
 	}

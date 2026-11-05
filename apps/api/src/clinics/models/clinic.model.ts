@@ -1,7 +1,7 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
 
-@ObjectType({ description: 'A project the user can access, with their role in it.' })
-export class ProjectSummary {
+@ObjectType({ description: 'A clinic the user can access, with their role in it.' })
+export class ClinicSummary {
 	@Field(() => ID)
 	id: string;
 
@@ -13,7 +13,7 @@ export class ProjectSummary {
 
 	@Field(() => String, {
 		nullable: true,
-		description: 'Folder holding the project context and `loopwise_config.yaml`.',
+		description: 'Folder holding the clinic context and `loopwise_config.yaml`.',
 	})
 	path: string | null;
 
@@ -48,7 +48,7 @@ export class SavedPrompt {
 	updatedAt: Date;
 }
 
-@ObjectType({ description: 'A synced warehouse table (upstream `project.getDatabaseObjects`).' })
+@ObjectType({ description: 'A synced warehouse table (upstream `clinic.getDatabaseObjects`).' })
 export class DatabaseObject {
 	@Field()
 	type: string;

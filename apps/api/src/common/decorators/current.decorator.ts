@@ -12,12 +12,12 @@ export const CurrentSession = createParamDecorator(
 	(_data: unknown, context: ExecutionContext) => getRequest(context).session,
 );
 
-/** The project resolved by `@ProjectAccess()`. */
-export const CurrentProject = createParamDecorator(
-	(_data: unknown, context: ExecutionContext) => getRequest(context).project,
+/** The clinic resolved by `@ClinicAccess()`. */
+export const CurrentClinic = createParamDecorator(
+	(_data: unknown, context: ExecutionContext) => getRequest(context).clinic,
 );
 
-/** The user's role in the project resolved by `@ProjectAccess()`. */
+/** The user's role in the clinic resolved by `@ClinicAccess()`. */
 export const CurrentUserRole = createParamDecorator(
 	(_data: unknown, context: ExecutionContext) => getRequest(context).userRole,
 );
@@ -37,9 +37,9 @@ export const CurrentFacility = createParamDecorator(
 	(_data: unknown, context: ExecutionContext) => getRequest(context).facility,
 );
 
-/** The project id the client selected (`x-loopwise-project-id` header), for handlers without `@ProjectAccess()`. */
-export const SelectedProjectId = createParamDecorator((_data: unknown, context: ExecutionContext) => {
-	const value = getRequest(context).headers['x-loopwise-project-id'];
+/** The clinic id the client selected (`x-loopwise-clinic-id` header), for handlers without `@ClinicAccess()`. */
+export const SelectedClinicId = createParamDecorator((_data: unknown, context: ExecutionContext) => {
+	const value = getRequest(context).headers['x-loopwise-clinic-id'];
 	const id = Array.isArray(value) ? value[0] : value;
 	return id && id.trim() ? id.trim() : null;
 });

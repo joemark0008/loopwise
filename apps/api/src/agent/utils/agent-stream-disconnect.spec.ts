@@ -26,7 +26,7 @@ describe('trackAgentStreamDisconnect', () => {
 			'Agent stream connection closed before the response was complete',
 			expect.objectContaining({
 				source: 'agent',
-				projectId: 'project-1',
+				clinicId: 'clinic-1',
 				context: expect.objectContaining({
 					chatId: 'chat-1',
 					userId: 'user-1',
@@ -92,7 +92,7 @@ function createSetup() {
 		response: raw as unknown as Response,
 		agent,
 		userId: 'user-1',
-		projectId: 'project-1',
+		clinicId: 'clinic-1',
 		chatId: 'chat-1',
 		modelId: 'model-1',
 	});

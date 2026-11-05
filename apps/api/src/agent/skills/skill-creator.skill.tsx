@@ -4,11 +4,11 @@ import type { InternalSkill } from './types.js';
 export const skillCreatorSkill: InternalSkill = {
 	name: 'skill-creator',
 	description:
-		'How to draft a new project skill. Load it when the user asks to create, save or turn something into a skill.',
+		'How to draft a new clinic skill. Load it when the user asks to create, save or turn something into a skill.',
 	body: () =>
 		renderToMarkdown(
 			<Block>
-				<Title level={1}>Drafting a project skill</Title>
+				<Title level={1}>Drafting a clinic skill</Title>
 				<Span>
 					A skill is a Markdown playbook the agent loads when a question matches its description. Draft from
 					what actually worked in this conversation, then call <Bold>propose_skill</Bold>. The user reads the

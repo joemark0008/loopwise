@@ -44,28 +44,28 @@ function setupDirStructure(root: string, structure: Record<string, string[]>) {
 }
 
 describe('getUserRules', () => {
-	it('returns undefined without a project-root RULES.md', () => {
+	it('returns undefined without a clinic-root RULES.md', () => {
 		mockExistsSync.mockReturnValue(false);
 
-		expect(getUserRules('/project', { enforced: true, groupNames: ['finance'] })).toBeUndefined();
+		expect(getUserRules('/clinic', { enforced: true, groupNames: ['finance'] })).toBeUndefined();
 		expect(mockReadFileSync).not.toHaveBeenCalled();
 	});
 
-	it('reads and renders only the project-root RULES.md for effective groups case-insensitively', () => {
+	it('reads and renders only the clinic-root RULES.md for effective groups case-insensitively', () => {
 		mockExistsSync.mockReturnValue(true);
 		mockReadFileSync.mockReturnValue(
 			'Public\n{% if group("finance") %}\nFinance\n{% endif %}\n{% if group("sales") %}\nSales\n{% endif %}\n',
 		);
 
-		expect(getUserRules('/project', { enforced: true, groupNames: ['Finance'] })).toBe('Public\nFinance\n');
-		expect(mockReadFileSync).toHaveBeenCalledWith(join('/project', 'RULES.md'), 'utf-8');
+		expect(getUserRules('/clinic', { enforced: true, groupNames: ['Finance'] })).toBe('Public\nFinance\n');
+		expect(mockReadFileSync).toHaveBeenCalledWith(join('/clinic', 'RULES.md'), 'utf-8');
 	});
 
 	it('includes conditional blocks when group enforcement is unavailable', () => {
 		mockExistsSync.mockReturnValue(true);
 		mockReadFileSync.mockReturnValue('{% if group("finance") %}\nVisible\n{% endif %}\n');
 
-		expect(getUserRules('/project')).toBe('Visible\n');
+		expect(getUserRules('/clinic')).toBe('Visible\n');
 	});
 
 	it('logs a RULES error and omits all content when rendering fails', () => {
@@ -73,7 +73,7 @@ describe('getUserRules', () => {
 		mockReadFileSync.mockReturnValue('Public\n{% if group("finance") %}\nGuarded');
 		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-		expect(getUserRules('/project', { enforced: true, groupNames: ['finance'] })).toBeUndefined();
+		expect(getUserRules('/clinic', { enforced: true, groupNames: ['finance'] })).toBeUndefined();
 		expect(consoleSpy).toHaveBeenCalledWith('Error reading RULES.md:', expect.any(Error));
 		consoleSpy.mockRestore();
 	});
@@ -82,12 +82,12 @@ describe('getUserRules', () => {
 describe('getDatabaseObjects', () => {
 	it('returns empty array when the databases folder does not exist', () => {
 		mockExistsSync.mockReturnValue(false);
-		const result = getDatabaseObjects('/project-no-db');
+		const result = getDatabaseObjects('/clinic-no-db');
 		expect(result).toEqual([]);
 	});
 
 	it('returns parsed database objects from the directory structure', () => {
-		const root = '/project-a';
+		const root = '/clinic-a';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=snowflake'],
 			[join(root, 'databases', 'type=snowflake')]: ['database=mydb'],
@@ -109,7 +109,7 @@ describe('getDatabaseObjects', () => {
 	});
 
 	it('returns multiple objects across types, databases, schemas, and tables', () => {
-		const root = '/project-b';
+		const root = '/clinic-b';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres', 'type=snowflake'],
 			[join(root, 'databases', 'type=postgres')]: ['database=analytics'],
@@ -156,14 +156,14 @@ describe('getDatabaseObjects', () => {
 		});
 		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-		const result = getDatabaseObjects('/project-err');
+		const result = getDatabaseObjects('/clinic-err');
 
 		expect(result).toEqual([]);
 		expect(consoleSpy).toHaveBeenCalledWith('Error reading database objects:', expect.any(Error));
 	});
 
 	it('returns cached result on subsequent calls with the same folder', () => {
-		const root = '/project-cached';
+		const root = '/clinic-cached';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=db1'],
@@ -184,10 +184,10 @@ describe('getDatabaseObjects', () => {
 		expect(mockStatSync).not.toHaveBeenCalled();
 	});
 
-	it('expires cached project entries', () => {
+	it('expires cached clinic entries', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(0);
-		const root = '/project-expired';
+		const root = '/clinic-expired';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=db1'],
@@ -201,46 +201,46 @@ describe('getDatabaseObjects', () => {
 		expect(getDatabaseObjects(root)).not.toBe(first);
 	});
 
-	it('bounds cached project entries with deterministic FIFO eviction', () => {
+	it('bounds cached clinic entries with deterministic FIFO eviction', () => {
 		const structure: Record<string, string[]> = {};
 		for (let index = 0; index <= 100; index += 1) {
-			const root = `/project-bounded-${index}`;
+			const root = `/clinic-bounded-${index}`;
 			structure[join(root, 'databases')] = ['type=postgres'];
 			structure[join(root, 'databases', 'type=postgres')] = ['database=db'];
 			structure[join(root, 'databases', 'type=postgres', 'database=db')] = ['schema=public'];
 			structure[join(root, 'databases', 'type=postgres', 'database=db', 'schema=public')] = ['table=users'];
 		}
-		setupDirStructure('/project-bounded-', structure);
+		setupDirStructure('/clinic-bounded-', structure);
 
-		const first = getDatabaseObjects('/project-bounded-0');
+		const first = getDatabaseObjects('/clinic-bounded-0');
 		for (let index = 1; index < 100; index += 1) {
-			getDatabaseObjects(`/project-bounded-${index}`);
+			getDatabaseObjects(`/clinic-bounded-${index}`);
 		}
-		expect(getDatabaseObjects('/project-bounded-0')).toBe(first);
+		expect(getDatabaseObjects('/clinic-bounded-0')).toBe(first);
 
-		getDatabaseObjects('/project-bounded-100');
+		getDatabaseObjects('/clinic-bounded-100');
 
-		expect(getDatabaseObjects('/project-bounded-0')).not.toBe(first);
+		expect(getDatabaseObjects('/clinic-bounded-0')).not.toBe(first);
 	});
 });
 
 describe('getDatabaseContextCatalog', () => {
 	it('distinguishes a missing databases tree from a successful empty scan', () => {
 		mockExistsSync.mockReturnValue(false);
-		expect(getDatabaseContextCatalog('/project-catalog-missing')).toEqual({
+		expect(getDatabaseContextCatalog('/clinic-catalog-missing')).toEqual({
 			syncState: 'missing',
 			objects: [],
 		});
 
-		setupDirStructure('/project-catalog-empty', {});
-		expect(getDatabaseContextCatalog('/project-catalog-empty')).toEqual({
+		setupDirStructure('/clinic-catalog-empty', {});
+		expect(getDatabaseContextCatalog('/clinic-catalog-empty')).toEqual({
 			syncState: 'ready',
 			objects: [],
 		});
 	});
 
 	it('returns normalized sorted object identities without paths', () => {
-		const root = '/project-catalog';
+		const root = '/clinic-catalog';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=SnowFlake', 'type=postgres'],
 			[join(root, 'databases', 'type=SnowFlake')]: ['database=Warehouse'],
@@ -278,7 +278,7 @@ describe('getDatabaseContextCatalog', () => {
 	});
 
 	it('does not re-read the catalog within the cache TTL', () => {
-		const root = '/project-catalog-cached';
+		const root = '/clinic-catalog-cached';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=app'],
@@ -312,7 +312,7 @@ describe('getDatabaseContextCatalog', () => {
 	});
 
 	it('refreshes a same-root catalog when sync replaces database metadata', () => {
-		const root = '/project-catalog-resynced';
+		const root = '/clinic-catalog-resynced';
 		const tableDirectory = join(root, 'databases', 'type=postgres', 'database=app', 'schema=public');
 		const metadataFile = join(root, '.meta', 'databases', 'type=postgres', 'database=app', 'columns.json');
 		const structure = {
@@ -348,7 +348,7 @@ describe('getDatabaseContextCatalog', () => {
 	});
 
 	it('bypasses and updates the cache for a fresh read', () => {
-		const root = '/project-catalog-fresh';
+		const root = '/clinic-catalog-fresh';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=app'],
@@ -366,10 +366,10 @@ describe('getDatabaseContextCatalog', () => {
 		expect(mockReadFileSync).toHaveBeenCalledTimes(2);
 	});
 
-	it('keys cached catalogs by project folder', () => {
-		const firstRoot = '/project-catalog-keyed/first';
-		const secondRoot = '/project-catalog-keyed/second';
-		setupDirStructure('/project-catalog-keyed', {
+	it('keys cached catalogs by clinic folder', () => {
+		const firstRoot = '/clinic-catalog-keyed/first';
+		const secondRoot = '/clinic-catalog-keyed/second';
+		setupDirStructure('/clinic-catalog-keyed', {
 			[join(firstRoot, 'databases')]: ['type=postgres'],
 			[join(firstRoot, 'databases', 'type=postgres')]: ['database=first'],
 			[join(firstRoot, 'databases', 'type=postgres', 'database=first')]: ['schema=public'],
@@ -392,7 +392,7 @@ describe('getDatabaseContextCatalog', () => {
 	it('expires cached catalog entries', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(0);
-		const root = '/project-catalog-expired';
+		const root = '/clinic-catalog-expired';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=app'],
@@ -411,29 +411,29 @@ describe('getDatabaseContextCatalog', () => {
 	it('bounds cached catalog entries with deterministic FIFO eviction', () => {
 		const structure: Record<string, string[]> = {};
 		for (let index = 0; index <= 100; index += 1) {
-			const root = `/project-catalog-bounded-${index}`;
+			const root = `/clinic-catalog-bounded-${index}`;
 			structure[join(root, 'databases')] = ['type=postgres'];
 			structure[join(root, 'databases', 'type=postgres')] = ['database=db'];
 			structure[join(root, 'databases', 'type=postgres', 'database=db')] = ['schema=public'];
 			structure[join(root, 'databases', 'type=postgres', 'database=db', 'schema=public')] = ['table=users'];
 		}
-		setupDirStructure('/project-catalog-bounded-', structure);
+		setupDirStructure('/clinic-catalog-bounded-', structure);
 		mockReadFileSync.mockReturnValue('- id (INTEGER)\n');
 
-		const first = getDatabaseContextCatalog('/project-catalog-bounded-0');
+		const first = getDatabaseContextCatalog('/clinic-catalog-bounded-0');
 		for (let index = 1; index < 100; index += 1) {
-			getDatabaseContextCatalog(`/project-catalog-bounded-${index}`);
+			getDatabaseContextCatalog(`/clinic-catalog-bounded-${index}`);
 		}
-		expect(getDatabaseContextCatalog('/project-catalog-bounded-0')).toBe(first);
+		expect(getDatabaseContextCatalog('/clinic-catalog-bounded-0')).toBe(first);
 
-		getDatabaseContextCatalog('/project-catalog-bounded-100');
+		getDatabaseContextCatalog('/clinic-catalog-bounded-100');
 
-		expect(getDatabaseContextCatalog('/project-catalog-bounded-0')).not.toBe(first);
+		expect(getDatabaseContextCatalog('/clinic-catalog-bounded-0')).not.toBe(first);
 		expect(mockReadFileSync).toHaveBeenCalledTimes(102);
 	});
 
 	it('resets same-root cached content for test isolation', () => {
-		const root = '/project-catalog-isolated';
+		const root = '/clinic-catalog-isolated';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=app'],
@@ -450,7 +450,7 @@ describe('getDatabaseContextCatalog', () => {
 	});
 
 	it('parses quoted column names and nested type parentheses', () => {
-		const root = '/project-catalog-identifiers';
+		const root = '/clinic-catalog-identifiers';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=app'],
@@ -469,7 +469,7 @@ describe('getDatabaseContextCatalog', () => {
 	});
 
 	it('ignores quoted parentheses in generated column defaults and descriptions', () => {
-		const root = '/project-catalog-quoted-metadata';
+		const root = '/clinic-catalog-quoted-metadata';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=clickhouse'],
 			[join(root, 'databases', 'type=clickhouse')]: ['database=app'],
@@ -498,7 +498,7 @@ describe('getDatabaseContextCatalog', () => {
 	});
 
 	it('parses a generated description ending in a literal backslash', () => {
-		const root = '/project-catalog-trailing-backslash';
+		const root = '/clinic-catalog-trailing-backslash';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=app'],
@@ -516,19 +516,19 @@ describe('getDatabaseContextCatalog', () => {
 			throw new Error('Permission denied');
 		});
 
-		expect(() => getDatabaseContextCatalog('/project-catalog-error')).toThrow('Permission denied');
+		expect(() => getDatabaseContextCatalog('/clinic-catalog-error')).toThrow('Permission denied');
 	});
 });
 
 describe('getTableColumnsContent', () => {
 	it('returns undefined when the fqdn does not match any database object', () => {
 		mockExistsSync.mockReturnValue(false);
-		const result = getTableColumnsContent('/project-x', 'db.schema.unknown', unrestrictedAccess);
+		const result = getTableColumnsContent('/clinic-x', 'db.schema.unknown', unrestrictedAccess);
 		expect(result).toBeUndefined();
 	});
 
 	it('returns the columns file content when the fqdn matches', () => {
-		const root = '/project-cols';
+		const root = '/clinic-cols';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=mydb'],
@@ -553,7 +553,7 @@ describe('getTableColumnsContent', () => {
 	});
 
 	it('selects an allowed warehouse object when multiple types share an fqdn', () => {
-		const root = '/project-cols-shared-fqdn';
+		const root = '/clinic-cols-shared-fqdn';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres', 'type=snowflake'],
 			[join(root, 'databases', 'type=postgres')]: ['database=mydb'],
@@ -579,7 +579,7 @@ describe('getTableColumnsContent', () => {
 	});
 
 	it('returns undefined when reading the columns file fails', () => {
-		const root = '/project-cols-err';
+		const root = '/clinic-cols-err';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=mydb'],
@@ -596,7 +596,7 @@ describe('getTableColumnsContent', () => {
 	});
 
 	it('does not read columns for a denied table', () => {
-		const root = '/project-cols-denied';
+		const root = '/clinic-cols-denied';
 		setupDirStructure(root, {
 			[join(root, 'databases')]: ['type=postgres'],
 			[join(root, 'databases', 'type=postgres')]: ['database=mydb'],

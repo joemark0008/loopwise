@@ -11,37 +11,37 @@ import {
 	type ProviderModelResult,
 } from '../providers/providers.js';
 import type { CustomModelMetadata, ModelSettingsMap, ProviderModelSource, ProviderSettings } from '../types/llm.js';
-import { ProjectLlmConfigRepository } from './project-llm-config.repository.js';
+import { ClinicLlmConfigRepository } from './clinic-llm-config.repository.js';
 
-/** A project's own credentials for a provider, and its per-model settings. */
+/** A clinic's own credentials for a provider, and its per-model settings. */
 interface ProviderAccess {
 	settings: ProviderSettings;
 	modelSettings?: ModelSettingsMap | null;
 }
 
 /**
- * Port of upstream `utils/llm.ts`: which models a project can use and how to reach them. Sources, in order:
- * the project's LLM configs (Settings → Models), then provider keys from the environment (`OPENAI_API_KEY`,
+ * Port of upstream `utils/llm.ts`: which models a clinic can use and how to reach them. Sources, in order:
+ * the clinic's LLM configs (Settings → Models), then provider keys from the environment (`OPENAI_API_KEY`,
  * `ANTHROPIC_API_KEY`…, `<PROVIDER>_BASE_URL`). Not ported: the `llm` block of `loopwise_config.yaml` and the
  * managed provider (billing).
  */
 @Injectable()
 export class LlmService {
-	constructor(private readonly configs: ProjectLlmConfigRepository) {}
+	constructor(private readonly configs: ClinicLlmConfigRepository) {}
 
-	async resolveProviderSettings(projectId: string, provider: LlmProvider): Promise<ProviderSettings | null> {
-		return (await this.findAccess(projectId, provider))?.settings ?? null;
+	async resolveProviderSettings(clinicId: string, provider: LlmProvider): Promise<ProviderSettings | null> {
+		return (await this.findAccess(clinicId, provider))?.settings ?? null;
 	}
 
 	/** `resolveProviderModel`: the model from the first source with credentials for the provider. */
 	async resolveProviderModel(
-		projectId: string,
+		clinicId: string,
 		provider: LlmProvider,
 		modelId: string,
 		applyUserSettings = true,
 		_usageContext?: ManagedAiUsageContext,
 	): Promise<ProviderModelResult | null> {
-		const access = await this.findAccess(projectId, provider);
+		const access = await this.findAccess(clinicId, provider);
 		if (!access) {
 			return null;
 		}
@@ -50,10 +50,10 @@ export class LlmService {
 	}
 
 	/** The chat default an admin pinned (substituted when unavailable), else the first available model. */
-	async resolveDefaultChatModel(projectId: string): Promise<LlmSelectedModel | null> {
+	async resolveDefaultChatModel(clinicId: string): Promise<LlmSelectedModel | null> {
 		const [settings, available] = await Promise.all([
-			this.configs.getDefaultModelSettings(projectId) as Promise<DefaultModelSettings | null>,
-			this.getProjectAvailableModels(projectId),
+			this.configs.getDefaultModelSettings(clinicId) as Promise<DefaultModelSettings | null>,
+			this.getClinicAvailableModels(clinicId),
 		]);
 		if (settings?.chat) {
 			return substituteUnavailableModel(available, settings.chat);
@@ -64,19 +64,19 @@ export class LlmService {
 
 	/** `resolveDefaultModelSelection`: the model pinned for a background task (title, memory…). */
 	async resolveDefaultModelSelection(
-		projectId: string,
+		clinicId: string,
 		category: Parameters<typeof selectBackgroundModel>[1],
 	): Promise<LlmSelectedModel | null> {
-		const settings = (await this.configs.getDefaultModelSettings(projectId)) as DefaultModelSettings | null;
+		const settings = (await this.configs.getDefaultModelSettings(clinicId)) as DefaultModelSettings | null;
 		const configured = selectBackgroundModel(settings, category);
 		return configured
-			? substituteUnavailableModel(await this.getProjectAvailableModels(projectId), configured)
+			? substituteUnavailableModel(await this.getClinicAvailableModels(clinicId), configured)
 			: null;
 	}
 
 	/** `resolveAnnotationModelId`: the model background tasks use when nothing is pinned. */
 	async resolveAnnotationModelId(
-		projectId: string,
+		clinicId: string,
 		modelSelection: LlmSelectedModel,
 		fallbackModelId: string,
 	): Promise<string> {
@@ -84,7 +84,7 @@ export class LlmService {
 		if (envOverride) {
 			return envOverride;
 		}
-		const config = await this.configs.getProjectLlmConfigByProvider(projectId, modelSelection.provider);
+		const config = await this.configs.getClinicLlmConfigByProvider(clinicId, modelSelection.provider);
 		if (config?.baseUrl) {
 			return modelSelection.modelId;
 		}
@@ -98,20 +98,20 @@ export class LlmService {
 		return fallbackModelId;
 	}
 
-	/** Upstream `getProjectModelProvider`: a configured anthropic/openai, else the env, else any available model. */
-	async getProjectModelProvider(projectId: string): Promise<LlmProvider | undefined> {
-		const configured = await this.configs.getConfiguredTaskProvider(projectId);
+	/** Upstream `getClinicModelProvider`: a configured anthropic/openai, else the env, else any available model. */
+	async getClinicModelProvider(clinicId: string): Promise<LlmProvider | undefined> {
+		const configured = await this.configs.getConfiguredTaskProvider(clinicId);
 		if (configured) {
 			return configured;
 		}
 		const envProvider = (['anthropic', 'openai'] as LlmProvider[]).find(hasEnvApiKey);
-		return envProvider ?? (await this.getProjectAvailableModels(projectId)).at(0)?.provider;
+		return envProvider ?? (await this.getClinicAvailableModels(clinicId)).at(0)?.provider;
 	}
 
-	async getProjectAvailableModels(
-		projectId: string,
+	async getClinicAvailableModels(
+		clinicId: string,
 	): Promise<Array<{ provider: LlmProvider; modelId: string; name: string; baseUrl: string | null }>> {
-		const sources = await this.getProjectModelSources(projectId);
+		const sources = await this.getClinicModelSources(clinicId);
 		return sources.flatMap(({ provider, enabledModels, customModels, baseUrl }) => {
 			if (enabledModels.length === 0) {
 				const modelId = getDefaultModelId(provider);
@@ -128,16 +128,16 @@ export class LlmService {
 		});
 	}
 
-	async getProjectDeclaredModels(
-		projectId: string,
+	async getClinicDeclaredModels(
+		clinicId: string,
 	): Promise<Array<{ provider: LlmProvider; models: CustomModelMetadata[] }>> {
-		const sources = await this.getProjectModelSources(projectId);
+		const sources = await this.getClinicModelSources(clinicId);
 		return sources.map(({ provider, customModels }) => ({ provider, models: customModels }));
 	}
 
-	/** Each provider from the first source that declares it: project configs, then the environment. */
-	private async getProjectModelSources(projectId: string): Promise<ProviderModelSource[]> {
-		const configs = await this.configs.getProjectLlmConfigs(projectId);
+	/** Each provider from the first source that declares it: clinic configs, then the environment. */
+	private async getClinicModelSources(clinicId: string): Promise<ProviderModelSource[]> {
+		const configs = await this.configs.getClinicLlmConfigs(clinicId);
 		const collected: ProviderModelSource[] = configs
 			.filter((config) => !isProviderDisabled(config.provider as LlmProvider))
 			.map((config) => ({
@@ -159,11 +159,11 @@ export class LlmService {
 		return collected;
 	}
 
-	private async findAccess(projectId: string, provider: LlmProvider): Promise<ProviderAccess | null> {
+	private async findAccess(clinicId: string, provider: LlmProvider): Promise<ProviderAccess | null> {
 		if (isProviderDisabled(provider)) {
 			return null;
 		}
-		const config = await this.configs.getProjectLlmConfigByProvider(projectId, provider);
+		const config = await this.configs.getClinicLlmConfigByProvider(clinicId, provider);
 		if (config) {
 			return {
 				settings: {

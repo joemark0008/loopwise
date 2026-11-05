@@ -21,8 +21,8 @@ const DRAFT = { name: 'churn-analysis', description: 'Use for churn questions.',
 describe('skills (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
-	let projectId = '';
-	let projectPath = '';
+	let clinicId = '';
+	let clinicPath = '';
 	let adminCookie: string[] = [];
 	let contextAdminCookie: string[] = [];
 	let memberCookie: string[] = [];
@@ -34,12 +34,12 @@ describe('skills (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -54,14 +54,14 @@ describe('skills (e2e)', () => {
 		const viewer = await signUp('Vic', 'vic@example.com');
 		viewerCookie = viewer.cookie;
 
-		const project = await graphql(adminCookie, 'mutation { createProject(input: { name: "Jaffle" }) { id } }');
-		projectId = project.body.data.createProject.id;
-		projectPath = (await prisma.project.findUniqueOrThrow({ where: { id: projectId } })).path as string;
-		await prisma.projectMember.createMany({
+		const clinic = await graphql(adminCookie, 'mutation { createClinic(input: { name: "Jaffle" }) { id } }');
+		clinicId = clinic.body.data.createClinic.id;
+		clinicPath = (await prisma.clinic.findUniqueOrThrow({ where: { id: clinicId } })).path as string;
+		await prisma.clinicMember.createMany({
 			data: [
-				{ projectId, userId: contextAdmin.userId, role: 'context_admin' },
-				{ projectId, userId: member.userId, role: 'user' },
-				{ projectId, userId: viewer.userId, role: 'viewer' },
+				{ clinicId, userId: contextAdmin.userId, role: 'context_admin' },
+				{ clinicId, userId: member.userId, role: 'user' },
+				{ clinicId, userId: viewer.userId, role: 'viewer' },
 			],
 		});
 	});
@@ -70,7 +70,7 @@ describe('skills (e2e)', () => {
 		await app?.close();
 	});
 
-	it('saves directly in the project folder', async () => {
+	it('saves directly in the clinic folder', async () => {
 		const status = await graphql(adminCookie, '{ skillSaveStatus { mode message } }');
 		expect(status.body.data.skillSaveStatus).toEqual({ mode: 'direct', message: null });
 	});
@@ -80,7 +80,7 @@ describe('skills (e2e)', () => {
 			const created = await graphql(cookie, CREATE, { input: DRAFT });
 			expect(created.body.errors?.[0]?.extensions?.code).toBe('FORBIDDEN');
 		}
-		expect(existsSync(path.join(projectPath, 'agent', 'skills', `${DRAFT.name}.md`))).toBe(false);
+		expect(existsSync(path.join(clinicPath, 'agent', 'skills', `${DRAFT.name}.md`))).toBe(false);
 	});
 
 	it('lets an admin create a skill that every member can then use', async () => {
@@ -116,14 +116,14 @@ describe('skills (e2e)', () => {
 			{ input: { name: DRAFT.name, expectedHash: updated.body.data.updateSkill.hash } },
 		);
 		expect(deleted.body.data.deleteSkill).toBe(true);
-		expect(existsSync(path.join(projectPath, 'agent', 'skills', `${DRAFT.name}.md`))).toBe(false);
+		expect(existsSync(path.join(clinicPath, 'agent', 'skills', `${DRAFT.name}.md`))).toBe(false);
 	});
 
 	it('shows a draft from chat without saving anything, then stops', async () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', adminCookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({ message: { text: 'Make this a skill' }, model: MODEL })
 			.buffer(true)
 			.parse((response, callback) => {
@@ -140,7 +140,7 @@ describe('skills (e2e)', () => {
 		const output = events.find((event) => event.type === 'tool-output-available');
 		expect(output?.output).toMatchObject({ success: true });
 		expect(events.some((event) => event.type === 'text-delta')).toBe(false);
-		expect(existsSync(path.join(projectPath, 'agent', 'skills', `${DRAFT.name}.md`))).toBe(false);
+		expect(existsSync(path.join(clinicPath, 'agent', 'skills', `${DRAFT.name}.md`))).toBe(false);
 	});
 });
 

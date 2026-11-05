@@ -111,7 +111,7 @@ export const getTools = (
 		builtinToolAllowlist?: string[];
 		/** Drops these built-in tools from the returned set. */
 		excludeBuiltinTools?: string[];
-		/** Custom GeoJSON boundary sets defined by the project admin. */
+		/** Custom GeoJSON boundary sets defined by the clinic admin. */
 		customBoundaries?: CustomBoundarySet[];
 	} = {},
 ) => {

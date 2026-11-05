@@ -3,28 +3,28 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-const projectPaths: Record<string, string> = {};
+const clinicPaths: Record<string, string> = {};
 
 vi.mock('node:fs', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('node:fs')>();
 	return { ...actual, watch: vi.fn(() => ({ close: vi.fn() })) };
 });
 
-import type { ProjectRepository } from '../projects/project.repository.js';
+import type { ClinicRepository } from '../clinics/clinic.repository.js';
 import { PRELOADED_SKILL_CHAR_LIMIT, PRELOADED_SKILLS_TOTAL_CHAR_LIMIT, SkillService } from './skill.service.js';
 
-// loopwise: upstream mocked `retrieveProjectById` (throwing for unknown projects); the service takes the repository.
+// loopwise: upstream mocked `retrieveClinicById` (throwing for unknown clinics); the service takes the repository.
 const skillService = new SkillService({
-	getProjectById: vi.fn(async (projectId: string) => {
-		const path = projectPaths[projectId];
+	getClinicById: vi.fn(async (clinicId: string) => {
+		const path = clinicPaths[clinicId];
 		if (!path) {
-			throw new Error(`unknown project ${projectId}`);
+			throw new Error(`unknown clinic ${clinicId}`);
 		}
-		return { id: projectId, path };
+		return { id: clinicId, path };
 	}),
-} as unknown as ProjectRepository);
+} as unknown as ClinicRepository);
 
-function createProjectWithSkill(prefix: string, skillName: string, body: string): string {
+function createClinicWithSkill(prefix: string, skillName: string, body: string): string {
 	const root = mkdtempSync(join(tmpdir(), `loopwise-skill-${prefix}-`));
 	const skillsDir = join(root, 'agent', 'skills');
 	mkdirSync(skillsDir, { recursive: true });
@@ -35,7 +35,7 @@ function createProjectWithSkill(prefix: string, skillName: string, body: string)
 	return root;
 }
 
-describe('skillService project isolation', () => {
+describe('skillService clinic isolation', () => {
 	const createdRoots: string[] = [];
 
 	afterAll(() => {
@@ -44,40 +44,40 @@ describe('skillService project isolation', () => {
 		}
 	});
 
-	it('serves each project its own skills and never leaks across projects', async () => {
-		const rootA = createProjectWithSkill('a', 'skill-a', 'Content from project A');
-		const rootB = createProjectWithSkill('b', 'skill-b', 'Content from project B');
+	it('serves each clinic its own skills and never leaks across clinics', async () => {
+		const rootA = createClinicWithSkill('a', 'skill-a', 'Content from clinic A');
+		const rootB = createClinicWithSkill('b', 'skill-b', 'Content from clinic B');
 		createdRoots.push(rootA, rootB);
-		projectPaths['project-a'] = rootA;
-		projectPaths['project-b'] = rootB;
+		clinicPaths['clinic-a'] = rootA;
+		clinicPaths['clinic-b'] = rootB;
 
-		await skillService.initializeSkills('project-a');
-		await skillService.initializeSkills('project-b');
+		await skillService.initializeSkills('clinic-a');
+		await skillService.initializeSkills('clinic-b');
 
-		expect(skillService.getSkills('project-a').map((s) => s.name)).toEqual(['skill-a']);
-		expect(skillService.getSkills('project-b').map((s) => s.name)).toEqual(['skill-b']);
+		expect(skillService.getSkills('clinic-a').map((s) => s.name)).toEqual(['skill-a']);
+		expect(skillService.getSkills('clinic-b').map((s) => s.name)).toEqual(['skill-b']);
 
-		expect(skillService.getSkillContent('project-a', 'skill-a')).toContain('Content from project A');
-		expect(skillService.getSkillContent('project-b', 'skill-b')).toContain('Content from project B');
+		expect(skillService.getSkillContent('clinic-a', 'skill-a')).toContain('Content from clinic A');
+		expect(skillService.getSkillContent('clinic-b', 'skill-b')).toContain('Content from clinic B');
 
-		expect(skillService.getSkillContent('project-a', 'skill-b')).toBeNull();
-		expect(skillService.getSkillContent('project-b', 'skill-a')).toBeNull();
+		expect(skillService.getSkillContent('clinic-a', 'skill-b')).toBeNull();
+		expect(skillService.getSkillContent('clinic-b', 'skill-a')).toBeNull();
 	});
 
-	it('does not clobber an already-initialized project when another project initializes', async () => {
-		const rootFirst = createProjectWithSkill('first', 'first-skill', 'First body');
-		const rootSecond = createProjectWithSkill('second', 'second-skill', 'Second body');
+	it('does not clobber an already-initialized clinic when another clinic initializes', async () => {
+		const rootFirst = createClinicWithSkill('first', 'first-skill', 'First body');
+		const rootSecond = createClinicWithSkill('second', 'second-skill', 'Second body');
 		createdRoots.push(rootFirst, rootSecond);
-		projectPaths['project-first'] = rootFirst;
-		projectPaths['project-second'] = rootSecond;
+		clinicPaths['clinic-first'] = rootFirst;
+		clinicPaths['clinic-second'] = rootSecond;
 
-		await skillService.initializeSkills('project-first');
-		expect(skillService.getSkills('project-first').map((s) => s.name)).toEqual(['first-skill']);
+		await skillService.initializeSkills('clinic-first');
+		expect(skillService.getSkills('clinic-first').map((s) => s.name)).toEqual(['first-skill']);
 
-		await skillService.initializeSkills('project-second');
+		await skillService.initializeSkills('clinic-second');
 
-		expect(skillService.getSkills('project-first').map((s) => s.name)).toEqual(['first-skill']);
-		expect(skillService.getSkills('project-second').map((s) => s.name)).toEqual(['second-skill']);
+		expect(skillService.getSkills('clinic-first').map((s) => s.name)).toEqual(['first-skill']);
+		expect(skillService.getSkills('clinic-second').map((s) => s.name)).toEqual(['second-skill']);
 	});
 });
 
@@ -90,8 +90,8 @@ describe('skillService.getPreloadedSkills', () => {
 		}
 	});
 
-	async function initializeProject(projectId: string, skills: Record<string, string>): Promise<void> {
-		const root = mkdtempSync(join(tmpdir(), `loopwise-preload-${projectId}-`));
+	async function initializeClinic(clinicId: string, skills: Record<string, string>): Promise<void> {
+		const root = mkdtempSync(join(tmpdir(), `loopwise-preload-${clinicId}-`));
 		const skillsDir = join(root, 'agent', 'skills');
 		mkdirSync(skillsDir, { recursive: true });
 		for (const [name, body] of Object.entries(skills)) {
@@ -101,12 +101,12 @@ describe('skillService.getPreloadedSkills', () => {
 			);
 		}
 		createdRoots.push(root);
-		projectPaths[projectId] = root;
-		await skillService.initializeSkills(projectId);
+		clinicPaths[clinicId] = root;
+		await skillService.initializeSkills(clinicId);
 	}
 
 	it('returns the configured skills with their content, in configured order', async () => {
-		await initializeProject('preload-order', { alpha: 'Alpha body', beta: 'Beta body', gamma: 'Gamma body' });
+		await initializeClinic('preload-order', { alpha: 'Alpha body', beta: 'Beta body', gamma: 'Gamma body' });
 
 		const preloaded = skillService.getPreloadedSkills('preload-order', ['gamma', 'alpha']);
 
@@ -116,7 +116,7 @@ describe('skillService.getPreloadedSkills', () => {
 	});
 
 	it('ignores unknown and duplicated names', async () => {
-		await initializeProject('preload-unknown', { alpha: 'Alpha body' });
+		await initializeClinic('preload-unknown', { alpha: 'Alpha body' });
 
 		const preloaded = skillService.getPreloadedSkills('preload-unknown', ['missing', 'alpha', 'alpha']);
 
@@ -132,7 +132,7 @@ describe('skillService.getPreloadedSkills', () => {
 			'---\nname: "  padded  "\ndescription: Padded\n---\n\nPadded body\n',
 		);
 		createdRoots.push(root);
-		projectPaths['preload-whitespace'] = root;
+		clinicPaths['preload-whitespace'] = root;
 		await skillService.initializeSkills('preload-whitespace');
 
 		const preloaded = skillService.getPreloadedSkills('preload-whitespace', ['padded']);
@@ -142,7 +142,7 @@ describe('skillService.getPreloadedSkills', () => {
 	});
 
 	it('strips the frontmatter from preloaded content', async () => {
-		await initializeProject('preload-frontmatter', { alpha: 'Alpha body' });
+		await initializeClinic('preload-frontmatter', { alpha: 'Alpha body' });
 
 		const [preloaded] = skillService.getPreloadedSkills('preload-frontmatter', ['alpha']);
 
@@ -158,7 +158,7 @@ describe('skillService.getPreloadedSkills', () => {
 		symlinkSync(secretPath, join(skillsDir, 'leak.md'));
 		writeFileSync(join(skillsDir, 'safe.md'), '---\nname: safe\n---\n\nSafe body\n');
 		createdRoots.push(root);
-		projectPaths['preload-symlink'] = root;
+		clinicPaths['preload-symlink'] = root;
 		await skillService.initializeSkills('preload-symlink');
 
 		expect(skillService.getSkills('preload-symlink').map((skill) => skill.name)).toEqual(['safe']);
@@ -167,14 +167,14 @@ describe('skillService.getPreloadedSkills', () => {
 		);
 	});
 
-	it('ignores a skills folder that is a symlink pointing outside the project', async () => {
+	it('ignores a skills folder that is a symlink pointing outside the clinic', async () => {
 		const root = mkdtempSync(join(tmpdir(), 'loopwise-preload-folder-symlink-'));
 		const outside = mkdtempSync(join(tmpdir(), 'loopwise-preload-outside-'));
 		writeFileSync(join(outside, 'leak.md'), '---\nname: leak\n---\n\nSECRET=value\n');
 		mkdirSync(join(root, 'agent'), { recursive: true });
 		symlinkSync(outside, join(root, 'agent', 'skills'));
 		createdRoots.push(root, outside);
-		projectPaths['preload-folder-symlink'] = root;
+		clinicPaths['preload-folder-symlink'] = root;
 		await skillService.initializeSkills('preload-folder-symlink');
 
 		expect(skillService.getSkills('preload-folder-symlink')).toEqual([]);
@@ -191,7 +191,7 @@ describe('skillService.getPreloadedSkills', () => {
 		);
 		writeFileSync(join(skillsDir, 'valid.md'), '---\nname: valid\n---\n\nValid body\n');
 		createdRoots.push(root);
-		projectPaths['preload-invalid'] = root;
+		clinicPaths['preload-invalid'] = root;
 		await skillService.initializeSkills('preload-invalid');
 
 		expect(skillService.getSkills('preload-invalid').map((skill) => skill.name)).toEqual(['valid']);
@@ -201,7 +201,7 @@ describe('skillService.getPreloadedSkills', () => {
 		expect(loadError.message).not.toContain('\n');
 	});
 
-	it.skipIf(process.getuid?.() === 0)('masks the project path in filesystem load errors', async () => {
+	it.skipIf(process.getuid?.() === 0)('masks the clinic path in filesystem load errors', async () => {
 		const root = mkdtempSync(join(tmpdir(), 'loopwise-preload-unreadable-'));
 		const skillsDir = join(root, 'agent', 'skills');
 		mkdirSync(skillsDir, { recursive: true });
@@ -209,12 +209,12 @@ describe('skillService.getPreloadedSkills', () => {
 		writeFileSync(unreadablePath, '---\nname: unreadable\n---\n\nBody\n');
 		chmodSync(unreadablePath, 0o000);
 		createdRoots.push(root);
-		projectPaths['preload-unreadable'] = root;
+		clinicPaths['preload-unreadable'] = root;
 		await skillService.initializeSkills('preload-unreadable');
 
 		const [loadError] = skillService.getSkillLoadErrors('preload-unreadable');
 		expect(loadError.location).toBe('/agent/skills/unreadable.md');
-		expect(loadError.message).toContain('<project>/agent/skills/unreadable.md');
+		expect(loadError.message).toContain('<clinic>/agent/skills/unreadable.md');
 		expect(loadError.message).not.toContain(root);
 		expect(loadError.message).not.toContain(realpathSync(root));
 	});
@@ -226,20 +226,20 @@ describe('skillService.getPreloadedSkills', () => {
 		writeFileSync(join(skillsDir, 'a.md'), '---\nname: revenue\n---\n\nFirst body\n');
 		writeFileSync(join(skillsDir, 'b.md'), '---\nname: " revenue "\n---\n\nSecond body\n');
 		createdRoots.push(root);
-		projectPaths['preload-duplicate'] = root;
+		clinicPaths['preload-duplicate'] = root;
 		await skillService.initializeSkills('preload-duplicate');
 
 		expect(skillService.getSkills('preload-duplicate')).toHaveLength(1);
 	});
 
 	it('returns nothing when no skills are configured', async () => {
-		await initializeProject('preload-none', { alpha: 'Alpha body' });
+		await initializeClinic('preload-none', { alpha: 'Alpha body' });
 
 		expect(skillService.getPreloadedSkills('preload-none')).toEqual([]);
 	});
 
 	it('truncates each skill to the per-skill limit', async () => {
-		await initializeProject('preload-long', { long: 'x'.repeat(PRELOADED_SKILL_CHAR_LIMIT * 2) });
+		await initializeClinic('preload-long', { long: 'x'.repeat(PRELOADED_SKILL_CHAR_LIMIT * 2) });
 
 		const [preloaded] = skillService.getPreloadedSkills('preload-long', ['long']);
 
@@ -251,7 +251,7 @@ describe('skillService.getPreloadedSkills', () => {
 		const bigSkillCountThatFits = Math.floor(PRELOADED_SKILLS_TOTAL_CHAR_LIMIT / PRELOADED_SKILL_CHAR_LIMIT);
 		const bigSkillNames = Array.from({ length: bigSkillCountThatFits + 1 }, (_, index) => `big-${index}`);
 		const bigSkills = Object.fromEntries(bigSkillNames.map((name) => [name, bigBody]));
-		await initializeProject('preload-budget', { ...bigSkills, small: 'Small body' });
+		await initializeClinic('preload-budget', { ...bigSkills, small: 'Small body' });
 
 		const preloaded = skillService.getPreloadedSkills('preload-budget', [...bigSkillNames, 'small']);
 		const totalChars = preloaded.reduce((total, skill) => total + skill.content.length, 0);

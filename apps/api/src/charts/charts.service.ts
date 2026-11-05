@@ -7,9 +7,9 @@ import { z } from 'zod/v4';
 import { listChartPlugins, readChartPlugin } from '../agent/services/chart-plugin.js';
 import { ChatRepository } from '../chats/chat.repository.js';
 import { ChatAccessService } from '../chats/chat-access.service.js';
+import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
-import type { Project } from '../generated/prisma/client.js';
-import { ProjectRepository } from '../projects/project.repository.js';
+import type { Clinic } from '../generated/prisma/client.js';
 import { ChartRepository } from './chart.repository.js';
 import { generateChartImage } from './components/generate-chart.js';
 
@@ -27,7 +27,7 @@ export class ChartsService {
 	constructor(
 		private readonly charts: ChartRepository,
 		private readonly chats: ChatRepository,
-		private readonly projects: ProjectRepository,
+		private readonly clinics: ClinicRepository,
 		private readonly chatAccess: ChatAccessService,
 	) {}
 
@@ -62,7 +62,7 @@ export class ChartsService {
 	/** Upstream `chart.download`: renders a built-in chart from its own chat's query data, as a base64 PNG. */
 	async downloadChart(toolCallId: string, userId: string): Promise<string> {
 		const owner = await this.charts.getChartOwnerInfo(toolCallId);
-		if (!owner || !(await this.chatAccess.canUserViewChatContent(owner.chatId, owner.projectId, userId))) {
+		if (!owner || !(await this.chatAccess.canUserViewChatContent(owner.chatId, owner.clinicId, userId))) {
 			throw new HandlerError('NOT_FOUND', 'Visualization not found.');
 		}
 		const config = await this.readDownloadableChartConfig(toolCallId);
@@ -70,7 +70,7 @@ export class ChartsService {
 		if (!query) {
 			throw new HandlerError('NOT_FOUND', `Query ${config.query_id} not found.`);
 		}
-		const displaySettings = await this.projects.getDisplaySettings(owner.projectId);
+		const displaySettings = await this.clinics.getDisplaySettings(owner.clinicId);
 		const png = generateChartImage({
 			config,
 			data: query.toolOutput.data,
@@ -96,12 +96,12 @@ export class ChartsService {
 		await this.charts.updateChartConfig(toolCallId, config as displayChart.Input);
 	}
 
-	/** Upstream `map.updateConfig` (`ownedResourceProcedure` + the project's boundary sets). */
+	/** Upstream `map.updateConfig` (`ownedResourceProcedure` + the clinic's boundary sets). */
 	async updateMapConfig(
 		mapId: string,
 		config: unknown,
 		userId: string,
-		selectedProjectId: string | null,
+		selectedClinicId: string | null,
 	): Promise<void> {
 		const ownerId = await this.charts.getMapOwnerId(mapId);
 		if (!ownerId) {
@@ -113,8 +113,8 @@ export class ChartsService {
 		if (typeof config !== 'object' || config === null) {
 			throw new HandlerError('BAD_REQUEST', 'Invalid map config');
 		}
-		const project = await this.projects.getProjectByUserId(userId, selectedProjectId);
-		const customSets = project ? await this.projects.getCustomBoundaries(project.id) : [];
+		const clinic = await this.clinics.getClinicByUserId(userId, selectedClinicId);
+		const customSets = clinic ? await this.clinics.getCustomBoundaries(clinic.id) : [];
 		const parsed = displayMap.buildInputSchema(customSets).safeParse(config);
 		if (!parsed.success) {
 			throw new HandlerError('BAD_REQUEST', 'Invalid map config');
@@ -123,20 +123,20 @@ export class ChartsService {
 	}
 
 	/** Upstream `chartPlugin.list`. */
-	listChartPlugins(project: Project): ChartPluginManifestEntry[] {
-		return listChartPlugins(project.path ?? '');
+	listChartPlugins(clinic: Clinic): ChartPluginManifestEntry[] {
+		return listChartPlugins(clinic.path ?? '');
 	}
 
 	/** Upstream `chartPlugin.source`. */
 	getChartPluginSource(
-		project: Project,
+		clinic: Clinic,
 		input: { type: string; version: string },
 	): { source: string; version: string } {
 		const parsed = chartPluginSourceSchema.safeParse(input);
 		if (!parsed.success) {
 			throw new HandlerError('BAD_REQUEST', parsed.error.issues.map((issue) => issue.message).join('; '));
 		}
-		const plugin = readChartPlugin(project.path ?? '', parsed.data.type);
+		const plugin = readChartPlugin(clinic.path ?? '', parsed.data.type);
 		if (!plugin) {
 			throw new HandlerError('NOT_FOUND', `Custom chart "${parsed.data.type}" was not found.`);
 		}
@@ -158,8 +158,8 @@ export class ChartsService {
 
 	private async canUserViewImage(imageId: string, userId: string): Promise<boolean> {
 		const chats = await this.charts.listChatsReferencingImage(imageId);
-		for (const { chatId, projectId } of chats) {
-			if (await this.chatAccess.canUserViewChatContent(chatId, projectId, userId)) {
+		for (const { chatId, clinicId } of chats) {
+			if (await this.chatAccess.canUserViewChatContent(chatId, clinicId, userId)) {
 				return true;
 			}
 		}

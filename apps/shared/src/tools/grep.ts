@@ -5,7 +5,7 @@ export const InputSchema = z.object({
 	path: z
 		.string()
 		.optional()
-		.describe('File or directory path to search in. Defaults to project root if not specified.'),
+		.describe('File or directory path to search in. Defaults to clinic root if not specified.'),
 	glob: z
 		.string()
 		.optional()

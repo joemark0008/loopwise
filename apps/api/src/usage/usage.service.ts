@@ -31,7 +31,7 @@ import {
 import { buildModelCostRows } from './usage-costs.js';
 import { assertSavedPeriodExists, UsagePeriodSettingsService } from './usage-period-settings.service.js';
 
-/** Who asks: project admins see everyone's usage, other members their own. */
+/** Who asks: clinic admins see everyone's usage, other members their own. */
 export interface UsageViewer {
 	userId: string;
 	role: UserRole;
@@ -46,49 +46,49 @@ export class UsageService {
 		private readonly llm: LlmService,
 	) {}
 
-	async getMessagesUsage(projectId: string, viewer: UsageViewer, input: UsageFilterInput): Promise<UsageRecord[]> {
+	async getMessagesUsage(clinicId: string, viewer: UsageViewer, input: UsageFilterInput): Promise<UsageRecord[]> {
 		const filter = parse(usageChartFilterSchema, input);
-		return this.usage.getMessagesUsage(projectId, filter, await this.getCosts(projectId), scopeOf(viewer));
+		return this.usage.getMessagesUsage(clinicId, filter, await this.getCosts(clinicId), scopeOf(viewer));
 	}
 
 	async getMessagesUsageByUser(
-		projectId: string,
+		clinicId: string,
 		viewer: UsageViewer,
 		input: UsageFilterInput,
 	): Promise<UsageByUserRecord[]> {
 		const filter = parse(usageChartFilterSchema, input);
-		return this.usage.getMessagesUsageByUser(projectId, filter, await this.getCosts(projectId), scopeOf(viewer));
+		return this.usage.getMessagesUsageByUser(clinicId, filter, await this.getCosts(clinicId), scopeOf(viewer));
 	}
 
-	getTotalUsage(projectId: string, viewer: UsageViewer, input: UsageFilterInput): Promise<TotalUsageRecord> {
-		return this.usage.getTotalUsage(projectId, parse(usageFilterSchema, input), scopeOf(viewer));
+	getTotalUsage(clinicId: string, viewer: UsageViewer, input: UsageFilterInput): Promise<TotalUsageRecord> {
+		return this.usage.getTotalUsage(clinicId, parse(usageFilterSchema, input), scopeOf(viewer));
 	}
 
-	getUserChatCounts(projectId: string): Promise<Array<{ userName: string; chatCount: number }>> {
-		return this.usage.getUserChatCounts(projectId);
+	getUserChatCounts(clinicId: string): Promise<Array<{ userName: string; chatCount: number }>> {
+		return this.usage.getUserChatCounts(clinicId);
 	}
 
-	getUsedProviders(projectId: string, viewer: UsageViewer): Promise<LlmProvider[]> {
-		return this.usage.getUsedProviders(projectId, scopeOf(viewer));
+	getUsedProviders(clinicId: string, viewer: UsageViewer): Promise<LlmProvider[]> {
+		return this.usage.getUsedProviders(clinicId, scopeOf(viewer));
 	}
 
 	async getPeriodSettings(
 		userId: string,
-		projectId: string,
+		clinicId: string,
 	): Promise<{ selection: UsagePeriodSelection | null; savedPeriods: SavedUsagePeriod[] }> {
-		const { preferences, savedPeriods } = await this.periodSettings.getAndRepairPeriodSettings(userId, projectId);
+		const { preferences, savedPeriods } = await this.periodSettings.getAndRepairPeriodSettings(userId, clinicId);
 		return { selection: preferences.usagePeriod ?? null, savedPeriods };
 	}
 
 	async updatePeriodSelection(
 		userId: string,
-		projectId: string,
+		clinicId: string,
 		input: UsagePeriodSelectionInput,
 	): Promise<UsagePeriodSelection | null> {
 		const selection = parse(usagePeriodSelectionSchema, input);
 		const preferences = await this.periodSettings.mutatePeriodSettings(
 			userId,
-			projectId,
+			clinicId,
 			({ preferences: current, savedPeriods }) => {
 				if (selection.mode === 'saved') {
 					assertSavedPeriodExists(savedPeriods, selection.savedPeriodId);
@@ -99,13 +99,9 @@ export class UsageService {
 		return preferences.usagePeriod ?? null;
 	}
 
-	async createSavedPeriod(
-		userId: string,
-		projectId: string,
-		input: SavedUsagePeriodInput,
-	): Promise<SavedUsagePeriod> {
+	async createSavedPeriod(userId: string, clinicId: string, input: SavedUsagePeriodInput): Promise<SavedUsagePeriod> {
 		const savedPeriod = { id: randomUUID(), ...parse(savedUsagePeriodInputSchema, input) };
-		await this.periodSettings.mutatePeriodSettings(userId, projectId, ({ preferences: current, savedPeriods }) => {
+		await this.periodSettings.mutatePeriodSettings(userId, clinicId, ({ preferences: current, savedPeriods }) => {
 			if (savedPeriods.length >= MAX_SAVED_USAGE_PERIODS) {
 				throw new HandlerError('BAD_REQUEST', SAVED_USAGE_PERIOD_LIMIT_MESSAGE);
 			}
@@ -120,11 +116,11 @@ export class UsageService {
 
 	async updateSavedPeriod(
 		userId: string,
-		projectId: string,
+		clinicId: string,
 		input: UpdateSavedUsagePeriodInput,
 	): Promise<SavedUsagePeriod> {
 		const nextSavedPeriod = parse(savedUsagePeriodSchema, input);
-		await this.periodSettings.mutatePeriodSettings(userId, projectId, ({ preferences: current, savedPeriods }) => {
+		await this.periodSettings.mutatePeriodSettings(userId, clinicId, ({ preferences: current, savedPeriods }) => {
 			assertSavedPeriodExists(savedPeriods, nextSavedPeriod.id);
 			return {
 				...current,
@@ -138,12 +134,12 @@ export class UsageService {
 
 	async deleteSavedPeriod(
 		userId: string,
-		projectId: string,
+		clinicId: string,
 		id: string,
 	): Promise<{ id: string; selection: UsagePeriodSelection | null }> {
 		const preferences = await this.periodSettings.mutatePeriodSettings(
 			userId,
-			projectId,
+			clinicId,
 			({ preferences: current, savedPeriods }) => {
 				assertSavedPeriodExists(savedPeriods, id);
 				const usagePeriod =
@@ -160,8 +156,8 @@ export class UsageService {
 		return { id, selection: preferences.usagePeriod ?? null };
 	}
 
-	private async getCosts(projectId: string) {
-		return buildModelCostRows(await this.llm.getProjectDeclaredModels(projectId));
+	private async getCosts(clinicId: string) {
+		return buildModelCostRows(await this.llm.getClinicDeclaredModels(clinicId));
 	}
 }
 

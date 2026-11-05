@@ -32,7 +32,7 @@ const CANCEL = `mutation ($input: WiseOriginInput!) { cancelWiseProposal(input: 
 describe('Wise tool settings (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
-	let projectId = '';
+	let clinicId = '';
 	let facilityId = '';
 	let patientId = '';
 	let encounterId = '';
@@ -49,7 +49,7 @@ describe('Wise tool settings (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	/** One Wise turn in a new chart chat; the SSE events and the chat id. */
@@ -57,7 +57,7 @@ describe('Wise tool settings (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', doctor.cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({ model: MODEL, message: { text }, ...(await newChatTarget()) })
 			.buffer(true)
 			.parse((response, callback) => {
@@ -90,7 +90,7 @@ describe('Wise tool settings (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -103,8 +103,8 @@ describe('Wise tool settings (e2e)', () => {
 		const head = await createTestUser(app, { name: 'Head Nurse', email: 'head@example.com', password });
 		Object.assign(doctor, { cookie: reyes.cookie, id: reyes.userId });
 		Object.assign(admin, { cookie: head.cookie, id: head.userId });
-		projectId = (await graphql(doctor.cookie, 'mutation { createProject(input: { name: "Clinic" }) { id } }')).body
-			.data.createProject.id;
+		clinicId = (await graphql(doctor.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }')).body
+			.data.createClinic.id;
 		const facility = await prisma.organization.create({
 			data: { name: 'Health Center', slug: 'hc', type: 'clinic' },
 		});

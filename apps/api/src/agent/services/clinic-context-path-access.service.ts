@@ -14,10 +14,10 @@ import type { ToolContext } from '../types/tools.js';
 import { isContextPathAllowed } from './context-access.js';
 import type { ResolvedFileTreeAccess, ResolvedSkillsAccess } from './user-group-context-access.service.js';
 
-export type ProjectPathKind = 'file' | 'directory';
-type ProjectPath = { kind: 'root' | 'docs' | 'files' | 'database'; relativePath: string } | { kind: 'invalid' };
+export type ClinicPathKind = 'file' | 'directory';
+type ClinicPath = { kind: 'root' | 'docs' | 'files' | 'database'; relativePath: string } | { kind: 'invalid' };
 
-type ProjectPathAccessContext = Pick<
+type ClinicPathAccessContext = Pick<
 	ToolContext,
 	'warehouseTableAccess' | 'docsContextAccess' | 'filesContextAccess' | 'mcpAccess' | 'skillsAccess'
 >;
@@ -26,32 +26,32 @@ const MCP_SPECS_DIRECTORY = 'agent/mcps/';
 const MCP_CONFIG_PATH = `${MCP_SPECS_DIRECTORY}mcp.json`;
 const SKILLS_DIRECTORY = 'agent/skills/';
 
-export function assertProjectContextPathAllowed(
-	context: ProjectPathAccessContext,
+export function assertClinicContextPathAllowed(
+	context: ClinicPathAccessContext,
 	requestedVirtualPath: string,
 	canonicalVirtualPath: string,
-	kind: ProjectPathKind,
+	kind: ClinicPathKind,
 ): void {
-	if (!isProjectContextPathAllowed(context, requestedVirtualPath, canonicalVirtualPath, kind)) {
+	if (!isClinicContextPathAllowed(context, requestedVirtualPath, canonicalVirtualPath, kind)) {
 		throw new Error(`Access denied: ${requestedVirtualPath}`);
 	}
 }
 
-export function isProjectContextPathAllowed(
-	context: ProjectPathAccessContext,
+export function isClinicContextPathAllowed(
+	context: ClinicPathAccessContext,
 	requestedVirtualPath: string,
 	canonicalVirtualPath: string,
-	kind: ProjectPathKind,
+	kind: ClinicPathKind,
 ): boolean {
-	if (isProjectConfigPath(requestedVirtualPath) || isProjectConfigPath(canonicalVirtualPath)) {
+	if (isClinicConfigPath(requestedVirtualPath) || isClinicConfigPath(canonicalVirtualPath)) {
 		return false;
 	}
 	if (!isContextPathAllowed(context.warehouseTableAccess, canonicalVirtualPath)) {
 		return false;
 	}
 
-	const requestedPath = parseProjectPath(requestedVirtualPath);
-	const canonicalPath = parseProjectPath(canonicalVirtualPath);
+	const requestedPath = parseClinicPath(requestedVirtualPath);
+	const canonicalPath = parseClinicPath(canonicalVirtualPath);
 	if (requestedPath.kind === 'invalid' || canonicalPath.kind === 'invalid') {
 		return false;
 	}
@@ -88,12 +88,12 @@ export function isProjectContextPathAllowed(
 	}
 }
 
-export function isDocsProjectPath(virtualPath: string): boolean {
-	return parseProjectPath(virtualPath).kind === 'docs';
+export function isDocsClinicPath(virtualPath: string): boolean {
+	return parseClinicPath(virtualPath).kind === 'docs';
 }
 
 /** `loopwise_config.yaml` can hold plaintext LLM keys and warehouse credentials, so the agent never sees it. */
-function isProjectConfigPath(virtualPath: string): boolean {
+function isClinicConfigPath(virtualPath: string): boolean {
 	return path.posix.basename(virtualPath).toLowerCase() === CONTEXT_CONFIG_FILENAME;
 }
 
@@ -107,7 +107,7 @@ function isFileTreePathAllowed(
 	resolvedAccess: ResolvedFileTreeAccess,
 	requestedPath: string,
 	canonicalPath: string,
-	kind: ProjectPathKind,
+	kind: ClinicPathKind,
 ): boolean {
 	if (!resolvedAccess.enforced || resolvedAccess.access.mode === 'all') {
 		return true;
@@ -125,7 +125,7 @@ function isFileTreePathAllowed(
 }
 
 /** Tool specs live in `agent/mcps/<server>/<url-encoded tool>.json`, so the path tells which grant it needs. */
-function isMcpSpecPathAllowed(access: McpAccess, relativePath: string, kind: ProjectPathKind): boolean {
+function isMcpSpecPathAllowed(access: McpAccess, relativePath: string, kind: ClinicPathKind): boolean {
 	if (access.mode === 'all' || !relativePath.toLowerCase().startsWith(MCP_SPECS_DIRECTORY)) {
 		return true;
 	}
@@ -147,7 +147,7 @@ function isMcpSpecPathAllowed(access: McpAccess, relativePath: string, kind: Pro
 }
 
 /** Skills are granted by name, so a restricted run only reaches the files its granted skills were loaded from. */
-function isSkillPathAllowed(access: ResolvedSkillsAccess, relativePath: string, kind: ProjectPathKind): boolean {
+function isSkillPathAllowed(access: ResolvedSkillsAccess, relativePath: string, kind: ClinicPathKind): boolean {
 	if (!relativePath.toLowerCase().startsWith(SKILLS_DIRECTORY) || access.mode === 'all') {
 		return true;
 	}
@@ -162,7 +162,7 @@ function decodeSpecFileName(fileName: string): string | null {
 	}
 }
 
-function parseProjectPath(virtualPath: string): ProjectPath {
+function parseClinicPath(virtualPath: string): ClinicPath {
 	if (virtualPath.includes('\\') || hasControlCharacter(virtualPath)) {
 		return { kind: 'invalid' };
 	}

@@ -4,9 +4,9 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 
 import type { AuthUser } from '../auth/auth.service.js';
-import { ProjectAccess } from '../common/decorators/access.decorator.js';
-import { CurrentProject, CurrentUser, CurrentUserRole } from '../common/decorators/current.decorator.js';
-import type { Project } from '../generated/prisma/client.js';
+import { ClinicAccess } from '../common/decorators/access.decorator.js';
+import { CurrentClinic, CurrentUser, CurrentUserRole } from '../common/decorators/current.decorator.js';
+import type { Clinic } from '../generated/prisma/client.js';
 import { AttachmentsService, type UploadedAttachment, type UploadedFile } from './attachments.service.js';
 
 /** Upstream's multipart limit (`app.register(multipart, { limits: { fileSize: 100 MB } })`). */
@@ -20,7 +20,7 @@ const MULTIPART_MAX_FILE_SIZE = 100 * 1024 * 1024;
 export class AttachmentsController {
 	constructor(private readonly attachments: AttachmentsService) {}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Post()
 	@HttpCode(200)
 	@UseInterceptors(
@@ -28,36 +28,36 @@ export class AttachmentsController {
 	)
 	upload(
 		@CurrentUser() user: AuthUser,
-		@CurrentProject() project: Project,
+		@CurrentClinic() clinic: Clinic,
 		@CurrentUserRole() userRole: UserRole,
 		@UploadedFiles() files: UploadedFile[] | undefined,
 	): Promise<UploadedAttachment> {
-		return this.attachments.upload(user.id, project.id, userRole, files?.[0]);
+		return this.attachments.upload(user.id, clinic.id, userRole, files?.[0]);
 	}
 
 	/** Registered before the `GET` handler, which Express would otherwise also run for `HEAD`. */
-	@ProjectAccess()
+	@ClinicAccess()
 	@Head('file')
 	async inspect(
 		@CurrentUser() user: AuthUser,
-		@CurrentProject() project: Project,
+		@CurrentClinic() clinic: Clinic,
 		@Query('path') path: string | undefined,
 		@Res() response: Response,
 	): Promise<void> {
-		const file = await this.attachments.getFile(user.id, project.id, path ?? '', false);
+		const file = await this.attachments.getFile(user.id, clinic.id, path ?? '', false);
 		setFileHeaders(response, file).setHeader('Content-Length', file.size);
 		response.end();
 	}
 
-	@ProjectAccess()
+	@ClinicAccess()
 	@Get('file')
 	async download(
 		@CurrentUser() user: AuthUser,
-		@CurrentProject() project: Project,
+		@CurrentClinic() clinic: Clinic,
 		@Query('path') path: string | undefined,
 		@Res() response: Response,
 	): Promise<void> {
-		const file = await this.attachments.getFile(user.id, project.id, path ?? '', true);
+		const file = await this.attachments.getFile(user.id, clinic.id, path ?? '', true);
 		setFileHeaders(response, file).send(file.data);
 	}
 }

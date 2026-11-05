@@ -23,7 +23,7 @@ const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
 describe('Wise actions, phase 2 (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
-	let projectId = '';
+	let clinicId = '';
 	let facilityId = '';
 	let labId = '';
 	let patientId = '';
@@ -37,7 +37,7 @@ describe('Wise actions, phase 2 (e2e)', () => {
 		request(app.getHttpServer())
 			.post('/graphql')
 			.set('Cookie', cookie)
-			.set(projectId ? { 'x-loopwise-project-id': projectId } : {})
+			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
 			.send({ query, variables });
 
 	const ok = async (cookie: string[], query: string, variables: Record<string, unknown> = {}) => {
@@ -54,7 +54,7 @@ describe('Wise actions, phase 2 (e2e)', () => {
 		const res = await request(app.getHttpServer())
 			.post('/api/agent')
 			.set('Cookie', user.cookie)
-			.set('x-loopwise-project-id', projectId)
+			.set('x-loopwise-clinic-id', clinicId)
 			.send({
 				model: MODEL,
 				...(chatId ? { chatId } : as === 'doctor' ? { patientId } : {}),
@@ -85,7 +85,7 @@ describe('Wise actions, phase 2 (e2e)', () => {
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
-		process.env.LOOPWISE_PROJECTS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-projects-'));
+		process.env.LOOPWISE_CLINICS_DIR = await mkdtemp(path.join(tmpdir(), 'loopwise-clinics-'));
 		await resetDatabase(databaseUrl);
 		app = await createTestApp();
 		prisma = app.get(PrismaService);
@@ -98,9 +98,9 @@ describe('Wise actions, phase 2 (e2e)', () => {
 		const bautista = await createTestUser(app, { name: 'Lab Bautista', email: 'lab@example.com', password });
 		Object.assign(doctor, { cookie: reyes.cookie, id: reyes.userId });
 		Object.assign(tech, { cookie: bautista.cookie, id: bautista.userId });
-		projectId = (await ok(doctor.cookie, 'mutation { createProject(input: { name: "Clinic" }) { id } }'))
-			.createProject.id;
-		await prisma.projectMember.create({ data: { projectId, userId: tech.id, role: 'user' } });
+		clinicId = (await ok(doctor.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }')).createClinic
+			.id;
+		await prisma.clinicMember.create({ data: { clinicId, userId: tech.id, role: 'user' } });
 		const [clinic, lab] = await Promise.all([
 			prisma.organization.create({ data: { name: 'Health Center', slug: 'hc', type: 'clinic' } }),
 			prisma.organization.create({ data: { name: 'Bohol Diagnostics', slug: 'lab', type: 'lab' } }),

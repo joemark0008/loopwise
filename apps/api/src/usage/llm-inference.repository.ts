@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 
 export interface NewLlmInference extends TokenUsage {
 	type: LlmInferenceType;
-	projectId: string;
+	clinicId: string;
 	userId: string;
 	chatId?: string | null;
 	llmProvider: string;
