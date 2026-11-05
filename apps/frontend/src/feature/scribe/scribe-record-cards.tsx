@@ -145,7 +145,7 @@ export function DiagnosisCard({ toolCallId, part, draft, output, record }: Scrib
 			toolCallId={toolCallId}
 			part={part}
 			icon={ClipboardList}
-			title='Diagnosis'
+			title={code ? `Diagnosis · ${code}` : 'Diagnosis'}
 			confirmLabel='Add diagnosis'
 			onConfirm={confirm}
 			isPending={save.isPending}
@@ -432,7 +432,8 @@ export function CertificateCard({ toolCallId, part, draft, record }: ScribePartP
 			...base,
 			id: existingDraft?.id ?? null,
 			type: asked?.type ?? base.type,
-			diagnosisText: asked?.diagnosisText?.trim() || base.diagnosisText,
+			// Left empty, the certificate names the visit's diagnoses as they are at Confirm (the cards above add them).
+			diagnosisText: asked?.diagnosisText?.trim() ?? '',
 			fitness: asked?.isFitToWork === undefined ? base.fitness : asked.isFitToWork ? 'fit' : 'unfit',
 			restDays: asked?.restDays ? String(asked.restDays) : '',
 			restFrom: asked?.restFrom ?? base.restFrom,
@@ -443,10 +444,11 @@ export function CertificateCard({ toolCallId, part, draft, record }: ScribePartP
 	const [values, setValues] = useState(initial);
 	const [isEditing, setIsEditing] = useState(false);
 	const save = useRecordMutation(encounterRecordApi.encounterRecord.saveCertificate);
-	const errors = validateCertificateForm(values);
+	const certificate = { ...values, diagnosisText: values.diagnosisText || newCertificateForm(record).diagnosisText };
+	const errors = validateCertificateForm(certificate);
 	const error = firstError(errors);
 	const set = (key: keyof CertificateFormValues, value: string) => setValues({ ...values, [key]: value });
-	const summary = certificateSummary({ ...values, isFitToWork: isFitToWorkOf(values) });
+	const summary = certificateSummary({ ...certificate, isFitToWork: isFitToWorkOf(certificate) });
 
 	const confirm = ({ origin }: ProposalConfirm) => {
 		if (error) {
@@ -454,7 +456,7 @@ export function CertificateCard({ toolCallId, part, draft, record }: ScribePartP
 			return;
 		}
 		return save.mutateAsync({
-			...toSaveCertificateInput(record.encounter.id, values),
+			...toSaveCertificateInput(record.encounter.id, certificate),
 			expectedVersion: existingDraft?.version ?? null,
 			wiseOrigin: { ...origin, edited: isEdited(values, initial) },
 		});
@@ -479,6 +481,11 @@ export function CertificateCard({ toolCallId, part, draft, record }: ScribePartP
 			isEditing={isEditing}
 			onEditToggle={() => setIsEditing(!isEditing)}
 			error={save.error?.message}
+			warnings={
+				!certificate.diagnosisText && (
+					<p className={styles.note}>Confirm the diagnoses above first, or write the diagnosis here.</p>
+				)
+			}
 		>
 			<div className={styles.cardBody}>
 				{isEditing ? (
@@ -487,7 +494,7 @@ export function CertificateCard({ toolCallId, part, draft, record }: ScribePartP
 							{(id) => (
 								<Input
 									id={id}
-									value={values.diagnosisText}
+									value={certificate.diagnosisText}
 									onChange={(event) => set('diagnosisText', event.target.value)}
 								/>
 							)}

@@ -64,7 +64,7 @@ function DraftCards({ toolCallId, draft, output, record }: Omit<ScribePartProps,
 	return (
 		<div className={styles.cards} data-testid='scribe-cards'>
 			<p className={styles.muted} data-testid='scribe-progress' aria-live='polite'>
-				{progressLine(progress)}. Nothing is saved until you confirm a card.
+				{progressLine(progress)}.{progress.open > 0 && ' Nothing is saved until you confirm a card.'}
 			</p>
 			{output.parts.map((part) => {
 				const kind = scribePartKind(part);
