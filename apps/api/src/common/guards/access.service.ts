@@ -62,11 +62,7 @@ export class AccessService {
 		selectedClinicId: string | null,
 		roles?: readonly UserRole[],
 	): Promise<ClinicAccessGrant> {
-		const grants = await this.listUserClinics(userId);
-		const grant =
-			grants.find(({ clinic }) => clinic.id === selectedClinicId) ??
-			(await this.defaultClinicGrant(grants)) ??
-			grants[0];
+		const grant = await this.findClinicAccess(userId, selectedClinicId);
 		if (!grant) {
 			throw new HandlerError('BAD_REQUEST', 'No clinic configured');
 		}
@@ -79,6 +75,17 @@ export class AccessService {
 			);
 		}
 		return grant;
+	}
+
+	/** The clinic `resolveClinicAccess` picks, without its role check; null when the user can open no clinic. */
+	async findClinicAccess(userId: string, selectedClinicId: string | null): Promise<ClinicAccessGrant | null> {
+		const grants = await this.listUserClinics(userId);
+		return (
+			grants.find(({ clinic }) => clinic.id === selectedClinicId) ??
+			(await this.defaultClinicGrant(grants)) ??
+			grants[0] ??
+			null
+		);
 	}
 
 	/**

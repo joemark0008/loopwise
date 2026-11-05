@@ -28,8 +28,7 @@ export type StoredUserGroupConfig =
 			features: UserGroupFeature[];
 			toolCallDensity: ToolCallDensityPolicy;
 			showAllSettings?: boolean;
-			/** Stored under the key used before clinics were called clinics; read and written as `clinicSharing`. */
-			projectSharing?: ClinicSharingPermission;
+			clinicSharing?: ClinicSharingPermission;
 			preloadedSkills?: string[];
 	  };
 
@@ -193,7 +192,7 @@ export function parseStoredUserGroupConfig(value: unknown, isDefault = false): U
 			defaultDensity: policy.defaultDensity === 'compact' ? 'compact' : 'detailed',
 			canChange: policy.canChange === true,
 		},
-		clinicSharing: parseClinicSharingPermission(value.projectSharing),
+		clinicSharing: parseClinicSharingPermission(value.clinicSharing),
 		showAllSettings: typeof value.showAllSettings === 'boolean' ? value.showAllSettings : isDefault,
 		preloadedSkills: Array.isArray(value.preloadedSkills) ? normalizePreloadedSkills(value.preloadedSkills) : [],
 	};
@@ -213,7 +212,7 @@ export function serializeUserGroupConfig(
 			defaultDensity: toolCallDensity.defaultDensity,
 			canChange: toolCallDensity.canChange,
 		},
-		projectSharing: parseClinicSharingPermission(clinicSharing),
+		clinicSharing: parseClinicSharingPermission(clinicSharing),
 		showAllSettings,
 		preloadedSkills: normalizePreloadedSkills(preloadedSkills),
 	};

@@ -11,7 +11,7 @@ export interface ShareRecipients {
  */
 @Injectable()
 export class ClinicSharingService {
-	async assertCanShareToClinic(_projectId: string, _userId: string): Promise<void> {}
+	async assertCanShareToClinic(_clinicId: string, _userId: string): Promise<void> {}
 
-	async assertCanShareWith(_projectId: string, _userId: string, _recipients: ShareRecipients): Promise<void> {}
+	async assertCanShareWith(_clinicId: string, _userId: string, _recipients: ShareRecipients): Promise<void> {}
 }

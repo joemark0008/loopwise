@@ -16,10 +16,10 @@ import { useSidebar } from '@/contexts/sidebar';
 import { resetLastAppLocation, useTrackLastAppLocation } from '@/hooks/use-last-app-location';
 import { useIsCloud } from '@/hooks/use-loopwise-mode';
 import { useClinicSwitch } from '@/hooks/use-clinic-switch';
-import { useStaffRole } from '@/hooks/use-staff-role';
+import { useDesks } from '@/hooks/use-staff-role';
 import { getActiveClinicId, setActiveClinicId } from '@/lib/active-clinic';
 import { getShortcutLabel } from '@/lib/keyboard-shortcuts';
-import { roleNavLinks } from '@/lib/navigation';
+import { deskNavLinks } from '@/lib/navigation';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useCanSeeAdvancedSettings } from '@/hooks/use-can-see-advanced-settings';
 import { useCurrentClinic, useClinics } from '@/hooks/use-current-clinic';
@@ -42,7 +42,7 @@ export function Sidebar() {
 	const { isAdmin, isContextAdmin, isViewer } = usePermissions();
 	const canSeeAdvancedSettings = useCanSeeAdvancedSettings();
 	const isCloud = useIsCloud();
-	const role = useStaffRole();
+	const desks = useDesks();
 
 	const locationPath = useRouterState({ select: (s) => s.location.pathname });
 	const isSettingsRoute = matchRoute({ to: '/settings', fuzzy: true });
@@ -160,7 +160,7 @@ export function Sidebar() {
 				/>
 			) : (
 				<nav className={styles.section} aria-label='Main'>
-					{roleNavLinks(role).map((link) => (
+					{deskNavLinks(desks).map((link) => (
 						<SidebarNavLink key={link.to} link={link} isCollapsed={effectiveIsCollapsed} />
 					))}
 					<div className={styles.spacer} />

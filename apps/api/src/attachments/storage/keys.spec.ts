@@ -6,7 +6,7 @@ const scope = { clinicId: 'proj-1', userId: 'user-1' };
 
 describe('clinicRoot', () => {
 	it('covers every user space of the clinic', () => {
-		expect(clinicRoot('proj-1')).toBe('projects/proj-1');
+		expect(clinicRoot('proj-1')).toBe('clinics/proj-1');
 		expect(scopeRoot(scope).startsWith(`${clinicRoot('proj-1')}/`)).toBe(true);
 	});
 
@@ -22,15 +22,15 @@ describe('userIdFromKey', () => {
 	});
 
 	it('ignores keys that are not inside a user space', () => {
-		expect(userIdFromKey('projects/proj-1/users/user-1')).toBeNull();
-		expect(userIdFromKey('projects/proj-1/shared/notes.md')).toBeNull();
+		expect(userIdFromKey('clinics/proj-1/users/user-1')).toBeNull();
+		expect(userIdFromKey('clinics/proj-1/shared/notes.md')).toBeNull();
 		expect(userIdFromKey('.loopwise-storage-health')).toBeNull();
 	});
 });
 
 describe('scopeRoot', () => {
 	it('namespaces by clinic then user', () => {
-		expect(scopeRoot(scope)).toBe('projects/proj-1/users/user-1');
+		expect(scopeRoot(scope)).toBe('clinics/proj-1/users/user-1');
 	});
 
 	it('rejects identifiers containing separators', () => {
@@ -46,15 +46,15 @@ describe('scopeRoot', () => {
 
 describe('scopedKey', () => {
 	it('builds a key inside the scope', () => {
-		expect(scopedKey(scope, 'reports/q1.csv')).toBe('projects/proj-1/users/user-1/reports/q1.csv');
+		expect(scopedKey(scope, 'reports/q1.csv')).toBe('clinics/proj-1/users/user-1/reports/q1.csv');
 	});
 
 	it('ignores leading and trailing slashes', () => {
-		expect(scopedKey(scope, '/reports/q1.csv/')).toBe('projects/proj-1/users/user-1/reports/q1.csv');
+		expect(scopedKey(scope, '/reports/q1.csv/')).toBe('clinics/proj-1/users/user-1/reports/q1.csv');
 	});
 
 	it('collapses repeated slashes', () => {
-		expect(scopedKey(scope, 'reports//q1.csv')).toBe('projects/proj-1/users/user-1/reports/q1.csv');
+		expect(scopedKey(scope, 'reports//q1.csv')).toBe('clinics/proj-1/users/user-1/reports/q1.csv');
 	});
 
 	it('rejects keys longer than the S3 limit', () => {

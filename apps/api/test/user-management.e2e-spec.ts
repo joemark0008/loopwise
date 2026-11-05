@@ -78,7 +78,7 @@ describe('user management (e2e)', () => {
 		expect(new Date(expiresAt).getTime()).toBeGreaterThan(Date.now() + 6 * 24 * 3600 * 1000);
 
 		const token = tokenOf(url);
-		const stored = await sql('SELECT identifier FROM verification');
+		const stored = await sql('SELECT identifier FROM verifications');
 		expect(stored).toHaveLength(1);
 		expect(stored[0].identifier).not.toContain(token);
 
@@ -114,7 +114,7 @@ describe('user management (e2e)', () => {
 			input: { token: tokenOf(created.body.data.createUser.url), password: 'short' },
 		});
 		expect(res.body.errors).toBeDefined();
-		expect(await sql('SELECT id FROM account WHERE password IS NOT NULL')).toHaveLength(1);
+		expect(await sql('SELECT id FROM accounts WHERE password IS NOT NULL')).toHaveLength(1);
 	});
 
 	it('refuses an expired link', async () => {
@@ -123,7 +123,7 @@ describe('user management (e2e)', () => {
 			{ input: { name: 'E', email: 'e@example.com', role: 'user' } },
 			adminCookie,
 		);
-		await sql("UPDATE verification SET expires_at = now() - interval '1 minute'");
+		await sql("UPDATE verifications SET expires_at = now() - interval '1 minute'");
 		const token = tokenOf(created.body.data.createUser.url);
 		expect((await gql(LINK_INFO, { token })).body.data.passwordLink).toBeNull();
 		const res = await gql(SET_PASSWORD, { input: { token, password: 'Valid-pass1' } });
@@ -174,6 +174,53 @@ describe('user management (e2e)', () => {
 
 		const invalid = await gql(update, { input: { userId, role: 'owner' } }, adminCookie);
 		expect(invalid.body.errors).toBeDefined();
+	});
+
+	it("sets a user's roles at the selected clinic, which their current clinic reports", async () => {
+		const atClinic =
+			(cookie: string[], clinicId: string) =>
+			(query: string, variables: Record<string, unknown> = {}) =>
+				request(app.getHttpServer())
+					.post('/graphql')
+					.set('Cookie', cookie)
+					.set('x-loopwise-clinic-id', clinicId)
+					.send({ query, variables });
+		const clinic = await gql(
+			'mutation { createClinic(input: { name: "Health Center" }) { id code } }',
+			{},
+			adminCookie,
+		);
+		expect(clinic.body.errors).toBeUndefined();
+		const { id: clinicId, code } = clinic.body.data.createClinic;
+		expect(code).toBe('HC');
+		const asAdmin = atClinic(adminCookie, clinicId);
+
+		const created = await asAdmin(
+			`mutation Create($input: CreateUserInput!) { createUser(input: $input) { url user { id role staffRoles } } }`,
+			{ input: { name: 'Nina', email: 'nina@example.com', role: 'user', staffRoles: ['NURSE'] } },
+		);
+		expect(created.body.errors).toBeUndefined();
+		const { user, url } = created.body.data.createUser;
+		expect(user).toMatchObject({ role: 'user', staffRoles: ['NURSE'] });
+
+		const set = `mutation S($input: SetUserStaffRolesInput!) { setUserStaffRoles(input: $input) { staffRoles } }`;
+		const changed = await asAdmin(set, { input: { userId: user.id, staffRoles: ['NURSE', 'MIDWIFE'] } });
+		expect(changed.body.data.setUserStaffRoles.staffRoles.sort()).toEqual(['MIDWIFE', 'NURSE']);
+		const superAdmin = await asAdmin(set, { input: { userId: user.id, staffRoles: ['SUPER_ADMIN'] } });
+		expect(superAdmin.body.errors[0].extensions.code).toBe('FORBIDDEN');
+		const own = await asAdmin(set, { input: { userId: adminId, staffRoles: ['DOCTOR'] } });
+		expect(own.body.errors[0].extensions.code).toBe('BAD_REQUEST');
+
+		const listed = await asAdmin(`{ managedUsers { email staffRoles } }`);
+		expect(listed.body.data.managedUsers).toEqual(
+			expect.arrayContaining([{ email: 'nina@example.com', staffRoles: expect.arrayContaining(['NURSE']) }]),
+		);
+
+		await gql(SET_PASSWORD, { input: { token: tokenOf(url), password: 'Us3r-secret!' } });
+		const nina = cookieOf(await signIn('nina@example.com', 'Us3r-secret!').expect(200));
+		const current = await atClinic(nina, clinicId)('{ currentClinic { id userRole staffRoles } }');
+		expect(current.body.data.currentClinic).toMatchObject({ id: clinicId, userRole: 'user' });
+		expect(current.body.data.currentClinic.staffRoles.sort()).toEqual(['MIDWIFE', 'NURSE']);
 	});
 
 	it('deactivates a user: signs them out, refuses sign-in and links; reactivation restores sign-in', async () => {

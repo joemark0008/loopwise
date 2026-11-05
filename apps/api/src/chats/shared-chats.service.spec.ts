@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
+import type { AccessService } from '../common/guards/access.service.js';
 import type { ChatRepository } from './chat.repository.js';
 import type { ChatsService } from './chats.service.js';
 import type { ClinicSharingService } from './clinic-sharing.service.js';
@@ -30,10 +31,8 @@ const service = new SharedChatsService(
 		getShareAllowedUserIds: mocks.getShareAllowedUserIds,
 		updateSharedChatAllowedUsers: mocks.updateSharedChatAllowedUsers,
 	} as unknown as SharedChatRepository,
-	{
-		getUserRoleInClinic: mocks.getUserRoleInClinic,
-		listUsersWithClinicAccess: mocks.listUsersWithClinicAccess,
-	} as unknown as ClinicRepository,
+	{ listUsersWithClinicAccess: mocks.listUsersWithClinicAccess } as unknown as ClinicRepository,
+	{ getUserRoleInClinic: mocks.getUserRoleInClinic } as unknown as AccessService,
 	{
 		assertCanShareToClinic: mocks.assertCanShareToClinic,
 		assertCanShareWith: mocks.assertCanShareWith,

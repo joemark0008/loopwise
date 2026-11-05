@@ -1,7 +1,7 @@
 # Loopwise in production: the app image (Dockerfile) and its Postgres.
 #   cp .env.example .env    # set BETTER_AUTH_SECRET, BETTER_AUTH_URL (the public URL) and an LLM key
 #   docker compose -f docker-compose.prod.yml up -d --build
-# The app listens on ${LOOPWISE_PORT:-8080}. Projects (context files) and stored files live in the loopwise_data volume.
+# The app listens on ${LOOPWISE_PORT:-8080}. Clinic folders (context files) and stored files live in the loopwise_data volume.
 # Its own project name, separate from docker-compose.yml (loopwise-dev), so the two never share a database volume.
 name: loopwise
 

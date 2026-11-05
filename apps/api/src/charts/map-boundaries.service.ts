@@ -7,6 +7,7 @@ import { getCachedBoundary, setCachedBoundary } from '../agent/utils/map-boundar
 import { parseAndValidateGeoJson, safeFetch } from '../agent/utils/safe-fetch.js';
 import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
+import { AccessService } from '../common/guards/access.service.js';
 
 const boundaryKeySchema = z
 	.string()
@@ -46,15 +47,18 @@ export const deleteMapBoundarySchema = z.object({ key: z.string().trim().min(1) 
 
 /**
  * Port of upstream `routes/map-boundaries.ts` (GeoJSON served to the map views) and the map-boundary procedures of
- * the tRPC `clinic` router (Settings → Display → custom boundary sets on `project.map_settings`).
+ * the tRPC `clinic` router (Settings → Display → custom boundary sets on `clinics.map_settings`).
  */
 @Injectable()
 export class MapBoundariesService {
-	constructor(private readonly clinics: ClinicRepository) {}
+	constructor(
+		private readonly clinics: ClinicRepository,
+		private readonly access: AccessService,
+	) {}
 
 	/** `GET /api/map-boundaries/:clinicId/:key`: a built-in or custom boundary set of a clinic the user is in. */
 	async getClinicBoundary(clinicId: string, key: string, userId: string): Promise<FeatureCollection> {
-		const userRole = await this.clinics.getUserRoleInClinic(clinicId, userId);
+		const userRole = await this.access.getUserRoleInClinic(clinicId, userId);
 		if (!userRole) {
 			throw new HandlerError('FORBIDDEN', 'You do not have access to this clinic.');
 		}

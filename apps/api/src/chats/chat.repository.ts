@@ -34,7 +34,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { DbExecutor } from '../prisma/prisma.types.js';
 
-type MessageWithParts = ChatMessage & { messageParts: MessagePart[]; messageFeedback?: MessageFeedback | null };
+type MessageWithParts = ChatMessage & { parts: MessagePart[]; feedback?: MessageFeedback | null };
 
 /** A stored query read back as SQL (upstream `StoredSqlQuery` of `execute-sql.queries`). */
 export type StoredSqlQuery = { sqlQuery: string; databaseId?: string; dialect?: string; adminMode: boolean };
@@ -74,20 +74,20 @@ export class ChatRepository {
 		const chat = await this.prisma.chat.findFirst({
 			where: { id: chatId, deletedAt: null },
 			include: {
-				chatMessages: {
+				messages: {
 					where: { supersededAt: null },
 					orderBy: { createdAt: 'asc' },
 					include: {
-						messageParts: { orderBy: { order: 'asc' } },
-						...(opts.includeFeedback && { messageFeedback: true }),
+						parts: { orderBy: { order: 'asc' } },
+						...(opts.includeFeedback && { feedback: true }),
 					},
 				},
 			},
 		});
-		if (!chat || chat.chatMessages.length === 0) {
+		if (!chat || chat.messages.length === 0) {
 			return [];
 		}
-		const messages = aggregateMessages(chat.chatMessages);
+		const messages = aggregateMessages(chat.messages);
 		const versionInfo = await this.buildVersionInfoMap([chatId]);
 		return [
 			{
@@ -111,7 +111,7 @@ export class ChatRepository {
 		const messages = await this.prisma.chatMessage.findMany({
 			where: { chatId, supersededAt: null },
 			orderBy: { createdAt: 'asc' },
-			include: { messageParts: { orderBy: { order: 'asc' } } },
+			include: { parts: { orderBy: { order: 'asc' } } },
 		});
 		return aggregateMessages(messages);
 	}
@@ -371,16 +371,16 @@ export class ChatRepository {
 	listOwnChats(userId: string): Promise<ChatListRow[]> {
 		return this.prisma.$queryRaw<ChatListRow[]>`
 			SELECT c.id, c.title, c.is_starred AS "isStarred",
-				exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source = 'onboarding') AS "isOnboarding",
+				exists(SELECT 1 FROM chat_messages m WHERE m.chat_id = c.id AND m.source = 'onboarding') AS "isOnboarding",
 				(extract(epoch FROM c.created_at) * 1000)::float8 AS "createdAt",
 				(extract(epoch FROM c.updated_at) * 1000)::float8 AS "updatedAt",
-				'own' AS kind, c.project_id AS "clinicId", p.name AS "clinicName",
-				exists(SELECT 1 FROM shared_chat s WHERE s.chat_id = c.id) AS "isSharedByMe",
+				'own' AS kind, c.clinic_id AS "clinicId", p.name AS "clinicName",
+				exists(SELECT 1 FROM shared_chats s WHERE s.chat_id = c.id) AS "isSharedByMe",
 				u.name AS "ownerName", ${SOURCE_PLATFORM} AS "sourcePlatform"
-			FROM chat c
-			JOIN project p ON p.id = c.project_id
-			JOIN "user" u ON u.id = c.user_id
-			WHERE c.user_id = ${userId} AND c.deleted_at IS NULL AND c.surface = 'chat'
+			FROM chats c
+			JOIN clinics p ON p.id = c.clinic_id
+			JOIN users u ON u.id = c.user_id
+			WHERE c.user_id = ${userId}::uuid AND c.deleted_at IS NULL AND c.surface = 'chat'
 				AND NOT ${IS_QUICK_QUESTION}
 			ORDER BY c.updated_at DESC`;
 	}
@@ -391,19 +391,20 @@ export class ChatRepository {
 			SELECT s.chat_id AS id, c.title, false AS "isStarred", false AS "isOnboarding",
 				(extract(epoch FROM c.created_at) * 1000)::float8 AS "createdAt",
 				(extract(epoch FROM c.updated_at) * 1000)::float8 AS "updatedAt",
-				'shared' AS kind, s.id AS "shareId", c.project_id AS "clinicId", p.name AS "clinicName",
+				'shared' AS kind, s.id AS "shareId", c.clinic_id AS "clinicId", p.name AS "clinicName",
 				false AS "isSharedByMe", u.name AS "ownerName", ${SOURCE_PLATFORM} AS "sourcePlatform"
-			FROM shared_chat s
-			JOIN chat c ON c.id = s.chat_id
-			JOIN project p ON p.id = c.project_id
-			JOIN "user" u ON u.id = c.user_id
-			LEFT JOIN shared_chat_access a ON a.shared_chat_id = s.id AND a.user_id = ${userId}
-			WHERE c.deleted_at IS NULL AND c.user_id <> ${userId}
-				AND NOT exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source = 'onboarding')
+			FROM shared_chats s
+			JOIN chats c ON c.id = s.chat_id
+			JOIN clinics p ON p.id = c.clinic_id
+			JOIN users u ON u.id = c.user_id
+			LEFT JOIN shared_chat_access a ON a.shared_chat_id = s.id AND a.user_id = ${userId}::uuid
+			WHERE c.deleted_at IS NULL AND c.user_id <> ${userId}::uuid
+				AND NOT exists(SELECT 1 FROM chat_messages m WHERE m.chat_id = c.id AND m.source = 'onboarding')
 				AND (
-					(s.visibility = 'project' AND (
-						exists(SELECT 1 FROM project_member pm WHERE pm.project_id = c.project_id AND pm.user_id = ${userId})
-						OR exists(SELECT 1 FROM org_member om WHERE om.org_id = p.org_id AND om.user_id = ${userId})))
+					(s.visibility = 'clinic' AND (
+						exists(SELECT 1 FROM user_clinic_roles r WHERE r.clinic_id = c.clinic_id AND r.user_id = ${userId}::uuid)
+						OR exists(SELECT 1 FROM organization_members om
+							WHERE om.organization_id = p.organization_id AND om.user_id = ${userId}::uuid)))
 					OR (s.visibility = 'specific' AND a.user_id IS NOT NULL)
 				)
 			ORDER BY c.updated_at DESC`;
@@ -416,17 +417,17 @@ export class ChatRepository {
 			{ id: string; title: string; createdAt: Date; updatedAt: Date }[]
 		>`
 			SELECT c.id, c.title, c.created_at AS "createdAt", c.updated_at AS "updatedAt"
-			FROM chat c
-			WHERE c.user_id = ${userId} AND c.deleted_at IS NULL AND ${EXCLUDED_CHATS} AND c.title ILIKE ${pattern}
+			FROM chats c
+			WHERE c.user_id = ${userId}::uuid AND c.deleted_at IS NULL AND ${EXCLUDED_CHATS} AND c.title ILIKE ${pattern}
 			ORDER BY c.updated_at DESC LIMIT ${limit}`;
 		const contentMatches = await this.prisma.$queryRaw<
 			{ id: string; title: string; createdAt: Date; updatedAt: Date; matchedText: string | null }[]
 		>`
 			SELECT c.id, c.title, c.created_at AS "createdAt", c.updated_at AS "updatedAt", mp.text AS "matchedText"
-			FROM chat c
-			JOIN chat_message m ON m.chat_id = c.id
-			JOIN message_part mp ON mp.message_id = m.id
-			WHERE c.user_id = ${userId} AND c.deleted_at IS NULL AND ${EXCLUDED_CHATS} AND mp.text ILIKE ${pattern}
+			FROM chats c
+			JOIN chat_messages m ON m.chat_id = c.id
+			JOIN message_parts mp ON mp.message_id = m.id
+			WHERE c.user_id = ${userId}::uuid AND c.deleted_at IS NULL AND ${EXCLUDED_CHATS} AND mp.text ILIKE ${pattern}
 			ORDER BY c.updated_at DESC LIMIT ${limit * 2}`;
 
 		const results: SearchChatResult[] = titleMatches.map((match) => ({
@@ -464,9 +465,9 @@ export class ChatRepository {
 		>`
 			SELECT mp.tool_call_id AS "toolCallId", mp.tool_name AS "toolName", mp.tool_input AS "toolInput",
 				mp.tool_output AS "toolOutput", m.source
-			FROM message_part mp
-			JOIN chat_message m ON m.id = mp.message_id
-			WHERE m.chat_id = ${chatId} AND m.superseded_at IS NULL
+			FROM message_parts mp
+			JOIN chat_messages m ON m.id = mp.message_id
+			WHERE m.chat_id = ${chatId}::uuid AND m.superseded_at IS NULL
 				AND ${PrismaSql(QUERY_RESULT_TOOL_NAME_SQL)}
 				AND mp.tool_output->>'id' = ${queryId}
 			ORDER BY m.created_at DESC, mp.created_at DESC, mp."order" DESC
@@ -560,7 +561,7 @@ export class ChatRepository {
 			where: {
 				toolCallId,
 				OR: [{ toolName: { in: [...QUERY_TOOL_NAMES] } }, { toolName: { startsWith: QUERY_TOOL_NAME_PREFIX } }],
-				chatMessage: { chatId },
+				message: { chatId },
 			},
 			select: { toolOutput: true },
 		});
@@ -570,7 +571,7 @@ export class ChatRepository {
 	/** The stored output of one tool call in a chat `userId` owns (a report's frozen data); null for anyone else. */
 	async getOwnToolOutput(userId: string, chatId: string, toolCallId: string, toolName: string): Promise<unknown> {
 		const part = await this.prisma.messagePart.findFirst({
-			where: { toolCallId, toolName, chatMessage: { chatId, chat: { userId, deletedAt: null } } },
+			where: { toolCallId, toolName, message: { chatId, chat: { userId, deletedAt: null } } },
 			select: { toolOutput: true },
 		});
 		return part?.toolOutput ?? null;
@@ -589,7 +590,7 @@ export class ChatRepository {
 			where: {
 				toolCallId: { in: toolCallIds },
 				toolState: 'output-available',
-				chatMessage: { chatId, chat: { userId, deletedAt: null } },
+				message: { chatId, chat: { userId, deletedAt: null } },
 			},
 			select: { toolCallId: true, toolName: true, toolOutput: true },
 		});
@@ -607,9 +608,9 @@ export class ChatRepository {
 				toolName: 'report',
 				toolState: 'output-available',
 				toolOutput: { path: ['id'], equals: reportId },
-				chatMessage: { chatId, chat: { userId, deletedAt: null } },
+				message: { chatId, chat: { userId, deletedAt: null } },
 			},
-			orderBy: [{ chatMessage: { createdAt: 'asc' } }, { order: 'asc' }],
+			orderBy: [{ message: { createdAt: 'asc' } }, { order: 'asc' }],
 			select: { toolOutput: true },
 		});
 		return parts.map((part) => part.toolOutput);
@@ -627,22 +628,22 @@ export class ChatRepository {
 			where: {
 				toolName: 'report',
 				toolState: 'output-available',
-				chatMessage: { chat: { userId, deletedAt: null } },
+				message: { chat: { userId, deletedAt: null } },
 			},
-			orderBy: [{ chatMessage: { createdAt: 'desc' } }, { order: 'desc' }],
+			orderBy: [{ message: { createdAt: 'desc' } }, { order: 'desc' }],
 			take: limit,
 			select: {
 				toolCallId: true,
 				toolOutput: true,
-				chatMessage: { select: { createdAt: true, chatId: true, chat: { select: { title: true } } } },
+				message: { select: { createdAt: true, chatId: true, chat: { select: { title: true } } } },
 			},
 		});
 		return parts.map((part) => ({
 			toolCallId: part.toolCallId ?? '',
 			output: part.toolOutput,
-			createdAt: part.chatMessage.createdAt,
-			chatId: part.chatMessage.chatId,
-			chatTitle: part.chatMessage.chat.title,
+			createdAt: part.message.createdAt,
+			chatId: part.message.chatId,
+			chatTitle: part.message.chat.title,
 		}));
 	}
 
@@ -685,7 +686,7 @@ export class ChatRepository {
 	/** The chat's owner when the message belongs to the chat (upstream `getOwnerOfChatAndMessage`). */
 	async getOwnerOfChatAndMessage(chatId: string, messageId: string): Promise<string | undefined> {
 		const chat = await this.prisma.chat.findFirst({
-			where: { id: chatId, chatMessages: { some: { id: messageId } } },
+			where: { id: chatId, messages: { some: { id: messageId } } },
 			select: { userId: true },
 		});
 		return chat?.userId;
@@ -699,14 +700,15 @@ export class ChatRepository {
 		}
 		const [shared] = await this.prisma.$queryRaw<{ id: string }[]>`
 			SELECT s.id
-			FROM shared_chat s
-			JOIN chat c ON c.id = s.chat_id
-			JOIN project p ON p.id = c.project_id
-			LEFT JOIN shared_chat_access a ON a.shared_chat_id = s.id AND a.user_id = ${userId}
-			WHERE s.chat_id = ${chatId} AND (
-				(s.visibility = 'project' AND (
-					exists(SELECT 1 FROM project_member pm WHERE pm.project_id = c.project_id AND pm.user_id = ${userId})
-					OR exists(SELECT 1 FROM org_member om WHERE om.org_id = p.org_id AND om.user_id = ${userId})))
+			FROM shared_chats s
+			JOIN chats c ON c.id = s.chat_id
+			JOIN clinics p ON p.id = c.clinic_id
+			LEFT JOIN shared_chat_access a ON a.shared_chat_id = s.id AND a.user_id = ${userId}::uuid
+			WHERE s.chat_id = ${chatId}::uuid AND (
+				(s.visibility = 'clinic' AND (
+					exists(SELECT 1 FROM user_clinic_roles r WHERE r.clinic_id = c.clinic_id AND r.user_id = ${userId}::uuid)
+					OR exists(SELECT 1 FROM organization_members om
+						WHERE om.organization_id = p.organization_id AND om.user_id = ${userId}::uuid)))
 				OR (s.visibility = 'specific' AND a.user_id IS NOT NULL)
 			)
 			LIMIT 1`;
@@ -758,8 +760,8 @@ export class ChatRepository {
 	): Promise<{ chatId: string; title: string; updatedAt: Date }[]> {
 		return this.prisma.$queryRaw`
 			SELECT c.id AS "chatId", c.title, c.updated_at AS "updatedAt"
-			FROM chat c
-			WHERE c.user_id = ${userId} AND c.deleted_at IS NULL AND ${IS_QUICK_QUESTION}
+			FROM chats c
+			WHERE c.user_id = ${userId}::uuid AND c.deleted_at IS NULL AND ${IS_QUICK_QUESTION}
 				AND c.fork_metadata->>'id' = ${sourceId}
 			ORDER BY c.updated_at DESC`;
 	}
@@ -780,11 +782,11 @@ export class ChatRepository {
 				source: string | null;
 			}[]
 		>`
-			SELECT c.project_id AS "clinicId", c.user_id AS "userId", c.id AS "chatId", mp.tool_call_id AS "toolCallId",
+			SELECT c.clinic_id AS "clinicId", c.user_id AS "userId", c.id AS "chatId", mp.tool_call_id AS "toolCallId",
 				mp.tool_name AS "toolName", mp.tool_input AS "toolInput", mp.tool_output AS "toolOutput", m.source
-			FROM message_part mp
-			JOIN chat_message m ON m.id = mp.message_id
-			JOIN chat c ON c.id = m.chat_id
+			FROM message_parts mp
+			JOIN chat_messages m ON m.id = mp.message_id
+			JOIN chats c ON c.id = m.chat_id
 			WHERE m.superseded_at IS NULL
 				AND ${PrismaSql(QUERY_RESULT_TOOL_NAME_SQL)}
 				AND mp.tool_output->>'id' = ${queryId}
@@ -823,9 +825,9 @@ export class ChatRepository {
 		return this.prisma.$queryRaw`
 			SELECT m.chat_id AS "chatId", mp.tool_name AS "toolName", mp.tool_input AS "toolInput",
 				mp.tool_output AS "toolOutput", m.source AS "messageSource"
-			FROM message_part mp
-			JOIN chat_message m ON m.id = mp.message_id
-			WHERE m.chat_id = ANY(${chatIds}::text[]) AND m.superseded_at IS NULL
+			FROM message_parts mp
+			JOIN chat_messages m ON m.id = mp.message_id
+			WHERE m.chat_id = ANY(${chatIds}::uuid[]) AND m.superseded_at IS NULL
 				AND ${PrismaSql(QUERY_RESULT_TOOL_NAME_SQL)}
 				AND mp.tool_output->>'id' = ANY(${queryIds}::text[])
 			ORDER BY m.created_at ASC, mp.created_at ASC, mp."order" ASC`;
@@ -837,7 +839,7 @@ export class ChatRepository {
 			this.prisma.chatMessage.findMany({
 				where: { chatId: { in: [...chatIds] }, supersededAt: null },
 				orderBy: { createdAt: 'asc' },
-				include: { messageParts: { orderBy: { order: 'asc' } }, messageFeedback: true },
+				include: { parts: { orderBy: { order: 'asc' } }, feedback: true },
 			}),
 			this.buildVersionInfoMap(chatIds),
 		]);
@@ -858,7 +860,7 @@ export class ChatRepository {
 	/** A chat that isn't deleted and has messages, without them (upstream `getChat` minus the messages). */
 	async getChatSummary(chatId: string): Promise<(Chat & { isOnboarding: boolean }) | null> {
 		const chat = await this.prisma.chat.findFirst({
-			where: { id: chatId, deletedAt: null, chatMessages: { some: { supersededAt: null } } },
+			where: { id: chatId, deletedAt: null, messages: { some: { supersededAt: null } } },
 		});
 		if (!chat) {
 			return null;
@@ -906,9 +908,9 @@ const SOURCE_PLATFORM = PrismaSql(`CASE
 	WHEN c.telegram_thread_id IS NOT NULL THEN 'Telegram'
 	WHEN c.mattermost_thread_id IS NOT NULL THEN 'Mattermost'
 	WHEN c.discord_thread_id IS NOT NULL THEN 'Discord'
-	WHEN exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source = 'mcp') THEN 'MCP'
-	WHEN exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source IN ('contextRecommendations', 'context_recommendation')) THEN 'Context recommendations'
-	WHEN exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source = 'admin') THEN 'Admin'
+	WHEN exists(SELECT 1 FROM chat_messages m WHERE m.chat_id = c.id AND m.source = 'mcp') THEN 'MCP'
+	WHEN exists(SELECT 1 FROM chat_messages m WHERE m.chat_id = c.id AND m.source IN ('contextRecommendations', 'context_recommendation')) THEN 'Context recommendations'
+	WHEN exists(SELECT 1 FROM chat_messages m WHERE m.chat_id = c.id AND m.source = 'admin') THEN 'Admin'
 	ELSE 'Web'
 END`);
 
@@ -918,7 +920,7 @@ const IS_QUICK_QUESTION = PrismaSql(
 );
 
 const EXCLUDED_CHATS =
-	PrismaSql(`NOT exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source = 'onboarding')
+	PrismaSql(`NOT exists(SELECT 1 FROM chat_messages m WHERE m.chat_id = c.id AND m.source = 'onboarding')
 	AND NOT coalesce(c.fork_metadata->>'type', '') IN ('chat_selection', 'chat_question', 'story_selection', 'story_question')`);
 
 /** Loose read of the SQL a stored part ran, tolerant of parts written by older versions (upstream `readStoredSql`). */
@@ -945,7 +947,7 @@ function PrismaSql(text: string) {
 
 function aggregateMessages(messages: MessageWithParts[]): UIMessage[] {
 	return messages.flatMap((message) => {
-		const parts = message.messageParts
+		const parts = message.parts
 			.map((part) => convertDBPartToUIPart(part))
 			.filter((part): part is UIMessagePart => part !== undefined);
 		if (parts.length === 0) {
@@ -956,7 +958,7 @@ function aggregateMessages(messages: MessageWithParts[]): UIMessage[] {
 				id: message.id,
 				role: message.role as UIMessage['role'],
 				parts,
-				feedback: message.messageFeedback ?? undefined,
+				feedback: message.feedback ?? undefined,
 				source: (message.source ?? undefined) as UIMessage['source'],
 				isForked: message.isForked ?? undefined,
 				citation: (message.citation as CitationData | null) ?? undefined,

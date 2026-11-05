@@ -17,24 +17,24 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { wiseToolsApi } from '@/lib/wise-tools-api';
 
 /**
- * Settings → Wise tools (DESIGN.md §7.3): every tool Wise can use, by category. A facility's admins turn tools on or
- * off at their facility; everyone can turn a tool off for themselves. Locked tools have no switch, and nothing here
+ * Settings → Wise tools (DESIGN.md §7.3): every tool Wise can use, by category. An organization's admins turn tools on
+ * or off in their organization; everyone can turn a tool off for themselves. Locked tools have no switch, and nothing here
  * turns off the clinician's Confirm: Wise never saves anything by itself.
  */
 export function WiseToolsPage() {
 	const queryClient = useQueryClient();
 	const { isAdmin: isWorkspaceAdmin } = usePermissions();
-	const [facilityId, setFacilityId] = useState<string | null>(null);
-	const settings = useQuery(wiseToolsApi.settings.queryOptions({ facilityId }));
+	const [organizationId, setOrganizationId] = useState<string | null>(null);
+	const settings = useQuery(wiseToolsApi.settings.queryOptions({ organizationId }));
 	const onSettled = () => void queryClient.invalidateQueries(wiseToolsApi.settings.pathFilter());
-	const setFacility = useMutation(wiseToolsApi.setFacility.mutationOptions({ onSettled }));
+	const setOrganization = useMutation(wiseToolsApi.setOrganization.mutationOptions({ onSettled }));
 	const setMine = useMutation(wiseToolsApi.setMine.mutationOptions({ onSettled }));
 
 	const data = settings.data;
-	const facility = data?.facilities.find((candidate) => candidate.id === data.facilityId);
-	const isAdmin = !!facility?.isAdmin;
-	const busy = setFacility.isPending || setMine.isPending;
-	const error = settings.error ?? setFacility.error ?? setMine.error;
+	const organization = data?.organizations.find((candidate) => candidate.id === data.organizationId);
+	const isAdmin = !!organization?.isAdmin;
+	const busy = setOrganization.isPending || setMine.isPending;
+	const error = settings.error ?? setOrganization.error ?? setMine.error;
 
 	return (
 		<SettingsPageWrapper>
@@ -44,13 +44,13 @@ export function WiseToolsPage() {
 						<h1 className={styles.title}>Wise tools</h1>
 						<p className={styles.lead}>What Wise can do for you in chat.</p>
 					</div>
-					{data && data.facilities.length > 1 && (
-						<Select value={data.facilityId ?? undefined} onValueChange={setFacilityId}>
-							<SelectTrigger className={styles.facilitySelect} aria-label='Facility'>
+					{data && data.organizations.length > 1 && (
+						<Select value={data.organizationId ?? undefined} onValueChange={setOrganizationId}>
+							<SelectTrigger className={styles.organizationSelect} aria-label='Organization'>
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								{data.facilities.map((candidate) => (
+								{data.organizations.map((candidate) => (
 									<SelectItem key={candidate.id} value={candidate.id}>
 										{candidate.name}
 									</SelectItem>
@@ -63,11 +63,11 @@ export function WiseToolsPage() {
 					<ShieldCheck aria-hidden />
 					Wise always asks you to confirm before anything is saved. This can&apos;t be turned off.
 				</p>
-				{facility && (
+				{organization && (
 					<p className={styles.lead}>
 						{isAdmin
-							? `You administer ${facility.name}: its switch turns a tool on or off for everyone there.`
-							: `${facility.name} sets which tools are on. You can turn tools off for yourself.`}
+							? `You administer ${organization.name}: its switch turns a tool on or off for everyone there.`
+							: `${organization.name} sets which tools are on. You can turn tools off for yourself.`}
 					</p>
 				)}
 				{error && <ErrorMessage message={error.message} />}
@@ -86,13 +86,13 @@ export function WiseToolsPage() {
 									<ToolRow
 										key={tool.name}
 										tool={tool}
-										facilityName={facility?.name}
+										organizationName={organization?.name}
 										isAdmin={isAdmin}
 										disabled={busy}
-										onFacilityChange={(enabled) =>
-											data.facilityId &&
-											setFacility.mutate({
-												facilityId: data.facilityId,
+										onOrganizationChange={(enabled) =>
+											data.organizationId &&
+											setOrganization.mutate({
+												organizationId: data.organizationId,
 												toolName: tool.name,
 												enabled,
 											})
@@ -124,17 +124,17 @@ export function WiseToolsPage() {
 
 function ToolRow({
 	tool,
-	facilityName,
+	organizationName,
 	isAdmin,
 	disabled,
-	onFacilityChange,
+	onOrganizationChange,
 	onMineChange,
 }: {
 	tool: WiseToolRow;
-	facilityName?: string;
+	organizationName?: string;
 	isAdmin: boolean;
 	disabled: boolean;
-	onFacilityChange: (enabled: boolean) => void;
+	onOrganizationChange: (enabled: boolean) => void;
 	onMineChange: (enabled: boolean) => void;
 }) {
 	const id = `wise-tool-${tool.name}`;
@@ -144,7 +144,7 @@ function ToolRow({
 				{WISE_TOOL_KIND_LABELS[tool.kind as WiseToolKind] ?? tool.kind}
 			</Badge>
 			{tool.summary}
-			{!tool.locked && !tool.comingSoon && <StateLine tool={tool} facilityName={facilityName} />}
+			{!tool.locked && !tool.comingSoon && <StateLine tool={tool} organizationName={organizationName} />}
 		</span>
 	);
 	let control;
@@ -162,12 +162,12 @@ function ToolRow({
 				{isAdmin && (
 					<label className={styles.switchLabel}>
 						<Switch
-							checked={tool.facilityEnabled}
+							checked={tool.organizationEnabled}
 							disabled={disabled}
-							onCheckedChange={onFacilityChange}
-							aria-label={`${tool.label} at ${facilityName ?? 'this facility'}`}
+							onCheckedChange={onOrganizationChange}
+							aria-label={`${tool.label} at ${organizationName ?? 'this organization'}`}
 						/>
-						Facility
+						Organization
 					</label>
 				)}
 				<label className={styles.switchLabel}>
@@ -193,18 +193,18 @@ function ToolRow({
 	);
 }
 
-function StateLine({ tool, facilityName }: { tool: WiseToolRow; facilityName?: string }) {
+function StateLine({ tool, organizationName }: { tool: WiseToolRow; organizationName?: string }) {
 	let text: string;
 	if (tool.enabled) {
 		text = 'On';
 	} else if (!tool.myEnabled) {
 		text = 'Off · turned off by you';
-	} else if (!tool.facilityEnabled) {
-		text = `Off · turned off${facilityName ? ` at ${facilityName}` : ''}`;
+	} else if (!tool.organizationEnabled) {
+		text = `Off · turned off${organizationName ? ` at ${organizationName}` : ''}`;
 	} else {
 		text = 'Off';
 	}
-	if (tool.facilityEnabled !== tool.facilityDefault) {
+	if (tool.organizationEnabled !== tool.organizationDefault) {
 		text += ' · changed from the default';
 	}
 	return <span className={styles.state}>{text}</span>;

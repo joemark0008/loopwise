@@ -51,7 +51,7 @@ describe('setup (e2e)', () => {
 			await client.end();
 		}
 	};
-	const countUsers = async () => Number((await query<{ n: string }>('SELECT count(*) AS n FROM "user"'))[0].n);
+	const countUsers = async () => Number((await query<{ n: string }>('SELECT count(*) AS n FROM users'))[0].n);
 
 	it('refuses a wrong token and creates nothing', async () => {
 		const res = await complete(valid({ token: '0'.repeat(32) }));
@@ -67,17 +67,17 @@ describe('setup (e2e)', () => {
 		expect(res.body.data.completeSetup).toBe(true);
 
 		const rows = await query(
-			`SELECT o.slug, m.role FROM org_member m JOIN organization o ON o.id = m.org_id
-			 JOIN "user" u ON u.id = m.user_id WHERE u.email = 'admin@example.com'`,
+			`SELECT o.slug, m.role FROM organization_members m JOIN organizations o ON o.id = m.organization_id
+			 JOIN users u ON u.id = m.user_id WHERE u.email = 'admin@example.com'`,
 		);
-		expect(rows).toEqual([{ slug: 'default', role: 'admin' }]);
+		expect(rows).toEqual([{ slug: 'default', role: 'ADMIN' }]);
 		await signIn('admin@example.com').expect(200);
 	});
 
 	it('stores the email trimmed and lower-cased', async () => {
 		const res = await complete(valid({ email: 'Admin@Example.com ' }));
 		expect(res.body.errors).toBeUndefined();
-		expect((await query<{ email: string }>('SELECT email FROM "user"')).map((r) => r.email)).toEqual([
+		expect((await query<{ email: string }>('SELECT email FROM users')).map((r) => r.email)).toEqual([
 			'admin@example.com',
 		]);
 		await signIn('ADMIN@example.com').expect(200);

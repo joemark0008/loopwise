@@ -1,15 +1,17 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { useForm } from '@tanstack/react-form';
-import { Check, Copy, KeyRound, MoreHorizontal, UserCheck, UserPlus, UserX } from 'lucide-react';
+import { STAFF_ROLE_LABELS, STAFF_ROLES } from '@loopwise/shared/staff-roles';
+import { Check, ChevronDown, Copy, KeyRound, MoreHorizontal, UserCheck, UserPlus, UserX } from 'lucide-react';
 import { useState } from 'react';
 import styles from './users-page.module.css';
-import type { ManagedUserFieldsFragment } from '@/graphql/generated/graphql';
+import type { ManagedUserFieldsFragment, StaffRole } from '@/graphql/generated/graphql';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
 	DropdownMenu,
+	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
@@ -25,8 +27,10 @@ import {
 	CreateUserDocument,
 	ManagedUsersDocument,
 	SetUserActiveDocument,
+	SetUserStaffRolesDocument,
 	UpdateUserRoleDocument,
 } from '@/graphql/generated/graphql';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
 import { useSession } from '@/lib/auth-client';
 
 type ManagedUser = ManagedUserFieldsFragment;
@@ -44,6 +48,12 @@ const ROLES = [
 	{ value: 'viewer', label: 'Viewer', description: 'Reads what others share.' },
 ];
 
+/**
+ * The clinic roles an admin hands out (`user_clinic_roles`): they pick each person's desks. MEMBER and VIEWER are not
+ * offered: the organization role above already gives that access.
+ */
+const CLINIC_ROLE_OPTIONS = STAFF_ROLES.filter((role) => role !== 'MEMBER' && role !== 'VIEWER') as StaffRole[];
+
 const STATUS_LABEL: Record<ManagedUser['status'], string> = {
 	ACTIVE: 'Active',
 	INVITED: 'Invited',
@@ -53,6 +63,8 @@ const STATUS_LABEL: Record<ManagedUser['status'], string> = {
 /** Organization admins create accounts here and hand out one-time links to set or reset passwords. */
 export function UsersPage() {
 	const { data: session } = useSession();
+	const clinic = useCurrentClinic();
+	const clinicName = clinic.data?.name;
 	const users = useQuery(ManagedUsersDocument);
 	const [createOpen, setCreateOpen] = useState(false);
 	const [issued, setIssued] = useState<IssuedLink | null>(null);
@@ -61,6 +73,7 @@ export function UsersPage() {
 
 	const [createPasswordLink] = useMutation(CreatePasswordLinkDocument);
 	const [updateUserRole] = useMutation(UpdateUserRoleDocument);
+	const [setUserStaffRoles] = useMutation(SetUserStaffRolesDocument);
 	const [setUserActive, { loading: isSettingActive }] = useMutation(SetUserActiveDocument);
 
 	const run = async (action: () => Promise<unknown>) => {
@@ -95,7 +108,11 @@ export function UsersPage() {
 
 			<SettingsCard
 				title='People'
-				description='Roles apply to every clinic unless a clinic sets its own.'
+				description={
+					clinicName
+						? `The role applies to every clinic. Clinic roles (doctor, nurse, cashier …) are those at ${clinicName}: they pick each person's desk.`
+						: 'The role applies to every clinic.'
+				}
 				action={
 					<Button size='sm' variant='outline' onClick={() => setCreateOpen(true)}>
 						<UserPlus className={styles.usersPageIcon} />
@@ -115,8 +132,12 @@ export function UsersPage() {
 							key={user.id}
 							user={user}
 							isSelf={user.id === session?.user.id}
+							clinicName={clinicName}
 							onRoleChange={(role) =>
 								run(() => updateUserRole({ variables: { input: { userId: user.id, role } } }))
+							}
+							onStaffRolesChange={(staffRoles) =>
+								run(() => setUserStaffRoles({ variables: { input: { userId: user.id, staffRoles } } }))
 							}
 							onIssueLink={() => issueLink(user)}
 							onDeactivate={() => setDeactivating(user)}
@@ -129,7 +150,12 @@ export function UsersPage() {
 			</SettingsCard>
 			{actionError && <p className={styles.usersPageError}>{actionError}</p>}
 
-			<CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={() => void users.refetch()} />
+			<CreateUserDialog
+				open={createOpen}
+				clinicName={clinicName}
+				onOpenChange={setCreateOpen}
+				onCreated={() => void users.refetch()}
+			/>
 			<PasswordLinkDialog link={issued} onClose={() => setIssued(null)} />
 			<ConfirmationDialog
 				open={deactivating !== null}
@@ -153,13 +179,24 @@ export function UsersPage() {
 interface UserRowProps {
 	user: ManagedUser;
 	isSelf: boolean;
+	clinicName?: string;
 	onRoleChange: (role: string) => void;
+	onStaffRolesChange: (staffRoles: StaffRole[]) => void;
 	onIssueLink: () => void;
 	onDeactivate: () => void;
 	onReactivate: () => void;
 }
 
-function UserRow({ user, isSelf, onRoleChange, onIssueLink, onDeactivate, onReactivate }: UserRowProps) {
+function UserRow({
+	user,
+	isSelf,
+	clinicName,
+	onRoleChange,
+	onStaffRolesChange,
+	onIssueLink,
+	onDeactivate,
+	onReactivate,
+}: UserRowProps) {
 	const isDeactivated = user.status === 'DEACTIVATED';
 	return (
 		<div className={styles.userRow}>
@@ -176,6 +213,14 @@ function UserRow({ user, isSelf, onRoleChange, onIssueLink, onDeactivate, onReac
 			>
 				{STATUS_LABEL[user.status]}
 			</Badge>
+			{clinicName && (
+				<StaffRolesPicker
+					value={user.staffRoles}
+					onChange={onStaffRolesChange}
+					disabled={isSelf || isDeactivated}
+					label={`Clinic roles of ${user.name} at ${clinicName}`}
+				/>
+			)}
 			<Select value={user.role} onValueChange={onRoleChange} disabled={isSelf || isDeactivated}>
 				<SelectTrigger className={styles.userRowRole} aria-label={`Role of ${user.name}`}>
 					<SelectValue />
@@ -222,16 +267,64 @@ function UserRow({ user, isSelf, onRoleChange, onIssueLink, onDeactivate, onReac
 	);
 }
 
+/** A multi-select of clinic roles: a button with the chosen roles, a menu of checkboxes. */
+function StaffRolesPicker({
+	value,
+	onChange,
+	disabled,
+	label,
+}: {
+	value: readonly StaffRole[];
+	onChange: (staffRoles: StaffRole[]) => void;
+	disabled?: boolean;
+	label: string;
+}) {
+	const summary = value.length === 0 ? 'No clinic role' : value.map((role) => STAFF_ROLE_LABELS[role]).join(', ');
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button
+					variant='outline'
+					size='sm'
+					className={styles.staffRoles}
+					disabled={disabled}
+					aria-label={label}
+					title={summary}
+				>
+					<span className={styles.staffRolesText}>{summary}</span>
+					<ChevronDown className={styles.usersPageIcon} aria-hidden />
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align='end'>
+				{CLINIC_ROLE_OPTIONS.map((role) => (
+					<DropdownMenuCheckboxItem
+						key={role}
+						checked={value.includes(role)}
+						onSelect={(event) => event.preventDefault()}
+						onCheckedChange={(checked) =>
+							onChange(checked ? [...value, role] : value.filter((current) => current !== role))
+						}
+					>
+						{STAFF_ROLE_LABELS[role]}
+					</DropdownMenuCheckboxItem>
+				))}
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+}
+
 interface CreateUserDialogProps {
 	open: boolean;
+	clinicName?: string;
 	onOpenChange: (open: boolean) => void;
 	onCreated: () => void;
 }
 
 /** Creates the user, then shows their invite link in the same dialog. */
-function CreateUserDialog({ open, onOpenChange, onCreated }: CreateUserDialogProps) {
+function CreateUserDialog({ open, clinicName, onOpenChange, onCreated }: CreateUserDialogProps) {
 	const [createUser] = useMutation(CreateUserDocument);
 	const [role, setRole] = useState('user');
+	const [staffRoles, setStaffRoles] = useState<StaffRole[]>([]);
 	const [serverError, setServerError] = useState<string>();
 	const [created, setCreated] = useState<IssuedLink | null>(null);
 
@@ -241,7 +334,14 @@ function CreateUserDialog({ open, onOpenChange, onCreated }: CreateUserDialogPro
 			setServerError(undefined);
 			try {
 				const { data } = await createUser({
-					variables: { input: { name: value.name.trim(), email: value.email.trim(), role } },
+					variables: {
+						input: {
+							name: value.name.trim(),
+							email: value.email.trim(),
+							role,
+							...(clinicName && { staffRoles }),
+						},
+					},
 				});
 				if (data) {
 					setCreated({ ...data.createUser, isInvite: true });
@@ -260,6 +360,7 @@ function CreateUserDialog({ open, onOpenChange, onCreated }: CreateUserDialogPro
 				if (next) {
 					form.reset();
 					setRole('user');
+					setStaffRoles([]);
 					setServerError(undefined);
 					setCreated(null);
 				}
@@ -323,6 +424,20 @@ function CreateUserDialog({ open, onOpenChange, onCreated }: CreateUserDialogPro
 									{ROLES.find((option) => option.value === role)?.description}
 								</p>
 							</div>
+							{clinicName && (
+								<div className={styles.createUserRole}>
+									<span className={styles.createUserLabel}>Clinic roles</span>
+									<StaffRolesPicker
+										value={staffRoles}
+										onChange={setStaffRoles}
+										label={`Clinic roles at ${clinicName}`}
+									/>
+									<p className={styles.createUserHint}>
+										At {clinicName}. They pick the desk the person opens on (doctor, nurse, lab,
+										front desk, cashier).
+									</p>
+								</div>
+							)}
 							{serverError && <p className={styles.usersPageError}>{serverError}</p>}
 							<form.Subscribe selector={(state) => state.isSubmitting}>
 								{(isSubmitting) => (

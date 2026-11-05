@@ -60,12 +60,12 @@ describe('auth (e2e)', () => {
 		await client.connect();
 		try {
 			const { rows } = await client.query(
-				`SELECT o.slug, m.role FROM org_member m
-				 JOIN organization o ON o.id = m.org_id
-				 JOIN "user" u ON u.id = m.user_id
+				`SELECT o.slug, m.role FROM organization_members m
+				 JOIN organizations o ON o.id = m.organization_id
+				 JOIN users u ON u.id = m.user_id
 				 WHERE u.email = 'ada@example.com'`,
 			);
-			expect(rows).toEqual([{ slug: 'default', role: 'admin' }]);
+			expect(rows).toEqual([{ slug: 'default', role: 'ADMIN' }]);
 		} finally {
 			await client.end();
 		}

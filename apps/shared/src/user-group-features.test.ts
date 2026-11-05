@@ -41,7 +41,7 @@ describe('user group configuration', () => {
 				defaultDensity: 'compact',
 				canChange: false,
 			},
-			projectSharing: 'inherit',
+			clinicSharing: 'inherit',
 			showAllSettings: true,
 			preloadedSkills: [],
 		});
@@ -50,7 +50,7 @@ describe('user group configuration', () => {
 
 	it('serializes the clinic sharing permission under its stored key', () => {
 		expect(serializeUserGroupConfig([], { defaultDensity: 'detailed', canChange: true }, 'blocked')).toMatchObject({
-			projectSharing: 'blocked',
+			clinicSharing: 'blocked',
 		});
 	});
 
@@ -89,7 +89,7 @@ describe('user group configuration', () => {
 					defaultDensity: 'compact',
 					canChange: true,
 				},
-				projectSharing: 'allowed',
+				clinicSharing: 'allowed',
 				showAllSettings: true,
 			}),
 		).toEqual({
@@ -138,7 +138,7 @@ describe('user group configuration', () => {
 		const toolCallDensity = { defaultDensity: 'detailed', canChange: true };
 		expect(parseStoredUserGroupConfig({ version: 2, features: [], toolCallDensity }).clinicSharing).toBe('inherit');
 		expect(
-			parseStoredUserGroupConfig({ version: 2, features: [], toolCallDensity, projectSharing: 'everyone' })
+			parseStoredUserGroupConfig({ version: 2, features: [], toolCallDensity, clinicSharing: 'everyone' })
 				.clinicSharing,
 		).toBe('inherit');
 	});

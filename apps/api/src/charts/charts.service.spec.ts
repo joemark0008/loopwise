@@ -15,6 +15,7 @@ vi.mock('./components/generate-chart.js', () => ({ generateChartImage: mocks.gen
 import type { ChatRepository } from '../chats/chat.repository.js';
 import type { ChatAccessService } from '../chats/chat-access.service.js';
 import type { ClinicRepository } from '../clinics/clinic.repository.js';
+import type { AccessService } from '../common/guards/access.service.js';
 import type { ChartRepository } from './chart.repository.js';
 import { ChartsService } from './charts.service.js';
 
@@ -36,6 +37,7 @@ const service = new ChartsService(
 	} as unknown as ChartRepository,
 	{ getExecuteSqlPartByQueryIdInChat: mocks.getExecuteSqlPartByQueryIdInChat } as unknown as ChatRepository,
 	{ getDisplaySettings: vi.fn(async () => ({ dateFormat: 'YYYY-MM-DD' })) } as unknown as ClinicRepository,
+	{} as AccessService,
 	{ canUserViewChatContent: mocks.canUserViewChatContent } as unknown as ChatAccessService,
 );
 

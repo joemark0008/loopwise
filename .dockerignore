@@ -5,7 +5,7 @@
 .env.*
 !.env.example
 apps/api/src/generated
-apps/api/projects
+apps/api/clinics
 apps/api/storage
 coverage
 *.log

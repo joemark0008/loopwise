@@ -17,24 +17,21 @@ export const scopedKey = (scope: StorageScope, relativePath: string): string => 
 	return key;
 };
 
-/**
- * The prefix holding every file for one user in one clinic. Keys keep the `projects/` prefix they were stored under
- * before clinics were called clinics, so existing files stay where they are.
- */
+/** The prefix holding every file for one user in one clinic: `clinics/<clinic id>/users/<user id>`. */
 export const scopeRoot = (scope: StorageScope): string => {
-	return `projects/${safeIdentifier(scope.clinicId, 'clinic id')}/users/${safeIdentifier(scope.userId, 'user id')}`;
+	return `clinics/${safeIdentifier(scope.clinicId, 'clinic id')}/users/${safeIdentifier(scope.userId, 'user id')}`;
 };
 
 /** The prefix holding every file of a clinic, whoever it belongs to. */
 export const clinicRoot = (clinicId: string): string => {
-	return `projects/${safeIdentifier(clinicId, 'clinic id')}`;
+	return `clinics/${safeIdentifier(clinicId, 'clinic id')}`;
 };
 
 /** The owner of a key, or null when the key sits outside a user space. */
 export const userIdFromKey = (key: string): string | null => {
 	const [clinics, , users, userId, ...rest] = key.split('/');
 
-	if (clinics !== 'projects' || users !== 'users' || !userId || rest.length === 0) {
+	if (clinics !== 'clinics' || users !== 'users' || !userId || rest.length === 0) {
 		return null;
 	}
 

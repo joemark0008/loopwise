@@ -1,5 +1,8 @@
-/** The example clinic's id; the value predates the rename from projects and is kept as stored. */
-export const SYSTEM_EXAMPLE_CLINIC_ID = 'system-example-project';
+/**
+ * The id of the built-in example clinic whose saved prompts the new-chat page suggests. A fixed UUID (every clinic id is
+ * one); no row has it unless an instance adds the example clinic.
+ */
+export const SYSTEM_EXAMPLE_CLINIC_ID = '00000000-0000-7000-8000-00000000e0a1';
 
 export * from './assistant-tags';
 export * from './attachments';

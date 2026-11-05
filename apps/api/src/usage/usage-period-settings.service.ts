@@ -74,7 +74,7 @@ export function assertSavedPeriodExists(savedPeriods: SavedUsagePeriod[], id: st
 }
 
 function getClinicPreferences(preferences: StoredUserPreferences, clinicId: string): UserClinicPreferences {
-	const clinicPreferences = preferences.projectPreferences?.[clinicId];
+	const clinicPreferences = preferences.clinicPreferences?.[clinicId];
 	return clinicPreferences && typeof clinicPreferences === 'object'
 		? (clinicPreferences as UserClinicPreferences)
 		: {};
@@ -87,8 +87,8 @@ function setClinicPreferences(
 ): StoredUserPreferences {
 	return {
 		...preferences,
-		projectPreferences: {
-			...preferences.projectPreferences,
+		clinicPreferences: {
+			...preferences.clinicPreferences,
 			[clinicId]: clinicPreferences,
 		},
 	};

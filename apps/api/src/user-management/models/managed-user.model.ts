@@ -1,5 +1,7 @@
 import { Field, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
 
+import { StaffRole } from '../../clinics/models/clinic-enums.js';
+
 export enum ManagedUserStatus {
 	/** Created by an admin; has not set a password through their link yet. */
 	INVITED = 'INVITED',
@@ -20,8 +22,13 @@ export class ManagedUser {
 	@Field()
 	email: string;
 
-	@Field({ description: 'Organization role: admin, user or viewer. Clinics fall back to it.' })
+	@Field({ description: 'Organization access level: admin, user or viewer. Clinics fall back to it.' })
 	role: string;
+
+	@Field(() => [StaffRole], {
+		description: 'Roles at the selected clinic (empty when no clinic of the organization is selected).',
+	})
+	staffRoles: StaffRole[];
 
 	@Field(() => ManagedUserStatus)
 	status: ManagedUserStatus;

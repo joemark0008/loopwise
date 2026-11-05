@@ -203,7 +203,7 @@ function ClinicDropdown({
 									<CommandSeparator />
 									<CommandGroup>
 										<CommandItem
-											value='__new_project__'
+											value='__new_clinic__'
 											keywords={['new', 'create', 'clinic']}
 											onSelect={() => {
 												setOpen(false);

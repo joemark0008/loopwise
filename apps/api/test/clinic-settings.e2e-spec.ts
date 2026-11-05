@@ -104,7 +104,7 @@ describe('clinic and user settings (e2e)', () => {
 
 	it('lists no share members for an unknown chat', async () => {
 		const res = await graphql('query ($chatId: ID!) { chatShareMembers(chatId: $chatId) { id email } }', {
-			chatId: 'missing-chat',
+			chatId: '0190a0c0-0000-7000-8000-00000000dead',
 		});
 		expect(res.body.errors).toBeUndefined();
 		expect(res.body.data.chatShareMembers).toEqual([]);

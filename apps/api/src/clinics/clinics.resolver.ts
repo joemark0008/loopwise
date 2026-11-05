@@ -1,10 +1,17 @@
+import type { UserRole } from '@loopwise/shared/types';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 
 import type { AuthUser } from '../auth/auth.service.js';
 import { ClinicAccess, ClinicAdmin } from '../common/decorators/access.decorator.js';
-import { CurrentClinic, CurrentUser, SelectedClinicId } from '../common/decorators/current.decorator.js';
-import type { Clinic } from '../generated/prisma/client.js';
+import {
+	CurrentClinic,
+	CurrentStaffRoles,
+	CurrentUser,
+	CurrentUserRole,
+	SelectedClinicId,
+} from '../common/decorators/current.decorator.js';
+import type { Clinic, StaffRole } from '../generated/prisma/client.js';
 import { ClinicsService } from './clinics.service.js';
 import { CreateClinicInput, RenameClinicInput, SavedPromptInput, UpdateSavedPromptInput } from './dto/clinic.input.js';
 import { ClinicSummary, DatabaseObject, SavedPrompt } from './models/clinic.model.js';
@@ -27,21 +34,30 @@ export class ClinicsResolver {
 	}
 
 	@Mutation(() => ClinicSummary)
-	createClinic(@CurrentUser() user: AuthUser, @Args('input') input: CreateClinicInput): Promise<ClinicSummary> {
-		return this.clinicsService.createClinic(user.id, input.name);
+	createClinic(
+		@CurrentUser() user: AuthUser,
+		@SelectedClinicId() selectedClinicId: string | null,
+		@Args('input') input: CreateClinicInput,
+	): Promise<ClinicSummary> {
+		return this.clinicsService.createClinic(user.id, selectedClinicId, input.name);
 	}
 
 	@ClinicAdmin()
 	@Mutation(() => ClinicSummary)
-	renameClinic(@CurrentClinic() clinic: Clinic, @Args('input') input: RenameClinicInput): Promise<ClinicSummary> {
-		return this.clinicsService.renameClinic(clinic, input.clinicId, input.name);
+	renameClinic(
+		@CurrentClinic() clinic: Clinic,
+		@CurrentUserRole() userRole: UserRole,
+		@CurrentStaffRoles() staffRoles: StaffRole[],
+		@Args('input') input: RenameClinicInput,
+	): Promise<ClinicSummary> {
+		return this.clinicsService.renameClinic({ clinic, userRole, staffRoles }, input.clinicId, input.name);
 	}
 
 	@ClinicAdmin()
 	@Mutation(() => Boolean)
 	async deleteClinic(
 		@CurrentClinic() clinic: Clinic,
-		@Args('clinicId', { type: () => ID }) _projectId: string,
+		@Args('clinicId', { type: () => ID }) _clinicId: string,
 	): Promise<boolean> {
 		await this.clinicsService.deleteClinic(clinic);
 		return true;

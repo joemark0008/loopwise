@@ -28,12 +28,11 @@ const usageMocks = {
 };
 
 const users = {
-	getUserPreferences: vi.fn(async () => ({ projectPreferences: { 'clinic-id': state.preferences } })),
+	getUserPreferences: vi.fn(async () => ({ clinicPreferences: { 'clinic-id': state.preferences } })),
 	mutateUserPreferences: vi.fn(
 		async (_userId: string, transform: (current: StoredUserPreferences) => StoredUserPreferences) => {
-			const updated = transform({ projectPreferences: { 'clinic-id': state.preferences } });
-			state.preferences =
-				(updated.projectPreferences?.['clinic-id'] as Record<string, unknown> | undefined) ?? {};
+			const updated = transform({ clinicPreferences: { 'clinic-id': state.preferences } });
+			state.preferences = (updated.clinicPreferences?.['clinic-id'] as Record<string, unknown> | undefined) ?? {};
 			return updated;
 		},
 	),

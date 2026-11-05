@@ -49,9 +49,9 @@ export class ChartRepository {
 	async getChartOwnerInfo(toolCallId: string): Promise<{ clinicId: string; userId: string; chatId: string } | null> {
 		const part = await this.prisma.messagePart.findFirst({
 			where: displayChartToolCall(toolCallId),
-			select: { chatMessage: { select: { chat: { select: { id: true, clinicId: true, userId: true } } } } },
+			select: { message: { select: { chat: { select: { id: true, clinicId: true, userId: true } } } } },
 		});
-		const chat = part?.chatMessage.chat;
+		const chat = part?.message.chat;
 		return chat ? { clinicId: chat.clinicId, userId: chat.userId, chatId: chat.id } : null;
 	}
 
@@ -70,8 +70,8 @@ export class ChartRepository {
 		chatId: string,
 	): Promise<Record<string, displayChart.ColumnConditionalFormats>> {
 		const rows = await this.prisma.messagePart.findMany({
-			where: { type: DISPLAY_CHART_TOOL_TYPE, chatMessage: { chatId, supersededAt: null } },
-			orderBy: [{ chatMessage: { createdAt: 'asc' } }, { order: 'asc' }],
+			where: { type: DISPLAY_CHART_TOOL_TYPE, message: { chatId, supersededAt: null } },
+			orderBy: [{ message: { createdAt: 'asc' } }, { order: 'asc' }],
 			select: { toolInput: true },
 		});
 		return selectLatestDisplayChartTableFormats(rows);
@@ -81,9 +81,9 @@ export class ChartRepository {
 	async getMapOwnerId(toolCallId: string): Promise<string | undefined> {
 		const part = await this.prisma.messagePart.findFirst({
 			where: { toolCallId, type: DISPLAY_MAP_TOOL_TYPE },
-			select: { chatMessage: { select: { chat: { select: { userId: true } } } } },
+			select: { message: { select: { chat: { select: { userId: true } } } } },
 		});
-		return part?.chatMessage.chat.userId;
+		return part?.message.chat.userId;
 	}
 
 	async updateMapConfig(toolCallId: string, config: displayMap.Input): Promise<void> {
@@ -96,7 +96,7 @@ export class ChartRepository {
 	/** Chats (not deleted) with a message part that shows the image (upstream `listChatsReferencingImage`). */
 	async listChatsReferencingImage(imageId: string): Promise<{ chatId: string; clinicId: string }[]> {
 		const chats = await this.prisma.chat.findMany({
-			where: { deletedAt: null, chatMessages: { some: { messageParts: { some: { imageId } } } } },
+			where: { deletedAt: null, messages: { some: { parts: { some: { imageId } } } } },
 			select: { id: true, clinicId: true },
 		});
 		return chats.map((chat) => ({ chatId: chat.id, clinicId: chat.clinicId }));

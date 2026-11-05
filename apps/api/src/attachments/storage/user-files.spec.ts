@@ -40,7 +40,7 @@ describe('writeUserFile', () => {
 	it('writes inside the user space and reads back', async () => {
 		const object = await writeUserFile(scope, 'reports/q1.csv', 'week,customers\n');
 
-		expect(object.key).toBe('projects/proj-1/users/user-1/reports/q1.csv');
+		expect(object.key).toBe('clinics/proj-1/users/user-1/reports/q1.csv');
 		expect(await readUserFile(scope, 'reports/q1.csv')).toBe('week,customers\n');
 	});
 
@@ -145,7 +145,7 @@ describe('saveUploadedFile', () => {
 		const object = await saveUploadedFile(scope, 'Q3 revenue.csv', Buffer.from('a,b\n'));
 		const today = new Date().toISOString().slice(0, 10);
 
-		expect(object.key).toBe(`projects/proj-1/users/user-1/uploads/${today}/Q3 revenue.csv`);
+		expect(object.key).toBe(`clinics/proj-1/users/user-1/uploads/${today}/Q3 revenue.csv`);
 		expect(object.contentType).toBe('text/csv');
 	});
 
@@ -169,7 +169,7 @@ describe('saveUploadedFile', () => {
 	it('strips a directory out of the name a browser reported', async () => {
 		const object = await saveUploadedFile(scope, '../../../etc/passwd.csv', Buffer.from('x'));
 		expect(object.key).toContain('/passwd.csv');
-		expect(object.key.startsWith('projects/proj-1/users/user-1/uploads/')).toBe(true);
+		expect(object.key.startsWith('clinics/proj-1/users/user-1/uploads/')).toBe(true);
 	});
 
 	it('refuses a file type Loopwise cannot do anything with', async () => {
@@ -190,7 +190,7 @@ describe('saveUploadedFile', () => {
 
 	it('lands somewhere statUserFile can find again', async () => {
 		const object = await saveUploadedFile(scope, 'sales.csv', Buffer.from('a,b\n'));
-		const relativePath = object.key.replace('projects/proj-1/users/user-1/', '');
+		const relativePath = object.key.replace('clinics/proj-1/users/user-1/', '');
 
 		expect(await statUserFile(scope, relativePath)).not.toBeNull();
 		expect(await statUserFile(otherUser, relativePath)).toBeNull();
@@ -241,8 +241,8 @@ describe('findUserFiles', () => {
 		const objects = await findUserFiles(scope, (relativePath) => relativePath.endsWith('.csv'));
 
 		expect(objects.map((object) => object.key)).toEqual([
-			'projects/proj-1/users/user-1/reports/2025/q2.csv',
-			'projects/proj-1/users/user-1/reports/q1.csv',
+			'clinics/proj-1/users/user-1/reports/2025/q2.csv',
+			'clinics/proj-1/users/user-1/reports/q1.csv',
 		]);
 	});
 
@@ -258,14 +258,14 @@ describe('findUserFiles', () => {
 
 	it('never offers a file from another user to the predicate', async () => {
 		const objects = await findUserFiles(scope, () => true);
-		expect(objects.map((object) => object.key)).not.toContain('projects/proj-1/users/user-2/theirs.csv');
+		expect(objects.map((object) => object.key)).not.toContain('clinics/proj-1/users/user-2/theirs.csv');
 	});
 });
 
 describe('grepRootForUser', () => {
 	it('points at the user space on the local backend', () => {
-		expect(grepRootForUser(scope)).toBe(path.join(root, 'projects/proj-1/users/user-1'));
-		expect(grepRootForUser(scope, 'reports')).toBe(path.join(root, 'projects/proj-1/users/user-1/reports'));
+		expect(grepRootForUser(scope)).toBe(path.join(root, 'clinics/proj-1/users/user-1'));
+		expect(grepRootForUser(scope, 'reports')).toBe(path.join(root, 'clinics/proj-1/users/user-1/reports'));
 	});
 
 	it('is unavailable on the s3 backend', () => {
@@ -282,7 +282,7 @@ describe('grepRootForUser', () => {
 /** The single file under uploads/, so a test does not have to spell out today's date. */
 async function onlyUploadPath(): Promise<string> {
 	const [object] = await findUserFiles(scope, (relativePath) => relativePath.startsWith('uploads/'));
-	return object.key.replace('projects/proj-1/users/user-1/', '');
+	return object.key.replace('clinics/proj-1/users/user-1/', '');
 }
 
 function useSizeLimit(megabytes: number): void {

@@ -11,29 +11,30 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { LlmService } from '../src/agent/llm/llm.service.js';
 import type { ProviderModelResult } from '../src/agent/providers/providers.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
+import { createClinicScene } from './fixtures/clinic-fixtures.js';
+import { createTestApp, resetDatabase, signIn, useTestDatabase } from './test-app.js';
 
 const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
-const SETTINGS = `query ($facilityId: ID) { wiseToolSettings(facilityId: $facilityId) {
-	facilityId facilities { id name type isAdmin }
-	tools { name kind category locked comingSoon facilityDefault facilityEnabled myEnabled enabled } } }`;
-const SET_FACILITY = `mutation ($facilityId: ID!, $toolName: String!, $enabled: Boolean!) {
-	setWiseToolEnabled(facilityId: $facilityId, toolName: $toolName, enabled: $enabled) }`;
+const SETTINGS = `query ($organizationId: ID) { wiseToolSettings(organizationId: $organizationId) {
+	organizationId organizations { id name isAdmin }
+	tools { name kind category locked comingSoon organizationDefault organizationEnabled myEnabled enabled } } }`;
+const SET_ORGANIZATION = `mutation ($organizationId: ID!, $toolName: String!, $enabled: Boolean!) {
+	setWiseToolEnabled(organizationId: $organizationId, toolName: $toolName, enabled: $enabled) }`;
 const SET_MINE = `mutation ($toolName: String!, $enabled: Boolean!) {
 	setMyWiseToolEnabled(toolName: $toolName, enabled: $enabled) }`;
 const UPDATE_NOTE = `mutation ($input: UpdateEncounterNoteInput!) { updateEncounterNote(input: $input) { plan } }`;
 const CANCEL = `mutation ($input: WiseOriginInput!) { cancelWiseProposal(input: $input) { status } }`;
 
 /**
- * Wise tool settings (DESIGN.md §7.3) end to end: a tool a facility admin turns off is not offered to the model, the
+ * Wise tool settings (DESIGN.md §7.3) end to end: a tool an organization admin turns off is not offered to the model, the
  * system prompt says it is off, a call to it is refused, and a card drafted before the toggle can't be confirmed (but
- * can be cancelled). Users can turn tools off for themselves only; only admins change a facility; changes are audited.
+ * can be cancelled). Users can turn tools off for themselves only; only admins change an organization; changes are audited.
  */
 describe('Wise tool settings (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
 	let clinicId = '';
-	let facilityId = '';
+	let organizationId = '';
 	let patientId = '';
 	let encounterId = '';
 	const doctor = { cookie: [] as string[], id: '' };
@@ -84,9 +85,9 @@ describe('Wise tool settings (e2e)', () => {
 			.join('\n') ?? '';
 
 	const tool = async (cookie: string[], name: string) =>
-		((await graphql(cookie, SETTINGS, { facilityId })).body.data.wiseToolSettings.tools as { name: string }[]).find(
-			(candidate) => candidate.name === name,
-		);
+		(
+			(await graphql(cookie, SETTINGS, { organizationId })).body.data.wiseToolSettings.tools as { name: string }[]
+		).find((candidate) => candidate.name === name);
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
@@ -98,95 +99,71 @@ describe('Wise tool settings (e2e)', () => {
 			scriptedModel(model),
 		);
 
-		const password = 'Sup3r-secret!';
-		const reyes = await createTestUser(app, { name: 'Dr. Reyes', email: 'reyes@example.com', password });
-		const head = await createTestUser(app, { name: 'Head Nurse', email: 'head@example.com', password });
-		Object.assign(doctor, { cookie: reyes.cookie, id: reyes.userId });
-		Object.assign(admin, { cookie: head.cookie, id: head.userId });
-		clinicId = (await graphql(doctor.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }')).body
-			.data.createClinic.id;
-		const facility = await prisma.organization.create({
-			data: { name: 'Health Center', slug: 'hc', type: 'clinic' },
-		});
-		facilityId = facility.id;
-		await prisma.orgMember.createMany({
-			data: [
-				{ orgId: facilityId, userId: doctor.id, role: 'user' },
-				{ orgId: facilityId, userId: admin.id, role: 'admin' },
-			],
-		});
-		patientId = (
-			await graphql(
-				doctor.cookie,
-				'mutation ($input: RegisterPatientInput!) { registerPatient(input: $input) { patient { id } } }',
-				{
-					input: {
-						facilityId,
-						givenName: 'Maria',
-						familyName: 'Santos',
-						birthDate: '1981-04-12',
-						sex: 'female',
-						consentGiven: true,
-					},
-				},
-			)
-		).body.data.registerPatient.patient.id;
-		encounterId = (
-			await graphql(
-				doctor.cookie,
-				'mutation ($input: CreateEncounterInput!) { createEncounter(input: $input) { id } }',
-				{ input: { patientId, facilityId, reason: 'Fatigue' } },
-			)
-		).body.data.createEncounter.id;
+		// The organization's ADMIN, and a doctor who works at its clinic (no organization role of their own).
+		const scene = await createClinicScene(prisma);
+		await prisma.organization.update({ where: { id: scene.organization.id }, data: { name: 'Health Center' } });
+		Object.assign(doctor, { cookie: await signIn(app, scene.doctor), id: scene.doctor.id });
+		Object.assign(admin, { cookie: await signIn(app, scene.admin), id: scene.admin.id });
+		clinicId = scene.clinic.id;
+		organizationId = scene.organization.id;
+		patientId = scene.patient.id;
+		encounterId = scene.encounter.id;
 	});
 
 	afterAll(async () => {
 		await app?.close();
 	});
 
-	it('lists every tool with the clinic defaults, and who administers the facility', async () => {
+	it('lists every tool with the defaults, and who administers the organization', async () => {
 		const res = await graphql(doctor.cookie, SETTINGS);
 		expect(res.body.errors).toBeUndefined();
 		const settings = res.body.data.wiseToolSettings;
-		expect(settings.facilities).toEqual([
-			{ id: facilityId, name: 'Health Center', type: 'clinic', isAdmin: false },
-		]);
+		expect(settings.organizations).toEqual([{ id: organizationId, name: 'Health Center', isAdmin: false }]);
 		const byName = Object.fromEntries(settings.tools.map((entry: { name: string }) => [entry.name, entry]));
-		expect(byName.propose_encounter_note).toMatchObject({ kind: 'propose', enabled: true, facilityEnabled: true });
+		expect(byName.propose_encounter_note).toMatchObject({
+			kind: 'propose',
+			enabled: true,
+			organizationEnabled: true,
+		});
 		expect(byName.find_patient).toMatchObject({ locked: true, enabled: true });
-		expect(byName.propose_referral).toMatchObject({ comingSoon: true, enabled: false });
 	});
 
-	it('lets only the facility’s admins change its tools, and audits each change', async () => {
-		const refused = await graphql(doctor.cookie, SET_FACILITY, {
-			facilityId,
+	it('lets only the organization’s admins change its tools, and audits each change', async () => {
+		const refused = await graphql(doctor.cookie, SET_ORGANIZATION, {
+			organizationId,
 			toolName: 'propose_encounter_note',
 			enabled: false,
 		});
 		expect(refused.body.errors?.[0].message).toMatch(/admins/);
 
-		const locked = await graphql(admin.cookie, SET_FACILITY, {
-			facilityId,
+		const locked = await graphql(admin.cookie, SET_ORGANIZATION, {
+			organizationId,
 			toolName: 'find_patient',
 			enabled: false,
 		});
 		expect(locked.body.errors?.[0].message).toMatch(/can't be turned on or off/);
 
-		const res = await graphql(admin.cookie, SET_FACILITY, {
-			facilityId,
+		const res = await graphql(admin.cookie, SET_ORGANIZATION, {
+			organizationId,
 			toolName: 'propose_encounter_note',
 			enabled: false,
 		});
 		expect(res.body.errors).toBeUndefined();
 		expect(await tool(doctor.cookie, 'propose_encounter_note')).toMatchObject({
-			facilityEnabled: false,
+			organizationEnabled: false,
 			enabled: false,
 		});
 		expect(
 			await prisma.auditLog.findFirst({
-				where: { action: 'wise_tool.disable', resourceId: 'propose_encounter_note' },
+				where: { event: 'wise_tool.disable', entityId: 'propose_encounter_note' },
 			}),
-		).toMatchObject({ userId: admin.id, orgId: facilityId, patientId: null, resource: 'wise_tool' });
+		).toMatchObject({
+			action: 'UPDATE',
+			userId: admin.id,
+			organizationId,
+			patientId: null,
+			entityType: 'WiseToolSetting',
+		});
 	});
 
 	it('does not offer a turned-off tool to the model and says it is off in the system prompt', async () => {
@@ -208,12 +185,20 @@ describe('Wise tool settings (e2e)', () => {
 	});
 
 	it('refuses to confirm a card drafted before the tool was turned off, and still lets it be cancelled', async () => {
-		await graphql(admin.cookie, SET_FACILITY, { facilityId, toolName: 'propose_encounter_note', enabled: true });
+		await graphql(admin.cookie, SET_ORGANIZATION, {
+			organizationId,
+			toolName: 'propose_encounter_note',
+			enabled: true,
+		});
 		model.toolName = 'propose_encounter_note';
 		const { events, chatId } = await ask('Change the plan to recheck BP in 2 weeks');
 		const card = events.find((event) => event.type === 'tool-output-available');
 		expect(card).toBeTruthy();
-		await graphql(admin.cookie, SET_FACILITY, { facilityId, toolName: 'propose_encounter_note', enabled: false });
+		await graphql(admin.cookie, SET_ORGANIZATION, {
+			organizationId,
+			toolName: 'propose_encounter_note',
+			enabled: false,
+		});
 
 		const origin = { chatId, toolCallId: card.toolCallId, toolName: 'propose_encounter_note', edited: false };
 		const res = await graphql(doctor.cookie, UPDATE_NOTE, {
@@ -227,7 +212,7 @@ describe('Wise tool settings (e2e)', () => {
 		expect(cancelled.body.data.cancelWiseProposal.status).toBe('cancelled');
 	});
 
-	it('lets a user turn a tool off for themselves, but never on past their facility', async () => {
+	it('lets a user turn a tool off for themselves, but never on past their organization', async () => {
 		await graphql(doctor.cookie, SET_MINE, { toolName: 'run_analytics_sql', enabled: false });
 		expect(await tool(doctor.cookie, 'run_analytics_sql')).toMatchObject({ myEnabled: false, enabled: false });
 		model.toolName = 'none';

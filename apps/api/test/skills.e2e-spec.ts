@@ -57,11 +57,11 @@ describe('skills (e2e)', () => {
 		const clinic = await graphql(adminCookie, 'mutation { createClinic(input: { name: "Jaffle" }) { id } }');
 		clinicId = clinic.body.data.createClinic.id;
 		clinicPath = (await prisma.clinic.findUniqueOrThrow({ where: { id: clinicId } })).path as string;
-		await prisma.clinicMember.createMany({
+		await prisma.userClinicRole.createMany({
 			data: [
-				{ clinicId, userId: contextAdmin.userId, role: 'context_admin' },
-				{ clinicId, userId: member.userId, role: 'user' },
-				{ clinicId, userId: viewer.userId, role: 'viewer' },
+				{ clinicId, userId: contextAdmin.userId, role: 'CONTEXT_ADMIN' },
+				{ clinicId, userId: member.userId, role: 'MEMBER' },
+				{ clinicId, userId: viewer.userId, role: 'VIEWER' },
 			],
 		});
 	});

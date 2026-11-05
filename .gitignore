@@ -9,8 +9,8 @@ coverage/
 .husky/_
 apps/api/src/generated/
 
-# Project folders created by apps/api (LOOPWISE_PROJECTS_DIR)
-apps/api/projects/
+# Clinic folders created by apps/api (LOOPWISE_CLINICS_DIR)
+apps/api/clinics/
 
 # Permanent storage of apps/api (LOOPWISE_STORAGE_LOCAL_PATH)
 apps/api/storage/

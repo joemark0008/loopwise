@@ -12,8 +12,8 @@ const CREDENTIAL_PROVIDER_ID = 'credential';
 
 /** Upstream `StoredUserPreferences`: what `user_preference.preferences` holds. */
 export interface StoredUserPreferences extends UserPreferences {
-	/** Per-clinic preferences by clinic id; the key predates the rename from projects and is kept as stored. */
-	projectPreferences?: Record<string, unknown>;
+	/** Per-clinic preferences by clinic id. */
+	clinicPreferences?: Record<string, unknown>;
 	supportRequestSentAt?: number;
 }
 

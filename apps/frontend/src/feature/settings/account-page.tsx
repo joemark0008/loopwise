@@ -3,7 +3,7 @@ import { useState } from 'react';
 import styles from './account-page.module.css';
 import { EditProfileDialog } from '@/feature/settings/components/edit-profile-dialog';
 import { ChangePasswordDialog } from '@/feature/settings/components/change-password-dialog';
-import { ClinicianProfileCard } from '@/feature/settings/components/clinician-profile-card';
+import { PractitionerProfileCard } from '@/feature/settings/components/practitioner-profile-card';
 import { Button } from '@/components/ui/button';
 import { UpdateProfileDocument } from '@/graphql/generated/graphql';
 import { useSession } from '@/lib/auth-client';
@@ -65,7 +65,7 @@ export function GeneralPage() {
 						onSubmit={handleEdit}
 					/>
 
-					<ClinicianProfileCard />
+					<PractitionerProfileCard />
 
 					<SettingsCard title='Security' divide>
 						<SettingsControlRow

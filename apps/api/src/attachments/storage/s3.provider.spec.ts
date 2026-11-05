@@ -67,17 +67,17 @@ const lastInput = () => mocks.sent.at(-1)!.input as Record<string, unknown>;
 describe('S3StorageProvider keys', () => {
 	it('sends the key as-is when no prefix is configured', async () => {
 		const storage = new S3StorageProvider(baseConfig);
-		await storage.write('projects/p1/users/u1/a.csv', Buffer.from('x'));
+		await storage.write('clinics/p1/users/u1/a.csv', Buffer.from('x'));
 
-		expect(lastInput().Key).toBe('projects/p1/users/u1/a.csv');
+		expect(lastInput().Key).toBe('clinics/p1/users/u1/a.csv');
 		expect(lastInput().Bucket).toBe('my-bucket');
 	});
 
 	it('prepends the configured prefix', async () => {
 		const storage = new S3StorageProvider({ ...baseConfig, prefix: 'loopwise' });
-		await storage.write('projects/p1/users/u1/a.csv', Buffer.from('x'));
+		await storage.write('clinics/p1/users/u1/a.csv', Buffer.from('x'));
 
-		expect(lastInput().Key).toBe('loopwise/projects/p1/users/u1/a.csv');
+		expect(lastInput().Key).toBe('loopwise/clinics/p1/users/u1/a.csv');
 	});
 
 	it('tolerates a prefix written with surrounding slashes', async () => {
@@ -124,23 +124,23 @@ describe('S3StorageProvider read', () => {
 describe('S3StorageProvider list', () => {
 	it('matches the prefix at a segment boundary and strips the configured prefix', async () => {
 		mocks.respond = () => ({
-			Contents: [{ Key: 'loopwise/projects/p1/users/u1/a.csv', Size: 3, LastModified: new Date(0) }],
+			Contents: [{ Key: 'loopwise/clinics/p1/users/u1/a.csv', Size: 3, LastModified: new Date(0) }],
 		});
 
 		const storage = new S3StorageProvider({ ...baseConfig, prefix: 'loopwise' });
-		const objects = await storage.list('projects/p1/users/u1');
+		const objects = await storage.list('clinics/p1/users/u1');
 
-		expect(lastInput().Prefix).toBe('loopwise/projects/p1/users/u1/');
-		expect(objects).toEqual([{ key: 'projects/p1/users/u1/a.csv', size: 3, lastModified: new Date(0) }]);
+		expect(lastInput().Prefix).toBe('loopwise/clinics/p1/users/u1/');
+		expect(objects).toEqual([{ key: 'clinics/p1/users/u1/a.csv', size: 3, lastModified: new Date(0) }]);
 	});
 
 	it('does not double the trailing slash', async () => {
 		mocks.respond = () => ({ Contents: [] });
 
 		const storage = new S3StorageProvider(baseConfig);
-		await storage.list('projects/p1/');
+		await storage.list('clinics/p1/');
 
-		expect(lastInput().Prefix).toBe('projects/p1/');
+		expect(lastInput().Prefix).toBe('clinics/p1/');
 	});
 
 	it('lists the root without inventing a slash prefix', async () => {

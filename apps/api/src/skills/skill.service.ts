@@ -53,11 +53,11 @@ type SkillReadResult = { skill: Skill } | { loadError: SkillLoadError };
 export class SkillService implements OnModuleDestroy {
 	constructor(private readonly clinics: ClinicRepository) {}
 
-	private _projects = new Map<string, ClinicSkills>();
+	private clinicSkills = new Map<string, ClinicSkills>();
 	private _initPromises = new Map<string, Promise<void>>();
 
 	public async initializeSkills(clinicId: string): Promise<void> {
-		const known = this._projects.get(clinicId);
+		const known = this.clinicSkills.get(clinicId);
 		if (known) {
 			if (Date.now() - known.loadedAt > RELOAD_AFTER_MS) {
 				this.reloadSkills(clinicId);
@@ -80,13 +80,13 @@ export class SkillService implements OnModuleDestroy {
 	/** Reads the skills folder now, and starts watching it if it only appeared after the first load. */
 	public reloadSkills(clinicId: string): void {
 		this._loadSkills(clinicId);
-		if (!this._projects.get(clinicId)?.fileWatcher) {
+		if (!this.clinicSkills.get(clinicId)?.fileWatcher) {
 			this._setupFileWatcher(clinicId);
 		}
 	}
 
 	public getSkills(clinicId: string): Skill[] {
-		return this._projects.get(clinicId)?.skills ?? [];
+		return this.clinicSkills.get(clinicId)?.skills ?? [];
 	}
 
 	public getSkill(clinicId: string, skillName: string): Skill | undefined {
@@ -94,11 +94,11 @@ export class SkillService implements OnModuleDestroy {
 	}
 
 	public getSkillLoadErrors(clinicId: string): SkillLoadError[] {
-		return this._projects.get(clinicId)?.loadErrors ?? [];
+		return this.clinicSkills.get(clinicId)?.loadErrors ?? [];
 	}
 
 	public getSkillContent(clinicId: string, skillName: string): string | null {
-		const entry = this._projects.get(clinicId);
+		const entry = this.clinicSkills.get(clinicId);
 		if (!entry) {
 			return null;
 		}
@@ -175,7 +175,7 @@ export class SkillService implements OnModuleDestroy {
 		const clinicPath = clinic?.path || '';
 		const skillsFolderPath = join(clinicPath, 'agent', 'skills');
 
-		this._projects.set(clinicId, {
+		this.clinicSkills.set(clinicId, {
 			clinicPath,
 			skillsFolderPath,
 			skills: [],
@@ -190,7 +190,7 @@ export class SkillService implements OnModuleDestroy {
 	}
 
 	private _loadSkills(clinicId: string): void {
-		const entry = this._projects.get(clinicId);
+		const entry = this.clinicSkills.get(clinicId);
 		if (!entry) {
 			return;
 		}
@@ -221,7 +221,7 @@ export class SkillService implements OnModuleDestroy {
 	}
 
 	private _readSkills(clinicId: string, files: string[]): void {
-		const entry = this._projects.get(clinicId);
+		const entry = this.clinicSkills.get(clinicId);
 		if (!entry) {
 			return;
 		}
@@ -276,13 +276,13 @@ export class SkillService implements OnModuleDestroy {
 	}
 
 	onModuleDestroy(): void {
-		for (const entry of this._projects.values()) {
+		for (const entry of this.clinicSkills.values()) {
 			entry.fileWatcher?.close();
 		}
 	}
 
 	private _setupFileWatcher(clinicId: string): void {
-		const entry = this._projects.get(clinicId);
+		const entry = this.clinicSkills.get(clinicId);
 		if (!entry || !existsSync(entry.skillsFolderPath)) {
 			return;
 		}

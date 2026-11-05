@@ -9,6 +9,7 @@ import { ChatRepository } from '../chats/chat.repository.js';
 import { ChatAccessService } from '../chats/chat-access.service.js';
 import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
+import { AccessService } from '../common/guards/access.service.js';
 import type { Clinic } from '../generated/prisma/client.js';
 import { ChartRepository } from './chart.repository.js';
 import { generateChartImage } from './components/generate-chart.js';
@@ -28,12 +29,14 @@ export class ChartsService {
 		private readonly charts: ChartRepository,
 		private readonly chats: ChatRepository,
 		private readonly clinics: ClinicRepository,
+		private readonly access: AccessService,
 		private readonly chatAccess: ChatAccessService,
 	) {}
 
 	/** `GET /c/:chatId/:chartId.png`: the stored PNG of a chart (public, like upstream). */
 	async getChartPng(chartId: string): Promise<Buffer> {
-		const imageData = await this.charts.getChartById(chartId);
+		// Chart ids are UUIDs (`chart_images.id`); anything else names no chart.
+		const imageData = z.uuid().safeParse(chartId).success ? await this.charts.getChartById(chartId) : null;
 		if (!imageData) {
 			throw new HandlerError('NOT_FOUND', 'Chart image not found');
 		}
@@ -113,7 +116,7 @@ export class ChartsService {
 		if (typeof config !== 'object' || config === null) {
 			throw new HandlerError('BAD_REQUEST', 'Invalid map config');
 		}
-		const clinic = await this.clinics.getClinicByUserId(userId, selectedClinicId);
+		const clinic = (await this.access.findClinicAccess(userId, selectedClinicId))?.clinic;
 		const customSets = clinic ? await this.clinics.getCustomBoundaries(clinic.id) : [];
 		const parsed = displayMap.buildInputSchema(customSets).safeParse(config);
 		if (!parsed.success) {

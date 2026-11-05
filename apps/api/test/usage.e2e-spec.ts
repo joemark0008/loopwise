@@ -11,6 +11,9 @@ import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from '.
 
 const FILTER = { period: { value: 15, unit: 'day' } };
 
+const ADMIN_CHAT_ID = '0190a0c0-0000-7000-8000-0000000a0001';
+const MEMBER_CHAT_ID = '0190a0c0-0000-7000-8000-0000000a0002';
+
 /**
  * Settings → Usage over GraphQL: chat messages and `llm_inference` records combined with their cost, scoped to
  * the caller unless they are a clinic admin, and the saved periods of each user.
@@ -39,25 +42,24 @@ describe('usage (e2e)', () => {
 
 		const clinic = await graphql(adminCookie, 'mutation { createClinic(input: { name: "Usage" }) { id } }');
 		clinicId = clinic.body.data.createClinic.id;
-		await prisma.clinicMember.createMany({
+		await prisma.userClinicRole.createMany({
 			data: [
-				{ clinicId, userId: member.userId, role: 'user' },
-				{ clinicId, userId: viewer.userId, role: 'viewer' },
+				{ clinicId, userId: member.userId, role: 'MEMBER' },
+				{ clinicId, userId: viewer.userId, role: 'VIEWER' },
 			],
 		});
 
 		await prisma.chat.createMany({
 			data: [
-				{ id: 'usage-admin-chat', clinicId, userId: admin.userId },
-				{ id: 'usage-member-chat', clinicId, userId: member.userId },
+				{ id: ADMIN_CHAT_ID, clinicId, userId: admin.userId },
+				{ id: MEMBER_CHAT_ID, clinicId, userId: member.userId },
 			],
 		});
 		await prisma.chatMessage.createMany({
 			data: [
-				{ id: 'usage-admin-question', chatId: 'usage-admin-chat', role: 'user', source: 'web' },
+				{ chatId: ADMIN_CHAT_ID, role: 'user', source: 'web' },
 				{
-					id: 'usage-admin-answer',
-					chatId: 'usage-admin-chat',
+					chatId: ADMIN_CHAT_ID,
 					role: 'assistant',
 					llmProvider: 'anthropic',
 					llmModelId: 'claude-haiku-4-5',
@@ -65,14 +67,14 @@ describe('usage (e2e)', () => {
 					outputTotalTokens: 1_000_000,
 					totalTokens: 2_000_000,
 				},
-				{ id: 'usage-member-question', chatId: 'usage-member-chat', role: 'user', source: 'web' },
+				{ chatId: MEMBER_CHAT_ID, role: 'user', source: 'web' },
 			],
 		});
 		await prisma.llmInference.create({
 			data: {
 				clinicId,
 				userId: member.userId,
-				chatId: 'usage-member-chat',
+				chatId: MEMBER_CHAT_ID,
 				type: 'title_generation',
 				llmProvider: 'anthropic',
 				llmModelId: 'claude-haiku-4-5',

@@ -17,10 +17,10 @@ export class ImageRepository {
 	/** The images of a chat's current messages (superseded edits left out). */
 	async getImagesByChatId(chatId: string): Promise<ChatImage[]> {
 		const parts = await this.prisma.messagePart.findMany({
-			where: { imageId: { not: null }, chatMessage: { chatId, supersededAt: null } },
-			select: { messageImage: { select: { id: true, data: true, mediaType: true } } },
+			where: { imageId: { not: null }, message: { chatId, supersededAt: null } },
+			select: { image: { select: { id: true, data: true, mediaType: true } } },
 		});
-		return parts.flatMap(({ messageImage }) => (messageImage ? [messageImage] : []));
+		return parts.flatMap(({ image }) => (image ? [image] : []));
 	}
 
 	async saveImage(image: { mediaType: string; data: string }): Promise<{ id: string }> {
@@ -40,7 +40,7 @@ export class ImageRepository {
 	/** Chats (not deleted) whose messages reference the image. */
 	async listChatsReferencingImage(imageId: string): Promise<Array<{ chatId: string; clinicId: string }>> {
 		const chats = await this.prisma.chat.findMany({
-			where: { deletedAt: null, chatMessages: { some: { messageParts: { some: { imageId } } } } },
+			where: { deletedAt: null, messages: { some: { parts: { some: { imageId } } } } },
 			select: { id: true, clinicId: true },
 		});
 		return chats.map((chat) => ({ chatId: chat.id, clinicId: chat.clinicId }));

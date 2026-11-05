@@ -14,19 +14,7 @@ export type SharedChatWithDetails = SharedChat & {
 	messageBubbles?: MessageBubble[];
 };
 
-/**
- * `shared_chat.visibility` stores a clinic-wide share as `'project'`, the value written before clinics were called
- * clinics; the API speaks `'clinic'`. These two map between them at the repository boundary.
- */
-const STORED_CLINIC_VISIBILITY = 'project';
-
-const toStoredVisibility = (visibility: string): string =>
-	visibility === 'clinic' ? STORED_CLINIC_VISIBILITY : visibility;
-
-const fromStoredVisibility = <T extends { visibility: string }>(row: T): T =>
-	row.visibility === STORED_CLINIC_VISIBILITY ? { ...row, visibility: 'clinic' } : row;
-
-/** Port of upstream `queries/shared-chat.queries.ts`. */
+/** Port of upstream `queries/shared-chat.queries.ts`; `shared_chats.visibility` is `'clinic'` or `'specific'`. */
 @Injectable()
 export class SharedChatRepository {
 	constructor(private readonly prisma: PrismaService) {}
@@ -36,17 +24,17 @@ export class SharedChatRepository {
 			return [];
 		}
 		const chats = await this.prisma.$queryRaw<SharedChatWithDetails[]>`
-			SELECT s.id, c.project_id AS "clinicId", c.user_id AS "userId", s.chat_id AS "chatId", s.visibility,
+			SELECT s.id, c.clinic_id AS "clinicId", c.user_id AS "userId", s.chat_id AS "chatId", s.visibility,
 				s.created_at AS "createdAt", u.name AS "authorName", c.title
-			FROM shared_chat s
-			JOIN chat c ON c.id = s.chat_id
-			JOIN "user" u ON u.id = c.user_id
-			LEFT JOIN shared_chat_access a ON a.shared_chat_id = s.id AND a.user_id = ${userId}
-			WHERE c.project_id = ANY(${clinicIds}::text[])
-				AND (s.visibility = 'project' OR c.user_id = ${userId} OR a.user_id IS NOT NULL)
+			FROM shared_chats s
+			JOIN chats c ON c.id = s.chat_id
+			JOIN users u ON u.id = c.user_id
+			LEFT JOIN shared_chat_access a ON a.shared_chat_id = s.id AND a.user_id = ${userId}::uuid
+			WHERE c.clinic_id = ANY(${clinicIds}::uuid[])
+				AND (s.visibility = 'clinic' OR c.user_id = ${userId}::uuid OR a.user_id IS NOT NULL)
 			ORDER BY s.created_at DESC`;
 		const bubblesMap = await this.fetchMessageBubbles(chats.map((chat) => chat.chatId));
-		return chats.map((chat) => fromStoredVisibility({ ...chat, messageBubbles: bubblesMap.get(chat.chatId) }));
+		return chats.map((chat) => ({ ...chat, messageBubbles: bubblesMap.get(chat.chatId) }));
 	}
 
 	async createSharedChat(
@@ -55,14 +43,14 @@ export class SharedChatRepository {
 	): Promise<SharedChat> {
 		return this.prisma.$transaction(async (tx) => {
 			const created = await tx.sharedChat.create({
-				data: { ...chat, visibility: toStoredVisibility(chat.visibility) },
+				data: chat,
 			});
 			if (chat.visibility === 'specific' && allowedUserIds && allowedUserIds.length > 0) {
 				await tx.sharedChatAccess.createMany({
 					data: allowedUserIds.map((userId) => ({ sharedChatId: created.id, userId })),
 				});
 			}
-			return fromStoredVisibility(created);
+			return created;
 		});
 	}
 
@@ -86,7 +74,7 @@ export class SharedChatRepository {
 		}
 		const { chat, ...row } = share;
 		return {
-			...fromStoredVisibility(row),
+			...row,
 			clinicId: chat.clinicId,
 			userId: chat.userId,
 			authorName: chat.user.name,
@@ -101,7 +89,7 @@ export class SharedChatRepository {
 			orderBy: { createdAt: 'desc' },
 			select: { id: true, visibility: true },
 		});
-		return share && fromStoredVisibility(share);
+		return share;
 	}
 
 	async getShareAllowedUserIds(shareId: string): Promise<string[]> {
@@ -133,9 +121,9 @@ export class SharedChatRepository {
 		}
 		const rows = await this.prisma.$queryRaw<{ chatId: string; role: 'user' | 'assistant'; charCount: number }[]>`
 			SELECT m.chat_id AS "chatId", m.role, coalesce(sum(length(mp.text)), 0)::int AS "charCount"
-			FROM chat_message m
-			LEFT JOIN message_part mp ON mp.message_id = m.id AND mp.type = 'text'
-			WHERE m.chat_id = ANY(${chatIds}::text[]) AND m.superseded_at IS NULL AND m.role IN ('user', 'assistant')
+			FROM chat_messages m
+			LEFT JOIN message_parts mp ON mp.message_id = m.id AND mp.type = 'text'
+			WHERE m.chat_id = ANY(${chatIds}::uuid[]) AND m.superseded_at IS NULL AND m.role IN ('user', 'assistant')
 			GROUP BY m.id, m.chat_id, m.role, m.created_at
 			ORDER BY m.created_at ASC`;
 		const map = new Map<string, MessageBubble[]>();

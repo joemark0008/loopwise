@@ -72,9 +72,9 @@ describe('LocalStorageProvider', () => {
 		const keys = (await storage.list(scopeRoot(scope))).map((object) => object.key);
 
 		expect(keys).toEqual([
-			'projects/proj-1/users/user-1/a/first.txt',
-			'projects/proj-1/users/user-1/b/second.txt',
-			'projects/proj-1/users/user-1/root.txt',
+			'clinics/proj-1/users/user-1/a/first.txt',
+			'clinics/proj-1/users/user-1/b/second.txt',
+			'clinics/proj-1/users/user-1/root.txt',
 		]);
 	});
 
@@ -84,7 +84,7 @@ describe('LocalStorageProvider', () => {
 
 		const keys = (await storage.list(scopeRoot(scope))).map((object) => object.key);
 
-		expect(keys).toEqual(['projects/proj-1/users/user-1/mine.txt']);
+		expect(keys).toEqual(['clinics/proj-1/users/user-1/mine.txt']);
 	});
 
 	it('returns an empty list for a scope that has never been written to', async () => {
@@ -92,12 +92,12 @@ describe('LocalStorageProvider', () => {
 	});
 
 	it('matches list prefixes at segment boundaries', async () => {
-		await storage.write('projects/proj-1/users/user-1/file.txt', Buffer.from('a'));
-		await storage.write('projects/proj-10/users/user-1/file.txt', Buffer.from('b'));
+		await storage.write('clinics/proj-1/users/user-1/file.txt', Buffer.from('a'));
+		await storage.write('clinics/proj-10/users/user-1/file.txt', Buffer.from('b'));
 
-		const keys = (await storage.list('projects/proj-1')).map((object) => object.key);
+		const keys = (await storage.list('clinics/proj-1')).map((object) => object.key);
 
-		expect(keys).toEqual(['projects/proj-1/users/user-1/file.txt']);
+		expect(keys).toEqual(['clinics/proj-1/users/user-1/file.txt']);
 	});
 
 	it('refuses a key that escapes the storage root', async () => {

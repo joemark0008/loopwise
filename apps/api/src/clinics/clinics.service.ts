@@ -3,7 +3,6 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { DATE_FORMAT_PRESETS, type DisplaySettings } from '@loopwise/shared/date';
-import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod/v4';
 
@@ -11,9 +10,9 @@ import { isDatabaseObjectAllowed } from '../agent/services/context-access.js';
 import { fullClinicContextAccess } from '../agent/services/user-group-context-access.service.js';
 import { type DatabaseObject, getDatabaseObjects } from '../agent/user-rules.js';
 import { HandlerError } from '../common/errors/handler-error.js';
+import { AccessService, type ClinicAccessGrant } from '../common/guards/access.service.js';
 import { ConfigService } from '../config/config.service.js';
-import type { Clinic, ClinicSavedPrompt } from '../generated/prisma/client.js';
-import { OrganizationRepository } from '../organizations/organization.repository.js';
+import type { Clinic, ClinicSavedPrompt, StaffRole } from '../generated/prisma/client.js';
 import { ClinicRepository } from './clinic.repository.js';
 import { ClinicSavedPromptRepository } from './clinic-saved-prompt.repository.js';
 import type { ClinicSummary } from './models/clinic.model.js';
@@ -33,33 +32,33 @@ export class ClinicsService {
 	constructor(
 		private readonly clinics: ClinicRepository,
 		private readonly savedPrompts: ClinicSavedPromptRepository,
-		private readonly organizations: OrganizationRepository,
+		private readonly access: AccessService,
 		private readonly config: ConfigService,
 	) {}
 
+	/** Every clinic the user can open (a role there, or a membership of its organization), with their roles. */
 	async listForUser(userId: string): Promise<ClinicSummary[]> {
-		const clinics = await this.clinics.listUserClinicsWithRoles(userId);
-		return clinics.map(({ clinic, userRole }) => toSummary(clinic, userRole));
+		return (await this.access.listUserClinics(userId)).map(toSummary);
 	}
 
+	/** The clinic the request works on (the selected one when the user can open it), or null when they have none. */
 	async getCurrent(userId: string, selectedClinicId: string | null): Promise<ClinicSummary | null> {
-		const clinic = await this.clinics.getClinicByUserId(userId, selectedClinicId);
-		if (!clinic) {
-			return null;
-		}
-		const userRole = await this.clinics.getUserRoleInClinic(clinic.id, userId);
-		return userRole ? toSummary(clinic, userRole) : null;
+		const grant = await this.access.findClinicAccess(userId, selectedClinicId);
+		return grant ? toSummary(grant) : null;
 	}
 
 	/**
-	 * loopwise addition (upstream self-hosted has one clinic from a default clinic path): a clinic gets a
-	 * folder under `LOOPWISE_CLINICS_DIR` for its context, in the user's organization, with the user as admin.
+	 * loopwise addition (upstream self-hosted has one clinic from a default clinic path): a clinic gets a folder under
+	 * `LOOPWISE_CLINICS_DIR` for its context and a code unique in the organization; it belongs to the organization the
+	 * request works on (viewers there can't create one), and the user becomes its ADMIN.
 	 */
-	async createClinic(userId: string, name: string): Promise<ClinicSummary> {
+	async createClinic(userId: string, selectedClinicId: string | null, name: string): Promise<ClinicSummary> {
 		const trimmed = name.trim();
-		const membership = await this.organizations.getUserOrgMembership(userId);
-		const orgId = membership?.orgId ?? null;
-		if (await this.clinics.isClinicNameTaken(orgId, trimmed)) {
+		const { organization, role } = await this.access.resolveOrganizationMembership(userId, selectedClinicId, null);
+		if (role === 'VIEWER') {
+			throw new HandlerError('FORBIDDEN', 'Viewers cannot create clinics.');
+		}
+		if (await this.clinics.isClinicNameTaken(organization.id, trimmed)) {
 			throw new HandlerError('CONFLICT', `A clinic named "${trimmed}" already exists.`);
 		}
 
@@ -68,33 +67,36 @@ export class ClinicsService {
 		await mkdir(folder, { recursive: true });
 		await writeFile(
 			path.join(folder, 'loopwise_config.yaml'),
-			`project_name: ${JSON.stringify(trimmed)}\ndatabases: []\n`,
+			`clinic_name: ${JSON.stringify(trimmed)}\ndatabases: []\n`,
 		);
 		try {
+			const staffRoles: StaffRole[] = ['ADMIN'];
 			const clinic = await this.clinics.createClinic({
 				id,
 				name: trimmed,
-				type: 'local',
+				kind: 'local',
 				path: folder,
-				orgId,
+				organizationId: organization.id,
 			});
-			await this.clinics.addClinicMember({ clinicId: clinic.id, userId, role: 'admin' });
-			return toSummary(clinic, 'admin');
+			await this.clinics.grantClinicRoles(clinic.id, userId, staffRoles);
+			return toSummary({ clinic, userRole: 'admin', staffRoles });
 		} catch (error) {
 			await rm(folder, { recursive: true, force: true });
 			throw error;
 		}
 	}
 
-	async renameClinic(clinic: Clinic, clinicId: string, name: string): Promise<ClinicSummary> {
+	/** Renames the selected clinic; the name stays unique in the organization. */
+	async renameClinic(grant: ClinicAccessGrant, clinicId: string, name: string): Promise<ClinicSummary> {
+		const { clinic } = grant;
 		if (clinicId !== clinic.id) {
 			throw new HandlerError('CONFLICT', 'The selected clinic changed. Reload the page and try again.');
 		}
 		const trimmed = name.trim();
-		if (!(await this.clinics.renameClinic(clinic.id, clinic.orgId, trimmed))) {
+		if (!(await this.clinics.renameClinic(clinic.id, clinic.organizationId, trimmed))) {
 			throw new HandlerError('CONFLICT', `A clinic named "${trimmed}" already exists.`);
 		}
-		return toSummary({ ...clinic, name: trimmed }, 'admin');
+		return toSummary({ ...grant, clinic: { ...clinic, name: trimmed } });
 	}
 
 	/** Deletes the clinic; its folder too when loopwise created it under `LOOPWISE_CLINICS_DIR`. */
@@ -111,7 +113,7 @@ export class ClinicsService {
 
 	/** Upstream `getClinicSavedPrompts`: another clinic's prompts, empty when the user isn't in it. */
 	async listClinicSavedPromptsForUser(clinicId: string, userId: string): Promise<ClinicSavedPrompt[]> {
-		if (!(await this.clinics.getUserRoleInClinic(clinicId, userId))) {
+		if (!(await this.access.getUserRoleInClinic(clinicId, userId))) {
 			return [];
 		}
 		return this.savedPrompts.listSavedPrompts(clinicId);
@@ -166,14 +168,16 @@ export class ClinicsService {
 	}
 }
 
-function toSummary(clinic: Clinic, userRole: UserRole): ClinicSummary {
+function toSummary({ clinic, userRole, staffRoles }: ClinicAccessGrant): ClinicSummary {
 	return {
 		id: clinic.id,
 		name: clinic.name,
-		type: clinic.type,
+		code: clinic.code,
+		kind: clinic.kind,
 		path: clinic.path,
-		orgId: clinic.orgId,
+		organizationId: clinic.organizationId,
 		userRole,
+		staffRoles,
 		createdAt: clinic.createdAt,
 		updatedAt: clinic.updatedAt,
 	};

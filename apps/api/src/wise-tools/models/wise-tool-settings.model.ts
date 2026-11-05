@@ -1,15 +1,12 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
 
-@ObjectType({ description: 'A facility whose Wise tools the user sees, and whether they administer it.' })
-export class WiseToolFacility {
+@ObjectType({ description: 'An organization whose Wise tools the user sees, and whether they administer it.' })
+export class WiseToolOrganization {
 	@Field(() => ID)
 	id: string;
 
 	@Field()
 	name: string;
-
-	@Field({ description: 'The facility type (clinic, lab, …), which sets the defaults.' })
-	type: string;
 
 	@Field()
 	isAdmin: boolean;
@@ -38,11 +35,11 @@ export class WiseToolView {
 	@Field({ description: 'Not a tool yet; no switch.' })
 	comingSoon: boolean;
 
-	@Field({ description: "The facility type's default at the selected facility." })
-	facilityDefault: boolean;
+	@Field({ description: 'The default in an organization, before its admin changes it.' })
+	organizationDefault: boolean;
 
-	@Field({ description: 'On at the selected facility (its override, else the default).' })
-	facilityEnabled: boolean;
+	@Field({ description: 'On in the selected organization (its override, else the default).' })
+	organizationEnabled: boolean;
 
 	@Field({ description: 'False when the user turned it off for themselves.' })
 	myEnabled: boolean;
@@ -53,11 +50,11 @@ export class WiseToolView {
 
 @ObjectType()
 export class WiseToolSettings {
-	@Field(() => [WiseToolFacility])
-	facilities: WiseToolFacility[];
+	@Field(() => [WiseToolOrganization])
+	organizations: WiseToolOrganization[];
 
-	@Field(() => ID, { nullable: true, description: 'The facility the `facility*` fields are about.' })
-	facilityId: string | null;
+	@Field(() => ID, { nullable: true, description: 'The organization the `organization*` fields are about.' })
+	organizationId: string | null;
 
 	@Field(() => [WiseToolView])
 	tools: WiseToolView[];

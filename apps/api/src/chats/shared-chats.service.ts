@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
+import { AccessService } from '../common/guards/access.service.js';
 import type { SharedChat } from '../generated/prisma/client.js';
 import { ChatRepository } from './chat.repository.js';
 import { ChatsService } from './chats.service.js';
@@ -20,12 +21,13 @@ export class SharedChatsService {
 		private readonly chats: ChatRepository,
 		private readonly sharedChats: SharedChatRepository,
 		private readonly clinics: ClinicRepository,
+		private readonly access: AccessService,
 		private readonly sharing: ClinicSharingService,
 		private readonly chatsService: ChatsService,
 	) {}
 
 	async list(userId: string): Promise<SharedChatWithDetails[]> {
-		const clinics = await this.clinics.listUserClinicsWithRoles(userId);
+		const clinics = await this.access.listUserClinics(userId);
 		return this.sharedChats.listUserSharedChats(
 			clinics.map(({ clinic }) => clinic.id),
 			userId,
@@ -148,7 +150,7 @@ export class SharedChatsService {
 		if (!share) {
 			throw new HandlerError('NOT_FOUND', 'Shared chat not found.');
 		}
-		const userRole = await this.clinics.getUserRoleInClinic(share.clinicId, userId);
+		const userRole = await this.access.getUserRoleInClinic(share.clinicId, userId);
 		if (!userRole) {
 			throw new HandlerError('FORBIDDEN', 'You do not have access to this clinic.');
 		}
@@ -181,7 +183,7 @@ export class SharedChatsService {
 	}
 
 	private async requireClinicRole(clinicId: string, userId: string): Promise<UserRole> {
-		const userRole = await this.clinics.getUserRoleInClinic(clinicId, userId);
+		const userRole = await this.access.getUserRoleInClinic(clinicId, userId);
 		if (!userRole) {
 			throw new HandlerError('FORBIDDEN', 'You do not have access to this clinic.');
 		}

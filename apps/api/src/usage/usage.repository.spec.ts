@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, inject, it, vi } from 'vitest';
 
 import type { ConfigService } from '../config/config.service.js';
@@ -35,12 +37,19 @@ const updateUserPreferences = (...args: Parameters<UserRepository['updateUserPre
 const mutateUserPreferences = (...args: Parameters<UserRepository['mutateUserPreferences']>) =>
 	users.mutateUserPreferences(...args);
 
-const CLINIC_ID = 'usage-clinic';
-const OTHER_CLINIC_ID = 'usage-clinic-other';
-const USER_ID = 'usage-user';
-const OTHER_USER_ID = 'usage-user-other';
-const CHAT_ID = 'usage-chat';
-const OTHER_USER_CHAT_ID = 'usage-chat-other-user';
+/** A fixed UUID per name, so the rows of this spec are recognisable and cleaned up between runs. */
+function uid(name: string): string {
+	const hex = createHash('sha1').update(`usage-spec:${name}`).digest('hex');
+	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+const ORG_ID = uid('usage-org');
+const CLINIC_ID = uid('usage-clinic');
+const OTHER_CLINIC_ID = uid('usage-clinic-other');
+const USER_ID = uid('usage-user');
+const OTHER_USER_ID = uid('usage-user-other');
+const CHAT_ID = uid('usage-chat');
+const OTHER_USER_CHAT_ID = uid('usage-chat-other-user');
 
 describe('usage query results', () => {
 	beforeAll(async () => {
@@ -52,14 +61,27 @@ describe('usage query results', () => {
 		await cleanup();
 		await prisma.user.createMany({
 			data: [
-				{ id: USER_ID, name: 'Usage User', email: 'usage@example.com' },
-				{ id: OTHER_USER_ID, name: 'Other Usage User', email: 'other-usage@example.com' },
+				{ id: USER_ID, name: 'Usage User', firstName: 'Usage', lastName: 'User', email: 'usage@example.com' },
+				{
+					id: OTHER_USER_ID,
+					name: 'Other Usage User',
+					firstName: 'Other',
+					lastName: 'Usage User',
+					email: 'other-usage@example.com',
+				},
 			],
 		});
+		await prisma.organization.create({ data: { id: ORG_ID, name: 'Usage Organization', slug: 'usage-spec-org' } });
 		await prisma.clinic.createMany({
 			data: [
-				{ id: CLINIC_ID, name: 'Usage Clinic', type: 'local', path: '/tmp/usage-clinic' },
-				{ id: OTHER_CLINIC_ID, name: 'Other Usage Clinic', type: 'local', path: '/tmp/usage-clinic-other' },
+				{ id: CLINIC_ID, organizationId: ORG_ID, code: 'USE', name: 'Usage Clinic', path: '/tmp/usage-clinic' },
+				{
+					id: OTHER_CLINIC_ID,
+					organizationId: ORG_ID,
+					code: 'USE2',
+					name: 'Other Usage Clinic',
+					path: '/tmp/usage-clinic-other',
+				},
 			],
 		});
 		await prisma.chat.createMany({
@@ -88,8 +110,8 @@ describe('usage query results', () => {
 	it('returns total usage aggregates as numbers', async () => {
 		await prisma.chatMessage.createMany({
 			data: [
-				{ id: 'total-1', chatId: CHAT_ID, role: 'user' },
-				{ id: 'total-2', chatId: CHAT_ID, role: 'user' },
+				{ id: uid('total-1'), chatId: CHAT_ID, role: 'user' },
+				{ id: uid('total-2'), chatId: CHAT_ID, role: 'user' },
 			],
 		});
 
@@ -119,13 +141,13 @@ describe('usage query results', () => {
 		await prisma.chatMessage.createMany({
 			data: [
 				{
-					id: 'outside-calendar-range',
+					id: uid('outside-calendar-range'),
 					chatId: CHAT_ID,
 					role: 'user',
 					createdAt: new Date('2026-08-19T12:00:00Z'),
 				},
 				{
-					id: 'inside-calendar-range',
+					id: uid('inside-calendar-range'),
 					chatId: CHAT_ID,
 					role: 'user',
 					createdAt: new Date('2026-08-20T12:00:00Z'),
@@ -149,29 +171,29 @@ describe('usage query results', () => {
 		const clinicPreferences = { usagePeriod, savedUsagePeriods };
 
 		await updateUserPreferences(USER_ID, {
-			projectPreferences: {
+			clinicPreferences: {
 				[CLINIC_ID]: clinicPreferences,
 			},
 		});
 
 		await expect(getUserPreferences(USER_ID)).resolves.toEqual({
-			projectPreferences: {
+			clinicPreferences: {
 				[CLINIC_ID]: clinicPreferences,
 			},
 		});
 		await expect(getUserPreferences(OTHER_USER_ID)).resolves.toEqual({});
-		expect((await getUserPreferences(USER_ID)).projectPreferences?.[OTHER_CLINIC_ID]).toBeUndefined();
+		expect((await getUserPreferences(USER_ID)).clinicPreferences?.[OTHER_CLINIC_ID]).toBeUndefined();
 	});
 
 	it('serializes concurrent clinic preference transforms', async () => {
 		await updateUserPreferences(USER_ID, { toolCallDensity: 'detailed' });
 		await Promise.all([
 			mutateUserPreferences(USER_ID, (current) => {
-				const clinicPreferences = (current.projectPreferences?.[CLINIC_ID] ?? {}) as UserClinicPreferences;
+				const clinicPreferences = (current.clinicPreferences?.[CLINIC_ID] ?? {}) as UserClinicPreferences;
 				return {
 					...current,
-					projectPreferences: {
-						...current.projectPreferences,
+					clinicPreferences: {
+						...current.clinicPreferences,
 						[CLINIC_ID]: {
 							...clinicPreferences,
 							savedUsagePeriods: [
@@ -183,11 +205,11 @@ describe('usage query results', () => {
 				};
 			}),
 			mutateUserPreferences(USER_ID, (current) => {
-				const clinicPreferences = (current.projectPreferences?.[CLINIC_ID] ?? {}) as UserClinicPreferences;
+				const clinicPreferences = (current.clinicPreferences?.[CLINIC_ID] ?? {}) as UserClinicPreferences;
 				return {
 					...current,
-					projectPreferences: {
-						...current.projectPreferences,
+					clinicPreferences: {
+						...current.clinicPreferences,
 						[CLINIC_ID]: {
 							...clinicPreferences,
 							savedUsagePeriods: [
@@ -201,7 +223,7 @@ describe('usage query results', () => {
 		]);
 
 		const preferences = await getUserPreferences(USER_ID);
-		const clinicPreferences = preferences.projectPreferences?.[CLINIC_ID] as UserClinicPreferences | undefined;
+		const clinicPreferences = preferences.clinicPreferences?.[CLINIC_ID] as UserClinicPreferences | undefined;
 		expect(preferences.toolCallDensity).toBe('detailed');
 		expect(clinicPreferences?.savedUsagePeriods).toHaveLength(2);
 		expect(clinicPreferences?.savedUsagePeriods).toEqual(
@@ -248,7 +270,7 @@ describe('usage query results', () => {
 		const now = new Date();
 		await prisma.chatMessage.createMany({
 			data: sources.map((source, index) => ({
-				id: `source-${index}`,
+				id: uid(`source-${index}`),
 				chatId: CHAT_ID,
 				role: 'user' as const,
 				source,
@@ -282,14 +304,14 @@ describe('usage query results', () => {
 		await prisma.chatMessage.createMany({
 			data: [
 				{
-					id: 'union-user',
+					id: uid('union-user'),
 					chatId: CHAT_ID,
 					role: 'user',
 					source: 'web',
 					createdAt: new Date(now.getTime() - 1_000),
 				},
 				{
-					id: 'union-assistant',
+					id: uid('union-assistant'),
 					chatId: CHAT_ID,
 					role: 'assistant',
 					llmProvider: 'openai',
@@ -305,7 +327,7 @@ describe('usage query results', () => {
 		await prisma.llmInference.createMany({
 			data: [
 				{
-					id: 'union-inference-current',
+					id: uid('union-inference-current'),
 					clinicId: CLINIC_ID,
 					userId: USER_ID,
 					chatId: CHAT_ID,
@@ -319,7 +341,7 @@ describe('usage query results', () => {
 					createdAt: now,
 				},
 				{
-					id: 'union-inference-previous',
+					id: uid('union-inference-previous'),
 					clinicId: CLINIC_ID,
 					userId: USER_ID,
 					type: 'compaction',
@@ -358,10 +380,10 @@ describe('usage query results', () => {
 
 		await prisma.chatMessage.createMany({
 			data: [
-				{ id: 'by-user-1', chatId: CHAT_ID, role: 'user', source: 'web', createdAt: now },
-				{ id: 'by-user-2', chatId: CHAT_ID, role: 'user', source: 'slack', createdAt: now },
+				{ id: uid('by-user-1'), chatId: CHAT_ID, role: 'user', source: 'web', createdAt: now },
+				{ id: uid('by-user-2'), chatId: CHAT_ID, role: 'user', source: 'slack', createdAt: now },
 				{
-					id: 'by-user-assistant',
+					id: uid('by-user-assistant'),
 					chatId: CHAT_ID,
 					role: 'assistant',
 					llmProvider: 'anthropic',
@@ -371,13 +393,13 @@ describe('usage query results', () => {
 					totalTokens: 2_000_000,
 					createdAt: now,
 				},
-				{ id: 'by-other-user-1', chatId: OTHER_USER_CHAT_ID, role: 'user', source: 'web', createdAt: now },
-				{ id: 'by-other-user-previous', chatId: OTHER_USER_CHAT_ID, role: 'user', createdAt: previousDay },
+				{ id: uid('by-other-user-1'), chatId: OTHER_USER_CHAT_ID, role: 'user', source: 'web', createdAt: now },
+				{ id: uid('by-other-user-previous'), chatId: OTHER_USER_CHAT_ID, role: 'user', createdAt: previousDay },
 			],
 		});
 		await prisma.llmInference.createMany({
 			data: {
-				id: 'by-other-user-inference',
+				id: uid('by-other-user-inference'),
 				clinicId: CLINIC_ID,
 				userId: OTHER_USER_ID,
 				chatId: OTHER_USER_CHAT_ID,
@@ -412,9 +434,9 @@ describe('usage query results', () => {
 		const now = new Date();
 		await prisma.chatMessage.createMany({
 			data: [
-				{ id: 'own-message', chatId: CHAT_ID, role: 'user', source: 'web', createdAt: now },
+				{ id: uid('own-message'), chatId: CHAT_ID, role: 'user', source: 'web', createdAt: now },
 				{
-					id: 'own-assistant',
+					id: uid('own-assistant'),
 					chatId: CHAT_ID,
 					role: 'assistant',
 					llmProvider: 'anthropic',
@@ -422,12 +444,12 @@ describe('usage query results', () => {
 					totalTokens: 100,
 					createdAt: now,
 				},
-				{ id: 'other-message', chatId: OTHER_USER_CHAT_ID, role: 'user', source: 'web', createdAt: now },
+				{ id: uid('other-message'), chatId: OTHER_USER_CHAT_ID, role: 'user', source: 'web', createdAt: now },
 			],
 		});
 		await prisma.llmInference.createMany({
 			data: {
-				id: 'other-inference',
+				id: uid('other-inference'),
 				clinicId: CLINIC_ID,
 				userId: OTHER_USER_ID,
 				chatId: OTHER_USER_CHAT_ID,
@@ -465,9 +487,9 @@ describe('usage query results', () => {
 		const now = new Date();
 		await prisma.chatMessage.createMany({
 			data: [
-				{ id: 'filtered-web', chatId: CHAT_ID, role: 'user', source: 'web', createdAt: now },
-				{ id: 'filtered-slack', chatId: CHAT_ID, role: 'user', source: 'slack', createdAt: now },
-				{ id: 'filtered-other', chatId: OTHER_USER_CHAT_ID, role: 'user', source: 'web', createdAt: now },
+				{ id: uid('filtered-web'), chatId: CHAT_ID, role: 'user', source: 'web', createdAt: now },
+				{ id: uid('filtered-slack'), chatId: CHAT_ID, role: 'user', source: 'slack', createdAt: now },
+				{ id: uid('filtered-other'), chatId: OTHER_USER_CHAT_ID, role: 'user', source: 'web', createdAt: now },
 			],
 		});
 
@@ -487,5 +509,6 @@ async function cleanup() {
 	await prisma.llmInference.deleteMany({ where: { clinicId: { in: [CLINIC_ID, OTHER_CLINIC_ID] } } });
 	await prisma.chat.deleteMany({ where: { clinicId: { in: [CLINIC_ID, OTHER_CLINIC_ID] } } });
 	await prisma.clinic.deleteMany({ where: { id: { in: [CLINIC_ID, OTHER_CLINIC_ID] } } });
+	await prisma.organization.deleteMany({ where: { id: ORG_ID } });
 	await prisma.user.deleteMany({ where: { id: { in: [USER_ID, OTHER_USER_ID] } } });
 }

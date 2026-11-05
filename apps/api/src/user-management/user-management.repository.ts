@@ -1,61 +1,113 @@
 import { Injectable } from '@nestjs/common';
 
-import type { OrgMember, Prisma, User } from '../generated/prisma/client.js';
-import type { OrgRole } from '../organizations/organization.repository.js';
+import type { OrganizationMember, OrgRole, Prisma, StaffRole, User } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { createMessagingProviderCode } from '../users/user.repository.js';
+import { createMessagingProviderCode, splitName } from '../users/user.repository.js';
 import { PASSWORD_LINK_PREFIX } from './password-link-token.js';
 
 const CREDENTIAL_PROVIDER_ID = 'credential';
 
-export type OrgUser = OrgMember & { user: User & { accounts: { id: string }[] } };
+/** A member of the organization, with their accounts and their roles at the clinic the page shows (if any). */
+export type OrgUser = OrganizationMember & {
+	user: User & { accounts: { id: string }[]; clinicRoles: { role: StaffRole }[] };
+};
 
 export interface NewPasswordLink {
 	identifier: string;
 	expiresAt: Date;
 }
 
-const orgUserInclude = { user: { include: { accounts: { select: { id: true } } } } } as const;
+/** Roles at `clinicId` only; none when the page shows no clinic. */
+function orgUserInclude(clinicId: string | null) {
+	return {
+		user: {
+			include: {
+				accounts: { select: { id: true } },
+				clinicRoles: { where: { clinicId: clinicId ?? { in: [] } }, select: { role: true } },
+			},
+		},
+	} satisfies Prisma.OrganizationMemberInclude;
+}
 
+/** Users of an organization (`organization_members`), their set-password links and their clinic roles. */
 @Injectable()
 export class UserManagementRepository {
 	constructor(private readonly prisma: PrismaService) {}
 
-	listOrgUsers(orgId: string): Promise<OrgUser[]> {
-		return this.prisma.orgMember.findMany({
-			where: { orgId },
-			include: orgUserInclude,
+	listOrgUsers(organizationId: string, clinicId: string | null): Promise<OrgUser[]> {
+		return this.prisma.organizationMember.findMany({
+			where: { organizationId },
+			include: orgUserInclude(clinicId),
 			orderBy: { user: { name: 'asc' } },
 		});
 	}
 
-	getOrgUser(orgId: string, userId: string): Promise<OrgUser | null> {
-		return this.prisma.orgMember.findUnique({
-			where: { orgId_userId: { orgId, userId } },
-			include: orgUserInclude,
+	getOrgUser(organizationId: string, userId: string, clinicId: string | null): Promise<OrgUser | null> {
+		return this.prisma.organizationMember.findUnique({
+			where: { organizationId_userId: { organizationId, userId } },
+			include: orgUserInclude(clinicId),
 		});
+	}
+
+	/** Replaces the user's roles at the clinic (none: they keep only their organization role there). */
+	async setClinicRoles(clinicId: string, userId: string, roles: readonly StaffRole[]): Promise<void> {
+		await this.prisma.$transaction(async (tx) => {
+			await tx.userClinicRole.deleteMany({ where: { clinicId, userId, role: { notIn: [...roles] } } });
+			await tx.userClinicRole.createMany({
+				data: roles.map((role) => ({ clinicId, userId, role })),
+				skipDuplicates: true,
+			});
+		});
+	}
+
+	/** Whether the clinic belongs to the organization (the clinic the request selected may be another one's). */
+	async isClinicOfOrganization(clinicId: string, organizationId: string): Promise<boolean> {
+		const clinic = await this.prisma.clinic.findFirst({
+			where: { id: clinicId, organizationId },
+			select: { id: true },
+		});
+		return clinic !== null;
 	}
 
 	isEmailTaken(email: string): Promise<boolean> {
 		return this.prisma.user.findUnique({ where: { email }, select: { id: true } }).then(Boolean);
 	}
 
-	/** Creates a user with no account (they get one when they use the link), their membership and their link. */
+	/**
+	 * Creates a user with no account (they get one when they use the link), their organization membership, their roles
+	 * at `clinicId` and their link, in one transaction.
+	 */
 	createInvitedUser(
-		orgId: string,
+		organizationId: string,
 		user: { id: string; name: string; email: string },
 		role: OrgRole,
+		clinicRoles: { clinicId: string; roles: readonly StaffRole[] } | null,
 		link: NewPasswordLink,
 	): Promise<OrgUser> {
 		return this.prisma.$transaction(async (tx) => {
 			await tx.user.create({
-				data: { ...user, emailVerified: false, messagingProviderCode: createMessagingProviderCode() },
+				data: {
+					...user,
+					...splitName(user.name),
+					emailVerified: false,
+					messagingProviderCode: createMessagingProviderCode(),
+				},
 			});
-			await tx.orgMember.create({ data: { orgId, userId: user.id, role } });
+			await tx.organizationMember.create({ data: { organizationId, userId: user.id, role } });
+			if (clinicRoles && clinicRoles.roles.length > 0) {
+				await tx.userClinicRole.createMany({
+					data: clinicRoles.roles.map((staffRole) => ({
+						clinicId: clinicRoles.clinicId,
+						userId: user.id,
+						role: staffRole,
+					})),
+					skipDuplicates: true,
+				});
+			}
 			await this.replaceLinks(tx, user.id, link);
-			return tx.orgMember.findUniqueOrThrow({
-				where: { orgId_userId: { orgId, userId: user.id } },
-				include: orgUserInclude,
+			return tx.organizationMember.findUniqueOrThrow({
+				where: { organizationId_userId: { organizationId, userId: user.id } },
+				include: orgUserInclude(clinicRoles?.clinicId ?? null),
 			});
 		});
 	}
@@ -116,18 +168,21 @@ export class UserManagementRepository {
 		});
 	}
 
-	async updateRole(orgId: string, userId: string, role: OrgRole): Promise<void> {
-		await this.prisma.orgMember.update({ where: { orgId_userId: { orgId, userId } }, data: { role } });
+	async updateRole(organizationId: string, userId: string, role: OrgRole): Promise<void> {
+		await this.prisma.organizationMember.update({
+			where: { organizationId_userId: { organizationId, userId } },
+			data: { role },
+		});
 	}
 
-	/** Deactivating also ends the user's sessions and voids their links; reactivating clears the flag only. */
-	async setDeactivated(userId: string, deactivated: boolean): Promise<void> {
-		if (!deactivated) {
-			await this.prisma.user.update({ where: { id: userId }, data: { deactivatedAt: null } });
+	/** Deactivating also ends the user's sessions and voids their links; reactivating sets the flag only. */
+	async setActive(userId: string, active: boolean): Promise<void> {
+		if (active) {
+			await this.prisma.user.update({ where: { id: userId }, data: { isActive: true } });
 			return;
 		}
 		await this.prisma.$transaction([
-			this.prisma.user.update({ where: { id: userId }, data: { deactivatedAt: new Date() } }),
+			this.prisma.user.update({ where: { id: userId }, data: { isActive: false } }),
 			this.prisma.session.deleteMany({ where: { userId } }),
 			this.prisma.verification.deleteMany({
 				where: { identifier: { startsWith: PASSWORD_LINK_PREFIX }, value: userId },

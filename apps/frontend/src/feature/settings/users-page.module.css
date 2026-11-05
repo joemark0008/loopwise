@@ -63,6 +63,16 @@
 	width: 7rem;
 	flex-shrink: 0;
 }
+.staffRoles {
+	max-width: 12rem;
+	flex-shrink: 0;
+	justify-content: space-between;
+}
+.staffRolesText {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
 .userRowActionsPlaceholder {
 	width: 2rem;
 	flex-shrink: 0;

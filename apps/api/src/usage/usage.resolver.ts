@@ -86,7 +86,7 @@ export class UsageResolver {
 	usagePeriodSettings(
 		@CurrentUser() user: AuthUser,
 		@CurrentClinic() clinic: Clinic,
-		@Args('clinicId', { type: () => ID }) _projectId: string,
+		@Args('clinicId', { type: () => ID }) _clinicId: string,
 	): Promise<UsagePeriodSettings> {
 		return this.usage.getPeriodSettings(user.id, clinic.id);
 	}
@@ -96,7 +96,7 @@ export class UsageResolver {
 	updateUsagePeriodSelection(
 		@CurrentUser() user: AuthUser,
 		@CurrentClinic() clinic: Clinic,
-		@Args('clinicId', { type: () => ID }) _projectId: string,
+		@Args('clinicId', { type: () => ID }) _clinicId: string,
 		@Args('selection') selection: UsagePeriodSelectionInput,
 	): Promise<UsagePeriodSelection | null> {
 		return this.usage.updatePeriodSelection(user.id, clinic.id, selection);
@@ -107,7 +107,7 @@ export class UsageResolver {
 	createSavedUsagePeriod(
 		@CurrentUser() user: AuthUser,
 		@CurrentClinic() clinic: Clinic,
-		@Args('clinicId', { type: () => ID }) _projectId: string,
+		@Args('clinicId', { type: () => ID }) _clinicId: string,
 		@Args('savedPeriod') savedPeriod: SavedUsagePeriodInput,
 	): Promise<SavedUsagePeriod> {
 		return this.usage.createSavedPeriod(user.id, clinic.id, savedPeriod);
@@ -118,7 +118,7 @@ export class UsageResolver {
 	updateSavedUsagePeriod(
 		@CurrentUser() user: AuthUser,
 		@CurrentClinic() clinic: Clinic,
-		@Args('clinicId', { type: () => ID }) _projectId: string,
+		@Args('clinicId', { type: () => ID }) _clinicId: string,
 		@Args('savedPeriod') savedPeriod: UpdateSavedUsagePeriodInput,
 	): Promise<SavedUsagePeriod> {
 		return this.usage.updateSavedPeriod(user.id, clinic.id, savedPeriod);
@@ -129,7 +129,7 @@ export class UsageResolver {
 	deleteSavedUsagePeriod(
 		@CurrentUser() user: AuthUser,
 		@CurrentClinic() clinic: Clinic,
-		@Args('clinicId', { type: () => ID }) _projectId: string,
+		@Args('clinicId', { type: () => ID }) _clinicId: string,
 		@Args('id', { type: () => ID }) id: string,
 	): Promise<DeletedSavedUsagePeriod> {
 		return this.usage.deleteSavedPeriod(user.id, clinic.id, id);

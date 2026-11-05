@@ -228,6 +228,8 @@ export const useAgent = ({
 		};
 
 		const newAgent = new Agent<UIMessage>({
+			// Message ids are UUIDs end to end (`chat_messages.id` is a uuid column).
+			generateId: () => crypto.randomUUID(),
 			transport: new DefaultChatTransport({
 				api: '/api/agent',
 				prepareSendMessagesRequest: ({ body, messages }) => {

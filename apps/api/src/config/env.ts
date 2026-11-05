@@ -76,7 +76,7 @@ const baseEnvSchema = z.object({
 	LOOPWISE_RELEASES_REPOSITORY: optionalNonEmptyString,
 
 	LOOPWISE_DEFAULT_CLINIC_PATH: z.string().optional(),
-	LOOPWISE_CLINICS_DIR: z.string().default('./projects'),
+	LOOPWISE_CLINICS_DIR: z.string().default('./clinics'),
 	/** `off`: skills are managed as files only, the app and the agent's drafts can't save them. */
 	LOOPWISE_SKILL_AUTHORING: z.enum(['auto', 'off']).default('auto'),
 	/** Built frontend (`apps/frontend/dist`) served by the API, as in the Docker image. Unset in development (Vite). */

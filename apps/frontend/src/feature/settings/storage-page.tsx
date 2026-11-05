@@ -145,7 +145,7 @@ function AdminStoragePage() {
 						/>
 						<DetailRow
 							label='File layout'
-							value={<Mono>projects/&lt;clinic&gt;/users/&lt;user&gt;/…</Mono>}
+							value={<Mono>clinics/&lt;clinic&gt;/users/&lt;user&gt;/…</Mono>}
 						/>
 					</>
 				)}

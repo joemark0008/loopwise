@@ -25,7 +25,7 @@ const PG_FORMATS: Record<Granularity, string> = {
 	month: 'YYYY-MM',
 };
 
-/** `UsageRecord` message counters and the `chat_message.source` each one counts. */
+/** `UsageRecord` message counters and the `chat_messages.source` each one counts. */
 const SOURCE_COUNTERS = [
 	['webMessageCount', 'web'],
 	['slackMessageCount', 'slack'],
@@ -62,14 +62,14 @@ const MESSAGE_SENDER = Prisma.sql`coalesce(cm.sender_user_id, c.user_id)`;
 const MESSAGE_USAGE_PROVIDER = Prisma.sql`case
 	when cm.role = 'user' then (
 		select next_message.llm_provider
-		from chat_message as next_message
+		from chat_messages as next_message
 		where next_message.chat_id = cm.chat_id
 			and next_message.role = 'assistant'
 			and next_message.llm_provider is not null
 			and next_message.created_at > cm.created_at
 			and not exists (
 				select 1
-				from chat_message as next_user_message
+				from chat_messages as next_user_message
 				where next_user_message.chat_id = cm.chat_id
 					and next_user_message.role = 'user'
 					and next_user_message.created_at > cm.created_at
@@ -85,7 +85,7 @@ end`;
 const MESSAGE_USAGE_SOURCE = Prisma.sql`case
 	when cm.role = 'assistant' then (
 		select source_message.source
-		from chat_message as source_message
+		from chat_messages as source_message
 		where source_message.chat_id = cm.chat_id
 			and source_message.role = 'user'
 			and source_message.created_at <= cm.created_at
@@ -98,7 +98,7 @@ end`;
 /** The source of an inference: the one of the latest user message of its chat. */
 const INFERENCE_USAGE_SOURCE = Prisma.sql`(
 	select source_message.source
-	from chat_message as source_message
+	from chat_messages as source_message
 	where source_message.chat_id = li.chat_id
 		and source_message.role = 'user'
 		and source_message.created_at <= li.created_at
@@ -110,7 +110,7 @@ const USER_MESSAGE_COUNT = Prisma.sql`count(distinct case when cm.role = 'user' 
 
 /**
  * Port of upstream `queries/usage.queries.ts` on Postgres. Usage combines the tokens of assistant messages
- * (`chat_message`) with those of the other model calls (`llm_inference`); costs come from the `cost_lookup` table
+ * (`chat_messages`) with those of the other model calls (`llm_inferences`); costs come from the `cost_lookup` table
  * the caller builds from the model catalogue and the clinic's custom model prices.
  */
 @Injectable()
@@ -151,17 +151,17 @@ export class UsageRepository {
 			with ${costLookup(costs)},
 			message_usage as (
 				select ${dateOf('cm', granularity)} as date, ${aliased(messageColumns, names)}
-				from chat_message cm
-				join chat c on cm.chat_id = c.id
-				join "user" u on ${MESSAGE_SENDER} = u.id
+				from chat_messages cm
+				join chats c on cm.chat_id = c.id
+				join users u on ${MESSAGE_SENDER} = u.id
 				left join cost_lookup cl on cl.provider = cm.llm_provider and cl.model_id = cm.llm_model_id
 				where ${messageWhere}
 				group by 1
 			),
 			inference_usage as (
 				select ${dateOf('li', granularity)} as date, ${aliased(inferenceColumns, names)}
-				from llm_inference li
-				join "user" u on li.user_id = u.id
+				from llm_inferences li
+				join users u on li.user_id = u.id
 				left join cost_lookup cl on cl.provider = li.llm_provider and cl.model_id = li.llm_model_id
 				where ${inferenceWhere}
 				group by 1
@@ -201,9 +201,9 @@ export class UsageRepository {
 					${USER_MESSAGE_COUNT} as message_count,
 					sum(cm.total_tokens) as total_tokens,
 					${totalCostOf('cm')} as total_cost
-				from chat_message cm
-				join chat c on cm.chat_id = c.id
-				join "user" u on ${MESSAGE_SENDER} = u.id
+				from chat_messages cm
+				join chats c on cm.chat_id = c.id
+				join users u on ${MESSAGE_SENDER} = u.id
 				left join cost_lookup cl on cl.provider = cm.llm_provider and cl.model_id = cm.llm_model_id
 				where ${messageWhere}
 				group by 1, 2
@@ -213,8 +213,8 @@ export class UsageRepository {
 					0 as message_count,
 					sum(li.total_tokens) as total_tokens,
 					${totalCostOf('li')} as total_cost
-				from llm_inference li
-				join "user" u on li.user_id = u.id
+				from llm_inferences li
+				join users u on li.user_id = u.id
 				left join cost_lookup cl on cl.provider = li.llm_provider and cl.model_id = li.llm_model_id
 				where ${inferenceWhere}
 				group by 1, 2
@@ -241,9 +241,9 @@ export class UsageRepository {
 		const { messageWhere } = buildUsageWhere(clinicId, filter, userId);
 		const [row] = await this.prisma.$queryRaw<Array<{ total_messages: unknown; unique_users: unknown }>>`
 			select ${USER_MESSAGE_COUNT} as total_messages, count(distinct ${MESSAGE_SENDER}) as unique_users
-			from chat_message cm
-			join chat c on cm.chat_id = c.id
-			join "user" u on ${MESSAGE_SENDER} = u.id
+			from chat_messages cm
+			join chats c on cm.chat_id = c.id
+			join users u on ${MESSAGE_SENDER} = u.id
 			where ${messageWhere}`;
 
 		return {
@@ -256,9 +256,9 @@ export class UsageRepository {
 	async getUserChatCounts(clinicId: string): Promise<Array<{ userName: string; chatCount: number }>> {
 		const rows = await this.prisma.$queryRaw<Array<{ user_name: string; chat_count: bigint }>>`
 			select u.name as user_name, count(distinct c.id) as chat_count
-			from chat c
-			join "user" u on c.user_id = u.id
-			where c.project_id = ${clinicId}
+			from chats c
+			join users u on c.user_id = u.id
+			where c.clinic_id = ${clinicId}::uuid
 			group by u.name
 			order by u.name`;
 		return rows.map((row) => ({ userName: row.user_name, chatCount: Number(row.chat_count) }));
@@ -268,11 +268,11 @@ export class UsageRepository {
 		const [messageRows, inferenceRows] = await Promise.all([
 			this.prisma.$queryRaw<Array<{ provider: string }>>`
 				select distinct cm.llm_provider as provider
-				from chat_message cm
-				join chat c on cm.chat_id = c.id
-				where c.project_id = ${clinicId}
+				from chat_messages cm
+				join chats c on cm.chat_id = c.id
+				where c.clinic_id = ${clinicId}::uuid
 					and cm.llm_provider is not null
-					${userId ? Prisma.sql`and ${MESSAGE_SENDER} = ${userId}` : Prisma.empty}`,
+					${userId ? Prisma.sql`and ${MESSAGE_SENDER} = ${userId}::uuid` : Prisma.empty}`,
 			this.prisma.llmInference.findMany({
 				where: { clinicId, ...(userId && { userId }) },
 				distinct: ['llmProvider'],
@@ -325,26 +325,33 @@ function aliased(columns: Prisma.Sql[], names: Prisma.Sql[]): Prisma.Sql {
 }
 
 function dateOf(table: 'cm' | 'li', granularity: Granularity): Prisma.Sql {
-	return Prisma.sql`to_char(${Prisma.raw(`${table}.created_at`)}, ${Prisma.raw(`'${PG_FORMATS[granularity]}'`)})`;
+	const utc = Prisma.raw(`(${table}.created_at at time zone 'UTC')`);
+	return Prisma.sql`to_char(${utc}, ${Prisma.raw(`'${PG_FORMATS[granularity]}'`)})`;
 }
 
-/** `created_at` holds UTC without a time zone: compare it with the lookback as a UTC wall-clock timestamp. */
+/** The lookback instant (ISO, UTC); `created_at` is a timestamptz and the buckets are UTC dates. */
 function lookbackOf(period: UsagePeriodRange): string {
 	return new Date(getLookbackTimestamp(period)).toISOString();
 }
 
 function buildUsageWhere(clinicId: string, filter: UsageFilter, userId?: string) {
 	const lookback = lookbackOf(filter.period);
-	const message = [Prisma.sql`c.project_id = ${clinicId}`, Prisma.sql`cm.created_at >= ${lookback}::timestamp`];
-	const inference = [Prisma.sql`li.project_id = ${clinicId}`, Prisma.sql`li.created_at >= ${lookback}::timestamp`];
+	const message = [
+		Prisma.sql`c.clinic_id = ${clinicId}::uuid`,
+		Prisma.sql`cm.created_at >= ${lookback}::timestamptz`,
+	];
+	const inference = [
+		Prisma.sql`li.clinic_id = ${clinicId}::uuid`,
+		Prisma.sql`li.created_at >= ${lookback}::timestamptz`,
+	];
 
 	if (filter.provider) {
 		message.push(Prisma.sql`(${MESSAGE_USAGE_PROVIDER}) = ${filter.provider}`);
 		inference.push(Prisma.sql`li.llm_provider = ${filter.provider}`);
 	}
 	if (userId) {
-		message.push(Prisma.sql`${MESSAGE_SENDER} = ${userId}`);
-		inference.push(Prisma.sql`li.user_id = ${userId}`);
+		message.push(Prisma.sql`${MESSAGE_SENDER} = ${userId}::uuid`);
+		inference.push(Prisma.sql`li.user_id = ${userId}::uuid`);
 	} else {
 		const names = filter.userNames?.filter(Boolean) ?? [];
 		if (names.length > 0) {

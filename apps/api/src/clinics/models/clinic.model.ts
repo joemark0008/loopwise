@@ -1,5 +1,7 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
 
+import { StaffRole } from './clinic-enums.js';
+
 @ObjectType({ description: 'A clinic the user can access, with their role in it.' })
 export class ClinicSummary {
 	@Field(() => ID)
@@ -8,8 +10,11 @@ export class ClinicSummary {
 	@Field()
 	name: string;
 
-	@Field()
-	type: string;
+	@Field({ description: 'Short code used in document numbers, unique in the organization (e.g. `TAG`).' })
+	code: string;
+
+	@Field({ description: 'Where the clinic context lives: `local` (a folder on the server).' })
+	kind: string;
 
 	@Field(() => String, {
 		nullable: true,
@@ -17,11 +22,17 @@ export class ClinicSummary {
 	})
 	path: string | null;
 
-	@Field(() => String, { nullable: true })
-	orgId: string | null;
+	@Field(() => ID)
+	organizationId: string;
 
-	@Field({ description: "The user's role: admin, user, viewer or context_admin." })
+	@Field({ description: "The user's access level, derived from their roles: admin, user, viewer or context_admin." })
 	userRole: string;
+
+	@Field(() => [StaffRole], {
+		description:
+			"The user's roles at the clinic (`user_clinic_roles`), e.g. DOCTOR or CASHIER: they pick the desks.",
+	})
+	staffRoles: StaffRole[];
 
 	@Field()
 	createdAt: Date;

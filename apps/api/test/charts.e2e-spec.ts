@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -39,8 +40,14 @@ vi.mock('../src/agent/utils/safe-fetch.js', async (importOriginal) => {
 	};
 });
 
-const OTHER_USER_ID = 'charts-other-user';
-const OTHER_CLINIC_ID = 'charts-other-clinic';
+/** A fixed UUID per name (every id column is a uuid). */
+function uid(name: string): string {
+	const hex = createHash('sha1').update(`charts-e2e:${name}`).digest('hex');
+	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+const OTHER_USER_ID = uid('charts-other-user');
+const OTHER_CLINIC_ID = uid('charts-other-clinic');
 const IMAGE_ID = '6f1d1f0e-8a0e-4a59-9f0b-6a5c2d7a9e11';
 const FOREIGN_IMAGE_ID = '0b5c8a0e-1f2d-4c3b-9a8e-7d6c5b4a3f21';
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -102,20 +109,32 @@ describe('charts and maps (e2e)', () => {
 			.send({ query, variables });
 
 	async function seed() {
-		await prisma.user.create({ data: { id: OTHER_USER_ID, name: 'Other', email: 'other@example.com' } });
-		await prisma.clinic.create({ data: { id: OTHER_CLINIC_ID, name: 'Other', type: 'local', path: '/tmp/x' } });
+		await prisma.user.create({
+			data: {
+				id: OTHER_USER_ID,
+				name: 'Other',
+				firstName: 'Other',
+				lastName: 'User',
+				email: 'other@example.com',
+			},
+		});
+		// Another organization's clinic: the user has no access to it.
+		const other = await prisma.organization.create({ data: { name: 'Other', slug: 'charts-other' } });
+		await prisma.clinic.create({
+			data: { id: OTHER_CLINIC_ID, organizationId: other.id, code: 'OTH', name: 'Other', path: '/tmp/x' },
+		});
 		await prisma.chat.createMany({
 			data: [
-				{ id: 'chat-own', userId, clinicId, title: 'Mine' },
-				{ id: 'chat-colleague', userId: OTHER_USER_ID, clinicId, title: 'Colleague' },
-				{ id: 'chat-foreign', userId: OTHER_USER_ID, clinicId: OTHER_CLINIC_ID, title: 'Foreign' },
+				{ id: uid('chat-own'), userId, clinicId, title: 'Mine' },
+				{ id: uid('chat-colleague'), userId: OTHER_USER_ID, clinicId, title: 'Colleague' },
+				{ id: uid('chat-foreign'), userId: OTHER_USER_ID, clinicId: OTHER_CLINIC_ID, title: 'Foreign' },
 			],
 		});
 		await prisma.chatMessage.createMany({
 			data: [
-				{ id: 'msg-own', chatId: 'chat-own', role: 'assistant' },
-				{ id: 'msg-colleague', chatId: 'chat-colleague', role: 'assistant' },
-				{ id: 'msg-foreign', chatId: 'chat-foreign', role: 'assistant' },
+				{ id: uid('msg-own'), chatId: uid('chat-own'), role: 'assistant' },
+				{ id: uid('msg-colleague'), chatId: uid('chat-colleague'), role: 'assistant' },
+				{ id: uid('msg-foreign'), chatId: uid('chat-foreign'), role: 'assistant' },
 			],
 		});
 		await prisma.messageImage.createMany({
@@ -125,7 +144,7 @@ describe('charts and maps (e2e)', () => {
 			],
 		});
 		const queryPart = (id: string, messageId: string) => ({
-			id: `${id}-sql`,
+			id: uid(`${id}-sql`),
 			messageId,
 			order: 0,
 			type: 'tool-execute_sql',
@@ -146,10 +165,10 @@ describe('charts and maps (e2e)', () => {
 		});
 		await prisma.messagePart.createMany({
 			data: [
-				queryPart('own', 'msg-own'),
+				queryPart('own', uid('msg-own')),
 				{
-					id: 'own-chart',
-					messageId: 'msg-own',
+					id: uid('own-chart'),
+					messageId: uid('msg-own'),
 					order: 1,
 					type: 'tool-display_chart',
 					toolName: 'display_chart',
@@ -158,8 +177,8 @@ describe('charts and maps (e2e)', () => {
 					toolInput: CHART_CONFIG,
 				},
 				{
-					id: 'own-map',
-					messageId: 'msg-own',
+					id: uid('own-map'),
+					messageId: uid('msg-own'),
 					order: 2,
 					type: 'tool-display_map',
 					toolName: 'display_map',
@@ -168,17 +187,17 @@ describe('charts and maps (e2e)', () => {
 					toolInput: MAP_CONFIG,
 				},
 				{
-					id: 'own-image',
-					messageId: 'msg-own',
+					id: uid('own-image'),
+					messageId: uid('msg-own'),
 					order: 3,
 					type: 'file',
 					mediaType: 'image/png',
 					imageId: IMAGE_ID,
 				},
-				queryPart('colleague', 'msg-colleague'),
+				queryPart('colleague', uid('msg-colleague')),
 				{
-					id: 'colleague-chart',
-					messageId: 'msg-colleague',
+					id: uid('colleague-chart'),
+					messageId: uid('msg-colleague'),
 					order: 1,
 					type: 'tool-display_chart',
 					toolName: 'display_chart',
@@ -187,8 +206,8 @@ describe('charts and maps (e2e)', () => {
 					toolInput: CHART_CONFIG,
 				},
 				{
-					id: 'foreign-image',
-					messageId: 'msg-foreign',
+					id: uid('foreign-image'),
+					messageId: uid('msg-foreign'),
 					order: 0,
 					type: 'file',
 					mediaType: 'image/png',
@@ -262,7 +281,7 @@ describe('charts and maps (e2e)', () => {
 				},
 			);
 			expect(res.body.data.updateChartConfig).toBe(true);
-			const part = await prisma.messagePart.findUniqueOrThrow({ where: { id: 'own-chart' } });
+			const part = await prisma.messagePart.findUniqueOrThrow({ where: { id: uid('own-chart') } });
 			expect(part.toolInput).toMatchObject({ title: 'Renamed' });
 			expect(await prisma.chartImage.count({ where: { toolCallId: 'own-chart-call' } })).toBe(0);
 		});
@@ -296,7 +315,7 @@ describe('charts and maps (e2e)', () => {
 					config,
 				});
 			expect((await update({ ...MAP_CONFIG, title: 'Shops' })).body.data.updateMapConfig).toBe(true);
-			const part = await prisma.messagePart.findUniqueOrThrow({ where: { id: 'own-map' } });
+			const part = await prisma.messagePart.findUniqueOrThrow({ where: { id: uid('own-map') } });
 			expect(part.toolInput).toMatchObject({ title: 'Shops' });
 
 			const invalid = await update({ ...MAP_CONFIG, map_type: 'choropleth' });
