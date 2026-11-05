@@ -42,7 +42,7 @@ export function TodayPage() {
 					<Sparkles aria-hidden />
 					Ask Wise
 				</p>
-				<ChatInput />
+				<ChatInput className={styles.askInput} />
 			</section>
 			<div className={styles.grid}>
 				<div className={styles.column}>
