@@ -65,6 +65,12 @@ for (const colorScheme of ['light', 'dark'] as const) {
 				['chart', `/patients/${patientId}`],
 				['results inbox', '/results'],
 				['wise chats', '/chats'],
+				['appointments', '/appointments'],
+				['appointments week', '/appointments?view=week'],
+				['queue', '/queue'],
+				['triage', '/triage'],
+				['my queue', '/my-queue'],
+				['board', '/board'],
 				...['note', 'vitals', 'orders', 'prescriptions', 'certificate', 'billing'].map(
 					(tab) => [`record ${tab}`, `${record}?tab=${tab}`] as const,
 				),
