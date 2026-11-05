@@ -1,0 +1,119 @@
+// =============================================================================
+//  HMO — Maxicare, Intellicare, MediCard, PhilCare, ValuCare, Avega, Cocolife …
+//  Flow: verify coverage → get LOA / approval code → render service →
+//  charge to HMO → batch transmittal (SOA) → HMO pays (often 30–90 days).
+// =============================================================================
+
+enum LoaStatus {
+  REQUESTED
+  APPROVED
+  DENIED
+  USED
+  EXPIRED
+  CANCELLED
+
+  @@map("loa_status")
+}
+
+enum TransmittalStatus {
+  DRAFT
+  SUBMITTED
+  PARTIALLY_PAID
+  PAID
+  DISPUTED
+
+  @@map("transmittal_status")
+}
+
+model HmoProvider {
+  id               String  @id @default(uuid(7)) @db.Uuid
+  organizationId   String  @map("organization_id") @db.Uuid
+  code             String
+  name             String
+  tin              String?
+  address          String?
+  contactPerson    String? @map("contact_person")
+  contactNo        String? @map("contact_no")
+  email            String?
+  accreditationNo  String? @map("accreditation_no") // clinic's accreditation with this HMO
+  paymentTermsDays Int?    @default(60) @map("payment_terms_days")
+  isActive         Boolean @default(true) @map("is_active")
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  coverages    PatientHmoCoverage[]
+  transmittals HmoTransmittal[]
+
+  @@unique([organizationId, code])
+  @@map("hmo_providers")
+}
+
+model PatientHmoCoverage {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  patientId     String    @map("patient_id") @db.Uuid
+  hmoProviderId String    @map("hmo_provider_id") @db.Uuid
+  cardNo        String    @map("card_no")
+  accountName   String?   @map("account_name") // employer / company account
+  planName      String?   @map("plan_name")
+  mbl           Decimal?  @db.Decimal(12, 2) // Maximum Benefit Limit
+  isPrincipal   Boolean   @default(true) @map("is_principal")
+  principalName String?   @map("principal_name")
+  validFrom     DateTime? @map("valid_from") @db.Date
+  validTo       DateTime? @map("valid_to") @db.Date
+  isActive      Boolean   @default(true) @map("is_active")
+  remarks       String?
+
+  patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  hmoProvider HmoProvider @relation(fields: [hmoProviderId], references: [id])
+  loas        HmoLoa[]
+
+  @@unique([hmoProviderId, cardNo])
+  @@index([patientId])
+  @@map("patient_hmo_coverages")
+}
+
+/// Letter of Authorization / approval code for a specific availment
+model HmoLoa {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  coverageId       String    @map("coverage_id") @db.Uuid
+  encounterId      String?   @map("encounter_id") @db.Uuid
+  loaNo            String?   @map("loa_no") // LOA number or approval code
+  approvedServices String?   @map("approved_services") // "Consultation, CBC, Urinalysis"
+  diagnosisText    String?   @map("diagnosis_text")
+  approvedAmount   Decimal?  @map("approved_amount") @db.Decimal(12, 2)
+  status           LoaStatus @default(REQUESTED)
+  requestedAt      DateTime  @default(now()) @map("requested_at") @db.Timestamptz(3)
+  approvedAt       DateTime? @map("approved_at") @db.Timestamptz(3)
+  expiresAt        DateTime? @map("expires_at") @db.Timestamptz(3)
+  approvedByName   String?   @map("approved_by_name") // HMO coordinator / call center agent
+  attachmentKey    String?   @map("attachment_key") // scanned LOA
+  remarks          String?
+
+  coverage  PatientHmoCoverage @relation(fields: [coverageId], references: [id])
+  encounter Encounter?         @relation(fields: [encounterId], references: [id])
+  payments  Payment[]
+
+  @@index([coverageId])
+  @@index([loaNo])
+  @@map("hmo_loas")
+}
+
+/// Statement of Account / transmittal batch sent to the HMO for collection
+model HmoTransmittal {
+  id            String            @id @default(uuid(7)) @db.Uuid
+  hmoProviderId String            @map("hmo_provider_id") @db.Uuid
+  transmittalNo String            @unique @map("transmittal_no")
+  periodFrom    DateTime          @map("period_from") @db.Date
+  periodTo      DateTime          @map("period_to") @db.Date
+  totalAmount   Decimal           @map("total_amount") @db.Decimal(12, 2)
+  status        TransmittalStatus @default(DRAFT)
+  submittedAt   DateTime?         @map("submitted_at") @db.Timestamptz(3)
+  paidAmount    Decimal?          @map("paid_amount") @db.Decimal(12, 2)
+  paidAt        DateTime?         @map("paid_at") @db.Timestamptz(3)
+  paymentRef    String?           @map("payment_ref")
+  remarks       String?
+
+  hmoProvider HmoProvider @relation(fields: [hmoProviderId], references: [id])
+  payments    Payment[] // HMO-type payments included in this batch
+
+  @@map("hmo_transmittals")
+}

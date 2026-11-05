@@ -1,0 +1,43 @@
+// =============================================================================
+//  Clinic Management System — Philippine Practice
+//  Prisma 7 multi-file schema (PostgreSQL)
+//
+//  Files:
+//    main.prisma           generator + datasource
+//    organization.prisma   organization, branches, users, roles, numbering
+//    reference.prisma      PSGC address codes, ICD-10, RVS, PhilHealth case rates
+//    practitioner.prisma   doctors (PRC/PTR/S2/PhilHealth PAN), schedules
+//    patient.prisma        patient master, IDs (SC/PWD/PhilSys), allergies, consent
+//    scheduling.prisma     appointments, priority queue (RA 9994 / RA 10754)
+//    clinical.prisma       encounters, SOAP, vitals, diagnoses, procedures
+//    diagnostics.prisma    lab / imaging catalog, orders, results (LIS/HL7-ready)
+//    prescription.prisma   prescriptions (Generics Act, S2 dangerous drugs)
+//    immunization.prisma   vaccines given (DOH EPI-aware)
+//    documents.prisma      medical certificates, referrals, uploaded files
+//    philhealth.prisma     membership, Konsulta/YAKAP enrollment, claims
+//    hmo.prisma            HMO providers, coverage, LOA, transmittals
+//    billing.prisma        services, BIR invoices, SC/PWD discounts, payments, PF
+//    inventory.prisma      items (FDA CPR), lots/expiry, stock movements
+//    audit.prisma          audit trail (Data Privacy Act, RA 10173)
+//
+//  Conventions:
+//    - Encounter-centric: clinical records (Rx, lab orders, med certs, referrals,
+//      immunizations, claims) require encounterId and get patient/branch from it.
+//    - IDs: UUIDv7 (time-ordered)          - Money: Decimal(12,2), PHP
+//    - *ById fields that point to User are plain IDs (no FK) to keep the
+//      relation graph manageable; AuditLog is the source of truth for actions.
+//    - Soft delete via deletedAt on master data.
+//    - DB naming: snake_case columns (@map), plural snake_case tables (@@map),
+//      snake_case enum types. Prisma client stays camelCase.
+//    - Instants use @db.Timestamptz(3) (store UTC, render Asia/Manila);
+//      calendar dates use @db.Date; clinic hours use @db.Time.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}

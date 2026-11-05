@@ -1,0 +1,113 @@
+// =============================================================================
+//  CLINICAL DOCUMENTS — medical certificates, referrals, uploads
+// =============================================================================
+
+enum CertificateType {
+  MEDICAL_CERTIFICATE // general (school, work absence)
+  FIT_TO_WORK
+  MEDICAL_CLEARANCE // pre-op, travel, sports
+  PEME_CERTIFICATE
+  APE_CERTIFICATE
+  SSS_SICKNESS // supporting doc for SSS sickness benefit
+  VACCINATION_CERTIFICATE
+  DRIVERS_LICENSE_MEDICAL // LTO medical certificate
+
+  @@map("certificate_type")
+}
+
+enum ReferralStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  COMPLETED
+  DECLINED
+  CANCELLED
+
+  @@map("referral_status")
+}
+
+enum DocumentType {
+  EXTERNAL_LAB_RESULT
+  EXTERNAL_IMAGING
+  CONSENT_FORM
+  IDENTIFICATION
+  REFERRAL_LETTER
+  PHILHEALTH_FORM // CF1–CF4, PMRF, MDR
+  HMO_LOA
+  PRESCRIPTION_SCAN
+  OTHER
+
+  @@map("document_type")
+}
+
+model MedicalCertificate {
+  id               String          @id @default(uuid(7)) @db.Uuid
+  certNo           String          @unique @map("cert_no")
+  encounterId      String          @map("encounter_id") @db.Uuid
+  practitionerId   String          @map("practitioner_id") @db.Uuid
+  type             CertificateType @default(MEDICAL_CERTIFICATE)
+  purpose          String? // "for school excuse", "for employment requirement"
+  examinedAt       DateTime        @map("examined_at") @db.Timestamptz(3)
+  diagnosisText    String?         @map("diagnosis_text")
+  findings         String?
+  recommendation   String?
+  restDays         Int?            @map("rest_days")
+  restFrom         DateTime?       @map("rest_from") @db.Date
+  restTo           DateTime?       @map("rest_to") @db.Date
+  isFitToWork      Boolean?        @map("is_fit_to_work")
+  peClassification String?         @map("pe_classification") // PEME: Class A / B / C / Pending
+  issuedAt         DateTime        @default(now()) @map("issued_at") @db.Timestamptz(3)
+  verificationCode String          @unique @map("verification_code") // printed as QR to deter fake med certs
+  isVoid           Boolean         @default(false) @map("is_void")
+  voidReason       String?         @map("void_reason")
+  encounter        Encounter       @relation(fields: [encounterId], references: [id])
+  practitioner     Practitioner    @relation(fields: [practitionerId], references: [id])
+
+  @@index([encounterId])
+  @@map("medical_certificates")
+}
+
+model Referral {
+  id                 String         @id @default(uuid(7)) @db.Uuid
+  encounterId        String         @map("encounter_id") @db.Uuid
+  fromPractitionerId String         @map("from_practitioner_id") @db.Uuid
+  toPractitionerId   String?        @map("to_practitioner_id") @db.Uuid // internal referral
+  toExternalDoctor   String?        @map("to_external_doctor") // external referral
+  toFacility         String?        @map("to_facility") // e.g. "Gov. Celestino Gallares Memorial Medical Center"
+  specialty          String?
+  reason             String
+  clinicalSummary    String?        @map("clinical_summary")
+  urgency            OrderPriority  @default(ROUTINE)
+  status             ReferralStatus @default(SENT)
+  referredAt         DateTime       @default(now()) @map("referred_at") @db.Timestamptz(3)
+  responseNotes      String?        @map("response_notes")
+  respondedAt        DateTime?      @map("responded_at") @db.Timestamptz(3)
+  encounter          Encounter      @relation(fields: [encounterId], references: [id])
+  fromPractitioner   Practitioner   @relation("ReferralFrom", fields: [fromPractitionerId], references: [id])
+  toPractitioner     Practitioner?  @relation("ReferralTo", fields: [toPractitionerId], references: [id])
+
+  @@index([encounterId])
+  @@map("referrals")
+}
+
+/// Files stored in S3-compatible storage (Garage/MinIO) — store the object key, not the bytes
+model PatientDocument {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  patientId    String       @map("patient_id") @db.Uuid
+  encounterId  String?      @map("encounter_id") @db.Uuid
+  type         DocumentType
+  title        String
+  storageKey   String       @map("storage_key")
+  mimeType     String       @map("mime_type")
+  sizeBytes    Int          @map("size_bytes")
+  documentDate DateTime?    @map("document_date") @db.Date
+  uploadedById String?      @map("uploaded_by_id") @db.Uuid
+  uploadedAt   DateTime     @default(now()) @map("uploaded_at") @db.Timestamptz(3)
+  deletedAt    DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  patient   Patient    @relation(fields: [patientId], references: [id])
+  encounter Encounter? @relation(fields: [encounterId], references: [id])
+
+  @@index([patientId, type])
+  @@map("patient_documents")
+}

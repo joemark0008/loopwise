@@ -5,3 +5,5 @@ schema.gql
 apps/api/src/generated/
 apps/frontend/src/graphql/generated/
 .claude/
+# The clinic schema reference as supplied, kept verbatim.
+docs/schema-reference/
