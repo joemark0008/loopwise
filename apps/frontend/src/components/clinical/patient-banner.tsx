@@ -30,13 +30,17 @@ export function PatientBanner({
 				<span>
 					Born <strong>{formatDay(patient.birthDate)}</strong>
 				</span>
-				{patient.identifiers.map((identifier) => (
-					<span key={`${identifier.system}-${identifier.value}`}>
-						{identifier.system} <strong>{identifier.value}</strong>
+				<span>
+					No. <strong>{patient.patientNo}</strong>
+				</span>
+				{patient.identifications.map((identification) => (
+					<span key={identification.id}>
+						{identification.label} <strong>{identification.idNumber}</strong>
 					</span>
 				))}
+				{patient.barangay && <span>Brgy. {patient.barangay}</span>}
 				<span>{languageLabel(patient.preferredLanguage)}</span>
-				{!patient.consentAt && <span>No consent recorded</span>}
+				{!patient.consentAt && <span>No data privacy consent on file</span>}
 			</p>
 			{allergies && <AllergyChips allergies={allergies} onAdd={onAddAllergy} />}
 			{actions && <div className={styles.bannerActions}>{actions}</div>}

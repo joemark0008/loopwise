@@ -1,10 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { resultValue, testName } from './result-format';
+import { ResultValues } from './result-values';
 import { ResultFlagCell } from './result-flag-cell';
 import styles from './results.module.css';
-import type { ResultItemFieldsFragment } from '@/graphql/generated/graphql';
-import { patientName } from '@/feature/patients/patient-format';
+import type { DiagnosticReportFieldsFragment } from '@/graphql/generated/graphql';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -16,14 +15,15 @@ import {
 } from '@/components/ui/dialog';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Textarea } from '@/components/ui/textarea';
+import { personName } from '@/feature/orders/order-format';
 import { resultApi } from '@/lib/result-api';
 
-/** Marks a result reviewed, with an optional note kept in the audit trail. */
+/** Marks a released result reviewed, with an optional note kept in the audit trail. */
 export function ReviewResultDialog({
 	result,
 	onOpenChange,
 }: {
-	result: ResultItemFieldsFragment | null;
+	result: DiagnosticReportFieldsFragment | null;
 	onOpenChange: (open: boolean) => void;
 }) {
 	const queryClient = useQueryClient();
@@ -61,14 +61,14 @@ export function ReviewResultDialog({
 						<DialogHeader>
 							<DialogTitle>Mark reviewed</DialogTitle>
 							<DialogDescription>
-								{patientName(result.patient)}: {testName(result)} {resultValue(result)}
+								{personName(result.patient)}: {result.test.name} · {result.order.orderNo}
 							</DialogDescription>
 						</DialogHeader>
 						<div className={styles.reviewFlag}>
 							<ResultFlagCell result={result} />
-							{result.refRange && <span>Reference {result.refRange}</span>}
+							<span>Released by {result.clinicName}</span>
 						</div>
-						{result.value.includes('\n') && <pre className={styles.report}>{result.value}</pre>}
+						<ResultValues result={result} />
 						<label className={styles.noteLabel} htmlFor='review-note'>
 							Note (optional)
 						</label>

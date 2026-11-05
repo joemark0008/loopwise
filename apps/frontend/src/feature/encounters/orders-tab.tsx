@@ -1,49 +1,59 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Printer } from 'lucide-react';
 import { useState } from 'react';
 import styles from './encounter.module.css';
+import ownStyles from './orders-tab.module.css';
 import { formatDateTime } from './encounter-format';
 import { FormField } from './form-field';
-import { useRecordMutation } from './use-record-mutation';
-import type { EncounterRecordFieldsFragment, OrderPriority } from '@/graphql/generated/graphql';
+import { VoidDialog } from './void-dialog';
+import type { DiagnosticOrderFieldsFragment, OrderPriority } from '@/graphql/generated/graphql';
 import { ClinicalFlag, FlaggedValue, ResultFlagChip } from '@/components/clinical/clinical-flag';
-import { StatusBadge } from '@/components/clinical/status-badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Empty } from '@/components/ui/empty';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { encounterRecordApi } from '@/lib/encounter-record-api';
+import { DiagnosticStatusBadge } from '@/feature/orders/diagnostic-status-badge';
+import { CANCELLABLE, PRIORITY_LABELS } from '@/feature/orders/order-format';
+import { valueText } from '@/feature/results/result-format';
+import { ordersApi } from '@/lib/orders-api';
 
-const PRIORITIES: OrderPriority[] = ['routine', 'urgent', 'stat'];
-const PRIORITY_LABELS: Record<OrderPriority, string> = { routine: 'Routine', urgent: 'Urgent', stat: 'STAT' };
+const PRIORITIES: OrderPriority[] = ['ROUTINE', 'URGENT', 'STAT'];
+
+type OrderItem = DiagnosticOrderFieldsFragment['items'][number];
 
 /**
- * Tests ordered from the visit and their results. Ordering sends the order to the lab or imaging facility, which
- * accepts it and marks the specimen collected (its worklist, or HL7); the results arrive through the results feature.
+ * The tests requested from the visit and their results. Requesting creates one order (numbered per clinic) for the
+ * clinic's own lab, which collects, runs and releases each test from its worklist; released results reach the doctor's
+ * results inbox. A test can be cancelled until its result is in.
  */
-export function OrdersTab({ record }: { record: EncounterRecordFieldsFragment }) {
+export function OrdersTab({ record }: { record: { encounter: { id: string }; canEdit: boolean } }) {
+	const encounterId = record.encounter.id;
+	const orders = useQuery(ordersApi.order.forEncounter.queryOptions({ encounterId }));
+	const [cancelling, setCancelling] = useState<{ order: DiagnosticOrderFieldsFragment; item: OrderItem } | null>(
+		null,
+	);
+	const items = (orders.data ?? []).flatMap((order) => order.items.map((item) => ({ order, item })));
+
 	return (
 		<>
 			<section className={styles.section}>
 				<div className={styles.sectionHeader}>
 					<h3 className={styles.sectionTitle}>Orders and results</h3>
-					{record.orders.length > 0 && (
+					{items.length > 0 && (
 						<Button asChild size='sm' variant='outline'>
-							<Link
-								to='/print/lab-request/$encounterId'
-								params={{ encounterId: record.encounter.id }}
-								target='_blank'
-							>
+							<Link to='/print/lab-request/$encounterId' params={{ encounterId }} target='_blank'>
 								<Printer />
 								Lab request
 							</Link>
 						</Button>
 					)}
 				</div>
-				{record.orders.length === 0 ? (
-					<Empty>No tests ordered from this visit.</Empty>
+				{orders.error && <ErrorMessage message={orders.error.message} />}
+				{orders.isPending ? null : items.length === 0 ? (
+					<Empty>No tests requested from this visit.</Empty>
 				) : (
 					<div className={styles.tableScroll} role='region' aria-label='Orders and results' tabIndex={0}>
 						<table className={styles.table} data-testid='order-list'>
@@ -55,72 +65,105 @@ export function OrdersTab({ record }: { record: EncounterRecordFieldsFragment })
 									</th>
 									<th scope='col'>Reference</th>
 									<th scope='col'>Flag</th>
-									<th scope='col'>Sent to</th>
 									<th scope='col'>Status</th>
+									{record.canEdit && (
+										<th scope='col'>
+											<span className='sr-only'>Actions</span>
+										</th>
+									)}
 								</tr>
 							</thead>
 							<tbody>
-								{record.orders.flatMap((order) => {
+								{items.flatMap(({ order, item }) => {
 									const name = (
 										<>
-											<span className={styles.listMain}>{order.display ?? order.code}</span>
-											{order.notes && <div className={styles.muted}>{order.notes}</div>}
-											{order.priority !== 'routine' && (
-												<>
-													{' '}
-													<ClinicalFlag
-														tone={order.priority === 'stat' ? 'critical' : 'abnormal'}
-													>
-														{order.priority === 'stat' ? 'STAT' : 'Urgent'}
-													</ClinicalFlag>
-												</>
+											<span className={styles.listMain}>{item.test.name}</span>
+											<div className={styles.muted}>
+												{order.orderNo}
+												{order.clinicalInfo && ` · ${order.clinicalInfo}`}
+											</div>
+											{order.priority !== 'ROUTINE' && (
+												<ClinicalFlag
+													tone={order.priority === 'STAT' ? 'critical' : 'abnormal'}
+												>
+													{PRIORITY_LABELS[order.priority]}
+												</ClinicalFlag>
 											)}
 										</>
 									);
-									const sent = (
+									const status = (
 										<td>
-											{order.targetFacility?.name ?? 'Facility'}
-											<div className={styles.muted}>
-												{order.sentAt ? formatDateTime(order.sentAt) : 'not sent'}
-											</div>
+											<DiagnosticStatusBadge status={item.status} />
+											{item.statusReason && (
+												<div className={styles.muted}>{item.statusReason}</div>
+											)}
+											{item.result?.releasedAt && (
+												<div className={styles.muted}>
+													{formatDateTime(item.result.releasedAt)}
+												</div>
+											)}
 										</td>
 									);
-									if (order.results.length === 0) {
+									const actions = record.canEdit && (
+										<td>
+											{CANCELLABLE.includes(item.status) && (
+												<Button
+													size='sm'
+													variant='outline'
+													onClick={() => setCancelling({ order, item })}
+													aria-label={`Cancel ${item.test.name}`}
+												>
+													Cancel
+												</Button>
+											)}
+										</td>
+									);
+									const released = item.status === 'RELEASED' ? item.result : null;
+									if (!released || (released.values.length === 0 && !released.impression)) {
 										return [
-											<tr key={order.id}>
+											<tr key={item.id} data-voided={item.status === 'CANCELLED' || undefined}>
 												<td>{name}</td>
 												<td data-numeric className={styles.muted}>
-													{order.status === 'resulted' || order.status === 'reviewed'
-														? 'No values'
-														: 'Pending'}
+													{released
+														? 'See report'
+														: item.status === 'CANCELLED'
+															? '—'
+															: 'Pending'}
 												</td>
 												<td />
 												<td />
-												{sent}
-												<td>
-													<OrderStatusCell order={order} />
-												</td>
+												{status}
+												{actions}
 											</tr>,
 										];
 									}
-									return order.results.map((result, index) => (
-										<tr key={result.id} data-flag={result.flag ?? undefined}>
+									if (released.values.length === 0) {
+										return [
+											<tr key={item.id}>
+												<td>{name}</td>
+												<td>{released.impression}</td>
+												<td />
+												<td />
+												{status}
+												{actions}
+											</tr>,
+										];
+									}
+									return released.values.map((value, index) => (
+										<tr key={value.id} data-flag={value.flag ?? undefined}>
 											<td>
 												{index === 0 ? name : null}
-												{(order.results.length > 1 || result.display !== order.display) && (
-													<div className={styles.muted}>{result.display ?? 'Result'}</div>
+												{released.values.length > 1 && (
+													<div className={styles.muted}>{value.name}</div>
 												)}
 											</td>
 											<td data-numeric>
-												<FlaggedValue flag={result.flag}>
-													{result.value}
-													{result.unit && <span className={styles.unit}> {result.unit}</span>}
-												</FlaggedValue>
+												<FlaggedValue flag={value.flag}>{valueText(value)}</FlaggedValue>
 											</td>
-											<td className={styles.muted}>{result.refRange ?? '—'}</td>
-											<td>{result.flag && <ResultFlagChip flag={result.flag} />}</td>
-											{index === 0 ? sent : <td />}
-											<td>{index === 0 && <OrderStatusCell order={order} />}</td>
+											<td className={styles.muted}>{value.referenceRange ?? '—'}</td>
+											<td>{value.flag && <ResultFlagChip flag={value.flag} />}</td>
+											{index === 0 ? status : <td />}
+											{index === 0 ? actions : record.canEdit && <td />}
 										</tr>
 									));
 								})}
@@ -129,88 +172,84 @@ export function OrdersTab({ record }: { record: EncounterRecordFieldsFragment })
 					</div>
 				)}
 			</section>
-			{record.canEdit && <NewOrderForm encounterId={record.encounter.id} />}
+			{record.canEdit && <NewOrderForm encounterId={encounterId} />}
+			<CancelTestDialog target={cancelling} onClose={() => setCancelling(null)} />
 		</>
 	);
 }
 
-/** The order's status, when it got there, and why when the lab rejected it or the doctor cancelled it. */
-function OrderStatusCell({ order }: { order: EncounterRecordFieldsFragment['orders'][number] }) {
-	const at =
-		order.status === 'accepted'
-			? order.acceptedAt
-			: order.status === 'collected'
-				? order.collectedAt
-				: order.status === 'rejected' || order.status === 'cancelled'
-					? order.closedAt
-					: null;
+function CancelTestDialog({
+	target,
+	onClose,
+}: {
+	target: { order: DiagnosticOrderFieldsFragment; item: OrderItem } | null;
+	onClose: () => void;
+}) {
+	const queryClient = useQueryClient();
+	const cancel = useMutation(
+		ordersApi.order.cancel.mutationOptions({
+			onSuccess: async () => {
+				await queryClient.invalidateQueries(ordersApi.order.forEncounter.pathFilter());
+				onClose();
+			},
+		}),
+	);
 	return (
-		<>
-			<StatusBadge status={order.status} />
-			{at && <div className={styles.muted}>{formatDateTime(at)}</div>}
-			{order.statusReason && <div className={styles.muted}>{order.statusReason}</div>}
-		</>
+		<VoidDialog
+			open={target !== null}
+			onOpenChange={(open) => !open && onClose()}
+			title={`Cancel ${target?.item.test.name ?? 'the test'}?`}
+			description="The lab sees your reason; it stays on the visit's orders, cancelled."
+			actionLabel='Cancel test'
+			placeholder='No longer needed'
+			onVoid={(reason) => target && cancel.mutate({ orderId: target.order.id, itemId: target.item.id, reason })}
+			isPending={cancel.isPending}
+			error={cancel.error?.message}
+		/>
 	);
 }
 
 function NewOrderForm({ encounterId }: { encounterId: string }) {
-	const options = useQuery(encounterRecordApi.encounterRecord.orderOptions.queryOptions());
-	const [code, setCode] = useState('');
-	const [targetOrgId, setTargetOrgId] = useState('');
-	const [priority, setPriority] = useState<OrderPriority>('routine');
-	const [notes, setNotes] = useState('');
-	const create = useRecordMutation(encounterRecordApi.encounterRecord.createOrder);
+	const queryClient = useQueryClient();
+	const tests = useQuery(ordersApi.order.tests.queryOptions(undefined));
+	const [testIds, setTestIds] = useState<string[]>([]);
+	const [priority, setPriority] = useState<OrderPriority>('ROUTINE');
+	const [clinicalInfo, setClinicalInfo] = useState('');
+	const create = useMutation(
+		ordersApi.order.create.mutationOptions({
+			onSuccess: async () => {
+				setTestIds([]);
+				setClinicalInfo('');
+				await queryClient.invalidateQueries(ordersApi.order.forEncounter.pathFilter());
+			},
+		}),
+	);
+	const toggle = (id: string, on: boolean) =>
+		setTestIds(on ? [...testIds, id] : testIds.filter((candidate) => candidate !== id));
 
 	return (
 		<form
 			className={styles.section}
 			onSubmit={(event) => {
 				event.preventDefault();
-				create.mutate(
-					{ encounterId, code, targetOrgId, priority, notes: notes.trim() || null },
-					{
-						onSuccess: () => {
-							setCode('');
-							setNotes('');
-						},
-					},
-				);
+				create.mutate({ encounterId, testIds, priority, clinicalInfo: clinicalInfo.trim() || null });
 			}}
 		>
-			<h3 className={styles.sectionTitle}>Order a test</h3>
+			<h3 className={styles.sectionTitle}>Request tests</h3>
+			<fieldset className={ownStyles.tests} aria-label='Tests'>
+				{(tests.data ?? []).map((test) => (
+					<label key={test.id} className={ownStyles.test}>
+						<Checkbox
+							checked={testIds.includes(test.id)}
+							onCheckedChange={(on) => toggle(test.id, on)}
+							disabled={create.isPending}
+						/>
+						{test.name}
+						{test.requiresFasting && <span className={ownStyles.fasting}>(fasting)</span>}
+					</label>
+				))}
+			</fieldset>
 			<div className={styles.fields}>
-				<FormField label='Test'>
-					{() => (
-						<Select value={code} onValueChange={setCode}>
-							<SelectTrigger className={styles.control} aria-label='Test'>
-								<SelectValue placeholder='Choose a test' />
-							</SelectTrigger>
-							<SelectContent>
-								{(options.data?.orderableTests ?? []).map((test) => (
-									<SelectItem key={test.code} value={test.code}>
-										{test.display}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					)}
-				</FormField>
-				<FormField label='Send to'>
-					{() => (
-						<Select value={targetOrgId} onValueChange={setTargetOrgId}>
-							<SelectTrigger className={styles.control} aria-label='Send to'>
-								<SelectValue placeholder='Lab or imaging facility' />
-							</SelectTrigger>
-							<SelectContent>
-								{(options.data?.orderTargets ?? []).map((facility) => (
-									<SelectItem key={facility.id} value={facility.id}>
-										{facility.name}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					)}
-				</FormField>
 				<FormField label='Priority'>
 					{() => (
 						<Select value={priority} onValueChange={(value) => setPriority(value as OrderPriority)}>
@@ -227,24 +266,24 @@ function NewOrderForm({ encounterId }: { encounterId: string }) {
 						</Select>
 					)}
 				</FormField>
-				<FormField label='Notes'>
+				<FormField label='Clinical information' wide>
 					{(id) => (
 						<Input
 							id={id}
 							className={styles.control}
-							value={notes}
-							maxLength={1000}
-							placeholder='For the lab, e.g. fasting 8 hours'
-							onChange={(event) => setNotes(event.target.value)}
+							value={clinicalInfo}
+							maxLength={500}
+							placeholder='Printed on the request, e.g. T2DM on metformin'
+							onChange={(event) => setClinicalInfo(event.target.value)}
 						/>
 					)}
 				</FormField>
 			</div>
-			{options.error && <ErrorMessage message={options.error.message} />}
+			{tests.error && <ErrorMessage message={tests.error.message} />}
 			{create.error && <ErrorMessage message={create.error.message} />}
 			<div className={styles.actions}>
-				<Button type='submit' size='sm' disabled={!code || !targetOrgId || create.isPending}>
-					Order and send
+				<Button type='submit' size='sm' disabled={testIds.length === 0 || create.isPending}>
+					{testIds.length > 1 ? `Request ${testIds.length} tests` : 'Request test'}
 				</Button>
 			</div>
 		</form>

@@ -30,6 +30,35 @@
 	white-space: pre-wrap;
 }
 
+.resultValues {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	font-size: var(--app-text-sm);
+	color: var(--app-body);
+}
+
+.valuesTable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.valuesTable th,
+.valuesTable td {
+	padding: 0.25rem 0.5rem 0.25rem 0;
+	text-align: left;
+	vertical-align: top;
+}
+
+.valuesTable th {
+	font-weight: 600;
+	color: var(--app-muted);
+}
+
+.valuesTable [data-numeric] {
+	text-align: right;
+}
+
 .groupHeading {
 	padding-top: 1rem;
 }

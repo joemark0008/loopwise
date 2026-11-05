@@ -2,72 +2,77 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { TestTubes } from 'lucide-react';
 import { useState } from 'react';
+import { DiagnosticStatusBadge } from './diagnostic-status-badge';
+import { EnterResultDialog } from './enter-result-dialog';
 import styles from './lab-worklist.module.css';
-import { byPriorityThenAge, waitingFor } from './order-format';
-import type { LabOrderFieldsFragment, OrderStatus } from '@/graphql/generated/graphql';
-import { ClinicalFlag } from '@/components/clinical/clinical-flag';
+import { ageSex, byPriorityThenAge, PRIORITY_LABELS, personName, waitingFor } from './order-format';
+import type { DiagnosticOrderStatus, LabWorklistItemFieldsFragment } from '@/graphql/generated/graphql';
+import { ClinicalFlag, ResultFlagChip } from '@/components/clinical/clinical-flag';
 import { EmptyState } from '@/components/clinical/empty-state';
 import { PageHeader, PageSection } from '@/components/clinical/page-header';
 import pageStyles from '@/components/clinical/page.module.css';
-import { StatusBadge } from '@/components/clinical/status-badge';
-import { formatDateTime } from '@/feature/encounters/encounter-format';
-import { VoidDialog } from '@/feature/encounters/void-dialog';
-import { ageLabel, patientName } from '@/feature/patients/patient-format';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TabBar, tabPanelId, tabTriggerId } from '@/components/ui/tab-bar';
+import { formatDateTime } from '@/feature/encounters/encounter-format';
+import { VoidDialog } from '@/feature/encounters/void-dialog';
 import { ordersApi } from '@/lib/orders-api';
 
-export const WORKLIST_TABS = ['sent', 'accepted', 'collected', 'resulted'] as const satisfies OrderStatus[];
+/** The worklist tabs, one per step before release. */
+export const WORKLIST_TABS = ['collect', 'collected', 'running', 'release'] as const;
 export type WorklistTab = (typeof WORKLIST_TABS)[number];
 
+const TAB_STATUSES: Record<WorklistTab, DiagnosticOrderStatus[]> = {
+	collect: ['REQUESTED', 'PAID'],
+	collected: ['SPECIMEN_COLLECTED'],
+	running: ['IN_PROGRESS'],
+	release: ['RESULTED'],
+};
+
 const TAB_LABELS: Record<WorklistTab, string> = {
-	sent: 'Incoming',
-	accepted: 'Accepted',
+	collect: 'To collect',
 	collected: 'Collected',
-	resulted: 'Resulted',
+	running: 'In progress',
+	release: 'To release',
 };
 
 const SECTION_TITLES: Record<WorklistTab, string> = {
-	sent: 'New orders to accept',
-	accepted: 'Accepted, to collect',
-	collected: 'Collected, waiting for the result',
-	resulted: 'Resulted',
+	collect: 'Requested, to collect',
+	collected: 'Specimen collected, to run',
+	running: 'Running, to enter the result',
+	release: 'Resulted, to check and release',
 };
 
 const EMPTY: Record<WorklistTab, string> = {
-	sent: 'New orders from the clinics arrive here. Facilities with a lab system get them over HL7 too.',
-	accepted: 'Orders you accepted wait here until the specimen is taken.',
-	collected: 'Specimens taken wait here until their result is sent back.',
-	resulted: 'Orders whose results went back to the ordering doctor.',
-};
-
-/** When the order reached its current tab. */
-const TAB_SINCE: Record<WorklistTab, (order: LabOrderFieldsFragment) => string | null> = {
-	sent: (order) => order.sentAt,
-	accepted: (order) => order.acceptedAt,
-	collected: (order) => order.collectedAt,
-	resulted: (order) => order.resultedAt,
+	collect: "Tests the clinic's doctors request arrive here.",
+	collected: 'Specimens you collected wait here until you run them.',
+	running: 'Tests on the analyser or in the X-ray room wait here for their result.',
+	release: "Entered results wait here until you check them and release them to the doctor's inbox.",
 };
 
 const idBase = 'lab-worklist';
 
 /**
- * The receiving facility's worklist (DESIGN.md §2 steps 2–4): orders sent to the lab, accepted, collected and
- * resulted. Staff accept or reject a new order and mark the specimen collected; results come back through the
- * results inbox. STAT first, then urgent, then the oldest.
+ * The clinic's lab desk (in-house laboratory and imaging): requested tests to collect, collected specimens to run,
+ * runs to result, and results to release to the requesting doctor. STAT first, then urgent, then the oldest. Values
+ * are flagged from the test's reference range for the patient's sex; critical values reach the doctor, never an
+ * automated message to the patient.
  */
 export function LabWorklistPage({ tab }: { tab: WorklistTab }) {
 	const navigate = useNavigate();
-	const counts = useQuery(ordersApi.order.labOrderCounts.queryOptions(undefined));
-	const orders = useQuery(ordersApi.order.labOrders.queryOptions({ status: tab }));
-	const countOf = (status: WorklistTab) => counts.data?.find((count) => count.status === status)?.count;
-	const rows = byPriorityThenAge(orders.data ?? []);
+	const [entering, setEntering] = useState<LabWorklistItemFieldsFragment | null>(null);
+	const counts = useQuery(ordersApi.order.worklistCounts.queryOptions(undefined));
+	const items = useQuery(ordersApi.order.worklist.queryOptions({ statuses: TAB_STATUSES[tab] }));
+	const countOf = (id: WorklistTab) =>
+		counts.data
+			?.filter((count) => TAB_STATUSES[id].includes(count.status))
+			.reduce((sum, count) => sum + count.count, 0);
+	const rows = byPriorityThenAge(items.data ?? []);
 
 	return (
 		<div className={pageStyles.page}>
-			<PageHeader title='Orders received' subtitle='Test orders sent to your lab or radiology unit.' />
+			<PageHeader title='Lab worklist' subtitle="The clinic's laboratory and imaging requests, by step." />
 			<TabBar
 				idBase={idBase}
 				className={styles.tabs}
@@ -76,13 +81,13 @@ export function LabWorklistPage({ tab }: { tab: WorklistTab }) {
 				onTabChange={(next) => void navigate({ to: '/orders', search: { tab: next } })}
 			/>
 			<div role='tabpanel' id={tabPanelId(idBase, tab)} aria-labelledby={tabTriggerId(idBase, tab)}>
-				<PageSection title={SECTION_TITLES[tab]} meta={orders.data ? String(orders.data.length) : undefined}>
-					{orders.isPending ? (
+				<PageSection title={SECTION_TITLES[tab]} meta={items.data ? String(items.data.length) : undefined}>
+					{items.isPending ? (
 						<Skeleton />
-					) : orders.error ? (
-						<ErrorMessage message={orders.error.message} />
+					) : items.error ? (
+						<ErrorMessage message={items.error.message} />
 					) : rows.length === 0 ? (
-						<EmptyState icon={TestTubes} title={`No ${TAB_LABELS[tab].toLowerCase()} orders`}>
+						<EmptyState icon={TestTubes} title={`Nothing ${TAB_LABELS[tab].toLowerCase()}`}>
 							{EMPTY[tab]}
 						</EmptyState>
 					) : (
@@ -94,8 +99,8 @@ export function LabWorklistPage({ tab }: { tab: WorklistTab }) {
 										<th scope='col'>Patient</th>
 										<th scope='col'>Test</th>
 										<th scope='col'>Priority</th>
-										<th scope='col'>Ordered by</th>
-										<th scope='col'>Received</th>
+										<th scope='col'>Requested by</th>
+										<th scope='col'>Ordered</th>
 										<th scope='col'>Status</th>
 										<th scope='col'>
 											<span className='sr-only'>Actions</span>
@@ -103,8 +108,8 @@ export function LabWorklistPage({ tab }: { tab: WorklistTab }) {
 									</tr>
 								</thead>
 								<tbody>
-									{rows.map((order) => (
-										<WorklistRow key={order.id} order={order} tab={tab} />
+									{rows.map((item) => (
+										<WorklistRow key={item.id} item={item} onEnterResult={setEntering} />
 									))}
 								</tbody>
 							</table>
@@ -112,129 +117,176 @@ export function LabWorklistPage({ tab }: { tab: WorklistTab }) {
 					)}
 				</PageSection>
 			</div>
+			<EnterResultDialog item={entering} onOpenChange={(open) => !open && setEntering(null)} />
 		</div>
 	);
 }
 
-function WorklistRow({ order, tab }: { order: LabOrderFieldsFragment; tab: WorklistTab }) {
-	const since = TAB_SINCE[tab](order) ?? order.sentAt ?? order.createdAt;
-	const name = patientName(order.patient);
+function WorklistRow({
+	item,
+	onEnterResult,
+}: {
+	item: LabWorklistItemFieldsFragment;
+	onEnterResult: (item: LabWorklistItemFieldsFragment) => void;
+}) {
+	const name = personName(item.patient);
 	return (
-		<tr data-testid='lab-order-row' data-order-id={order.id}>
+		<tr data-testid='lab-order-row' data-item-id={item.id}>
 			<td data-label='Patient'>
 				<div className={styles.stack}>
 					<div className={styles.main}>{name}</div>
 					<div className={styles.muted}>
-						{ageLabel(
-							order.patient.birthDate,
-							order.patient.sex as 'female' | 'male' | 'other' | 'unknown',
-						)}
+						{ageSex(item.patient.birthDate, item.patient.sex as 'MALE' | 'FEMALE')} ·{' '}
+						{item.patient.patientNo}
 					</div>
 				</div>
 			</td>
 			<td data-label='Test'>
 				<div className={styles.stack}>
-					<div>{order.display ?? order.code}</div>
-					<div className={styles.muted}>LOINC {order.code}</div>
-					{order.notes && <div className={styles.muted}>{order.notes}</div>}
+					<div>{item.test.name}</div>
+					<div className={styles.muted}>
+						{item.order.orderNo}
+						{item.accessionNo && ` · ${item.accessionNo}`}
+					</div>
+					{item.order.clinicalInfo && <div className={styles.muted}>{item.order.clinicalInfo}</div>}
 				</div>
 			</td>
 			<td data-label='Priority'>
-				{order.priority === 'routine' ? (
+				{item.order.priority === 'ROUTINE' ? (
 					<span className={styles.muted}>Routine</span>
 				) : (
-					<ClinicalFlag tone={order.priority === 'stat' ? 'critical' : 'abnormal'}>
-						{order.priority === 'stat' ? 'STAT' : 'Urgent'}
+					<ClinicalFlag tone={item.order.priority === 'STAT' ? 'critical' : 'abnormal'}>
+						{PRIORITY_LABELS[item.order.priority]}
 					</ClinicalFlag>
 				)}
 			</td>
-			<td data-label='Ordered by'>
-				<div className={styles.stack}>
-					<div>{order.orderingDoctorName}</div>
-					<div className={styles.muted}>{order.orderingFacilityName}</div>
-				</div>
+			<td data-label='Requested by'>
+				{item.order.requestedByName ?? item.order.externalPhysician ?? <span className={styles.muted}>—</span>}
 			</td>
-			<td data-label='Received' className={styles.nowrap}>
+			<td data-label='Ordered' className={styles.nowrap}>
 				<div className={styles.stack}>
-					<div>{order.sentAt ? formatDateTime(order.sentAt) : '—'}</div>
-					<div className={styles.muted}>{waitingFor(since)} ago</div>
+					<div>{formatDateTime(item.order.createdAt)}</div>
+					<div className={styles.muted}>{waitingFor(item.order.createdAt)} ago</div>
 				</div>
 			</td>
 			<td data-label='Status'>
-				<StatusBadge status={order.status} />
+				<DiagnosticStatusBadge status={item.status} />
+				{item.result?.flag && (
+					<>
+						{' '}
+						<ResultFlagChip flag={item.result.flag} />
+					</>
+				)}
 			</td>
 			<td data-label='Actions' className={styles.actionsCell}>
-				<RowActions order={order} name={name} />
+				<RowActions item={item} name={name} onEnterResult={onEnterResult} />
 			</td>
 		</tr>
 	);
 }
 
-function RowActions({ order, name }: { order: LabOrderFieldsFragment; name: string }) {
+function RowActions({
+	item,
+	name,
+	onEnterResult,
+}: {
+	item: LabWorklistItemFieldsFragment;
+	name: string;
+	onEnterResult: (item: LabWorklistItemFieldsFragment) => void;
+}) {
 	const queryClient = useQueryClient();
-	const [rejecting, setRejecting] = useState(false);
-	const refresh = { onSuccess: () => queryClient.invalidateQueries(ordersApi.order.labOrders.pathFilter()) };
-	const accept = useMutation(ordersApi.order.accept.mutationOptions(refresh));
-	const collect = useMutation(ordersApi.order.markCollected.mutationOptions(refresh));
-	const reject = useMutation(
-		ordersApi.order.reject.mutationOptions({
+	const [cancelling, setCancelling] = useState(false);
+	const refresh = { onSuccess: () => queryClient.invalidateQueries(ordersApi.order.worklist.pathFilter()) };
+	const collect = useMutation(ordersApi.order.collect.mutationOptions(refresh));
+	const start = useMutation(ordersApi.order.start.mutationOptions(refresh));
+	const release = useMutation(ordersApi.order.release.mutationOptions(refresh));
+	const cancel = useMutation(
+		ordersApi.order.cancel.mutationOptions({
 			onSuccess: async () => {
-				setRejecting(false);
+				setCancelling(false);
 				await refresh.onSuccess();
 			},
 		}),
 	);
-	const test = order.display ?? order.code;
-	const error = accept.error ?? collect.error;
+	const test = item.test.name;
+	const error = collect.error ?? start.error ?? release.error;
+	const isImaging = item.test.parameters.length === 0;
+	const canCancel = item.status !== 'RESULTED';
 
-	if (order.status === 'sent') {
-		return (
-			<div className={styles.actions}>
+	return (
+		<div className={styles.actions}>
+			{canCancel && (
 				<Button
 					size='sm'
 					variant='outline'
-					onClick={() => setRejecting(true)}
-					aria-label={`Reject ${test} for ${name}`}
+					onClick={() => setCancelling(true)}
+					aria-label={`Cancel ${test} for ${name}`}
 				>
-					Reject
+					Cancel
 				</Button>
+			)}
+			{(item.status === 'REQUESTED' || item.status === 'PAID') &&
+				(isImaging ? (
+					<Button
+						size='sm'
+						onClick={() => start.mutate({ itemId: item.id })}
+						disabled={start.isPending}
+						aria-label={`Start ${test} for ${name}`}
+					>
+						Start
+					</Button>
+				) : (
+					<Button
+						size='sm'
+						onClick={() => collect.mutate({ itemId: item.id })}
+						disabled={collect.isPending}
+						aria-label={`Mark ${test} for ${name} collected`}
+					>
+						Mark collected
+					</Button>
+				))}
+			{item.status === 'SPECIMEN_COLLECTED' && (
 				<Button
 					size='sm'
-					onClick={() => accept.mutate({ orderId: order.id })}
-					disabled={accept.isPending}
-					aria-label={`Accept ${test} for ${name}`}
+					onClick={() => start.mutate({ itemId: item.id })}
+					disabled={start.isPending}
+					aria-label={`Start ${test} for ${name}`}
 				>
-					Accept
+					Start
 				</Button>
-				{error && <ErrorMessage message={error.message} />}
-				<VoidDialog
-					open={rejecting}
-					onOpenChange={setRejecting}
-					title={`Reject ${test}?`}
-					description={`The ordering doctor sees the reason. ${name}'s order closes and the doctor can order elsewhere.`}
-					actionLabel='Reject order'
-					placeholder='Test not offered'
-					onVoid={(reason) => reject.mutate({ orderId: order.id, reason })}
-					isPending={reject.isPending}
-					error={reject.error?.message}
-				/>
-			</div>
-		);
-	}
-	if (order.status === 'accepted') {
-		return (
-			<div className={styles.actions}>
+			)}
+			{(item.status === 'IN_PROGRESS' || item.status === 'RESULTED') && (
 				<Button
 					size='sm'
-					onClick={() => collect.mutate({ orderId: order.id })}
-					disabled={collect.isPending}
-					aria-label={`Mark ${test} for ${name} collected`}
+					variant={item.status === 'RESULTED' ? 'outline' : 'default'}
+					onClick={() => onEnterResult(item)}
+					aria-label={`${item.status === 'RESULTED' ? 'Edit' : 'Enter'} the result of ${test} for ${name}`}
 				>
-					Mark collected
+					{item.status === 'RESULTED' ? 'Edit result' : 'Enter result'}
 				</Button>
-				{error && <ErrorMessage message={error.message} />}
-			</div>
-		);
-	}
-	return null;
+			)}
+			{item.status === 'RESULTED' && (
+				<Button
+					size='sm'
+					onClick={() => release.mutate({ itemId: item.id })}
+					disabled={release.isPending}
+					aria-label={`Release ${test} for ${name}`}
+				>
+					Release
+				</Button>
+			)}
+			{error && <ErrorMessage message={error.message} />}
+			<VoidDialog
+				open={cancelling}
+				onOpenChange={setCancelling}
+				title={`Cancel ${test}?`}
+				description={`The requesting doctor sees the reason. ${name}'s test closes; the doctor can request it again.`}
+				actionLabel='Cancel test'
+				placeholder='Specimen haemolysed'
+				onVoid={(reason) => cancel.mutate({ orderId: item.order.id, itemId: item.id, reason })}
+				isPending={cancel.isPending}
+				error={cancel.error?.message}
+			/>
+		</div>
+	);
 }

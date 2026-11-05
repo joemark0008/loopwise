@@ -1,20 +1,19 @@
 import { Link } from '@tanstack/react-router';
 import { Fragment } from 'react';
-import { isReport, resultValue, testName, URGENCY_LABELS } from './result-format';
+import { referenceRange, resultSummary, URGENCY_LABELS } from './result-format';
 import { ResultFlagCell } from './result-flag-cell';
 import styles from './results.module.css';
-import type { ResultItemFieldsFragment } from '@/graphql/generated/graphql';
-import { FlaggedValue } from '@/components/clinical/clinical-flag';
+import type { DiagnosticReportFieldsFragment } from '@/graphql/generated/graphql';
+import { ClinicalFlag, FlaggedValue } from '@/components/clinical/clinical-flag';
 import pageStyles from '@/components/clinical/page.module.css';
-import { StatusBadge } from '@/components/clinical/status-badge';
-import { formatDateTime } from '@/feature/encounters/encounter-format';
-import { ageLabel, patientName } from '@/feature/patients/patient-format';
 import { Button } from '@/components/ui/button';
+import { formatDateTime } from '@/feature/encounters/encounter-format';
+import { ageSex, personName } from '@/feature/orders/order-format';
 import { cn } from '@/lib/utils';
 
 /**
- * Results in a dense table: the flag in words first, then the value marked when out of range. `grouped` adds a heading
- * row per urgency (the inbox); `showPatient` adds the patient column with a link to the chart.
+ * Released results in a dense table: the flag in words first, then the result marked when out of range. `grouped`
+ * adds a heading row per urgency (the inbox); `showPatient` adds the patient column with a link to the chart.
  */
 export function ResultsTable({
 	results,
@@ -23,11 +22,11 @@ export function ResultsTable({
 	showPatient = false,
 	onReview,
 }: {
-	results: ResultItemFieldsFragment[];
+	results: DiagnosticReportFieldsFragment[];
 	caption: string;
 	grouped?: boolean;
 	showPatient?: boolean;
-	onReview?: (result: ResultItemFieldsFragment) => void;
+	onReview?: (result: DiagnosticReportFieldsFragment) => void;
 }) {
 	const columns = 4 + (showPatient ? 1 : 0) + 2 + (onReview ? 1 : 0);
 	return (
@@ -43,8 +42,8 @@ export function ResultsTable({
 							Result
 						</th>
 						<th scope='col'>Reference</th>
-						<th scope='col'>From</th>
-						<th scope='col'>{onReview ? 'Received' : 'Resulted'}</th>
+						<th scope='col'>Requested by</th>
+						<th scope='col'>Released</th>
 						{onReview ? <th scope='col'>Action</th> : <th scope='col'>Status</th>}
 					</tr>
 				</thead>
@@ -69,28 +68,28 @@ export function ResultsTable({
 											params={{ patientId: result.patient.id }}
 											className={styles.patientLink}
 										>
-											{patientName(result.patient)}
+											{personName(result.patient)}
 										</Link>{' '}
 										<span className={styles.muted}>
-											{ageLabel(result.patient.birthDate, result.patient.sex)}
+											{ageSex(result.patient.birthDate, result.patient.sex as 'MALE' | 'FEMALE')}
 										</span>
 									</td>
 								)}
-								<td data-label='Test'>{testName(result)}</td>
-								<td
-									data-label='Result'
-									data-numeric
-									className={styles.nowrap}
-									title={isReport(result) ? result.value : undefined}
-								>
-									<FlaggedValue flag={result.flag}>{resultValue(result)}</FlaggedValue>
+								<td data-label='Test'>
+									{result.test.name}
+									<div className={styles.muted}>{result.order.orderNo}</div>
+								</td>
+								<td data-label='Result' data-numeric className={styles.nowrap}>
+									<FlaggedValue flag={result.values.length === 1 ? result.flag : null}>
+										{resultSummary(result)}
+									</FlaggedValue>
 								</td>
 								<td data-label='Reference' className={cn(styles.muted, styles.nowrap)}>
-									{result.refRange ?? '—'}
+									{referenceRange(result) ?? '—'}
 								</td>
-								<td data-label='From'>{result.sourceFacility.name}</td>
-								<td data-label={onReview ? 'Received' : 'Resulted'} className={styles.nowrap}>
-									{formatDateTime(onReview ? result.receivedAt : result.resultedAt)}
+								<td data-label='Requested by'>{result.order.requestedByName ?? '—'}</td>
+								<td data-label='Released' className={styles.nowrap}>
+									{result.releasedAt ? formatDateTime(result.releasedAt) : '—'}
 								</td>
 								{onReview ? (
 									<td data-label='Action'>
@@ -100,7 +99,11 @@ export function ResultsTable({
 									</td>
 								) : (
 									<td data-label='Status'>
-										<StatusBadge status={result.reviewedAt ? 'reviewed' : 'resulted'} />
+										{result.reviewedAt ? (
+											<ClinicalFlag tone='done'>Reviewed</ClinicalFlag>
+										) : (
+											<ClinicalFlag tone='abnormal'>Awaiting review</ClinicalFlag>
+										)}
 									</td>
 								)}
 							</tr>

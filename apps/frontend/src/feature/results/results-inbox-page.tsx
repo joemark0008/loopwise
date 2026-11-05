@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ResultsTable } from './results-table';
 import { ReviewResultDialog } from './review-result-dialog';
 import styles from './results.module.css';
-import type { ResultItemFieldsFragment } from '@/graphql/generated/graphql';
+import type { DiagnosticReportFieldsFragment } from '@/graphql/generated/graphql';
 import { EmptyState } from '@/components/clinical/empty-state';
 import { PageHeader, PageSection } from '@/components/clinical/page-header';
 import pageStyles from '@/components/clinical/page.module.css';
@@ -13,17 +13,20 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resultApi } from '@/lib/result-api';
 
-/** Results waiting for the clinician's review (DESIGN.md §2 steps 5–6): critical first, then abnormal. */
+/**
+ * Released lab and imaging results waiting for the doctor's review: critical first, then abnormal. Opening the inbox is
+ * audited (one row per patient listed), so it refreshes on focus rather than polling.
+ */
 export function ResultsInboxPage() {
-	const results = useQuery(resultApi.result.toReview.queryOptions(undefined, { refetchInterval: 30_000 }));
-	const [reviewing, setReviewing] = useState<ResultItemFieldsFragment | null>(null);
-	const critical = results.data?.filter((result) => result.urgency === 'critical').length ?? 0;
+	const results = useQuery(resultApi.result.toReview.queryOptions(undefined));
+	const [reviewing, setReviewing] = useState<DiagnosticReportFieldsFragment | null>(null);
+	const critical = results.data?.filter((result) => result.urgency === 'CRITICAL').length ?? 0;
 
 	return (
 		<div className={pageStyles.page}>
 			<PageHeader
 				title='Results to review'
-				subtitle='Lab and imaging results for your patients, critical first.'
+				subtitle="Results the clinic's lab released for your patients, critical first."
 			/>
 			<PageSection
 				title='Waiting for review'
@@ -40,7 +43,7 @@ export function ResultsInboxPage() {
 					</div>
 				) : results.data.length === 0 ? (
 					<EmptyState icon={FlaskConical} title='No results waiting'>
-						Results from the lab (HL7 ORU) arrive here. Critical values always come first.
+						Results the lab releases for your patients arrive here. Critical values always come first.
 					</EmptyState>
 				) : (
 					<ResultsTable

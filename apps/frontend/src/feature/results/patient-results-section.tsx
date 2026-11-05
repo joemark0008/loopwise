@@ -9,7 +9,7 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resultApi } from '@/lib/result-api';
 
-/** The chart's Results tab: every result of the patient you can see, newest first, reviewed or not. */
+/** The chart's Results tab: every released result of the patient you can see, newest first, reviewed or not. */
 export function PatientResultsSection({ patientId }: { patientId: string }) {
 	const results = useQuery(resultApi.result.forPatient.queryOptions({ patientId }));
 	const waiting = results.data?.filter((result) => !result.reviewedAt).length ?? 0;
@@ -29,7 +29,7 @@ export function PatientResultsSection({ patientId }: { patientId: string }) {
 				</div>
 			) : results.data.length === 0 ? (
 				<EmptyState icon={FlaskConical} title='No results yet'>
-					Lab and imaging results for this patient arrive here from the lab (HL7 ORU).
+					Lab and imaging results for this patient appear here once the clinic's lab releases them.
 				</EmptyState>
 			) : (
 				<ResultsTable results={results.data} caption="The patient's results, newest first" />

@@ -1,45 +1,62 @@
-fragment ResultItemFields on ResultItem {
+fragment DiagnosticReportFields on DiagnosticReport {
 	id
-	code
-	display
-	value
-	unit
-	refRange
+	orderItemId
+	status
+	findings
+	impression
+	remarks
 	flag
 	urgency
 	resultedAt
-	receivedAt
+	releasedAt
 	reviewedAt
-	orderId
-	orderStatus
-	orderPriority
-	patient {
-		id
-		givenName
-		familyName
-		birthDate
-		sex
-	}
-	sourceFacility {
+	clinicName
+	values {
 		id
 		name
+		value
+		unit
+		referenceRange
+		flag
+	}
+	test {
+		id
+		code
+		name
+		category
+		loincCode
+	}
+	order {
+		id
+		orderNo
+		encounterId
+		priority
+		requestedByName
+	}
+	patient {
+		id
+		patientNo
+		firstName
+		lastName
+		birthDate
+		sex
 	}
 }
 
 query ResultsToReview {
 	resultsToReview {
-		...ResultItemFields
+		...DiagnosticReportFields
 	}
 }
 
 query PatientResults($patientId: ID!) {
 	patientResults(patientId: $patientId) {
-		...ResultItemFields
+		...DiagnosticReportFields
 	}
 }
 
 mutation ReviewResult($input: ReviewResultInput!) {
 	reviewResult(input: $input) {
-		...ResultItemFields
+		...DiagnosticReportFields
 	}
 }

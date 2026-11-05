@@ -1,0 +1,22 @@
+/* The encounter's orders tab: the clinic's catalog as a checklist of tests to request. */
+
+.tests {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+	gap: 0.5rem 1rem;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.test {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: var(--app-text-sm);
+	color: var(--app-text);
+}
+
+.fasting {
+	color: var(--app-muted);
+}

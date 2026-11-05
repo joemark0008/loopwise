@@ -14,8 +14,6 @@ export function configureApp(app: NestExpressApplication): void {
 	// why it runs twice.
 	app.use(requestContextMiddleware);
 	app.use((req: express.Request, res: express.Response, next: express.NextFunction) => auth.use(req, res, next));
-	// The HL7 ingest takes one raw message as text, whatever the connector labels it (often text/plain or x-hl7).
-	app.use('/api/hl7/messages', express.text({ type: () => true, limit: '1mb' }));
 	app.use(express.json({ limit: '10mb' }));
 	app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 	app.use(requestContextMiddleware);

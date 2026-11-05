@@ -8,6 +8,6 @@ export const Route = createFileRoute('/_protected/orders')({
 	}),
 	component: function OrdersRoute() {
 		const { tab } = Route.useSearch();
-		return <LabWorklistPage tab={tab ?? 'sent'} />;
+		return <LabWorklistPage tab={tab ?? 'collect'} />;
 	},
 });

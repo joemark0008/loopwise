@@ -6,7 +6,7 @@ import { mutation, query, runMutation, runQuery } from '@/lib/apollo-procedures'
 type Inputs = ApiInputs['result'];
 type Outputs = ApiOutputs['result'];
 
-/** Lab and imaging results (`apps/api/src/clinical/results`): the review inbox and the chart's Results tab. */
+/** Released lab and imaging results (`apps/api/src/clinical/diagnostics/results`): the inbox and the Results tab. */
 export const resultApi = {
 	result: {
 		toReview: query<Inputs['toReview'], Outputs['toReview']>(

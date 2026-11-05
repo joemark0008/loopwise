@@ -25,8 +25,7 @@
 		"dev:frontend": "npm run dev -w @loopwise/frontend",
 		"dev:studio": "npm run db:studio -w @loopwise/api",
 		"codegen": "npm run codegen -w @loopwise/frontend",
-		"test:e2e:setup": "./scripts/e2e-setup-wizard.sh",
-		"hl7:sample": "./scripts/send-hl7-sample.sh"
+		"test:e2e:setup": "./scripts/e2e-setup-wizard.sh"
 	},
 	"lint-staged": {
 		"*.{ts,tsx,js,mjs,cjs}": [

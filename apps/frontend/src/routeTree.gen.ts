@@ -17,17 +17,12 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as ProtectedChatLayoutRouteImport } from './routes/_protected/_chat-layout'
-import { Route as ProtectedCasesRouteImport } from './routes/_protected/cases'
 import { Route as ProtectedChatsRouteImport } from './routes/_protected/chats'
-import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
 import { Route as ProtectedOrdersRouteImport } from './routes/_protected/orders'
-import { Route as ProtectedPathwaysRouteImport } from './routes/_protected/pathways'
 import { Route as ProtectedPatientsRouteImport } from './routes/_protected/patients'
-import { Route as ProtectedReferralsRouteImport } from './routes/_protected/referrals'
 import { Route as ProtectedReportsRouteImport } from './routes/_protected/reports'
 import { Route as ProtectedResultsRouteImport } from './routes/_protected/results'
 import { Route as ProtectedSettingsRouteImport } from './routes/_protected/settings'
-import { Route as ProtectedWorklistRouteImport } from './routes/_protected/worklist'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public/forgot-password'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as ProtectedChatLayoutIndexRouteImport } from './routes/_protected/_chat-layout.index'
@@ -49,8 +44,6 @@ import { Route as PrintPrintLabRequestEncounterIdRouteImport } from './routes/_p
 import { Route as PrintPrintMedicalCertificateCertificateIdRouteImport } from './routes/_print/print.medical-certificate.$certificateId'
 import { Route as PrintPrintPrescriptionPrescriptionIdRouteImport } from './routes/_print/print.prescription.$prescriptionId'
 import { Route as ProtectedPatientsPatientIdIndexRouteImport } from './routes/_protected/patients.$patientId.index'
-import { Route as ProtectedPatientsPatientIdCasesRouteImport } from './routes/_protected/patients.$patientId.cases'
-import { Route as ProtectedPatientsPatientIdMessagesRouteImport } from './routes/_protected/patients.$patientId.messages'
 import { Route as ProtectedPatientsPatientIdResultsRouteImport } from './routes/_protected/patients.$patientId.results'
 import { Route as ProtectedSettingsClinicIndexRouteImport } from './routes/_protected/settings.clinic.index'
 import { Route as ProtectedSettingsClinicAgentRouteImport } from './routes/_protected/settings.clinic.agent'
@@ -94,19 +87,9 @@ const ProtectedChatLayoutRoute = ProtectedChatLayoutRouteImport.update({
   id: '/_chat-layout',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedCasesRoute = ProtectedCasesRouteImport.update({
-  id: '/cases',
-  path: '/cases',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 const ProtectedChatsRoute = ProtectedChatsRouteImport.update({
   id: '/chats',
   path: '/chats',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedOrdersRoute = ProtectedOrdersRouteImport.update({
@@ -114,19 +97,9 @@ const ProtectedOrdersRoute = ProtectedOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedPathwaysRoute = ProtectedPathwaysRouteImport.update({
-  id: '/pathways',
-  path: '/pathways',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 const ProtectedPatientsRoute = ProtectedPatientsRouteImport.update({
   id: '/patients',
   path: '/patients',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedReferralsRoute = ProtectedReferralsRouteImport.update({
-  id: '/referrals',
-  path: '/referrals',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedReportsRoute = ProtectedReportsRouteImport.update({
@@ -142,11 +115,6 @@ const ProtectedResultsRoute = ProtectedResultsRouteImport.update({
 const ProtectedSettingsRoute = ProtectedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedWorklistRoute = ProtectedWorklistRouteImport.update({
-  id: '/worklist',
-  path: '/worklist',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const PublicForgotPasswordRoute = PublicForgotPasswordRouteImport.update({
@@ -266,18 +234,6 @@ const ProtectedPatientsPatientIdIndexRoute =
     path: '/',
     getParentRoute: () => ProtectedPatientsPatientIdRoute,
   } as any)
-const ProtectedPatientsPatientIdCasesRoute =
-  ProtectedPatientsPatientIdCasesRouteImport.update({
-    id: '/cases',
-    path: '/cases',
-    getParentRoute: () => ProtectedPatientsPatientIdRoute,
-  } as any)
-const ProtectedPatientsPatientIdMessagesRoute =
-  ProtectedPatientsPatientIdMessagesRouteImport.update({
-    id: '/messages',
-    path: '/messages',
-    getParentRoute: () => ProtectedPatientsPatientIdRoute,
-  } as any)
 const ProtectedPatientsPatientIdResultsRoute =
   ProtectedPatientsPatientIdResultsRouteImport.update({
     id: '/results',
@@ -321,17 +277,12 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/setup': typeof SetupRoute
-  '/cases': typeof ProtectedCasesRoute
   '/chats': typeof ProtectedChatsRoute
-  '/dashboard': typeof ProtectedDashboardRoute
   '/orders': typeof ProtectedOrdersRoute
-  '/pathways': typeof ProtectedPathwaysRoute
   '/patients': typeof ProtectedPatientsRouteWithChildren
-  '/referrals': typeof ProtectedReferralsRoute
   '/reports': typeof ProtectedReportsRoute
   '/results': typeof ProtectedResultsRoute
   '/settings': typeof ProtectedSettingsRouteWithChildren
-  '/worklist': typeof ProtectedWorklistRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/$chatId': typeof ProtectedChatLayoutChatIdRoute
@@ -351,8 +302,6 @@ export interface FileRoutesByFullPath {
   '/print/lab-request/$encounterId': typeof PrintPrintLabRequestEncounterIdRoute
   '/print/medical-certificate/$certificateId': typeof PrintPrintMedicalCertificateCertificateIdRoute
   '/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
-  '/patients/$patientId/cases': typeof ProtectedPatientsPatientIdCasesRoute
-  '/patients/$patientId/messages': typeof ProtectedPatientsPatientIdMessagesRoute
   '/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
   '/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
   '/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
@@ -367,15 +316,10 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/setup': typeof SetupRoute
-  '/cases': typeof ProtectedCasesRoute
   '/chats': typeof ProtectedChatsRoute
-  '/dashboard': typeof ProtectedDashboardRoute
   '/orders': typeof ProtectedOrdersRoute
-  '/pathways': typeof ProtectedPathwaysRoute
-  '/referrals': typeof ProtectedReferralsRoute
   '/reports': typeof ProtectedReportsRoute
   '/results': typeof ProtectedResultsRoute
-  '/worklist': typeof ProtectedWorklistRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/$chatId': typeof ProtectedChatLayoutChatIdRoute
@@ -393,8 +337,6 @@ export interface FileRoutesByTo {
   '/print/lab-request/$encounterId': typeof PrintPrintLabRequestEncounterIdRoute
   '/print/medical-certificate/$certificateId': typeof PrintPrintMedicalCertificateCertificateIdRoute
   '/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
-  '/patients/$patientId/cases': typeof ProtectedPatientsPatientIdCasesRoute
-  '/patients/$patientId/messages': typeof ProtectedPatientsPatientIdMessagesRoute
   '/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
   '/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
   '/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
@@ -413,17 +355,12 @@ export interface FileRoutesById {
   '/set-password': typeof SetPasswordRoute
   '/setup': typeof SetupRoute
   '/_protected/_chat-layout': typeof ProtectedChatLayoutRouteWithChildren
-  '/_protected/cases': typeof ProtectedCasesRoute
   '/_protected/chats': typeof ProtectedChatsRoute
-  '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/orders': typeof ProtectedOrdersRoute
-  '/_protected/pathways': typeof ProtectedPathwaysRoute
   '/_protected/patients': typeof ProtectedPatientsRouteWithChildren
-  '/_protected/referrals': typeof ProtectedReferralsRoute
   '/_protected/reports': typeof ProtectedReportsRoute
   '/_protected/results': typeof ProtectedResultsRoute
   '/_protected/settings': typeof ProtectedSettingsRouteWithChildren
-  '/_protected/worklist': typeof ProtectedWorklistRoute
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/login': typeof PublicLoginRoute
   '/_protected/_chat-layout/$chatId': typeof ProtectedChatLayoutChatIdRoute
@@ -444,8 +381,6 @@ export interface FileRoutesById {
   '/_print/print/lab-request/$encounterId': typeof PrintPrintLabRequestEncounterIdRoute
   '/_print/print/medical-certificate/$certificateId': typeof PrintPrintMedicalCertificateCertificateIdRoute
   '/_print/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
-  '/_protected/patients/$patientId/cases': typeof ProtectedPatientsPatientIdCasesRoute
-  '/_protected/patients/$patientId/messages': typeof ProtectedPatientsPatientIdMessagesRoute
   '/_protected/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
   '/_protected/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
   '/_protected/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
@@ -462,17 +397,12 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/set-password'
     | '/setup'
-    | '/cases'
     | '/chats'
-    | '/dashboard'
     | '/orders'
-    | '/pathways'
     | '/patients'
-    | '/referrals'
     | '/reports'
     | '/results'
     | '/settings'
-    | '/worklist'
     | '/forgot-password'
     | '/login'
     | '/$chatId'
@@ -492,8 +422,6 @@ export interface FileRouteTypes {
     | '/print/lab-request/$encounterId'
     | '/print/medical-certificate/$certificateId'
     | '/print/prescription/$prescriptionId'
-    | '/patients/$patientId/cases'
-    | '/patients/$patientId/messages'
     | '/patients/$patientId/results'
     | '/settings/clinic/agent'
     | '/settings/clinic/models'
@@ -508,15 +436,10 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/set-password'
     | '/setup'
-    | '/cases'
     | '/chats'
-    | '/dashboard'
     | '/orders'
-    | '/pathways'
-    | '/referrals'
     | '/reports'
     | '/results'
-    | '/worklist'
     | '/forgot-password'
     | '/login'
     | '/$chatId'
@@ -534,8 +457,6 @@ export interface FileRouteTypes {
     | '/print/lab-request/$encounterId'
     | '/print/medical-certificate/$certificateId'
     | '/print/prescription/$prescriptionId'
-    | '/patients/$patientId/cases'
-    | '/patients/$patientId/messages'
     | '/patients/$patientId/results'
     | '/settings/clinic/agent'
     | '/settings/clinic/models'
@@ -553,17 +474,12 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/setup'
     | '/_protected/_chat-layout'
-    | '/_protected/cases'
     | '/_protected/chats'
-    | '/_protected/dashboard'
     | '/_protected/orders'
-    | '/_protected/pathways'
     | '/_protected/patients'
-    | '/_protected/referrals'
     | '/_protected/reports'
     | '/_protected/results'
     | '/_protected/settings'
-    | '/_protected/worklist'
     | '/_public/forgot-password'
     | '/_public/login'
     | '/_protected/_chat-layout/$chatId'
@@ -584,8 +500,6 @@ export interface FileRouteTypes {
     | '/_print/print/lab-request/$encounterId'
     | '/_print/print/medical-certificate/$certificateId'
     | '/_print/print/prescription/$prescriptionId'
-    | '/_protected/patients/$patientId/cases'
-    | '/_protected/patients/$patientId/messages'
     | '/_protected/patients/$patientId/results'
     | '/_protected/settings/clinic/agent'
     | '/_protected/settings/clinic/models'
@@ -663,25 +577,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedChatLayoutRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/cases': {
-      id: '/_protected/cases'
-      path: '/cases'
-      fullPath: '/cases'
-      preLoaderRoute: typeof ProtectedCasesRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/chats': {
       id: '/_protected/chats'
       path: '/chats'
       fullPath: '/chats'
       preLoaderRoute: typeof ProtectedChatsRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/dashboard': {
-      id: '/_protected/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof ProtectedDashboardRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/orders': {
@@ -691,25 +591,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedOrdersRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/pathways': {
-      id: '/_protected/pathways'
-      path: '/pathways'
-      fullPath: '/pathways'
-      preLoaderRoute: typeof ProtectedPathwaysRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/patients': {
       id: '/_protected/patients'
       path: '/patients'
       fullPath: '/patients'
       preLoaderRoute: typeof ProtectedPatientsRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/referrals': {
-      id: '/_protected/referrals'
-      path: '/referrals'
-      fullPath: '/referrals'
-      preLoaderRoute: typeof ProtectedReferralsRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/reports': {
@@ -731,13 +617,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof ProtectedSettingsRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/worklist': {
-      id: '/_protected/worklist'
-      path: '/worklist'
-      fullPath: '/worklist'
-      preLoaderRoute: typeof ProtectedWorklistRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_public/forgot-password': {
@@ -887,20 +766,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPatientsPatientIdIndexRouteImport
       parentRoute: typeof ProtectedPatientsPatientIdRoute
     }
-    '/_protected/patients/$patientId/cases': {
-      id: '/_protected/patients/$patientId/cases'
-      path: '/cases'
-      fullPath: '/patients/$patientId/cases'
-      preLoaderRoute: typeof ProtectedPatientsPatientIdCasesRouteImport
-      parentRoute: typeof ProtectedPatientsPatientIdRoute
-    }
-    '/_protected/patients/$patientId/messages': {
-      id: '/_protected/patients/$patientId/messages'
-      path: '/messages'
-      fullPath: '/patients/$patientId/messages'
-      preLoaderRoute: typeof ProtectedPatientsPatientIdMessagesRouteImport
-      parentRoute: typeof ProtectedPatientsPatientIdRoute
-    }
     '/_protected/patients/$patientId/results': {
       id: '/_protected/patients/$patientId/results'
       path: '/results'
@@ -976,8 +841,6 @@ const ProtectedChatLayoutRouteWithChildren =
   ProtectedChatLayoutRoute._addFileChildren(ProtectedChatLayoutRouteChildren)
 
 interface ProtectedPatientsPatientIdRouteChildren {
-  ProtectedPatientsPatientIdCasesRoute: typeof ProtectedPatientsPatientIdCasesRoute
-  ProtectedPatientsPatientIdMessagesRoute: typeof ProtectedPatientsPatientIdMessagesRoute
   ProtectedPatientsPatientIdResultsRoute: typeof ProtectedPatientsPatientIdResultsRoute
   ProtectedPatientsPatientIdIndexRoute: typeof ProtectedPatientsPatientIdIndexRoute
   ProtectedPatientsPatientIdEncountersEncounterIdRoute: typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
@@ -985,9 +848,6 @@ interface ProtectedPatientsPatientIdRouteChildren {
 
 const ProtectedPatientsPatientIdRouteChildren: ProtectedPatientsPatientIdRouteChildren =
   {
-    ProtectedPatientsPatientIdCasesRoute: ProtectedPatientsPatientIdCasesRoute,
-    ProtectedPatientsPatientIdMessagesRoute:
-      ProtectedPatientsPatientIdMessagesRoute,
     ProtectedPatientsPatientIdResultsRoute:
       ProtectedPatientsPatientIdResultsRoute,
     ProtectedPatientsPatientIdIndexRoute: ProtectedPatientsPatientIdIndexRoute,
@@ -1064,33 +924,23 @@ const ProtectedSettingsRouteWithChildren =
 
 interface ProtectedRouteChildren {
   ProtectedChatLayoutRoute: typeof ProtectedChatLayoutRouteWithChildren
-  ProtectedCasesRoute: typeof ProtectedCasesRoute
   ProtectedChatsRoute: typeof ProtectedChatsRoute
-  ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedOrdersRoute: typeof ProtectedOrdersRoute
-  ProtectedPathwaysRoute: typeof ProtectedPathwaysRoute
   ProtectedPatientsRoute: typeof ProtectedPatientsRouteWithChildren
-  ProtectedReferralsRoute: typeof ProtectedReferralsRoute
   ProtectedReportsRoute: typeof ProtectedReportsRoute
   ProtectedResultsRoute: typeof ProtectedResultsRoute
   ProtectedSettingsRoute: typeof ProtectedSettingsRouteWithChildren
-  ProtectedWorklistRoute: typeof ProtectedWorklistRoute
   ProtectedSharedChatShareIdRoute: typeof ProtectedSharedChatShareIdRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedChatLayoutRoute: ProtectedChatLayoutRouteWithChildren,
-  ProtectedCasesRoute: ProtectedCasesRoute,
   ProtectedChatsRoute: ProtectedChatsRoute,
-  ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedOrdersRoute: ProtectedOrdersRoute,
-  ProtectedPathwaysRoute: ProtectedPathwaysRoute,
   ProtectedPatientsRoute: ProtectedPatientsRouteWithChildren,
-  ProtectedReferralsRoute: ProtectedReferralsRoute,
   ProtectedReportsRoute: ProtectedReportsRoute,
   ProtectedResultsRoute: ProtectedResultsRoute,
   ProtectedSettingsRoute: ProtectedSettingsRouteWithChildren,
-  ProtectedWorklistRoute: ProtectedWorklistRoute,
   ProtectedSharedChatShareIdRoute: ProtectedSharedChatShareIdRoute,
 }
 

@@ -12,7 +12,7 @@ export function AllergyChips({
 	allergies,
 	onAdd,
 }: {
-	allergies: Pick<AllergyFieldsFragment, 'id' | 'substance' | 'severity' | 'reaction'>[];
+	allergies: Pick<AllergyFieldsFragment, 'id' | 'allergen' | 'severity' | 'reaction'>[];
 	onAdd?: () => void;
 }) {
 	return (
@@ -28,8 +28,8 @@ export function AllergyChips({
 						icon={OctagonAlert}
 						title={allergy.reaction ?? undefined}
 					>
-						{allergy.substance}
-						{allergy.severity && ` · ${allergy.severity}`}
+						{allergy.allergen}
+						{allergy.severity && ` · ${allergy.severity.toLowerCase()}`}
 						{allergy.reaction && <span className={styles.allergyReaction}>({allergy.reaction})</span>}
 					</ClinicalFlag>
 				))

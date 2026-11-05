@@ -1,62 +1,180 @@
-fragment LabOrderFields on LabOrder {
+fragment DiagnosticTestFields on DiagnosticTest {
 	id
 	code
-	display
+	name
+	category
+	section
+	specimenType
+	requiresFasting
+	loincCode
+	parameters {
+		id
+		code
+		name
+		unit
+		valueType
+		options
+		refLowMale
+		refHighMale
+		refLowFemale
+		refHighFemale
+		refRangeText
+		sortOrder
+	}
+}
+
+fragment DiagnosticResultFields on DiagnosticResult {
+	id
+	findings
+	impression
+	remarks
+	flag
+	urgency
+	resultedAt
+	releasedAt
+	reviewedAt
+	values {
+		id
+		parameterId
+		name
+		value
+		unit
+		referenceRange
+		flag
+	}
+}
+
+fragment DiagnosticOrderSummaryFields on DiagnosticOrderSummary {
+	id
+	orderNo
+	encounterId
 	priority
 	status
-	notes
-	sentAt
-	acceptedAt
-	collectedAt
-	resultedAt
+	clinicalInfo
+	isExternal
+	externalPhysician
+	requestedByName
 	createdAt
-	orderingDoctorName
-	orderingFacilityName
+}
+
+fragment DiagnosticOrderFields on DiagnosticOrder {
+	id
+	orderNo
+	encounterId
+	priority
+	status
+	clinicalInfo
+	isExternal
+	externalPhysician
+	requestedByName
+	createdAt
+	items {
+		id
+		status
+		accessionNo
+		specimenCollectedAt
+		statusReason
+		cancelledAt
+		test {
+			id
+			code
+			name
+			category
+			loincCode
+		}
+		result {
+			...DiagnosticResultFields
+		}
+	}
+}
+
+fragment LabWorklistItemFields on LabWorklistItem {
+	id
+	status
+	accessionNo
+	specimenCollectedAt
+	statusReason
+	test {
+		...DiagnosticTestFields
+	}
+	result {
+		...DiagnosticResultFields
+	}
+	order {
+		...DiagnosticOrderSummaryFields
+	}
 	patient {
 		id
-		givenName
-		familyName
+		patientNo
+		firstName
+		lastName
+		middleName
 		birthDate
 		sex
 	}
 }
 
-query LabOrders($status: OrderStatus!) {
-	labOrders(status: $status) {
-		...LabOrderFields
+query DiagnosticTests {
+	diagnosticTests {
+		...DiagnosticTestFields
 	}
 }
 
-query LabOrderCounts {
-	labOrderCounts {
+query EncounterDiagnosticOrders($encounterId: ID!) {
+	encounterDiagnosticOrders(encounterId: $encounterId) {
+		...DiagnosticOrderFields
+	}
+}
+
+query LabWorklist($statuses: [DiagnosticOrderStatus!]) {
+	labWorklist(statuses: $statuses) {
+		...LabWorklistItemFields
+	}
+}
+
+query LabWorklistCounts {
+	labWorklistCounts {
 		status
 		count
 	}
 }
 
-mutation AcceptOrder($orderId: ID!) {
-	acceptOrder(orderId: $orderId) {
+mutation CreateDiagnosticOrder($input: CreateDiagnosticOrderInput!) {
+	createDiagnosticOrder(input: $input) {
+		...DiagnosticOrderFields
+	}
+}
+
+mutation CancelDiagnosticOrder($input: CancelDiagnosticOrderInput!) {
+	cancelDiagnosticOrder(input: $input) {
 		id
 		status
 	}
 }
 
-mutation MarkOrderCollected($orderId: ID!) {
-	markOrderCollected(orderId: $orderId) {
+mutation MarkSpecimenCollected($input: MarkSpecimenCollectedInput!) {
+	markSpecimenCollected(input: $input) {
+		id
+		status
+		accessionNo
+	}
+}
+
+mutation StartDiagnosticOrderItem($input: DiagnosticItemStepInput!) {
+	startDiagnosticOrderItem(input: $input) {
 		id
 		status
 	}
 }
 
-mutation RejectOrder($input: OrderReasonInput!) {
-	rejectOrder(input: $input) {
-		id
-		status
+mutation EnterDiagnosticResult($input: EnterDiagnosticResultInput!) {
+	enterDiagnosticResult(input: $input) {
+		...LabWorklistItemFields
 	}
 }
 
-mutation CancelOrder($input: OrderReasonInput!) {
-	cancelOrder(input: $input) {
+mutation ReleaseDiagnosticResult($input: DiagnosticItemStepInput!) {
+	releaseDiagnosticResult(input: $input) {
 		id
 		status
 	}

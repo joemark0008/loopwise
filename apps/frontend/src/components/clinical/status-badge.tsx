@@ -10,6 +10,7 @@ const STATUS: Record<string, { tone: ClinicalTone; label: string }> = {
 	issued: { tone: 'done', label: 'Issued' },
 	finalized: { tone: 'info', label: 'Finalized' },
 	paid: { tone: 'done', label: 'Paid' },
+	partially_paid: { tone: 'info', label: 'Partially paid' },
 	voided: { tone: 'void', label: 'Voided' },
 	cancelled: { tone: 'void', label: 'Cancelled' },
 	rejected: { tone: 'void', label: 'Rejected' },
