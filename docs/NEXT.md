@@ -85,6 +85,26 @@ Known UI issue: the avatar's white initials fail contrast on some palette colour
   follow-up date, patient summary), each confirmed separately; recording consent per visit (`patient_consents` with
   `encounter_id`).
 
+## Before real patients: privacy hardening (RA 10173)
+
+Wise sends the patient data it reads (chart, results, scribe transcripts) to the clinic's LLM provider, an overseas
+processor of sensitive personal information. Everything is synthetic today; before any real patient:
+
+- **Minimise and mask:** send each tool only the fields its task needs, and replace direct identifiers (PhilHealth
+  PIN, ID numbers, full address, mobile, email) with placeholders before the LLM call, restoring them in the
+  confirmed card where needed.
+- **Log what was sent:** for every LLM call that carried patient data, an audit row with the patient, the fields or
+  tool outputs included, the provider and model, and the request id (not the content itself).
+- **Clinic switch and DPA record:** a per-clinic "AI processing enabled" setting that stays off until an admin records
+  the provider's data processing agreement (provider, date, zero-retention / no-training terms). Wise refuses patient
+  tools while it is off.
+- **Provider check:** only allow providers or endpoints configured as business APIs with no training and zero
+  retention; warn on anything else (consumer keys, unknown base URLs).
+- **Transparency and consent:** the privacy notice names AI processing and the overseas processor; keep the per-visit
+  recording consent for the scribe; let a patient opt out of AI drafting for their record.
+- **Paperwork (not code):** the clinic's DPO, a privacy impact assessment covering the AI processing, NPC registration
+  where the thresholds apply, and a review by counsel familiar with the Data Privacy Act and NPC guidance.
+
 ## Later
 
 - **Pharmacy and inventory** (`inventory`): items (FDA CPR, dangerous drugs), lots (FEFO), receipts, the dispense queue
