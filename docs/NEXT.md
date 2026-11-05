@@ -107,12 +107,6 @@ expects `BETTER_AUTH_URL=http://localhost:3000` (a worktree on another port must
 running its own frontend next to main's also needs `TANSTACK_DEVTOOLS_PORT` (main uses 42069). The
 `flows` › "a chat from the list opens" test skips on a database without chats (a fresh seed has none).
 
-`flows` › "skills › creates a skill in the form, finds it in chat, edits and deletes it" fails on main: the edit sends
-the cached `hash` / `__typename` inside `UpdateSkillInput` ("Field \"hash\" is not defined by type \"UpdateSkillInput\"").
-
-Known UI issue: the avatar's white initials fail contrast on some palette colours, picked from the user's name
-("Test Admin" hit it; the seed keeps the admin's name "Test").
-
 ## Next: Phase 1 — front desk and AI scribe
 
 - **Clinic setup:** built (see What's built). Left: a Wise read tool ("which doctors are in today") on
