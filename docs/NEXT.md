@@ -19,6 +19,24 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
 - **Patients:** registration with an organization MRN, data-privacy consent and duplicate checks, contact and address
   updates, allergies, IDs (`clinical/patients/`, `apps/shared/src/patient-registration.ts`, `/patients`).
 - **Practitioners:** the practitioner profile (PRC, PTR, S2, PhilHealth PAN) on Settings → Account; it signs documents.
+- **Clinic setup (Phase 1, branch of session 1):** `apps/api/src/clinical/clinics/` now holds `clinics/` and
+  `organizations/` (moved from `src/`; other modules use `ClinicDirectoryService` / `OrganizationsService`, an ESLint
+  rule keeps the domain's repositories inside it), `profile/`, `expiries/` and `document-sequences/` settings
+  (`ClinicSetupModule`); `practitioners/setup/` and `practitioners/schedules/`; `billing/service-items/` catalog. Admin
+  pages under Settings → Clinic: **Clinic profile** (organization TIN / VAT / SEC-DTI / logo for its ADMIN or a
+  SUPER_ADMIN; clinic code, BIR branch code, DOH LTO, PhilHealth accreditation, PSGC city search + barangay),
+  **Practitioners** (profile incl. TIN and e-signature, sign-in user, room and consult fee, weekly hours with no
+  overlap at any clinic, leaves in Philippine dates), **Services and prices** (catalog with test / inventory link,
+  clinic price and HMO rate), **Staff and roles** (desk-role matrix on the user management API), **Numbering**
+  (prefix with the year + digits; the format carries into the next year), **Expiring licenses** (PRC, S2, PhilHealth
+  PAN, DOH LTO, PhilHealth accreditation within 30/60/90 days). For booking: `PractitionerScheduleService`
+  (`availabilityFor(tx, practitionerId, clinicId, date)`, `isOnLeave(tx, practitionerId, from, to?)`,
+  `upcomingLeaves`, `weeklySchedule`) and GraphQL `practitionerAvailability`. Every change audited
+  (`clinic.update`, `organization.update`, `practitioner.*`, `practitioner_schedule.*`, `practitioner_leave.*`,
+  `service_item.*`, `clinic_service_price.*`, `document_sequence.update`). No migration. Seed: clinic registrations,
+  weekly hours for the three doctors, consult fees, Dr. Cruz's leave next week, credential expiries inside the 60-day
+  window, two clinic price overrides. Tests: `test/clinic-setup.e2e-spec.ts`, `test/practitioner-availability.e2e-spec.ts`,
+  `availability.spec.ts`, `credential-expiry.spec.ts`, `e2e/clinic-setup.spec.ts` (incl. axe).
 - **Encounters (§5.1):** visit number, type, status transitions, SOAP note, vitals, ICD-10 diagnoses, the chart and
   the encounter page with tabs, print views; prescriptions (RA 6675, RA 9165) and medical certificates (draft, issue,
   void), referrals (API only).
@@ -75,9 +93,8 @@ Known UI issue: the avatar's white initials fail contrast on some palette colour
 
 ## Next: Phase 1 — front desk and AI scribe
 
-- **Clinic setup** (the `clinics` domain): clinic profile (BIR, DOH, PhilHealth, address with PSGC), rooms, services and
-  prices (`service_items`, `clinic_service_prices`), practitioner clinics, schedules and leaves; move
-  `apps/api/src/clinics` and `apps/api/src/organizations` under `clinical/clinics/`.
+- **Clinic setup:** built (see What's built). Left: a Wise read tool ("which doctors are in today") on
+  `PractitionerScheduleService`; a logo / signature upload instead of a URL; HMO rates aren't used by invoices yet.
 - **Appointments and queue** (`scheduling`): booking / reschedule / cancel / no-show, walk-in queue with the priority
   lane (RA 9994, RA 10754), status board, triage at the nurse station; appointment → encounter on check-in
   (`encounters.appointment_id`); reminder jobs.
@@ -100,8 +117,8 @@ Known UI issue: the avatar's white initials fail contrast on some palette colour
 - **Wise:** per-role tool defaults; `chart_facility_panel`'s `facilityId` now means a clinic id; the seven older
   propose tools could move onto the generic card; `propose_skill` onto `ProposalCard` + `wiseOrigin`.
 - **Access:** break-glass (`BREAK_GLASS` care relationships with a reason and expiry; no API yet).
-- **Base-app modules that predate the API structure rules** (listed, not changed in Phase 0): charts, chats, agent,
-  skills and attachments inject `ClinicRepository`; auth and setup inject `OrganizationRepository`; user management
+- **Base-app modules that predate the API structure rules** (listed, not changed in Phase 0; the `ClinicRepository` /
+  `OrganizationRepository` injections are fixed): user management
   reads clinic roles in its own repository; platform modules throw `HandlerError` rather than domain errors; the wise
   tool settings service drives its own transaction; `chat.repository.ts` is ~1000 lines.
 - **Small:** the encounter page's own note form doesn't send `expectedVersion`; a PDF of a saved document; saving

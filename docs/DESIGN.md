@@ -137,21 +137,21 @@ The patient never learns bad news from a machine.
 
 **Module map.** One NestJS module per schema domain under `apps/api/src/clinical/` (the reference's file names):
 
-| Module                             | Covers                                                                                                                                  |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `clinics`                          | document numbering (`document-sequences/`); organizations and clinic roles live in `src/organizations` and `src/clinics` (to move here) |
-| `reference`                        | ICD-10 search and validation, PSGC barangays                                                                                            |
-| `practitioners`                    | the practitioner profile (PRC, PTR, S2, PhilHealth PAN), the signatory printed on documents                                             |
-| `patients`                         | registration (MRN, consent, duplicates), the chart, contact updates, allergies, identifications                                         |
-| `encounters`                       | the visit and its status, the SOAP note, vitals, diagnoses, the encounter record                                                        |
-| `diagnostics`                      | `catalog/`, `orders/`, `worklist/` (the lab desk), `results/` (the doctor's inbox)                                                      |
-| `prescriptions`                    | prescriptions and items (RA 6675, RA 9165)                                                                                              |
-| `documents`                        | `medical-certificates/`, `referrals/`                                                                                                   |
-| `billing`                          | `service-items/`, `invoices/` (with `InvoiceTotalsService`), `payments/`                                                                |
-| `audit`                            | `AuditService`, the one writer of `audit_logs`                                                                                          |
-| `wise-proposals`                   | settling Wise cards once (§7.1)                                                                                                         |
-| `insights`, `reports`, `analytics` | Wise's charts, summary reports and SQL analytics                                                                                        |
-| `rls`                              | `ClinicalDbService` (`asUser` / `asSystem`)                                                                                             |
+| Module                             | Covers                                                                                                                                                                                                                                                    |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clinics`                          | `clinics/` (Wise workspaces, `ClinicDirectoryService`), `organizations/`, `document-sequences/` (numbering and its settings), `profile/` (legal details, BIR / DOH / PhilHealth, PSGC address), `expiries/` (licenses expiring soon); `ClinicSetupModule` |
+| `reference`                        | ICD-10 search and validation, PSGC cities / municipalities and barangays                                                                                                                                                                                  |
+| `practitioners`                    | the practitioner profile (PRC, PTR, S2, PhilHealth PAN), the signatory printed on documents; `setup/` (admins: profiles, room and fee); `schedules/` (weekly hours and leaves; `PractitionerScheduleService` reads availability for booking)              |
+| `patients`                         | registration (MRN, consent, duplicates), the chart, contact updates, allergies, identifications                                                                                                                                                           |
+| `encounters`                       | the visit and its status, the SOAP note, vitals, diagnoses, the encounter record                                                                                                                                                                          |
+| `diagnostics`                      | `catalog/`, `orders/`, `worklist/` (the lab desk), `results/` (the doctor's inbox)                                                                                                                                                                        |
+| `prescriptions`                    | prescriptions and items (RA 6675, RA 9165)                                                                                                                                                                                                                |
+| `documents`                        | `medical-certificates/`, `referrals/`                                                                                                                                                                                                                     |
+| `billing`                          | `service-items/` (the price list invoices use; the catalog and clinic prices of Settings → Services), `invoices/` (with `InvoiceTotalsService`), `payments/`                                                                                              |
+| `audit`                            | `AuditService`, the one writer of `audit_logs`                                                                                                                                                                                                            |
+| `wise-proposals`                   | settling Wise cards once (§7.1)                                                                                                                                                                                                                           |
+| `insights`, `reports`, `analytics` | Wise's charts, summary reports and SQL analytics                                                                                                                                                                                                          |
+| `rls`                              | `ClinicalDbService` (`asUser` / `asSystem`)                                                                                                                                                                                                               |
 
 Domains of the schema without a feature yet (scheduling, immunizations, PhilHealth, HMO, inventory) get their module
 when the feature is built.
@@ -437,7 +437,12 @@ Per-role defaults can follow the staff roles (`user_clinic_roles`) later.
    results, result values, invoice lines, allocations) through the parent; clinic operations (appointments, queue,
    invoices, payments, stock, schedules) through the clinic; catalogs through the organization. Registration duplicate
    checks, opening a visit (which writes the care relationship), jobs and seeds use `asSystem`. Tests:
-   `test/clinical-rls.e2e-spec.ts`, `test/foundation.e2e-spec.ts`.
+   `test/clinical-rls.e2e-spec.ts`, `test/foundation.e2e-spec.ts`. Clinic setup (Settings → Clinic) is for clinic
+   admins (`@ClinicAdmin()`; the organization's legal details need its ADMIN or a SUPER_ADMIN): the catalog, clinic
+   prices, practitioner links, schedules and numbering are written as the user; what the policies give admins no path
+   for (the `organizations` and `clinics` rows, another practitioner's profile or leave, deleting a schedule, leave or
+   clinic price) runs as `asSystem` after the service checked the row belongs to the admin's clinic or organization,
+   audited with the admin as the user (`test/clinic-setup.e2e-spec.ts`).
 3. **Agent scoped the same way.** Tools run with the user's identity. Wise analytics runs SQL over curated `analytics`
    views with four locks Postgres enforces itself: its own login role `loopwise_analyst` (SELECT on `analytics.*` and
    EXECUTE on `analytics.bind` only, a separate pool), views owned by `loopwise_analytics_owner` so the base tables'
