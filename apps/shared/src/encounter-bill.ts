@@ -3,7 +3,7 @@ import z from 'zod/v3';
 import { LAB_TESTS } from './lab-tests';
 
 /**
- * The bill of an encounter (DESIGN.md §7), prototype scale: a few charges, the 20% senior citizen / PWD discount
+ * The bill of an encounter (DESIGN.md §5), prototype scale: a few charges, the 20% senior citizen / PWD discount
  * (RA 9994, RA 10754) and a PhilHealth package amount. The one set of rules for the API, the billing tab and the Wise
  * card. Out of scope: eClaims, HMOs, BIR receipts and VAT (the discount is taken on the whole subtotal).
  */

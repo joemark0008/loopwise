@@ -473,7 +473,7 @@ ALTER TABLE "patient_message" ADD CONSTRAINT "patient_message_patient_id_patient
 -- AddForeignKey
 ALTER TABLE "patient_message" ADD CONSTRAINT "patient_message_created_by_id_user_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
--- Append-only history (DESIGN.md §7, §10.6): case events and the audit log are never changed or removed.
+-- Append-only history (DESIGN.md §5, §8.6): case events and the audit log are never changed or removed.
 CREATE FUNCTION "reject_append_only_change"() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN

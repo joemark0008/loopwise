@@ -78,7 +78,7 @@ export class DocumentSignatory {
 	facilityPhone: string | null;
 }
 
-@ObjectType({ description: 'A prescription (℞) of an encounter (DESIGN.md §7).' })
+@ObjectType({ description: 'A prescription (℞) of an encounter (DESIGN.md §5).' })
 export class Prescription {
 	@Field(() => ID)
 	id: string;

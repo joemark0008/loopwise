@@ -15,7 +15,7 @@ import {
 import z from 'zod/v4';
 
 import { getTools, uiToolset } from '../tools/index.js';
-import type { DBAutomationRun, MessageFeedback } from './db.js';
+import type { MessageFeedback } from './db.js';
 import { llmSelectedModelSchema } from './llm.js';
 
 export interface ForkMetadata {
@@ -38,10 +38,6 @@ export interface UIChat {
 	updatedAt: number;
 	messages: UIMessage[];
 	forkMetadata?: ForkMetadata;
-	automationRun?: Pick<
-		DBAutomationRun,
-		'id' | 'automationId' | 'status' | 'startedAt' | 'completedAt' | 'errorMessage'
-	>;
 }
 
 /** The model that generated an assistant message. */
@@ -219,7 +215,7 @@ export const AgentRequestSchema = z
 	.object({
 		message: AgentRequestUserMessageSchema,
 		chatId: z.string().optional(),
-		/** Starts the chart chat of this patient (new chats only): Wise knows the patient (DESIGN.md §9). */
+		/** Starts the chart chat of this patient (new chats only): Wise knows the patient (DESIGN.md §7). */
 		patientId: z.string().uuid().optional(),
 		messageToEditId: z.string().optional(),
 		model: llmSelectedModelSchema.optional(),

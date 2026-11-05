@@ -46,7 +46,7 @@ import { ordersApi } from '@/lib/orders-api';
 import { wiseActionsApi } from '@/lib/wise-actions-api';
 
 /*
- * The cards of the phase-2 Wise actions (DESIGN.md §9.4): changes to a visit's record, an order's steps, documents,
+ * The cards of the phase-2 Wise actions (DESIGN.md §7.3): changes to a visit's record, an order's steps, documents,
  * bills, reports and contact details. Same rules as `propose-action.tsx`: the card loads the record as the clinician,
  * and only Confirm calls the mutation, with the card's `wiseOrigin`.
  */

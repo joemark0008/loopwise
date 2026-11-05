@@ -31,7 +31,7 @@ export class ResultPatient {
 	sex: Sex;
 }
 
-@ObjectType({ description: 'A lab or imaging result with its patient, source and order (DESIGN.md §4.1 steps 5–6).' })
+@ObjectType({ description: 'A lab or imaging result with its patient, source and order (DESIGN.md §2 steps 5–6).' })
 export class ResultItem {
 	@Field(() => ID)
 	id: string;

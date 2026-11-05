@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/ui/error-message';
 
 /**
- * Wise's `chart_patient_trend` and `chart_facility_panel` (DESIGN.md §9.2): a patient's vitals or lab trend, or counts
+ * Wise's `chart_patient_trend` and `chart_facility_panel` (DESIGN.md §7.2): a patient's vitals or lab trend, or counts
  * across the user's facility, drawn from the rows the server read as the user. Thresholds are flat series; the data
  * view lists the exact values.
  */

@@ -6,7 +6,7 @@ import { EncounterIdSchema, RULES } from './tools/encounter-proposal';
 import { VitalsInputSchema } from './tools/propose-encounter';
 
 /**
- * Wise action tools (DESIGN.md §9.4): one definition per action a clinician can take from chat. The API turns each into
+ * Wise action tools (DESIGN.md §7.3): one definition per action a clinician can take from chat. The API turns each into
  * a `propose` tool that writes nothing, the frontend renders it on the shared proposal card, and only the card's
  * Confirm calls `mutation`, as the user, with the card's `wiseOrigin`. The mutation accepts the card only from the
  * tools named here for it (`wiseActionToolsFor`), so adding an action is a definition, one line on its mutation and

@@ -1,22 +1,24 @@
 # Loopwise
 
-> **Every result, followed through.**
+> **Run the whole clinic, with an assistant that drafts and a clinician who decides.**
 
-Loopwise makes sure every ordered test and every actionable screening result becomes timely care, with a clear owner at
-each step, safe AI help for doctors, and documented closure across providers. It is an entry to the Future Health
-Digital Innovation Challenge (Population Health: _Closing the Screening-to-Care Loop_).
+Loopwise is an AI-powered clinic system for Philippine outpatient clinics: front desk, nurse, doctor, lab, pharmacy,
+cashier and the patient, with **Wise** (the AI assistant) drafting the work at every desk and a person confirming it.
 
-The design, scope and plan are in [docs/DESIGN.md](docs/DESIGN.md).
+The product and plan are in [docs/PLAN.md](docs/PLAN.md), the technical design in [docs/DESIGN.md](docs/DESIGN.md),
+and the current state in [docs/NEXT.md](docs/NEXT.md).
 
 ## What it does
 
-- **Cases**: every order and actionable result is a case with a state machine, one accountable owner per step, SLAs and
-  a full timeline, from the order to documented closure.
-- **Wise**: the doctor's assistant. It finds patients, summarises results and drafts orders, referrals and messages as
-  proposal cards. The doctor confirms every clinical action; the AI never acts on its own.
-- **Cross-provider**: facilities (clinics, labs, imaging, hospitals, pharmacies) are tenants of one hub. Referrals are
-  accepted or rejected, and the case follows the patient.
-- **Patients**: calm, tiered messages in their language. The patient never learns bad news from a machine.
+- **Patients and visits**: registration with duplicate checks and consent, the patient chart, SOAP notes, vitals,
+  ICD-10 diagnoses, allergies, prescriptions, medical certificates and billing, with print views.
+- **Wise**: drafts registrations, notes, orders, prescriptions, certificates, charges and reviews as proposal cards;
+  explains results, charts trends, answers analytics questions and writes reports. A person confirms every change; the
+  AI never acts on its own.
+- **Lab and results**: orders, a lab worklist, HL7 v2 in and out, a results inbox, and a rules engine that flags
+  actionable and critical results against clinical pathways.
+- **Coming next**: appointments and queue, an AI scribe, pharmacy and inventory, follow-ups with owners, and a patient
+  portal with reminders ([docs/PLAN.md](docs/PLAN.md) §6).
 - **Governance**: deny-by-default access through care relationships, Postgres row-level security, and an append-only
   audit trail.
 
@@ -37,13 +39,12 @@ The design, scope and plan are in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Repository layout
 
-| Path                               | Contents                                                                    |
-| ---------------------------------- | --------------------------------------------------------------------------- |
-| [`apps/api`](apps/api)             | NestJS API: GraphQL at `/graphql`, REST for auth, agent streaming and files |
-| [`apps/frontend`](apps/frontend)   | React app                                                                   |
-| [`apps/shared`](apps/shared)       | Types and helpers used by both apps                                         |
-| [`apps/connector`](apps/connector) | Edge connector: HL7 v2 over MLLP in, HTTPS to the hub, local retry queue    |
-| [`docs`](docs)                     | Design and frontend guidelines                                              |
+| Path                             | Contents                                                                    |
+| -------------------------------- | --------------------------------------------------------------------------- |
+| [`apps/api`](apps/api)           | NestJS API: GraphQL at `/graphql`, REST for auth, agent streaming and files |
+| [`apps/frontend`](apps/frontend) | React app                                                                   |
+| [`apps/shared`](apps/shared)     | Types and helpers used by both apps                                         |
+| [`docs`](docs)                   | Plan, design, handoff and frontend guidelines                               |
 
 ## Local development
 
@@ -83,17 +84,6 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 The container applies pending migrations at start. Put a TLS reverse proxy in front of it, and create the first admin at
 `/setup` with the token from `docker compose -f docker-compose.prod.yml logs loopwise | grep "setup token"`.
-
-## Edge connector
-
-Each facility runs a small connector next to its LIS ([`apps/connector`](apps/connector/README.md)): it takes HL7 v2
-over MLLP, queues each message in a local SQLite file, ACKs the LIS, and pushes the message to the hub with the
-facility API key, retrying while the hub is unreachable. It can also deliver hub orders to the LIS.
-
-```bash
-HUB_URL=http://localhost:5006 FACILITY_KEY=<facility key> npm start -w @loopwise/connector
-npm run send-mllp -w @loopwise/connector -- --port 2575   # a synthetic ORU^R01
-```
 
 ## Development checks
 

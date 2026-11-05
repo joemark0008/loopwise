@@ -15,7 +15,7 @@ const readerMatches: RulesService extends AgentToolServices['rules'] ? true : ne
 void readerMatches;
 
 /**
- * Clinical pathways and the rules engine (DESIGN.md §2 "rules-first decisions", §6.2, §7, §8): validated pathway
+ * Clinical pathways and the rules engine (DESIGN.md §4.4 "rules-first decisions", §4.2, §5, §6): validated pathway
  * definitions, deterministic result evaluations (on `result.received`) and their read API.
  */
 @Module({

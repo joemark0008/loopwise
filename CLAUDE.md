@@ -1,14 +1,15 @@
 # Loopwise
 
-Closing the screening-to-care loop: every ordered test and actionable result becomes timely care, with an owner at each
-step. Built on NestJS 11 + GraphQL code-first + Prisma/PostgreSQL + React. Read [docs/DESIGN.md](docs/DESIGN.md)
-first: it holds the problem, the data model (§7), the case state machine (§8), the Wise assistant (§9), the access rules
-(§10) and the plan (§15).
+AI-powered clinic system for Philippine outpatient clinics: front desk, nurse, doctor, lab, pharmacy, cashier and the
+patient, with Wise (the AI assistant) drafting the work at every desk and a person confirming it. Built on NestJS 11 +
+GraphQL code-first + Prisma/PostgreSQL + React. Read [docs/PLAN.md](docs/PLAN.md) first for the product, modules and
+phases, then [docs/DESIGN.md](docs/DESIGN.md) for the data model (§5), the follow-up state machine (§6), Wise (§7) and
+the access rules (§8). [docs/NEXT.md](docs/NEXT.md) is the handoff: what is built and what comes next.
 
 ## Stack rules
 
 - NestJS 11 on Express, GraphQL code-first (`@nestjs/graphql` + Apollo), one server, no federation. REST only for auth,
-  agent streaming, file uploads and the HL7/edge-connector ingest.
+  agent streaming, file uploads and the HL7 ingest.
 - Prisma on PostgreSQL only. The schema is split by domain into `apps/api/prisma/schema/*.prisma` (generator and
   datasource in `main.prisma`, clinical models in `clinical-*.prisma`); migrations stay in `apps/api/prisma/migrations/`.
 - Frontend: React (TanStack Router, Mantine, CSS Modules) following [docs/frontend-design.md](docs/frontend-design.md),
@@ -19,9 +20,11 @@ first: it holds the problem, the data model (§7), the case state machine (§8),
 ## Module conventions
 
 - **kebab-case file names**: `care-case.service.ts`, `patient-access.guard.ts`.
-- Clinical features live under `apps/api/src/clinical/<feature>/` (`patients`, `encounters`, `orders`, `results`,
-  `pathways`, `cases`, `referrals`, `tasks`, `messaging`, `audit`): `<feature>.module.ts`, `.resolver.ts`, `.service.ts`,
-  `.repository.ts`, `.loader.ts`, `dto/`, `models/`.
+- Clinical features live under `apps/api/src/clinical/<feature>/`: built `patients`, `encounters`, `orders`,
+  `results`, `pathways`, `prescriptions`, `medical-certificates`, `billing`, `clinicians`, `insights`, `analytics`,
+  `reports`, `audit`, `wise-proposals` (plus `events` and `rls`); planned `appointments`, `queue`, `pharmacy`,
+  `inventory`, `follow-ups`, `portal`. Each has `<feature>.module.ts`, `.resolver.ts`, `.service.ts`, `.repository.ts`,
+  `.loader.ts`, `dto/`, `models/`.
 - **Resolvers (and REST controllers) stay thin**: parse args, check access via decorators, call a service, return. No
   business logic, no Prisma.
 - **Business logic lives in services.**
@@ -42,7 +45,7 @@ first: it holds the problem, the data model (§7), the case state machine (§8),
 - **AI drafts, the clinician confirms.** Agent tools only read (scoped to the user) or render proposal cards. Only the
   confirm button calls the mutation that orders, refers, messages or closes. Critical values never get an automated
   patient message.
-- **Closing a case** needs `Evidence` or a named clinician's sign-off with a reason.
+- **Closing a follow-up (`CareCase`)** needs `Evidence` or a named clinician's sign-off with a reason.
 - **Synthetic data only.** Seeds, fixtures and demos never contain real patient data.
 
 ## Style

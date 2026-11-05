@@ -21,36 +21,35 @@ export const pdfSkill: InternalSkill = {
 			<Block>
 				<Title level={1}>Working with PDFs</Title>
 				<Span>
-					Reading a PDF with <Bold>read</Bold> gives you its text layer, page by page, prefixed with a{' '}
+					Reading a PDF with <Bold>read_attachment</Bold> gives you its text, page by page, prefixed with a{' '}
 					<Code>--- Page N ---</Code> marker and a header saying how many pages the file has. Start there. The
 					rest of this skill is about the cases where that is not enough.
 				</Span>
 
 				<Title level={2}>Trust the page count</Title>
 				<Span>
-					The header tells you the true number of pages; the body may be cut short because a long read is
-					truncated. If the last marker you can see is well below the page count, you have not read the whole
-					document. Say so rather than answering as if you had, and read again with a narrower goal
-					{canRunSandbox && ' or work through a sandbox'}.
+					The header tells you the true number of pages; the body may be cut short because a long read is cut
+					into parts. If the last marker you can see is well below the page count, you have not read the whole
+					document: read on with the <Code>nextOffset</Code> it returned, or say so rather than answering as
+					if you had{canRunSandbox && ', or work through a sandbox'}.
 				</Span>
 
-				<Title level={2}>A PDF with no text layer</Title>
+				<Title level={2}>Scanned pages (OCR)</Title>
 				<Span>
-					A scanned document — a photographed invoice, a signed contract, an old report — has no text layer,
-					and <Bold>read</Bold> fails saying so. It is not a corrupt file and re-reading will not help.
+					A scanned document (a photographed referral, an outside lab result, a signed certificate) has no
+					text layer. Its pages are read by OCR, up to the first 20, and marked{' '}
+					<Code>--- Page N (OCR) ---</Code>. OCR text can be wrong: letters and digits get confused (0 and O,
+					1 and l, 5 and S), decimal points vanish, and handwriting is mostly lost. Quote a doubtful value as
+					read and ask the user to confirm it against the paper, above all names, birth dates, doses, units,
+					lab values and dates.
 				</Span>
-				<Span>Two ways forward, in order of preference:</Span>
-				<List ordered>
-					<ListItem>
-						If the user also attached the page as an <Bold>image</Bold>, read the image instead: you can see
-						images directly, and that is the fastest route for one or two pages.
-					</ListItem>
-					<ListItem>
-						Otherwise tell the user plainly that the PDF is scanned and its text cannot be extracted, and
-						ask whether they can supply the underlying data (a CSV, an export, the original spreadsheet).
-						{canRunSandbox && ' Offer OCR as a last resort, and warn that OCR on a table is unreliable.'}
-					</ListItem>
-				</List>
+				<Span>
+					If OCR found nothing or could not run, the read fails saying so. If the user also attached the page
+					as an <Bold>image</Bold>, look at the image instead: you see images directly. Otherwise ask for a
+					clearer scan or the underlying data.
+					{canRunSandbox &&
+						' A sandbox can retry OCR as a last resort; warn that OCR on a table is unreliable.'}
+				</Span>
 				<Span>Never guess at the contents of a scanned PDF from its filename.</Span>
 
 				<Title level={2}>Tables and layout</Title>

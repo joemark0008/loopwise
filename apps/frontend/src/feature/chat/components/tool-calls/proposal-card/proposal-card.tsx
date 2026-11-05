@@ -52,7 +52,7 @@ const BADGES = {
 };
 
 /**
- * The card of a Wise proposal tool (DESIGN.md §9.1: AI drafts, the clinician confirms). The tool writes nothing; only
+ * The card of a Wise proposal tool (DESIGN.md §7.1: AI drafts, the clinician confirms). The tool writes nothing; only
  * Confirm calls the real mutation, with the card's origin, and the API settles the card once. The card never confirms
  * by itself, and a second Confirm is dropped until the first settles.
  *

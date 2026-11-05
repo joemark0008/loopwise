@@ -105,7 +105,7 @@ export class OrganizationRepository {
 	}
 
 	/**
-	 * The facilities the user works at (DESIGN.md §6.1): their organizations that own no clinic. Staff are also
+	 * The facilities the user works at (DESIGN.md §4.1): their organizations that own no clinic. Staff are also
 	 * members of the workspace organization that owns the clinic, which is not a facility.
 	 */
 	getUserFacilities(userId: string): Promise<Organization[]> {

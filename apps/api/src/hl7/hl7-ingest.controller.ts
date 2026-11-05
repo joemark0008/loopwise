@@ -6,7 +6,7 @@ import type { Organization } from '../generated/prisma/client.js';
 import { Hl7IngestService } from './hl7-ingest.service.js';
 
 /**
- * `POST /api/hl7/messages` — the contract shared with the edge connector (DESIGN.md §11):
+ * `POST /api/hl7/messages` — the contract shared with the edge connector (DESIGN.md §9):
  * - `Authorization: Bearer <facility key>`; 401 for a missing, unknown or revoked key.
  * - Body `text/plain`: one HL7 v2 message, segments separated by `\r`, MLLP framing already stripped.
  * - 200 `text/plain`: an HL7 ACK (MSH + MSA with AA / AE / AR and the original MSH-10). AE and AR mean "do not

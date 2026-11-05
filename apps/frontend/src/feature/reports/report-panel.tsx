@@ -30,7 +30,7 @@ export function reportVersions(messages: UIMessage[], reportId: string): ReportV
 }
 
 /**
- * A Wise report in the side panel (DESIGN.md §9.2), as loopwise's story viewer: the latest version follows the chat,
+ * A Wise report in the side panel (DESIGN.md §7.2), as loopwise's story viewer: the latest version follows the chat,
  * earlier versions stay one click away, and the header prints, downloads (audited) or saves it.
  */
 export function ReportPanel({ reportId, onClose }: { reportId: string; onClose: () => void }) {
@@ -128,7 +128,7 @@ export function ReportPanel({ reportId, onClose }: { reportId: string; onClose: 
 
 /**
  * Saves the shown version to the patient's chart: the clinician's own action, confirmed in place, once per version.
- * The chart keeps it frozen with the results it embeds (DESIGN.md §9.2).
+ * The chart keeps it frozen with the results it embeds (DESIGN.md §7.2).
  */
 function SaveToChart({
 	chatId,

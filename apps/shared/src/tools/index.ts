@@ -36,6 +36,7 @@ export * as proposeSkill from './propose-skill';
 export * as proposeSql from './propose-sql';
 export { QueryIdSchema } from './query-id';
 export * as readFile from './read';
+export * as readAttachment from './read-attachment';
 export * as readQueryResult from './read-query-result';
 export * as report from './report';
 export * as requestWarehouseCredentials from './request-warehouse-credentials';

@@ -1,5 +1,5 @@
 /**
- * The catalogue of Wise tools (DESIGN.md §9.4): what each one does in plain words, what kind it is, where it shows in
+ * The catalogue of Wise tools (DESIGN.md §7.3): what each one does in plain words, what kind it is, where it shows in
  * Settings → Wise tools, and whether a facility of each type has it on by default. The API offers the model only the
  * tools turned on for the user, refuses the others, and the settings page lists them from here.
  *
@@ -364,6 +364,15 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 		label: 'Ask you a question',
 		summary: 'Asks you to choose when something is unclear.',
 		kind: 'display',
+		category: 'assistant',
+		locked: true,
+		defaultOn: ALL,
+	},
+	{
+		name: 'read_attachment',
+		label: 'Read attached files',
+		summary: 'Reads a file you attach to a message (PDF, Word, CSV, text), with OCR for scanned pages.',
+		kind: 'read',
 		category: 'assistant',
 		locked: true,
 		defaultOn: ALL,

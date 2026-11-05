@@ -83,9 +83,15 @@ describe('the pdf skill', () => {
 		expect(bodyOf('pdf-handling', false)).toMatch(/page count/i);
 	});
 
-	it('only offers OCR where there is something to run it in', () => {
+	it('explains OCR-read pages and has doubtful values confirmed', () => {
+		const body = bodyOf('pdf-handling', false);
+		expect(body).toContain('--- Page N (OCR) ---');
+		expect(body).toMatch(/ask the user to confirm it against the paper/);
+	});
+
+	it('only offers a sandbox OCR retry where there is something to run it in', () => {
 		expect(bodyOf('pdf-handling', true)).toMatch(/OCR as a last resort/);
-		expect(bodyOf('pdf-handling', false)).not.toMatch(/OCR/);
+		expect(bodyOf('pdf-handling', false)).not.toMatch(/last resort/);
 	});
 });
 
@@ -93,7 +99,7 @@ describe('the excel skill', () => {
 	it('sends the agent to read first, since that is what lists the sheets', () => {
 		const body = bodyOf('excel-handling', false);
 
-		expect(body).toMatch(/\*\*read\*\* gives you instead is its outline/);
+		expect(body).toMatch(/\*\*read_attachment\*\* gives you instead is its outline/);
 		expect(body).toMatch(/never infer them/i);
 	});
 

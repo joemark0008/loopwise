@@ -189,7 +189,6 @@ function toUIChat(chat: ChatFieldsFragment): Outputs['chat']['get'] {
 	return {
 		...chat,
 		forkMetadata: chat.forkMetadata ?? undefined,
-		automationRun: chat.automationRun ?? undefined,
 	} as Outputs['chat']['get'];
 }
 

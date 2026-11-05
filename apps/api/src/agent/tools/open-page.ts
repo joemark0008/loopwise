@@ -4,7 +4,7 @@ import { openPage } from '@loopwise/shared/tools';
 import { createTool } from '../utils/tools.js';
 
 /**
- * Opens a page of the app for the user (DESIGN.md §9.2): Wise picks a key of the `APP_PAGES` registry, never a URL.
+ * Opens a page of the app for the user (DESIGN.md §7.2): Wise picks a key of the `APP_PAGES` registry, never a URL.
  * A patient's pages are only offered when the user may see the patient, so navigating never gets around access rules.
  */
 export default createTool<openPage.Input, openPage.Output>({

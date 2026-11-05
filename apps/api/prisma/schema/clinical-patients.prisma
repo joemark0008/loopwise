@@ -52,7 +52,7 @@ model PatientIdentifier {
   @@map("patient_identifier")
 }
 
-/// Why a user may see a patient (deny by default, DESIGN.md §10). `break_glass` rows carry a reason and expire.
+/// Why a user may see a patient (deny by default, DESIGN.md §8). `break_glass` rows carry a reason and expire.
 model CareRelationship {
   id           String                 @id @default(uuid())
   patientId    String                 @map("patient_id")

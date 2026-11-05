@@ -13,7 +13,7 @@ import { ErrorMessage } from '@/components/ui/error-message';
 const PAGE_SIZE = 10;
 
 /**
- * Wise's `run_analytics_sql` and `get_metric` (DESIGN.md §9.2): the result table of a query run as the user, and the
+ * Wise's `run_analytics_sql` and `get_metric` (DESIGN.md §7.2): the result table of a query run as the user, and the
  * query itself on request, so every number can be traced to its SQL.
  */
 export const AnalyticsResultToolCall = memo(

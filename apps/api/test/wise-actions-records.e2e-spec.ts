@@ -16,7 +16,7 @@ import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from '.
 const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
 
 /**
- * Wise actions phase 2 (DESIGN.md §9.4) end to end, with a scripted model: diagnoses, voids, cancelling an order, the
+ * Wise actions phase 2 (DESIGN.md §7.3) end to end, with a scripted model: diagnoses, voids, cancelling an order, the
  * lab's worklist steps from a general chat, issuing and voiding a prescription, the bill's steps and contact details.
  * Each card writes nothing; its Confirm goes through the real mutation, settles once, and the audit row records Wise.
  */

@@ -37,7 +37,7 @@ export class EncounterCharge {
 	amount: number;
 }
 
-@ObjectType({ description: 'The bill of an encounter (DESIGN.md §7). Amounts in pesos.' })
+@ObjectType({ description: 'The bill of an encounter (DESIGN.md §5). Amounts in pesos.' })
 export class EncounterBill {
 	@Field(() => ID)
 	id: string;

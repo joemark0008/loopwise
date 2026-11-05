@@ -2,9 +2,9 @@ import { expect, test } from '@playwright/test';
 import { logIn, trackErrors } from './helpers';
 
 /**
- * Wise reports on the patient chart (DESIGN.md §9.2), on the seeded Maria Santos, who has a year of BP readings: the
+ * Wise reports on the patient chart (DESIGN.md §7.2), on the seeded Maria Santos, who has a year of BP readings: the
  * chart chat writes a BP report that opens over the chart, downloads as a PDF, and is saved to the chart, where it is
- * listed under Documents. Real LLM call.
+ * listed under Documents, and the reports library opens it again. Real LLM call.
  */
 test.describe('charts and reports', () => {
 	test("Wise reports Maria's BP trend; the PDF downloads and the report saves to her chart (real LLM call)", async ({
@@ -37,6 +37,14 @@ test.describe('charts and reports', () => {
 		await panel.getByTestId('report-save').click();
 		await panel.getByTestId('report-save-confirm').click();
 		await expect(panel.getByTestId('report-saved')).toBeVisible();
+
+		// The reports library lists it, and opens it again in its chat's side panel.
+		await page.goto('/reports');
+		const row = page.getByTestId('reports-library').getByRole('row').filter({ hasText: 'Maria Santos' }).first();
+		await expect(row).toBeVisible();
+		await row.getByRole('link').first().click();
+		await expect(page.getByTestId('report-panel')).toBeVisible({ timeout: 30_000 });
+		await expect(page).not.toHaveURL(/report=/);
 		expect(errors).toEqual([]);
 	});
 });

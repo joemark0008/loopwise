@@ -7,7 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 const RLS_ROLE = 'loopwise_app';
 
 /**
- * The clinical database (DESIGN.md §10.2). Clinical repositories run their queries through it, never on the bare
+ * The clinical database (DESIGN.md §8.2). Clinical repositories run their queries through it, never on the bare
  * `PrismaService`: `asUser` puts Postgres row-level security between the user and the data, `asSystem` is for the
  * work that acts for the hub itself and writes its own audit rows.
  */

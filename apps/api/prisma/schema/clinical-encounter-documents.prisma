@@ -1,4 +1,4 @@
-// Documents issued from an encounter: prescriptions and medical certificates (DESIGN.md §7).
+// Documents issued from an encounter: prescriptions and medical certificates (DESIGN.md §5).
 // A draft is editable; issuing snapshots the clinician and facility and makes the row immutable (a trigger allows
 // only voiding). Rows reference the encounter by (encounter_id, patient_id).
 

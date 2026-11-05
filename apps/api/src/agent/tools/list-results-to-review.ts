@@ -4,7 +4,7 @@ import type { ToolContext } from '../types/tools.js';
 import { createTool } from '../utils/tools.js';
 
 /**
- * `list_results_to_review` (DESIGN.md §9.2, §9.4): the clinician's results inbox, read as them (row-level security),
+ * `list_results_to_review` (DESIGN.md §7.2, §7.3): the clinician's results inbox, read as them (row-level security),
  * with the rules engine's stored evaluation of each result; in a chart chat, that patient's only. Audited by the
  * service. To mark one reviewed Wise calls `propose_result_review`, whose card only the clinician confirms.
  */

@@ -7,7 +7,7 @@ registerEnumType(OrderPriority, { name: 'OrderPriority' });
 registerEnumType(OrderStatus, { name: 'OrderStatus' });
 registerEnumType(ResultFlag, { name: 'ResultFlag' });
 
-@ObjectType({ description: 'A lab or imaging result (DESIGN.md §7).' })
+@ObjectType({ description: 'A lab or imaging result (DESIGN.md §5).' })
 export class OrderResult {
 	@Field(() => ID)
 	id: string;
@@ -169,7 +169,7 @@ export class LabOrderPatient {
 	sex: string;
 }
 
-@ObjectType({ description: "An order on the receiving facility's worklist (DESIGN.md §4.1 steps 2–4)." })
+@ObjectType({ description: "An order on the receiving facility's worklist (DESIGN.md §2 steps 2–4)." })
 export class LabOrder {
 	@Field(() => ID)
 	id: string;

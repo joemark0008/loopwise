@@ -1,7 +1,7 @@
 // Template-based messages to and from patients.
 // Every clinical row names the organization (tenant) it belongs to, so row-level security can filter on it.
 
-/// A message to or from the patient, always from an approved template (DESIGN.md §5).
+/// A message to or from the patient, always from an approved template (DESIGN.md §3).
 model PatientMessage {
   id          String         @id @default(uuid())
   caseId      String?        @map("case_id")

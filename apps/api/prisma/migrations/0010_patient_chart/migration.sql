@@ -1,4 +1,4 @@
--- The patient chart (DESIGN.md §9): one Wise chat per clinician per patient, and the chat an encounter was drafted in.
+-- The patient chart (DESIGN.md §7): one Wise chat per clinician per patient, and the chat an encounter was drafted in.
 
 -- AlterTable
 ALTER TABLE "chat" ADD COLUMN     "patient_id" TEXT;

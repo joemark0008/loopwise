@@ -2,7 +2,7 @@ import { describeAnalytics } from '@loopwise/shared/tools';
 
 import { createTool } from '../utils/tools.js';
 
-/** The analytics views Wise may query and the certified metrics (DESIGN.md §9.2). Reads the schema only. */
+/** The analytics views Wise may query and the certified metrics (DESIGN.md §7.2). Reads the schema only. */
 export default createTool<describeAnalytics.Input, describeAnalytics.Output>({
 	kind: 'read',
 	description: describeAnalytics.description,

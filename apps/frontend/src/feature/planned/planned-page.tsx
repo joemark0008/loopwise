@@ -4,7 +4,7 @@ import { PageHeader, PageSection } from '@/components/clinical/page-header';
 import pageStyles from '@/components/clinical/page.module.css';
 
 /**
- * The layout of a screen whose feature is not built yet (DESIGN.md §14): its header, its table's columns and an empty
+ * The layout of a screen whose feature is not built yet (PLAN.md §6): its header, its table's columns and an empty
  * state naming what fills it, so the feature slots in without a new layout.
  */
 export function PlannedPage({

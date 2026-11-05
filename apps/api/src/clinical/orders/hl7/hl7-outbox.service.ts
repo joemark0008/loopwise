@@ -20,7 +20,7 @@ export interface OutboxAckResult {
 const MAX_LIMIT = 100;
 
 /**
- * The edge connector's side of outbound HL7 (DESIGN.md §11): it pulls its facility's pending ORM messages, forwards
+ * The edge connector's side of outbound HL7 (DESIGN.md §9): it pulls its facility's pending ORM messages, forwards
  * them over MLLP and posts back the lab system's ACK. AA marks the message delivered; AE and AR mark it failed (the
  * hub does not resend: a failed order shows on the worklist instead). A message stays pending, and is handed out
  * again, until its ACK arrives.

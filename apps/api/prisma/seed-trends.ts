@@ -1,4 +1,4 @@
-// Synthetic history for the Wise charts and summary reports (DESIGN.md §9.2): a year of check-ups for Maria Santos
+// Synthetic history for the Wise charts and summary reports (DESIGN.md §7.2): a year of check-ups for Maria Santos
 // before her first full visit, with BP, weight and glucose creeping up, an earlier HbA1c and FBS, and the repeat FBS
 // her referral mentions. Pedro Villanueva and Ramon Gonzaga get an earlier HbA1c so the panel isn't flat. Synthetic
 // data only. Idempotent: skipped once Maria has an encounter older than her first full visit.

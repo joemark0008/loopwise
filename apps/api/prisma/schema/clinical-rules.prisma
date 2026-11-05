@@ -1,4 +1,4 @@
-// Rules engine evaluations (DESIGN.md §6.2, §6.3 step 3): why a result is normal, actionable or critical. Written by
+// Rules engine evaluations (DESIGN.md §4.2, §4.3 step 3): why a result is normal, actionable or critical. Written by
 // system work, append-only (a trigger rejects UPDATE and DELETE); readable by whoever can read the result (RLS).
 
 enum ResultClassification {
@@ -19,7 +19,7 @@ model ResultEvaluation {
   urgency        Urgency
   reason         String
   guideline      String
-  /// The case state the case engine should aim for (DESIGN.md §8).
+  /// The case state the case engine should aim for (DESIGN.md §6).
   nextState      CaseState            @map("next_state")
   slaHours       Float?               @map("sla_hours")
   /// band | critical_flag | unrecognised (`@loopwise/shared/rules-engine`).

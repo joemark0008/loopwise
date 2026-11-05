@@ -32,6 +32,7 @@ import { useSetChatInputCallback } from '@/contexts/set-chat-input-callback';
 import { shouldShowChatAccessError } from '@/lib/api-error';
 import { useClinics } from '@/hooks/use-current-clinic';
 import { chatApi } from '@/lib/chat-api';
+import { ReportPanel } from '@/feature/reports/report-panel';
 
 const Route = getRouteApi('/_protected/_chat-layout/$chatId');
 
@@ -80,6 +81,7 @@ function ChatPage() {
 	const inputAreaHeight = useHeight(inputAreaRef);
 
 	const sidePanel = useSidePanel({ containerRef, sidePanelRef });
+	useOpenLinkedReport(sidePanel, isLoadingMessages);
 	const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 	const chatInputCallback = useSetChatInputCallback();
 
@@ -217,13 +219,29 @@ function ChatPage() {
 	);
 }
 
+/**
+ * Opens the report a link asked for (`?report=<id>`, from the reports library) once the chat's messages are in, then
+ * drops the param so a reload or Back doesn't reopen it.
+ */
+function useOpenLinkedReport(sidePanel: ReturnType<typeof useSidePanel>, isLoadingMessages: boolean) {
+	const { report } = Route.useSearch();
+	const navigate = Route.useNavigate();
+	useEffect(() => {
+		if (!report || isLoadingMessages) {
+			return;
+		}
+		sidePanel.open(<ReportPanel reportId={report} onClose={sidePanel.close} />, `report:${report}`);
+		void navigate({ search: {}, replace: true });
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- opens once per linked report
+	}, [report, isLoadingMessages]);
+}
+
 function selectChatHeader(chat: Chat) {
 	return {
 		title: chat.title,
 		clinicId: chat.clinicId,
 		isOnboarding: chat.isOnboarding,
 		forkMetadata: chat.forkMetadata,
-		automationRun: chat.automationRun,
 	};
 }
 

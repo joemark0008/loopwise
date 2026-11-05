@@ -2,7 +2,7 @@ import { Field, ID, InputType } from '@nestjs/graphql';
 import { IsBoolean, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
 
 /**
- * The Wise card a mutation confirms (DESIGN.md §9.1). The API checks it against the stored chat: the tool call must be
+ * The Wise card a mutation confirms (DESIGN.md §7.1). The API checks it against the stored chat: the tool call must be
  * in the user's own chat, made by that tool, and not settled yet. Manual forms leave it out.
  */
 @InputType()

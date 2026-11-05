@@ -1,7 +1,7 @@
 import z from 'zod/v3';
 
 /**
- * The pages Wise may open (`open_page`, DESIGN.md §9.2), one entry each: Wise picks a key and its params, never a URL.
+ * The pages Wise may open (`open_page`, DESIGN.md §7.2), one entry each: Wise picks a key and its params, never a URL.
  * The API validates the params and checks access; the frontend navigates to `path` with them (TanStack Router path
  * syntax). A new screen needs only a line here. Admin-only pages are left out: Wise opens what any clinician can.
  */
@@ -11,6 +11,7 @@ const patientParams = z.object({ patientId: z.string().uuid('Use the id that fin
 export const APP_PAGES = {
 	'chat.new': { label: 'Today (and a new chat)', path: '/', params: noParams },
 	'chats.list': { label: 'Wise chats', path: '/chats', params: noParams },
+	'reports.list': { label: 'Reports (your Wise reports)', path: '/reports', params: noParams },
 	'patients.list': { label: 'Patients', path: '/patients', params: noParams },
 	'patients.new': { label: 'Register a patient', path: '/patients/new', params: noParams },
 	'patients.detail': { label: 'Patient chart', path: '/patients/$patientId', params: patientParams },

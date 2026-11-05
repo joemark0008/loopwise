@@ -5,6 +5,7 @@ import type { LlmProvider, LlmSelectedModel } from '@loopwise/shared/types';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { convertToModelMessages, type InferUIMessageChunk, type Tool } from 'ai';
 
+import { AttachmentsService } from '../attachments/attachments.service.js';
 import { ImageRepository } from '../attachments/image.repository.js';
 import type { StorageScope } from '../attachments/storage/index.js';
 import { statUserFile } from '../attachments/storage/user-files.js';
@@ -95,6 +96,7 @@ export class AgentService {
 		@Inject(ORDERS_READER) private readonly orders: AgentToolServices['orders'],
 		private readonly toolSettings: WiseToolSettingsService,
 		@Inject(RULES_READER) private readonly rules: AgentToolServices['rules'],
+		private readonly attachments: AttachmentsService,
 	) {}
 
 	/** `POST /api/agent`: `authorizeAgentRun` + `handleAgentRoute`. */
@@ -164,7 +166,7 @@ export class AgentService {
 		});
 		const webTools = await this.resolveWebTools(chat.clinicId, modelSelection.provider, agentSettings);
 		// The web profile's tool set (upstream `analyticsToolsExcluding([])`) unless the profile brings its own, less the
-		// tools turned off in Wise settings (DESIGN.md §9.4): the model is never offered them, and the AI SDK refuses a
+		// tools turned off in Wise settings (DESIGN.md §7.3): the model is never offered them, and the AI SDK refuses a
 		// call to a tool outside this set. Computed per run, so a toggle applies from the next message.
 		const offered = (
 			profile.tools
@@ -323,7 +325,7 @@ export class AgentService {
 					this.llm.resolveProviderModel(clinicId, provider, modelId, applyUserSettings),
 				getImagesByChatId: (chatId) => this.images.getImagesByChatId(chatId),
 				recordLlmInference: (record) => this.inferences.scheduleSave(record),
-				// Read methods only, never the services: a tool can't reach a write even at runtime (DESIGN.md §9.1).
+				// Read methods only, never the services: a tool can't reach a write even at runtime (DESIGN.md §7.1).
 				...readOnlyToolServices({
 					patients: this.patients,
 					skills: this.skills,
@@ -334,6 +336,7 @@ export class AgentService {
 					results: this.results,
 					orders: this.orders,
 					rules: this.rules,
+					attachments: this.attachments,
 				}),
 			},
 			clinicFolder: clinic.path,

@@ -24,6 +24,7 @@ import { Route as ProtectedOrdersRouteImport } from './routes/_protected/orders'
 import { Route as ProtectedPathwaysRouteImport } from './routes/_protected/pathways'
 import { Route as ProtectedPatientsRouteImport } from './routes/_protected/patients'
 import { Route as ProtectedReferralsRouteImport } from './routes/_protected/referrals'
+import { Route as ProtectedReportsRouteImport } from './routes/_protected/reports'
 import { Route as ProtectedResultsRouteImport } from './routes/_protected/results'
 import { Route as ProtectedSettingsRouteImport } from './routes/_protected/settings'
 import { Route as ProtectedWorklistRouteImport } from './routes/_protected/worklist'
@@ -126,6 +127,11 @@ const ProtectedPatientsRoute = ProtectedPatientsRouteImport.update({
 const ProtectedReferralsRoute = ProtectedReferralsRouteImport.update({
   id: '/referrals',
   path: '/referrals',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedReportsRoute = ProtectedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedResultsRoute = ProtectedResultsRouteImport.update({
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/pathways': typeof ProtectedPathwaysRoute
   '/patients': typeof ProtectedPatientsRouteWithChildren
   '/referrals': typeof ProtectedReferralsRoute
+  '/reports': typeof ProtectedReportsRoute
   '/results': typeof ProtectedResultsRoute
   '/settings': typeof ProtectedSettingsRouteWithChildren
   '/worklist': typeof ProtectedWorklistRoute
@@ -366,6 +373,7 @@ export interface FileRoutesByTo {
   '/orders': typeof ProtectedOrdersRoute
   '/pathways': typeof ProtectedPathwaysRoute
   '/referrals': typeof ProtectedReferralsRoute
+  '/reports': typeof ProtectedReportsRoute
   '/results': typeof ProtectedResultsRoute
   '/worklist': typeof ProtectedWorklistRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
@@ -412,6 +420,7 @@ export interface FileRoutesById {
   '/_protected/pathways': typeof ProtectedPathwaysRoute
   '/_protected/patients': typeof ProtectedPatientsRouteWithChildren
   '/_protected/referrals': typeof ProtectedReferralsRoute
+  '/_protected/reports': typeof ProtectedReportsRoute
   '/_protected/results': typeof ProtectedResultsRoute
   '/_protected/settings': typeof ProtectedSettingsRouteWithChildren
   '/_protected/worklist': typeof ProtectedWorklistRoute
@@ -460,6 +469,7 @@ export interface FileRouteTypes {
     | '/pathways'
     | '/patients'
     | '/referrals'
+    | '/reports'
     | '/results'
     | '/settings'
     | '/worklist'
@@ -504,6 +514,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/pathways'
     | '/referrals'
+    | '/reports'
     | '/results'
     | '/worklist'
     | '/forgot-password'
@@ -549,6 +560,7 @@ export interface FileRouteTypes {
     | '/_protected/pathways'
     | '/_protected/patients'
     | '/_protected/referrals'
+    | '/_protected/reports'
     | '/_protected/results'
     | '/_protected/settings'
     | '/_protected/worklist'
@@ -698,6 +710,13 @@ declare module '@tanstack/react-router' {
       path: '/referrals'
       fullPath: '/referrals'
       preLoaderRoute: typeof ProtectedReferralsRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/reports': {
+      id: '/_protected/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ProtectedReportsRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/results': {
@@ -1052,6 +1071,7 @@ interface ProtectedRouteChildren {
   ProtectedPathwaysRoute: typeof ProtectedPathwaysRoute
   ProtectedPatientsRoute: typeof ProtectedPatientsRouteWithChildren
   ProtectedReferralsRoute: typeof ProtectedReferralsRoute
+  ProtectedReportsRoute: typeof ProtectedReportsRoute
   ProtectedResultsRoute: typeof ProtectedResultsRoute
   ProtectedSettingsRoute: typeof ProtectedSettingsRouteWithChildren
   ProtectedWorklistRoute: typeof ProtectedWorklistRoute
@@ -1067,6 +1087,7 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedPathwaysRoute: ProtectedPathwaysRoute,
   ProtectedPatientsRoute: ProtectedPatientsRouteWithChildren,
   ProtectedReferralsRoute: ProtectedReferralsRoute,
+  ProtectedReportsRoute: ProtectedReportsRoute,
   ProtectedResultsRoute: ProtectedResultsRoute,
   ProtectedSettingsRoute: ProtectedSettingsRouteWithChildren,
   ProtectedWorklistRoute: ProtectedWorklistRoute,

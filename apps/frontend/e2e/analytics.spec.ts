@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { logIn, trackErrors } from './helpers';
 
 /**
- * Wise analytics (DESIGN.md §9.2): "how many patients do I have" is answered from a certified metric run as the user,
+ * Wise analytics (DESIGN.md §7.2): "how many patients do I have" is answered from a certified metric run as the user,
  * and the card shows the query on request. The seed gives the demo user 7 patients. Real LLM call.
  */
 test('Wise counts my patients from a certified metric and shows the query (real LLM call)', async ({ page }) => {

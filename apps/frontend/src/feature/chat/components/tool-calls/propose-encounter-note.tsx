@@ -25,7 +25,7 @@ const UPDATED_ANSWER = /^I updated the encounter note/;
 
 /**
  * Wise's change to an encounter's SOAP note: a before → after card the clinician checks, edits and confirms
- * (DESIGN.md §9.1). Confirm saves through `updateEncounterNote` against the version Wise drafted from, so an edit made
+ * (DESIGN.md §7.1). Confirm saves through `updateEncounterNote` against the version Wise drafted from, so an edit made
  * meanwhile is never overwritten: the card says so and offers a new draft (`ProposalCard`).
  */
 export const ProposeEncounterNoteToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_encounter_note'>) => {

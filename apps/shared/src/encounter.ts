@@ -1,6 +1,6 @@
 import z from 'zod/v3';
 
-/** Encounters (DESIGN.md §7): the one set of field rules for the API, the New encounter form and the Wise card. */
+/** Encounters (DESIGN.md §5): the one set of field rules for the API, the New encounter form and the Wise card. */
 export const ENCOUNTER_REASON_MAX_LENGTH = 200;
 export const ENCOUNTER_NOTES_MAX_LENGTH = 10_000;
 /** Clocks drift; an encounter "now" on a slightly fast laptop is still now. */

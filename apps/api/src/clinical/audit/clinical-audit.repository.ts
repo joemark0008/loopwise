@@ -18,7 +18,7 @@ export interface AuditEntry {
 	origin?: Prisma.InputJsonObject | null;
 }
 
-/** Writes `AuditLog` rows (DESIGN.md §10.6) in the caller's transaction, so the row and the change commit together. */
+/** Writes `AuditLog` rows (DESIGN.md §8.6) in the caller's transaction, so the row and the change commit together. */
 @Injectable()
 export class ClinicalAuditRepository {
 	write(tx: Tx, entry: AuditEntry) {

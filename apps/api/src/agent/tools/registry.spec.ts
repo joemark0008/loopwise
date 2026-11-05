@@ -7,7 +7,7 @@ import { getToolKind, TOOL_KINDS, withToolKind } from '../utils/tools.js';
 import { assertToolKinds, createWebSearchTools, getTools, uiToolset } from './index.js';
 
 /**
- * "AI drafts, the clinician confirms" (DESIGN.md §9.1), enforced on the registry: every tool declares what it does,
+ * "AI drafts, the clinician confirms" (DESIGN.md §7.1), enforced on the registry: every tool declares what it does,
  * tools only reach read methods, and a propose tool's execute only reads.
  */
 describe('agent tool registry', () => {
@@ -33,6 +33,7 @@ describe('agent tool registry', () => {
 			propose_medical_certificate: 'propose',
 			propose_charges: 'propose',
 			find_patient: 'read',
+			read_attachment: 'read',
 			open_page: 'navigate',
 			chart_patient_trend: 'read',
 			chart_facility_panel: 'read',
@@ -97,6 +98,7 @@ describe('agent tool registry', () => {
 			results: { ...readMocks(TOOL_SERVICE_READS.results), review: write },
 			orders: { ...readMocks(TOOL_SERVICE_READS.orders), accept: write },
 			rules: { ...readMocks(TOOL_SERVICE_READS.rules), evaluateAndStore: write },
+			attachments: { ...readMocks(TOOL_SERVICE_READS.attachments), upload: write },
 		} as never);
 
 		expect(
@@ -111,6 +113,7 @@ describe('agent tool registry', () => {
 			results: ['toReviewForWise'],
 			orders: ['labOrdersForWise'],
 			rules: ['explainForWise'],
+			attachments: ['readTextForWise'],
 		});
 		expect(Object.isFrozen(facades.patients)).toBe(true);
 		expect('register' in facades.patients).toBe(false);

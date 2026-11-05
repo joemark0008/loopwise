@@ -10,7 +10,7 @@ import { PrescriptionRepository } from './prescription.repository.js';
 import { PrescriptionService } from './prescription.service.js';
 import { PrescriptionsResolver } from './prescriptions.resolver.js';
 
-/** Prescriptions of an encounter (DESIGN.md §7): drafts, issuing (locked) and voiding, and the print view. */
+/** Prescriptions of an encounter (DESIGN.md §5): drafts, issuing (locked) and voiding, and the print view. */
 @Module({
 	imports: [
 		ClinicalDbModule,

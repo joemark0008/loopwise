@@ -40,6 +40,15 @@ describe('getLatestToolActivityLabel', () => {
 		expect(getLatestToolActivityLabel([toolPart('read', { file_path: 'RULES.md' })])).toBe('Exploring RULES.md');
 	});
 
+	it('names the attachment Wise is reading', () => {
+		expect(
+			getLatestToolActivityLabel([
+				toolPart('read_attachment', { path: '/home/uploads/2026-11-05/referral.pdf' }),
+			]),
+		).toBe('Reading referral.pdf');
+		expect(getLatestToolActivityLabel([toolPart('read_attachment', {})])).toBe('Reading the attachment');
+	});
+
 	it('names the MCP tool in use', () => {
 		expect(getLatestToolActivityLabel([dynamicToolPart('mcp_call', { server: 'metabase', tool: 'query' })])).toBe(
 			'Using query from metabase',

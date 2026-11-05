@@ -15,7 +15,7 @@ async function logInAs(page: Page, user: { email: string; password: string }, re
 }
 
 /**
- * The lab side of an order (DESIGN.md §4.1 steps 1–4): Dr. Reyes orders an HbA1c from Maria Santos's visit, Bohol
+ * The lab side of an order (DESIGN.md §2 steps 1–4): Dr. Reyes orders an HbA1c from Maria Santos's visit, Bohol
  * Diagnostics accepts it and marks the specimen collected on its worklist, and the doctor sees the status.
  */
 test.describe('lab orders', () => {

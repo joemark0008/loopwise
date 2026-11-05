@@ -2,7 +2,7 @@ import z from 'zod/v3';
 
 import { DateOnlySchema } from './encounter-record';
 
-/** Medical certificates (DESIGN.md §7): the one set of rules for the API, the certificate form and the Wise card. */
+/** Medical certificates (DESIGN.md §5): the one set of rules for the API, the certificate form and the Wise card. */
 export const WORK_FITNESS = ['fit_to_work', 'fit_with_restrictions', 'unfit'] as const;
 export type WorkFitness = (typeof WORK_FITNESS)[number];
 

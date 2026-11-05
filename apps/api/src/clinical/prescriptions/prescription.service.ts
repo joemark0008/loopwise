@@ -22,7 +22,7 @@ export function documentNumber(prefix: string, id: string, at: Date): string {
 }
 
 /**
- * Prescriptions (DESIGN.md §7). A draft is saved and replaced freely; issuing snapshots the prescriber (PRC license
+ * Prescriptions (DESIGN.md §5). A draft is saved and replaced freely; issuing snapshots the prescriber (PRC license
  * required) and the facility letterhead, and from then on the row is locked by a trigger: it can only be voided.
  * Everything runs as the user; only staff at the encounter's facility write. Every view and change is audited.
  */

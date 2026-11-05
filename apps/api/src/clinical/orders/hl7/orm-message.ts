@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
 /**
- * HL7 v2 ORM^O01 (general order) for an order sent to a lab or imaging facility (DESIGN.md §11). Pure: it takes the
+ * HL7 v2 ORM^O01 (general order) for an order sent to a lab or imaging facility (DESIGN.md §9). Pure: it takes the
  * order as plain values and returns the message, segments joined by carriage returns. The edge connector forwards it
  * over MLLP to the facility's lab system and posts the ACK back.
  *

@@ -6,7 +6,7 @@ import { DocumentSignatory } from '../../prescriptions/models/prescription.model
 
 registerEnumType(WorkFitness, { name: 'WorkFitness' });
 
-@ObjectType({ description: 'A medical certificate issued from an encounter (DESIGN.md §7).' })
+@ObjectType({ description: 'A medical certificate issued from an encounter (DESIGN.md §5).' })
 export class MedicalCertificate {
 	@Field(() => ID)
 	id: string;

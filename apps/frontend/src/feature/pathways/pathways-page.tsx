@@ -13,7 +13,7 @@ import { pathwayApi } from '@/lib/pathway-api';
 const TONE = { critical: 'critical', actionable: 'abnormal', normal: 'normal' } as const;
 
 /**
- * The clinical pathways, read-only (DESIGN.md §2 "rules-first decisions", §7, §8): every threshold, what it concludes
+ * The clinical pathways, read-only (DESIGN.md §4.4 "rules-first decisions", §5, §6): every threshold, what it concludes
  * and why, the steps a case goes through and their SLAs. What the rules engine applies is exactly what this shows.
  */
 export function PathwaysPage() {

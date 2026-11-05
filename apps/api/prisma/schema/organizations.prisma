@@ -20,7 +20,7 @@ model Organization {
   googleClientId     String?              @map("google_client_id")
   googleClientSecret String?              @map("google_client_secret")
   googleAuthDomains  String?              @map("google_auth_domains")
-  /// The kind of facility (DESIGN.md §6.1: each facility is an organization).
+  /// The kind of facility (DESIGN.md §4.1: each facility is an organization).
   type               OrganizationType     @default(clinic)
   /// For letterheads (prescriptions, medical certificates).
   address            String?
@@ -69,13 +69,8 @@ model Clinic {
   displaySettings    Json?               @map("display_settings")
   mapSettings        Json?               @map("map_settings")
   defaultModels      Json?               @map("default_models")
-  activities         Activity[]
-  analyticsEvents    AnalyticsEvent[]
-  automations        Automation[]
   chats              Chat[]
   llmInferences      LlmInference[]
-  logs               Log[]
-  notifications      Notification[]
   organization       Organization?       @relation(fields: [orgId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_org_id_organization_id_fk")
   clinicLlmConfigs   ClinicLlmConfig[]
   clinicMembers      ClinicMember[]
@@ -132,40 +127,30 @@ model ClinicSavedPrompt {
 }
 
 model User {
-  id                       String                    @id @default(uuid())
-  name                     String
-  email                    String                    @unique(map: "user_email_unique")
-  emailVerified            Boolean                   @default(false) @map("email_verified")
-  image                    String?
-  createdAt                DateTime                  @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt                DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  requiresPasswordReset    Boolean                   @default(false) @map("requires_password_reset")
-  memoryEnabled            Boolean                   @default(true) @map("memory_enabled")
-  messagingProviderCode    String?                   @unique(map: "user_messaging_provider_code_unique") @map("messaging_provider_code")
-  githubAccessToken        String?                   @map("github_access_token")
-  gitlabAccessToken        String?                   @map("gitlab_access_token")
-  deactivatedAt            DateTime?                 @map("deactivated_at") @db.Timestamp(6)
-  accounts                 Account[]
-  activities               Activity[]
-  analyticsEvents          AnalyticsEvent[]
-  apiKeys                  ApiKey[]
-  automations              Automation[]
-  chats                    Chat[]
-  chatMessages             ChatMessage[]
-  llmInferences            LlmInference[]
-  memories                 Memory[]
-  notifications            Notification[]
-  notificationUnsubscribes NotificationUnsubscribe[]
-  oauthAccessTokens        OauthAccessToken[]
-  oauthClients             OauthClient[]
-  oauthConsents            OauthConsent[]
-  oauthRefreshTokens       OauthRefreshToken[]
-  orgMembers               OrgMember[]
-  clinicMembers            ClinicMember[]
-  sessions                 Session[]
-  sharedChatAccess         SharedChatAccess[]
-  userGroupMembers         UserGroupMember[]
-  userPreference           UserPreference?
+  id                    String             @id @default(uuid())
+  name                  String
+  email                 String             @unique(map: "user_email_unique")
+  emailVerified         Boolean            @default(false) @map("email_verified")
+  image                 String?
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  requiresPasswordReset Boolean            @default(false) @map("requires_password_reset")
+  memoryEnabled         Boolean            @default(true) @map("memory_enabled")
+  messagingProviderCode String?            @unique(map: "user_messaging_provider_code_unique") @map("messaging_provider_code")
+  githubAccessToken     String?            @map("github_access_token")
+  gitlabAccessToken     String?            @map("gitlab_access_token")
+  deactivatedAt         DateTime?          @map("deactivated_at") @db.Timestamp(6)
+  accounts              Account[]
+  apiKeys               ApiKey[]
+  chats                 Chat[]
+  chatMessages          ChatMessage[]
+  llmInferences         LlmInference[]
+  memories              Memory[]
+  orgMembers            OrgMember[]
+  clinicMembers         ClinicMember[]
+  sessions              Session[]
+  sharedChatAccess      SharedChatAccess[]
+  userPreference        UserPreference?
 
   careRelationships CareRelationship[]
   encounters        Encounter[]
@@ -188,35 +173,21 @@ model User {
 }
 
 model UserGroup {
-  id               String            @id @default(uuid())
-  clinicId         String            @map("project_id")
-  name             String
-  isDefault        Boolean           @default(false) @map("is_default")
-  featureGrants    Json              @default("{\"version\": 2, \"features\": [], \"toolCallDensity\": {\"canChange\": true, \"defaultDensity\": \"detailed\"}}") @map("feature_grants")
-  contextGrants    Json?             @map("context_grants")
-  rowPolicies      Json?             @map("row_policies")
-  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  clinic           Clinic            @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_group_project_id_project_id_fk")
-  userGroupMembers UserGroupMember[]
+  id            String   @id @default(uuid())
+  clinicId      String   @map("project_id")
+  name          String
+  isDefault     Boolean  @default(false) @map("is_default")
+  featureGrants Json     @default("{\"version\": 2, \"features\": [], \"toolCallDensity\": {\"canChange\": true, \"defaultDensity\": \"detailed\"}}") @map("feature_grants")
+  contextGrants Json?    @map("context_grants")
+  rowPolicies   Json?    @map("row_policies")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_group_project_id_project_id_fk")
 
   @@unique([clinicId], map: "user_group_project_default_unique", where: raw("(is_default = true)"))
   @@unique([clinicId, name], map: "user_group_project_name_unique")
   @@index([clinicId], map: "user_group_projectId_idx")
   @@map("user_group")
-}
-
-model UserGroupMember {
-  groupId   String    @map("group_id")
-  userId    String    @map("user_id")
-  provider  String    @default("manual")
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
-  userGroup UserGroup @relation(fields: [groupId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_group_member_group_id_user_group_id_fk")
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_group_member_user_id_user_id_fk")
-
-  @@id([groupId, userId, provider], map: "user_group_member_group_id_user_id_provider_pk")
-  @@index([userId, provider], map: "user_group_member_user_provider_idx")
-  @@map("user_group_member")
 }
 
 model UserPreference {

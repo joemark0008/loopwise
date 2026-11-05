@@ -22,7 +22,7 @@ const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
 const origin = (toolCallId = crypto.randomUUID()): AnalyticsOrigin => ({ chatId: 'c', toolCallId, tool: 'test' });
 
 /**
- * Safe analytics (DESIGN.md §10.2), checked twice for every attack: the validator refuses it, and Postgres refuses it
+ * Safe analytics (DESIGN.md §8.2), checked twice for every attack: the validator refuses it, and Postgres refuses it
  * too when the validator is bypassed (`AnalyticsRepository.runWithToken`, the analyst side of a run). Dr. A works at
  * the health center and cares for Maria; Dr. B works at another clinic and cares for Juan.
  */

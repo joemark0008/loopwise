@@ -5,7 +5,7 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
 import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
 
 /**
- * The clinical schema (DESIGN.md §7, migration 0005_clinical) on Postgres: the happy path of §4.1 as rows, from the
+ * The clinical schema (DESIGN.md §5, migration 0005_clinical) on Postgres: the happy path of §2 as rows, from the
  * order to a closed case with evidence, and the append-only history. The clinical modules arrive with their own
  * repositories and tests; this only checks that the tables, enums, relations and triggers hold together.
  */

@@ -135,9 +135,6 @@ A chat (upstream `chat.get`'s `UIChat`). Dates are epoch milliseconds, as upstre
 """
 type Chat {
   author: ChatAuthor
-
-  """The automation run behind the chat (Phase 5)."""
-  automationRun: JSON
   clinicId: String!
   createdAt: Float!
 
@@ -447,7 +444,7 @@ input EditMemoryInput {
   memoryId: ID!
 }
 
-"""A visit of a patient at a facility (DESIGN.md §7)."""
+"""A visit of a patient at a facility (DESIGN.md §5)."""
 type Encounter {
   assessment: String
   doctor: EncounterDoctor
@@ -480,7 +477,7 @@ type Encounter {
   version: Int!
 }
 
-"""The bill of an encounter (DESIGN.md §7). Amounts in pesos."""
+"""The bill of an encounter (DESIGN.md §5). Amounts in pesos."""
 type EncounterBill {
   charges: [EncounterCharge!]!
   createdAt: DateTime!
@@ -635,7 +632,7 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 scalar JSON
 
 """
-An order on the receiving facility's worklist (DESIGN.md §4.1 steps 2–4).
+An order on the receiving facility's worklist (DESIGN.md §2 steps 2–4).
 """
 type LabOrder {
   acceptedAt: DateTime
@@ -721,7 +718,7 @@ input MarkBillPaidInput {
   wiseOrigin: WiseOriginInput
 }
 
-"""A medical certificate issued from an encounter (DESIGN.md §7)."""
+"""A medical certificate issued from an encounter (DESIGN.md §5)."""
 type MedicalCertificate {
   certificateNumber: String
   createdAt: DateTime!
@@ -1032,7 +1029,7 @@ input OrderReasonInput {
   wiseOrigin: WiseOriginInput
 }
 
-"""A lab or imaging result (DESIGN.md §7)."""
+"""A lab or imaging result (DESIGN.md §5)."""
 type OrderResult {
   code: String!
   display: String
@@ -1254,7 +1251,7 @@ type PatientVisit {
   prescriptions: [Prescription!]!
 }
 
-"""A prescription (℞) of an encounter (DESIGN.md §7)."""
+"""A prescription (℞) of an encounter (DESIGN.md §5)."""
 type Prescription {
   createdAt: DateTime!
   encounterId: ID!
@@ -1445,6 +1442,11 @@ type Query {
   """The facilities the signed-in user works at."""
   myFacilities: [Facility!]!
 
+  """
+  Your Wise reports across your chats, the latest version of each, newest first.
+  """
+  myReports: [WiseReportSummary!]!
+
   """Labs, imaging centers and hospitals that receive orders."""
   orderTargets: [Facility!]!
 
@@ -1483,9 +1485,6 @@ type Query {
 
   """Upstream `chat.getQueryRows`."""
   queryRows(input: QueryRowsInput!): QueryRowsPage!
-
-  """Upstream `feedback.getRecent`."""
-  recentFeedbacks(limit: Int): [RecentFeedback!]!
 
   """
   Why a result is normal, actionable or critical. Null when none is stored or the user can’t see it.
@@ -1588,15 +1587,6 @@ type QuickQuestionChat {
   chatId: ID!
   title: String!
   updatedAt: DateTime!
-}
-
-type RecentFeedback {
-  createdAt: DateTime!
-  explanation: String
-  messageId: ID!
-  messageText: String
-  userName: String!
-  vote: String!
 }
 
 input RecordVitalsInput {
@@ -1710,7 +1700,7 @@ enum ResultFlag {
 }
 
 """
-A lab or imaging result with its patient, source and order (DESIGN.md §4.1 steps 5–6).
+A lab or imaging result with its patient, source and order (DESIGN.md §2 steps 5–6).
 """
 type ResultItem {
   code: String!
@@ -2229,6 +2219,26 @@ type WiseProposalOutcome {
   toolName: String!
 }
 
+type WiseReportSummary {
+  chatId: ID!
+  chatTitle: String!
+  patientId: ID
+
+  """The patient's name, when you may still see them."""
+  patientName: String
+
+  """The report's id within its chat (the `report` tool's kebab-case id)."""
+  reportId: String!
+  title: String!
+
+  """The tool call of the latest version."""
+  toolCallId: String!
+  updatedAt: DateTime!
+
+  """The latest version."""
+  version: Int!
+}
+
 """
 A facility whose Wise tools the user sees, and whether they administer it.
 """
@@ -2249,7 +2259,7 @@ type WiseToolSettings {
   tools: [WiseToolView!]!
 }
 
-"""One Wise tool in Settings → Wise tools (DESIGN.md §9.4)."""
+"""One Wise tool in Settings → Wise tools (DESIGN.md §7.3)."""
 type WiseToolView {
   category: String!
 

@@ -1,4 +1,4 @@
--- Rules engine evaluations (DESIGN.md §6.2 "actionable? urgency?", §6.3 step 3): why a result is normal, actionable or
+-- Rules engine evaluations (DESIGN.md §4.2 "actionable? urgency?", §4.3 step 3): why a result is normal, actionable or
 -- critical, by which pathway rule and version. New table and enum only; nothing existing changes. Written by system
 -- work (the `result.received` subscriber, the seed), append-only like `audit_log`, and readable by exactly the users
 -- who can read the result: the policy looks the result up under the result's own row-level security.

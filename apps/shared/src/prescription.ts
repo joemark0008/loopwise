@@ -1,7 +1,7 @@
 import z from 'zod/v3';
 
 /**
- * Prescriptions (DESIGN.md §7): the one set of rules for the API, the prescription form and the Wise card.
+ * Prescriptions (DESIGN.md §5): the one set of rules for the API, the prescription form and the Wise card.
  * Items name the generic first (Generics Act, RA 6675); the brand is optional.
  */
 export const MEDICATION_ROUTES = [

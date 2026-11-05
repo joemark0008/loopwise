@@ -5,6 +5,7 @@ import { Injectable } from '@nestjs/common';
 import { isStoragePath, toStorageRelativePath, toStorageVirtualPath } from '../agent/utils/tools.js';
 import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
+import { readAttachmentText } from './attachment-text.js';
 import {
 	getStorageConfig,
 	getStorageHealth,
@@ -121,6 +122,17 @@ export class AttachmentsService {
 			size: stored.size,
 			...(withData && { data: await readUserFileBytes(scope, relativePath) }),
 		};
+	}
+
+	/**
+	 * Wise's `read_attachment` (DESIGN.md §9.2): the readable text of a file in the user's own space, with OCR for
+	 * scanned PDF pages. The scope is the run's user and clinic, never something the model chose.
+	 */
+	async readTextForWise(userId: string, clinicId: string, relativePath: string): Promise<string> {
+		if (!isStorageEnabled()) {
+			throw new Error(STORAGE_DISABLED_MESSAGE);
+		}
+		return readAttachmentText({ clinicId, userId }, relativePath);
 	}
 
 	/** `storage.getConfig`. */

@@ -1,4 +1,4 @@
-// The clinical record of an encounter: vitals, diagnoses, and the patient's allergies (DESIGN.md §7).
+// The clinical record of an encounter: vitals, diagnoses, and the patient's allergies (DESIGN.md §5).
 // Every row names the patient and the organization (tenant), so row-level security can filter on them; rows of an
 // encounter reference it by (encounter_id, patient_id), so they can never point at another patient's visit.
 // Wrong entries are voided, never deleted.

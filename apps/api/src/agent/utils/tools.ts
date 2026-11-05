@@ -19,7 +19,7 @@ export const STORAGE_MOUNT = 'home';
 const STORAGE_MOUNT_ALIAS = '~';
 
 /**
- * What a Wise tool may do (DESIGN.md §9.1). None of them writes: `read` tools read as the user, `navigate` opens a page,
+ * What a Wise tool may do (DESIGN.md §7.1). None of them writes: `read` tools read as the user, `navigate` opens a page,
  * `display` renders something in the chat, and `propose` returns a draft that only the clinician's Confirm saves.
  */
 export const TOOL_KINDS = ['read', 'navigate', 'display', 'propose'] as const;

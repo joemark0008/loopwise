@@ -138,7 +138,7 @@ export interface AgentToolServices {
 		): Promise<createReport.Snapshot>;
 	};
 	/**
-	 * `AnalyticsService` (Wise analytics, DESIGN.md §9.2, §10.2): validated SQL and certified metrics on the analyst
+	 * `AnalyticsService` (Wise analytics, DESIGN.md §7.2, §8.2): validated SQL and certified metrics on the analyst
 	 * role, as the user, audited. Typed structurally for the same reason as `patients`.
 	 */
 	analytics: {
@@ -167,6 +167,10 @@ export interface AgentToolServices {
 			toolCallIds: string[],
 		): Promise<Record<string, { toolName: string; output: unknown }>>;
 		versions(userId: string, chatId: string, reportId: string): Promise<report.Output[]>;
+	};
+	/** `AttachmentsService` read for `read_attachment`: a file in the user's own storage space, as text. */
+	attachments: {
+		readTextForWise(userId: string, clinicId: string, relativePath: string): Promise<string>;
 	};
 	/** `ResultsService` read for `list_results_to_review`; reviewing is the user's `reviewResult`. */
 	results: {

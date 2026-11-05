@@ -1,0 +1,21 @@
+.search {
+	position: relative;
+	max-width: 28rem;
+	margin-bottom: 0.75rem;
+}
+.searchIcon {
+	position: absolute;
+	top: 50%;
+	left: 0.75rem;
+	width: 1rem;
+	height: 1rem;
+	transform: translateY(-50%);
+	color: var(--app-muted);
+	pointer-events: none;
+}
+.searchInput {
+	padding-left: 2.25rem;
+}
+.meta {
+	color: var(--app-muted);
+}

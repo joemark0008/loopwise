@@ -6,7 +6,7 @@ import type { UIMessage } from '../agent/types/chat.js';
 import type { AuthUser } from '../auth/auth.service.js';
 import { Loaders } from '../common/dataloader/loaders.decorator.js';
 import type { RequestLoaders } from '../common/dataloader/request-loaders.js';
-import { ClinicAccess, ClinicAdmin } from '../common/decorators/access.decorator.js';
+import { ClinicAccess } from '../common/decorators/access.decorator.js';
 import { CurrentClinic, CurrentUser } from '../common/decorators/current.decorator.js';
 import type { Clinic } from '../generated/prisma/client.js';
 import { UserLoader } from '../users/user.loader.js';
@@ -30,7 +30,6 @@ import {
 	GroupedChatList,
 	MessageFeedback,
 	QueryRowsPage,
-	RecentFeedback,
 } from './models/chat.model.js';
 import { QueryRowsService } from './query-rows.service.js';
 
@@ -159,14 +158,5 @@ export class ChatsResolver {
 	@Mutation(() => MessageFeedback, { description: 'Upstream `feedback.submit`.' })
 	submitMessageFeedback(@CurrentUser() user: AuthUser, @Args('input') input: MessageFeedbackInput) {
 		return this.feedback.submit(user.id, input);
-	}
-
-	@ClinicAdmin()
-	@Query(() => [RecentFeedback], { description: 'Upstream `feedback.getRecent`.' })
-	recentFeedbacks(
-		@CurrentClinic() clinic: Clinic,
-		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-	): Promise<RecentFeedback[]> {
-		return this.feedback.listRecent(clinic.id, limit ? Math.min(Math.max(limit, 1), 50) : 10);
 	}
 }

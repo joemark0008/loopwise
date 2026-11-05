@@ -26,3 +26,17 @@ query SavedReportDocument($toolCallId: String!) {
 		createdAt
 	}
 }
+
+query MyReports {
+	myReports {
+		chatId
+		chatTitle
+		reportId
+		title
+		version
+		toolCallId
+		patientId
+		patientName
+		updatedAt
+	}
+}

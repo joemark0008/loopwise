@@ -11,10 +11,11 @@ type ReadSources = {
 	results: AgentToolServices['results'];
 	orders: AgentToolServices['orders'];
 	rules: AgentToolServices['rules'];
+	attachments: AgentToolServices['attachments'];
 };
 
 /**
- * The read methods tools may call, by service. A write method can't reach a tool even at runtime (DESIGN.md §9.1):
+ * The read methods tools may call, by service. A write method can't reach a tool even at runtime (DESIGN.md §7.1):
  * the facades are plain frozen objects of these methods, never the services themselves, and `registry.spec.ts` fails
  * when this list grows without review.
  */
@@ -28,6 +29,7 @@ export const TOOL_SERVICE_READS = {
 	results: ['toReviewForWise'],
 	orders: ['labOrdersForWise'],
 	rules: ['explainForWise'],
+	attachments: ['readTextForWise'],
 } as const satisfies { [K in keyof ReadSources]: readonly (keyof ReadSources[K])[] };
 
 export function readOnlyToolServices(sources: ReadSources): ReadSources {

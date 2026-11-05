@@ -6,7 +6,7 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
 import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
 
 /**
- * Row-level security on the clinical tables (DESIGN.md §10, migration 0006_clinical_rls), through
+ * Row-level security on the clinical tables (DESIGN.md §8, migration 0006_clinical_rls), through
  * `ClinicalDbService.asUser`. The setup runs as the owner, as system work does.
  */
 describe('clinical row-level security (e2e)', () => {

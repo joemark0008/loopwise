@@ -381,7 +381,6 @@ export class ChatRepository {
 			JOIN project p ON p.id = c.project_id
 			JOIN "user" u ON u.id = c.user_id
 			WHERE c.user_id = ${userId} AND c.deleted_at IS NULL AND c.surface = 'chat'
-				AND NOT exists(SELECT 1 FROM automation_run r WHERE r.chat_id = c.id)
 				AND NOT ${IS_QUICK_QUESTION}
 			ORDER BY c.updated_at DESC`;
 	}
@@ -400,7 +399,6 @@ export class ChatRepository {
 			JOIN "user" u ON u.id = c.user_id
 			LEFT JOIN shared_chat_access a ON a.shared_chat_id = s.id AND a.user_id = ${userId}
 			WHERE c.deleted_at IS NULL AND c.user_id <> ${userId}
-				AND NOT exists(SELECT 1 FROM automation_run r WHERE r.chat_id = c.id)
 				AND NOT exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source = 'onboarding')
 				AND (
 					(s.visibility = 'project' AND (
@@ -615,6 +613,37 @@ export class ChatRepository {
 			select: { toolOutput: true },
 		});
 		return parts.map((part) => part.toolOutput);
+	}
+
+	/**
+	 * The `report` tool outputs of the user's own chats, newest first (at most `limit`): every version of every report,
+	 * which the reports library folds to the latest per report.
+	 */
+	async listOwnReportParts(
+		userId: string,
+		limit: number,
+	): Promise<{ toolCallId: string; output: unknown; createdAt: Date; chatId: string; chatTitle: string }[]> {
+		const parts = await this.prisma.messagePart.findMany({
+			where: {
+				toolName: 'report',
+				toolState: 'output-available',
+				chatMessage: { chat: { userId, deletedAt: null } },
+			},
+			orderBy: [{ chatMessage: { createdAt: 'desc' } }, { order: 'desc' }],
+			take: limit,
+			select: {
+				toolCallId: true,
+				toolOutput: true,
+				chatMessage: { select: { createdAt: true, chatId: true, chat: { select: { title: true } } } },
+			},
+		});
+		return parts.map((part) => ({
+			toolCallId: part.toolCallId ?? '',
+			output: part.toolOutput,
+			createdAt: part.chatMessage.createdAt,
+			chatId: part.chatMessage.chatId,
+			chatTitle: part.chatMessage.chat.title,
+		}));
 	}
 
 	async updateExecuteSqlPart(
@@ -888,8 +917,8 @@ const IS_QUICK_QUESTION = PrismaSql(
 	`coalesce(c.fork_metadata->>'type', '') IN ('chat_selection', 'chat_question', 'story_selection', 'story_question')`,
 );
 
-const EXCLUDED_CHATS = PrismaSql(`NOT exists(SELECT 1 FROM automation_run r WHERE r.chat_id = c.id)
-	AND NOT exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source = 'onboarding')
+const EXCLUDED_CHATS =
+	PrismaSql(`NOT exists(SELECT 1 FROM chat_message m WHERE m.chat_id = c.id AND m.source = 'onboarding')
 	AND NOT coalesce(c.fork_metadata->>'type', '') IN ('chat_selection', 'chat_question', 'story_selection', 'story_question')`);
 
 /** Loose read of the SQL a stored part ran, tolerant of parts written by older versions (upstream `readStoredSql`). */

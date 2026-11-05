@@ -1,7 +1,7 @@
 import type { CaseState, Prisma } from '../src/generated/prisma/client.js';
 
 /**
- * Synthetic demo data for Loopwise (DESIGN.md §14): the Bohol facilities, their staff, synthetic patients, and cases
+ * Synthetic demo data for Loopwise: the Bohol facilities, their staff, synthetic patients, and cases
  * at different steps of the loop on the pathways of `seed-pathways.ts`. Everything here is invented; never put real
  * patient data in a seed.
  */
@@ -243,7 +243,7 @@ async function seedPatients(tx: Prisma.TransactionClient, ids: Ids, pathways: Re
 		return created.id;
 	};
 
-	// Maria Santos — the happy path (§4.1): diabetes range, referred to the internist, who accepted.
+	// Maria Santos — the happy path (§2): diabetes range, referred to the internist, who accepted.
 	{
 		const id = await patient('Maria', 'Santos', '1981-04-12', 'female', 'ceb');
 		const visit = await encounter(id, 'Fatigue, frequent urination, BP 140/90', daysAgo(12));

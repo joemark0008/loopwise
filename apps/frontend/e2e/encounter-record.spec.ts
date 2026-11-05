@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { logIn, trackErrors } from './helpers';
 
 /**
- * The encounter record (DESIGN.md §7) on Maria Santos's seeded first visit: vitals with the BMI, an ICD-10 diagnosis,
+ * The encounter record (DESIGN.md §5) on Maria Santos's seeded first visit: vitals with the BMI, an ICD-10 diagnosis,
  * a prescription saved, issued (locked) and printed. The seed admin gets a PRC license first (Settings → Account).
  */
 test.describe('encounter record', () => {

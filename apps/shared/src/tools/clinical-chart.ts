@@ -3,7 +3,7 @@ import z from 'zod/v3';
 import { SeriesConfigSchema } from './display-chart';
 
 /**
- * A chart the server builds from a fixed clinical dataset (DESIGN.md §9.2): Wise picks the dataset, never the numbers
+ * A chart the server builds from a fixed clinical dataset (DESIGN.md §7.2): Wise picks the dataset, never the numbers
  * or the axes. The chat card and the report PDF both draw it with the shared `buildChart`.
  */
 export const ChartSpecSchema = z.object({

@@ -3,7 +3,7 @@ import { chartPatientTrend, clinicalChart } from '@loopwise/shared/tools';
 import { createTool, rememberToolOutput, withResultId } from '../utils/tools.js';
 
 /**
- * Charts one patient's vitals or lab results for Wise (DESIGN.md §9.2), read as the signed-in user and audited. Wise
+ * Charts one patient's vitals or lab results for Wise (DESIGN.md §7.2), read as the signed-in user and audited. Wise
  * picks the measure; the points come from the record, and the model gets them back to describe the trend.
  */
 export default createTool<chartPatientTrend.Input, chartPatientTrend.Output>({

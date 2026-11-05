@@ -71,7 +71,7 @@ type ChatInputInlineProps = {
 	onSubmitMessage: AgentHelpers['queueOrSendMessage'];
 };
 
-export function ChatInput({ variant = 'default' }: { variant?: ChatInputVariant }) {
+export function ChatInput({ variant = 'default', className }: { variant?: ChatInputVariant; className?: string }) {
 	const promptRef = useRef<PromptHandle>(null);
 	const { queueOrSendMessage } = useAgentContext();
 
@@ -83,7 +83,15 @@ export function ChatInput({ variant = 'default' }: { variant?: ChatInputVariant 
 		requestAnimationFrame(() => promptRef.current?.focus());
 	});
 
-	return <ChatInputBase promptRef={promptRef} variant={variant} onSubmitMessage={queueOrSendMessage} allowQueueing />;
+	return (
+		<ChatInputBase
+			promptRef={promptRef}
+			variant={variant}
+			className={className}
+			onSubmitMessage={queueOrSendMessage}
+			allowQueueing
+		/>
+	);
 }
 
 export function ChatInputInline({ className, initialText, onCancel, onSubmitMessage }: ChatInputInlineProps) {

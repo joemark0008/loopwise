@@ -1,4 +1,4 @@
-// Care pathways and the cases that follow an actionable result to care: events, referrals, tasks, evidence (DESIGN.md §8).
+// Care pathways and the cases that follow an actionable result to care: events, referrals, tasks, evidence (DESIGN.md §6).
 // Every clinical row names the organization (tenant) it belongs to, so row-level security can filter on it.
 
 /// A guideline-based care pathway (diabetes, CKD, breast screening): rules, steps, SLAs and closure requirements.
@@ -20,7 +20,7 @@ model Pathway {
   @@map("pathway")
 }
 
-/// An actionable result followed through to care (DESIGN.md §8). `case` is an SQL keyword, hence the table name.
+/// An actionable result followed through to care (DESIGN.md §6). `case` is an SQL keyword, hence the table name.
 model CareCase {
   id                    String           @id @default(uuid())
   patientId             String           @map("patient_id")

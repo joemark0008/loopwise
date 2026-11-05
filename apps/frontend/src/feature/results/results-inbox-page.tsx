@@ -13,7 +13,7 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resultApi } from '@/lib/result-api';
 
-/** Results waiting for the clinician's review (DESIGN.md §4.1 steps 5–6): critical first, then abnormal. */
+/** Results waiting for the clinician's review (DESIGN.md §2 steps 5–6): critical first, then abnormal. */
 export function ResultsInboxPage() {
 	const results = useQuery(resultApi.result.toReview.queryOptions(undefined, { refetchInterval: 30_000 }));
 	const [reviewing, setReviewing] = useState<ResultItemFieldsFragment | null>(null);

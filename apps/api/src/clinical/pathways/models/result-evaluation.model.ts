@@ -27,7 +27,7 @@ export class EvaluatedRule {
 	received: string;
 }
 
-/** Why a result is normal, actionable or critical: the deterministic rules engine's evaluation (DESIGN.md §6.2). */
+/** Why a result is normal, actionable or critical: the deterministic rules engine's evaluation (DESIGN.md §4.2). */
 @ObjectType()
 export class ResultEvaluation {
 	@Field(() => ID)

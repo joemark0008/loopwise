@@ -43,7 +43,6 @@ export class ChatsService {
 			createdAt: chat.createdAt.getTime(),
 			updatedAt: chat.updatedAt.getTime(),
 			forkMetadata: (chat.forkMetadata as ForkMetadata | null) ?? null,
-			automationRun: null,
 		};
 	}
 

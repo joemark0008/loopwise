@@ -12,7 +12,7 @@ import { EncounterRepository } from './encounter.repository.js';
 import type { Encounter } from './models/encounter.model.js';
 
 /**
- * Encounters (DESIGN.md §7). Everything runs as the user: row-level security only shows the encounters of patients
+ * Encounters (DESIGN.md §5). Everything runs as the user: row-level security only shows the encounters of patients
  * they may see, and only lets them record one for such a patient at one of their facilities.
  */
 @Injectable()

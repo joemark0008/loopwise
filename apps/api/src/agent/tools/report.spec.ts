@@ -101,4 +101,37 @@ describe('report tool', () => {
 			/search was not found/,
 		);
 	});
+
+	it('lays blocks out in tabs and grids, with a KPI of a result', async () => {
+		const { run } = setup();
+		const layout = [
+			'<tab title="Overview">',
+			'<grid widths="2,1"><chart ref="call_metric"/><kpi ref="call_metric" column="patients" compare="variation"/></grid>',
+			'</tab>',
+			'<tab title="Detail"><table ref="call_table"/></tab>',
+		].join('\n');
+		const created = await run({ action: 'create', id: 'r', title: 'R', code: layout });
+		expect(created.refs).toEqual(['call_metric', 'call_metric', 'call_table']);
+	});
+
+	it('refuses malformed layout and a KPI its result cannot show', async () => {
+		const { run } = setup();
+		await expect(
+			run({
+				action: 'create',
+				id: 'r',
+				title: 'R',
+				code: 'Intro <tab title="A"><table ref="call_table"/></tab>',
+			}),
+		).rejects.toThrow(/layout doesn't parse: A report with tabs/);
+		await expect(
+			run({ action: 'create', id: 'r', title: 'R', code: '<grid><table ref="call_table"/></grid>' }),
+		).rejects.toThrow(/2–4 blocks/);
+		await expect(
+			run({ action: 'create', id: 'r', title: 'R', code: '<kpi ref="call_metric" column="age_band"/>' }),
+		).rejects.toThrow(/no number in the last row/);
+		await expect(run({ action: 'create', id: 'r', title: 'R', code: '<kpi ref="call_table"/>' })).rejects.toThrow(
+			/no numeric column/,
+		);
+	});
 });
