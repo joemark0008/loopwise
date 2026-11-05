@@ -51,7 +51,7 @@ export interface InsightsAuditEntry {
 }
 
 /**
- * Reads of the Wise charts and summary reports (DESIGN.md §9.2). Every method takes the transaction of
+ * Reads of the Wise charts and summary reports (DESIGN.md §7.2). Every method takes the transaction of
  * `ClinicalDbService.asUser`, so row-level security decides what a chart or report can show.
  */
 @Injectable()

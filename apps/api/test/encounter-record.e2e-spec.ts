@@ -20,7 +20,7 @@ const RECORD = `query ($id: ID!) {
 }`;
 
 /**
- * The encounter record through GraphQL (DESIGN.md §7): the note, vitals (BMI computed), ICD-10 diagnoses, allergies,
+ * The encounter record through GraphQL (DESIGN.md §5): the note, vitals (BMI computed), ICD-10 diagnoses, allergies,
  * orders, prescriptions and medical certificates; row-level security on every read, the facility check on every
  * write, audit rows, and locked issued documents.
  */

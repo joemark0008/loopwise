@@ -3,7 +3,7 @@ import { createReport } from '@loopwise/shared/tools';
 import { createTool, rememberToolOutput, withResultId } from '../utils/tools.js';
 
 /**
- * Builds a summary report for Wise (DESIGN.md §9.2): the server fills the data sections as the signed-in user and
+ * Builds a summary report for Wise (DESIGN.md §7.2): the server fills the data sections as the signed-in user and
  * freezes them in the tool output, which the PDF is printed from. The model writes only the narrative, and a narrative
  * with a number the sections don't hold is refused. Viewing a report is a read; the PDF is the clinician's click.
  */

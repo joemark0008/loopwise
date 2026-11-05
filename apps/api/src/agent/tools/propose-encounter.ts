@@ -3,7 +3,7 @@ import { proposeEncounter } from '@loopwise/shared/tools';
 import { createTool } from '../utils/tools.js';
 
 /**
- * Offers a draft encounter for the patient of a chart chat (DESIGN.md §9.1). It writes nothing: the clinician records
+ * Offers a draft encounter for the patient of a chart chat (DESIGN.md §7.1). It writes nothing: the clinician records
  * it with the card's Confirm button (`createEncounter`), which links it back to this chat.
  */
 export default createTool<proposeEncounter.Input, proposeEncounter.Output>({

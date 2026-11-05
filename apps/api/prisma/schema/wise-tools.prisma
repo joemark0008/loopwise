@@ -1,4 +1,4 @@
-// Wise tool settings (DESIGN.md §9.4): which Wise tools a facility turned on or off, and the ones a user turned off for
+// Wise tool settings (DESIGN.md §7.3): which Wise tools a facility turned on or off, and the ones a user turned off for
 // themselves. Rows are overrides only; without one the catalogue's default for the facility type applies
 // (`@loopwise/shared/wise-tools`). The foreign keys to `organization` and `user` (cascade) live in the migration only, so
 // those models stay as they are.

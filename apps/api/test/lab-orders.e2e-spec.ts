@@ -23,7 +23,7 @@ const WORKLIST = `query ($status: OrderStatus!) {
 const COUNTS = `{ labOrderCounts { status count } }`;
 
 /**
- * The lab side of orders (DESIGN.md §4.1 steps 2–5, §7, §11): the receiving facility's worklist and steps under
+ * The lab side of orders (DESIGN.md §2 steps 2–5, §5, §9): the receiving facility's worklist and steps under
  * row-level security, the transitions the API and Postgres refuse, audit rows, and outbound HL7 through `hl7_outbox`.
  */
 describe('lab orders (e2e)', () => {

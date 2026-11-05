@@ -9,7 +9,7 @@ import { BillingRepository } from './billing.repository.js';
 import { BillingResolver } from './billing.resolver.js';
 import { BillingService } from './billing.service.js';
 
-/** The bill of an encounter (DESIGN.md §7): charges, senior/PWD discount, PhilHealth package; finalize, pay, void. */
+/** The bill of an encounter (DESIGN.md §5): charges, senior/PWD discount, PhilHealth package; finalize, pay, void. */
 @Module({
 	imports: [ClinicalDbModule, ClinicalAuditModule, OrganizationsModule, EncountersModule, WiseProposalsModule],
 	providers: [BillingResolver, BillingService, BillingRepository],

@@ -3,6 +3,7 @@ import {
 	Boxes,
 	ChartColumn,
 	Contact,
+	FileText,
 	FlaskConical,
 	HardDrive,
 	ListChecks,
@@ -35,7 +36,7 @@ export interface NavContext {
 	isViewer: boolean;
 }
 
-/** Who the signed-in user is in the loop (DESIGN.md §3); each role has its own home and sidebar. */
+/** Who the signed-in user is in the loop (DESIGN.md §1); each role has its own home and sidebar. */
 export type StaffRole = 'doctor' | 'nurse' | 'lab' | 'specialist' | 'program';
 
 export interface NavLink {
@@ -113,6 +114,13 @@ export const navLinks: NavLink[] = [
 		to: '/chats',
 		section: 'workspace',
 		shortcut: 'G W',
+		roles: ['doctor', 'specialist', 'program'],
+	},
+	{
+		icon: FileText,
+		label: 'Reports',
+		to: '/reports',
+		section: 'workspace',
 		roles: ['doctor', 'specialist', 'program'],
 	},
 	// The rules the engine applies, for program staff and the clinicians who act on them (everyone is a doctor until

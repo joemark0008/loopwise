@@ -3,7 +3,7 @@ import { findPatient } from '@loopwise/shared/tools';
 import { createTool } from '../utils/tools.js';
 
 /**
- * Looks patients up for Wise (DESIGN.md §9.2), as the signed-in user: row-level security decides what it finds and
+ * Looks patients up for Wise (DESIGN.md §7.2), as the signed-in user: row-level security decides what it finds and
  * every patient it returns is audited as a view. Reads only.
  */
 export default createTool<findPatient.Input, findPatient.Output>({

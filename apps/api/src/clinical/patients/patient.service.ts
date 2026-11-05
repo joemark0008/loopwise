@@ -36,11 +36,11 @@ interface Match {
 }
 
 /**
- * Patient registration and lookup (DESIGN.md §7, §10). Registering is system work: it creates the patient, their
+ * Patient registration and lookup (DESIGN.md §5, §8). Registering is system work: it creates the patient, their
  * identifiers at the facility and the registering user's care relationship, and writes its own audit row. Reads run
  * as the user, so row-level security decides what they see.
  *
- * Duplicates (deterministic, §16): the MRN at the facility or the PhilHealth number at any facility is an exact match
+ * Duplicates (deterministic, §12): the MRN at the facility or the PhilHealth number at any facility is an exact match
  * and is never registered twice; the same name, birth date and sex is a possible match the clinician confirms.
  */
 /** The Wise card that confirms into `register` / `linkExisting`. */

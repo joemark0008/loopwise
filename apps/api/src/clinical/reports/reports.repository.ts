@@ -14,6 +14,18 @@ export class ReportsRepository {
 		return (await tx.patient.count({ where: { id: patientId } })) > 0;
 	}
 
+	/** Names of the patients the user may see, by id; a patient they can't see is simply missing. */
+	async patientNames(tx: Tx, patientIds: string[]): Promise<Map<string, string>> {
+		if (patientIds.length === 0) {
+			return new Map();
+		}
+		const rows = await tx.patient.findMany({
+			where: { id: { in: patientIds } },
+			select: { id: true, givenName: true, familyName: true },
+		});
+		return new Map(rows.map((row) => [row.id, `${row.givenName} ${row.familyName}`]));
+	}
+
 	async userName(tx: Tx, userId: string): Promise<string> {
 		return (await tx.user.findUnique({ where: { id: userId }, select: { name: true } }))?.name ?? 'Unknown user';
 	}

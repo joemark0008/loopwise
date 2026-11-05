@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 /**
- * The in-process clinical events (DESIGN.md §6.3). Ingest publishes, the rules and case engines subscribe. A small
+ * The in-process clinical events (DESIGN.md §4.3). Ingest publishes, the rules and case engines subscribe. A small
  * typed bus for the prototype; NATS JetStream can replace it behind the same names.
  */
 export interface ClinicalEvents {

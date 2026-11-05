@@ -166,7 +166,7 @@ export class AgentService {
 		});
 		const webTools = await this.resolveWebTools(chat.projectId, modelSelection.provider, agentSettings);
 		// The web profile's tool set (upstream `analyticsToolsExcluding([])`) unless the profile brings its own, less the
-		// tools turned off in Wise settings (DESIGN.md §9.4): the model is never offered them, and the AI SDK refuses a
+		// tools turned off in Wise settings (DESIGN.md §7.3): the model is never offered them, and the AI SDK refuses a
 		// call to a tool outside this set. Computed per run, so a toggle applies from the next message.
 		const offered = (
 			profile.tools
@@ -325,7 +325,7 @@ export class AgentService {
 					this.llm.resolveProviderModel(projectId, provider, modelId, applyUserSettings),
 				getImagesByChatId: (chatId) => this.images.getImagesByChatId(chatId),
 				recordLlmInference: (record) => this.inferences.scheduleSave(record),
-				// Read methods only, never the services: a tool can't reach a write even at runtime (DESIGN.md §9.1).
+				// Read methods only, never the services: a tool can't reach a write even at runtime (DESIGN.md §7.1).
 				...readOnlyToolServices({
 					patients: this.patients,
 					skills: this.skills,

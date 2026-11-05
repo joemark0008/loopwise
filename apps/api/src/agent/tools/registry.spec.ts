@@ -7,7 +7,7 @@ import { getToolKind, TOOL_KINDS, withToolKind } from '../utils/tools.js';
 import { assertToolKinds, createWebSearchTools, getTools, uiToolset } from './index.js';
 
 /**
- * "AI drafts, the clinician confirms" (DESIGN.md §9.1), enforced on the registry: every tool declares what it does,
+ * "AI drafts, the clinician confirms" (DESIGN.md §7.1), enforced on the registry: every tool declares what it does,
  * tools only reach read methods, and a propose tool's execute only reads.
  */
 describe('agent tool registry', () => {

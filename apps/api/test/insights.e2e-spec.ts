@@ -30,7 +30,7 @@ interface ScriptedCall {
 }
 
 /**
- * Wise charts and summary reports (DESIGN.md §9.2): `chart_patient_trend` and `create_report` read as the user, so a
+ * Wise charts and summary reports (DESIGN.md §7.2): `chart_patient_trend` and `create_report` read as the user, so a
  * doctor without a care relationship gets neither; a narrative with a number the record lacks is refused; the PDF is
  * printed only for the chat's owner and audited as `report.export`. The LLM is scripted, one tool call a step.
  */
@@ -365,6 +365,23 @@ describe('charts and reports (e2e)', () => {
 		expect(
 			await prisma.auditLog.count({ where: { action: 'document.create', resourceId: saved.id, patientId } }),
 		).toBe(1);
+
+		const library = (cookie: string[]) =>
+			graphql(cookie, '{ myReports { chatId reportId title version toolCallId patientId patientName } }');
+		expect((await library(users.reyes.cookie)).body.data.myReports).toContainEqual({
+			chatId: chatMessage.chatId,
+			reportId: 'bp',
+			title: 'Maria BP',
+			version: 1,
+			toolCallId: reportId,
+			patientId,
+			patientName: expect.stringContaining('Maria'),
+		});
+		expect(
+			(await library(users.cruz.cookie)).body.data.myReports.filter(
+				(row: { toolCallId: string }) => row.toolCallId === reportId,
+			),
+		).toEqual([]);
 
 		const list = (cookie: string[]) =>
 			graphql(cookie, 'query ($p: ID!) { patientDocuments(patientId: $p) { id } }', { p: patientId });

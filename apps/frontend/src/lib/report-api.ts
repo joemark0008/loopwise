@@ -1,6 +1,7 @@
 import {
 	ExportReportPdfDocument,
 	ExportWiseReportPdfDocument,
+	MyReportsDocument,
 	SavedReportDocumentDocument,
 	SaveReportToChartDocument,
 } from '@/graphql/generated/graphql';
@@ -12,7 +13,7 @@ interface PdfFile {
 	data: string;
 }
 
-/** Wise reports (DESIGN.md §9.2): PDFs of reports Wise built in one of your chats, printed on the server and audited. */
+/** Wise reports (DESIGN.md §7.2): PDFs of reports Wise built in one of your chats, printed on the server and audited. */
 export const reportApi = {
 	/** A `create_report` summary card's PDF (`report.export`), saved in the browser. */
 	async downloadPdf({ chatId, toolCallId }: { chatId: string; toolCallId: string }): Promise<void> {
@@ -41,6 +42,12 @@ export const reportApi = {
 	/** Saves one version of a report about a patient to their chart (the clinician's action). */
 	async saveToChart({ chatId, toolCallId }: { chatId: string; toolCallId: string }) {
 		return (await runMutation(SaveReportToChartDocument, { chatId, toolCallId })).saveReportToChart;
+	},
+
+	/** The reports library: the latest version of each report in your chats, newest first. */
+	mine: {
+		queryKey: ['report', 'mine'] as const,
+		fetch: async () => (await runQuery(MyReportsDocument, {})).myReports,
 	},
 
 	savedDocument: {

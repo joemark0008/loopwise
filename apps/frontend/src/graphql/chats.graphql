@@ -7,7 +7,6 @@ fragment ChatFields on Chat {
 	createdAt
 	updatedAt
 	forkMetadata
-	automationRun
 	messages
 }
 

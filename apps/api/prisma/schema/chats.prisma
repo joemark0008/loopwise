@@ -10,30 +10,27 @@ model ChartImage {
 }
 
 model Chat {
-  id                 String           @id @default(uuid())
-  userId             String           @map("user_id")
-  title              String           @default("New Conversation")
-  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt          DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  slackThreadId      String?          @map("slack_thread_id")
-  projectId          String           @map("project_id")
-  teamsThreadId      String?          @map("teams_thread_id")
-  isStarred          Boolean          @default(false) @map("is_starred")
-  telegramThreadId   String?          @map("telegram_thread_id")
-  whatsappThreadId   String?          @map("whatsapp_thread_id")
-  deletedAt          DateTime?        @map("deleted_at") @db.Timestamp(6)
-  forkMetadata       Json?            @map("fork_metadata")
-  surface            String           @default("chat")
-  mattermostThreadId String?          @map("mattermost_thread_id")
-  discordThreadId    String?          @map("discord_thread_id")
+  id                 String         @id @default(uuid())
+  userId             String         @map("user_id")
+  title              String         @default("New Conversation")
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  slackThreadId      String?        @map("slack_thread_id")
+  projectId          String         @map("project_id")
+  teamsThreadId      String?        @map("teams_thread_id")
+  isStarred          Boolean        @default(false) @map("is_starred")
+  telegramThreadId   String?        @map("telegram_thread_id")
+  whatsappThreadId   String?        @map("whatsapp_thread_id")
+  deletedAt          DateTime?      @map("deleted_at") @db.Timestamp(6)
+  forkMetadata       Json?          @map("fork_metadata")
+  surface            String         @default("chat")
+  mattermostThreadId String?        @map("mattermost_thread_id")
+  discordThreadId    String?        @map("discord_thread_id")
   /// The patient a chart chat is about (`surface = 'patient'`): one per clinician per patient.
-  patientId          String?          @map("patient_id")
-  patient            Patient?         @relation(fields: [patientId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "chat_patient_id_patient_id_fk")
-  activities         Activity[]
-  analyticsEvents    AnalyticsEvent[]
-  automationRuns     AutomationRun[]
-  project            Project          @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "chat_project_id_project_id_fk")
-  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "chat_user_id_user_id_fk")
+  patientId          String?        @map("patient_id")
+  patient            Patient?       @relation(fields: [patientId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "chat_patient_id_patient_id_fk")
+  project            Project        @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "chat_project_id_project_id_fk")
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "chat_user_id_user_id_fk")
   chatMessages       ChatMessage[]
   llmInferences      LlmInference[]
   memories           Memory[]
@@ -166,8 +163,6 @@ model SharedChat {
   chatId           String             @unique(map: "shared_chat_chatId_unique") @map("chat_id")
   visibility       String             @default("project")
   createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
-  activities       Activity[]
-  analyticsEvents  AnalyticsEvent[]
   chat             Chat               @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shared_chat_chat_id_chat_id_fk")
   sharedChatAccess SharedChatAccess[]
 

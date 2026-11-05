@@ -25,15 +25,15 @@ type SystemPromptProps = {
 	currentPatient?: string;
 	/** Names of the tools in the run's tool set — rules for surface-dependent tools (e.g. display_map) are only emitted when the tool is present. Omit to include every rule. */
 	toolNames?: string[];
-	/** Tools turned off in Wise settings for this user (DESIGN.md §9.4): Wise says so instead of failing silently. */
+	/** Tools turned off in Wise settings for this user (DESIGN.md §7.3): Wise says so instead of failing silently. */
 	disabledTools?: string[];
 };
 
 export const MEMORY_TOKEN_LIMIT = 1000;
 
 /**
- * Wise, the doctor's assistant (DESIGN.md §9). The clinical tools and their rules arrive with the clinical modules;
- * the safety rules of §9.3 apply from the start.
+ * Wise, the doctor's assistant (DESIGN.md §7). The clinical tools and their rules arrive with the clinical modules;
+ * the safety rules of §7.4 apply from the start.
  */
 export function SystemPrompt({
 	memories = [],
@@ -376,10 +376,12 @@ export function SystemPrompt({
 							When asked for a report, summary or PDF, first get the data (get_metric or run_analytics_sql
 							with a chart, chart_patient_trend, or create_report for a patient's clinical summary), then
 							call <Bold>report</Bold>: short markdown plus blocks that embed those results by their
-							result id. It opens in a side panel. For changes the clinician asks for, call report again
-							with the same id (update for small edits, replace to rewrite). Write no number that isn't in
-							an embedded result, and never say a report was saved, sent or shared: the clinician
-							downloads or saves it from the panel.
+							result id; use a kpi block for a headline number, a grid to put a chart beside a KPI or a
+							second chart, and tabs only for a long report with clearly separate parts. It opens in a
+							side panel. For changes the clinician asks for, call report again with the same id (update
+							for small edits, replace to rewrite). Write no number that isn't in an embedded result, and
+							never say a report was saved, sent or shared: the clinician downloads or saves it from the
+							panel.
 						</ListItem>
 					</List>
 				</>

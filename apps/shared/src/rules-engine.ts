@@ -14,7 +14,7 @@ import {
 } from './pathway-rules';
 
 /**
- * The rules engine (DESIGN.md §2 "rules-first decisions", §6.2 "actionable? urgency?", §6.3 step 3): a pure function
+ * The rules engine (DESIGN.md §4.4 "rules-first decisions", §4.2 "actionable? urgency?", §4.3 step 3): a pure function
  * from a result and the active pathways to one explainable evaluation. No AI, no clock, no I/O: the same input always
  * gives the same output, and the output says which rule fired and why.
  */
@@ -49,7 +49,7 @@ export interface RuleEvaluation {
 	urgency: Urgency;
 	reason: string;
 	guideline: string;
-	/** The case state the case engine should aim for (DESIGN.md §8). */
+	/** The case state the case engine should aim for (DESIGN.md §6). */
 	nextState: CaseState;
 	/** Hours allowed in `nextState` before the case escalates. */
 	slaHours: number | null;

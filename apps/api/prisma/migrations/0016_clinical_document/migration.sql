@@ -1,4 +1,4 @@
--- Documents saved to a patient's chart (DESIGN.md §9.2): a Wise report version the clinician saved from the report
+-- Documents saved to a patient's chart (DESIGN.md §7.2): a Wise report version the clinician saved from the report
 -- panel, frozen with the tool results it embeds. New table only; nothing existing changes. Append-only like
 -- `audit_log`, and readable or writable only through the patient (row-level security, as 0011's clinical tables).
 

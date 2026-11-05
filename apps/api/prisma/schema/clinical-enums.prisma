@@ -1,4 +1,4 @@
-// Postgres enums shared by the clinical models (DESIGN.md §7).
+// Postgres enums shared by the clinical models (DESIGN.md §5).
 
 enum OrganizationType {
   clinic

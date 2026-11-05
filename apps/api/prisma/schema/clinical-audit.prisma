@@ -1,7 +1,7 @@
-// The append-only audit trail of every view of and action on clinical data (DESIGN.md §10.6).
+// The append-only audit trail of every view of and action on clinical data (DESIGN.md §8.6).
 // Every clinical row names the organization (tenant) it belongs to, so row-level security can filter on it.
 
-/// Every view of and action on clinical data (DESIGN.md §10.6). Append-only; ids are plain columns, not foreign keys,
+/// Every view of and action on clinical data (DESIGN.md §8.6). Append-only; ids are plain columns, not foreign keys,
 /// so the trail outlives what it points at.
 model AuditLog {
   id         String   @id @default(uuid())
@@ -13,7 +13,7 @@ model AuditLog {
   resourceId String?  @map("resource_id")
   reason     String?
   /// Where the action came from when not the app's own forms, e.g. a confirmed Wise card:
-  /// `{ via: 'wise', toolName, chatId, messageId, toolCallId, edited }` (DESIGN.md §9.1).
+  /// `{ via: 'wise', toolName, chatId, messageId, toolCallId, edited }` (DESIGN.md §7.1).
   origin     Json?
   at         DateTime @default(now()) @db.Timestamp(6)
 

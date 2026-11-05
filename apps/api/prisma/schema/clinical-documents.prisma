@@ -1,4 +1,4 @@
-// Documents saved to a patient's chart (DESIGN.md §9.2): a Wise report version the clinician saved, frozen with the
+// Documents saved to a patient's chart (DESIGN.md §7.2): a Wise report version the clinician saved, frozen with the
 // results it embeds, so the chart shows what they read. Append-only (a trigger rejects UPDATE and DELETE).
 
 model ClinicalDocument {

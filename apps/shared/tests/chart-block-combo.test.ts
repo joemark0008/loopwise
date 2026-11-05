@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { buildStoryChartBlock } from '../src/chart-block';
 import { parseChartBlock } from '../src/story-segments';
-import { validateStoryCode } from '../src/story-validation';
 import { ChartInputSchema } from '../src/tools/display-chart';
 
 describe('combo chart input schema', () => {
@@ -70,36 +69,5 @@ describe('combo chart block round-trip', () => {
 		expect(parsed?.yAxisRightMin).toBe(0);
 		expect(parsed?.yAxisRightMax).toBe(100);
 		expect(parsed?.yAxisRightLabel).toBe('Orders');
-	});
-});
-
-describe('combo chart story validation', () => {
-	it('passes validation for a valid combo chart', () => {
-		const block = buildStoryChartBlock({
-			query_id: 'q1',
-			chart_type: 'mixed',
-			x_axis_key: 'month',
-			x_axis_type: 'category',
-			series: [
-				{ data_key: 'revenue', series_type: 'bar', y_axis: 'left' },
-				{ data_key: 'orders', series_type: 'line', y_axis: 'right' },
-			],
-			title: 'Revenue vs. orders',
-		});
-		expect(validateStoryCode(block)).toEqual([]);
-	});
-
-	it('flags an invalid series_type', () => {
-		const code =
-			'<chart query_id="q1" chart_type="bar" x_axis_key="month" series=\'[{"data_key":"revenue","series_type":"donut"}]\' title="x" />';
-		const errors = validateStoryCode(code);
-		expect(errors.some((error) => error.message.includes('series_type'))).toBe(true);
-	});
-
-	it('flags an invalid y_axis', () => {
-		const code =
-			'<chart query_id="q1" chart_type="bar" x_axis_key="month" series=\'[{"data_key":"revenue","y_axis":"middle"}]\' title="x" />';
-		const errors = validateStoryCode(code);
-		expect(errors.some((error) => error.message.includes('y_axis'))).toBe(true);
 	});
 });

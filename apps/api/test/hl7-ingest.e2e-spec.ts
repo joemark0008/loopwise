@@ -11,7 +11,7 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
 import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
 
 /**
- * `POST /api/hl7/messages` (DESIGN.md §6.3, §11): facility-key auth, ACK codes, idempotency per MSH-10, deterministic
+ * `POST /api/hl7/messages` (DESIGN.md §4.3, §9): facility-key auth, ACK codes, idempotency per MSH-10, deterministic
  * patient matching, stored results with the order moved to `resulted`, audit rows and the `result.received` event.
  */
 describe('HL7 ingest (e2e)', () => {

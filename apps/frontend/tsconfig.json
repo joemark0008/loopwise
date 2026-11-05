@@ -29,7 +29,9 @@
 			"@loopwise/api/*": ["../api/src/*"],
 			"zod": ["../../node_modules/zod"],
 			"zod/*": ["../../node_modules/zod/*"],
-			"ai": ["../../node_modules/ai"]
+			"ai": ["../../node_modules/ai"],
+			// 6.3.0 declarations import its .ts sources, which fail strict checks; see the shim.
+			"@maplibre/geojson-vt": ["./src/types/maplibre-geojson-vt.d.ts"]
 		}
 	}
 }

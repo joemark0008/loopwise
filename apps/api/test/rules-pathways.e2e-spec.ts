@@ -27,7 +27,7 @@ const PATHWAYS = `{
 }`;
 
 /**
- * The rules engine end to end (DESIGN.md §6.2, §6.3 step 3): a stored result is evaluated against the seeded pathways,
+ * The rules engine end to end (DESIGN.md §4.2, §4.3 step 3): a stored result is evaluated against the seeded pathways,
  * the evaluation is stored once per rule version, and it is readable exactly by the users who can read the result —
  * the patient's doctor and the lab that sent it, not a doctor at another facility.
  */

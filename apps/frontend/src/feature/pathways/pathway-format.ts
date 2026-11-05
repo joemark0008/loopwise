@@ -14,7 +14,7 @@ const CASE_STATES: Record<CaseState, string> = {
 	lost_to_follow_up: 'Lost to follow-up',
 };
 
-/** A case state (DESIGN.md §8) in words. */
+/** A case state (DESIGN.md §6) in words. */
 export const caseStateLabel = (state: CaseState) => CASE_STATES[state];
 
 const URGENCIES: Record<Urgency, string> = { routine: 'Routine', soon: 'Soon', urgent: 'Urgent', critical: 'Critical' };

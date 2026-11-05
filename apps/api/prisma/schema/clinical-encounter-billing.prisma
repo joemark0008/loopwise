@@ -1,5 +1,5 @@
 // The bill of an encounter: a short list of charges, an optional senior/PWD discount and PhilHealth package
-// (DESIGN.md §7). A draft is editable; a finalized bill can only be marked paid or voided (a trigger enforces it).
+// (DESIGN.md §5). A draft is editable; a finalized bill can only be marked paid or voided (a trigger enforces it).
 // Out of scope: eClaims and claim forms, HMOs, BIR receipts, payment processing.
 
 model EncounterBill {

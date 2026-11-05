@@ -129,8 +129,7 @@ Visible labels (never placeholder-only), a required marker, errors under the fie
 - **Top bar:** breadcrumbs as a list with links (`Patients › Maria Santos › Encounter 22 Oct 2026`, names read from
   the pages' cached queries, never fetched again: the reads are audited), ⌘K "Find a patient or chat", account menu.
 - Skip link to `#main`; focus moves to the new page's h1 on every route change.
-- The project, agent, skills, usage and storage settings are admin-only. The newsletter, community links and
-  version notice are gone.
+- The project, agent, skills, usage and storage settings are admin-only.
 
 ### Roles and homes
 

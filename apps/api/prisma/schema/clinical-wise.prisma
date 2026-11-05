@@ -1,4 +1,4 @@
-// How each Wise proposal card ended (DESIGN.md §9.1). One row per tool call: the unique key is what stops a card from
+// How each Wise proposal card ended (DESIGN.md §7.1). One row per tool call: the unique key is what stops a card from
 // being confirmed twice, after a reload or from a second tab. Append-only, like the audit log.
 
 /// A Wise proposal card the clinician confirmed or cancelled. Ids are plain columns: the chat can be deleted.

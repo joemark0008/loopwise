@@ -2,7 +2,7 @@ import styles from './report-sections.module.css';
 import type { createReport } from '@loopwise/shared/tools';
 import { ClinicalChartView } from '@/feature/chat/components/tool-calls/clinical-chart';
 
-/** The data sections of a Wise report (DESIGN.md §9.2), as the server froze them; the PDF prints the same ones. */
+/** The data sections of a Wise report (DESIGN.md §7.2), as the server froze them; the PDF prints the same ones. */
 export function ReportSections({ sections }: { sections: createReport.Section[] }) {
 	return (
 		<div className={styles.sections}>

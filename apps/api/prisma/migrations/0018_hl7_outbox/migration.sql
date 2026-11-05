@@ -1,4 +1,4 @@
--- The lab side of orders (DESIGN.md §4.1 steps 2–4, §7, §11): the order status lifecycle and the outbound HL7 queue.
+-- The lab side of orders (DESIGN.md §2 steps 2–4, §5, §9): the order status lifecycle and the outbound HL7 queue.
 -- Additive only: a new `rejected` order status, nullable timestamp/reason columns on `clinical_order`, a boolean on
 -- `organization` (default false) and a new `hl7_outbox` table. No existing row changes.
 

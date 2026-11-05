@@ -16,7 +16,7 @@ type ResultRow = Pick<Prisma.ResultGetPayload<object>, 'code' | 'resultedAt' | '
 /** LOINC codes of the lab measures (the seed's and the orderable tests'). */
 export const LAB_CODES: Partial<Record<PatientMeasure, string>> = { hba1c: '4548-4', fbs: '1558-6' };
 
-/** Thresholds drawn as a flat line: the diagnostic cut-offs the pathways use (DESIGN.md §8), not targets. */
+/** Thresholds drawn as a flat line: the diagnostic cut-offs the pathways use (DESIGN.md §6), not targets. */
 const THRESHOLDS = {
 	systolic: 140,
 	diastolic: 90,

@@ -1,5 +1,5 @@
 /**
- * Shared rules of Wise proposal cards (DESIGN.md §9.1), for the API and the cards.
+ * Shared rules of Wise proposal cards (DESIGN.md §7.1), for the API and the cards.
  */
 
 /** The CONFLICT message of a stale edit: the record changed after the draft was made. Cards offer to re-draft on it. */

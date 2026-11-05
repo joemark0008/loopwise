@@ -1,6 +1,5 @@
 /**
- * The tests a clinician orders from an encounter in the prototype (LOINC). The orders module (DESIGN.md §15,
- * Days 4–6) may replace this with a facility catalog.
+ * The tests a clinician orders from an encounter (LOINC). A per-clinic catalog may replace this list.
  */
 export interface LabTest {
 	code: string;

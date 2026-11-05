@@ -21,7 +21,7 @@ import { type BillRow, type EncounterBill, toEncounterBill } from './models/enco
 type Tx = Prisma.TransactionClient;
 
 /**
- * The bill of an encounter (DESIGN.md §7). A draft is saved and replaced freely and its totals are computed here
+ * The bill of an encounter (DESIGN.md §5). A draft is saved and replaced freely and its totals are computed here
  * (never taken from the client); finalizing locks it (a trigger allows only paying or voiding). One bill per encounter
  * that is not voided. Only staff at the encounter's facility bill; every change is audited.
  */

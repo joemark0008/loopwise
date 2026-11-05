@@ -3,7 +3,7 @@ import { runAnalyticsSql } from '@loopwise/shared/tools';
 import { createTool, rememberToolOutput, withResultId } from '../utils/tools.js';
 
 /**
- * Runs Wise's SQL over the analytics views, as the user (DESIGN.md §9.2, §10.2): validated, then run read-only on the
+ * Runs Wise's SQL over the analytics views, as the user (DESIGN.md §7.2, §8.2): validated, then run read-only on the
  * analyst role, which Postgres limits to the user's own patients. The model gets a sample; the card shows the table.
  */
 export default createTool<runAnalyticsSql.Input, runAnalyticsSql.Output>({

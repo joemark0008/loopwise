@@ -1,4 +1,4 @@
--- HL7 v2 ingest log (DESIGN.md §6.3, §11): every message a facility key posts to /api/hl7/messages, with the ACK it
+-- HL7 v2 ingest log (DESIGN.md §4.3, §9): every message a facility key posts to /api/hl7/messages, with the ACK it
 -- got. Unique per (org, MSH-10), so a resend returns the same ACK and stores nothing twice. Unmatched messages stay
 -- here (status `error`) for review. New table and type only; nothing existing changes.
 --

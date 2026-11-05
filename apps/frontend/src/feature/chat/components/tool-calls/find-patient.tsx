@@ -9,7 +9,7 @@ import { useAgentContext } from '@/contexts/agent.provider';
 import { formatDay } from '@/feature/encounters/encounter-format';
 import { ageLabel } from '@/feature/patients/patient-format';
 
-/** Wise's `find_patient` (DESIGN.md §9.2): the matches, each linking to the patient's chart. */
+/** Wise's `find_patient` (DESIGN.md §7.2): the matches, each linking to the patient's chart. */
 export const FindPatientToolCall = memo(({ toolPart }: ToolCallComponentProps<'find_patient'>) => {
 	if (toolPart.state === 'output-error') {
 		return <ErrorMessage message={toolPart.errorText} />;

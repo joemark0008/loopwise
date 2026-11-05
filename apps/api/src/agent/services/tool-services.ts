@@ -15,7 +15,7 @@ type ReadSources = {
 };
 
 /**
- * The read methods tools may call, by service. A write method can't reach a tool even at runtime (DESIGN.md §9.1):
+ * The read methods tools may call, by service. A write method can't reach a tool even at runtime (DESIGN.md §7.1):
  * the facades are plain frozen objects of these methods, never the services themselves, and `registry.spec.ts` fails
  * when this list grows without review.
  */

@@ -1,7 +1,7 @@
 import { component, field, findSegment, type Hl7Message, type Hl7Segment, repetitions } from './hl7-parser.js';
 
 /**
- * ORU^R01 → the normalized, FHIR-shaped result the ingest stores (DESIGN.md §6.3, §11). Pure: no database, no clock
+ * ORU^R01 → the normalized, FHIR-shaped result the ingest stores (DESIGN.md §4.3, §9). Pure: no database, no clock
  * except the timezone default.
  */
 

@@ -54,7 +54,7 @@ const TAB_SINCE: Record<WorklistTab, (order: LabOrderFieldsFragment) => string |
 const idBase = 'lab-worklist';
 
 /**
- * The receiving facility's worklist (DESIGN.md §4.1 steps 2–4): orders sent to the lab, accepted, collected and
+ * The receiving facility's worklist (DESIGN.md §2 steps 2–4): orders sent to the lab, accepted, collected and
  * resulted. Staff accept or reject a new order and mark the specimen collected; results come back through the
  * results inbox. STAT first, then urgent, then the oldest.
  */

@@ -6,7 +6,7 @@ import { WiseProposalRepository } from './wise-proposal.repository.js';
 import { WiseProposalService } from './wise-proposal.service.js';
 import { WiseProposalsResolver } from './wise-proposals.resolver.js';
 
-/** Confirming and cancelling Wise proposal cards (DESIGN.md §9.1); the features' mutations call the service. */
+/** Confirming and cancelling Wise proposal cards (DESIGN.md §7.1); the features' mutations call the service. */
 @Module({
 	imports: [ClinicalDbModule, WiseToolsModule],
 	providers: [WiseProposalsResolver, WiseProposalService, WiseProposalRepository],

@@ -24,7 +24,7 @@ interface ScriptedCall {
 }
 
 /**
- * Wise's `explain_result` (DESIGN.md §2, §9.2): it relays the rules engine's deterministic evaluation, read as the
+ * Wise's `explain_result` (DESIGN.md §4.4, §7.2): it relays the rules engine's deterministic evaluation, read as the
  * user, so a doctor at another facility gets nothing, and every read is audited. The LLM is scripted.
  */
 describe('explain_result (e2e)', () => {

@@ -35,7 +35,7 @@ export function assertCardPatient(card: VerifiedWiseCard | undefined, patientId:
 }
 
 /**
- * Server side of "AI drafts, the clinician confirms" (DESIGN.md §9.1). A mutation confirming a Wise card verifies the
+ * Server side of "AI drafts, the clinician confirms" (DESIGN.md §7.1). A mutation confirming a Wise card verifies the
  * card first (the user's own chat, the right tool, not settled yet), then settles it in its own transaction, so the
  * change, its audit row and the outcome commit together and a second Confirm (reload, second tab) is refused.
  */
@@ -49,7 +49,7 @@ export class WiseProposalService {
 
 	/**
 	 * Checks a confirm against the stored chat. `toolNames` are the cards that may confirm this mutation; the caller
-	 * checks the patient with `assertCardPatient` once it knows it. The tool must still be on in Wise settings (§9.4),
+	 * checks the patient with `assertCardPatient` once it knows it. The tool must still be on in Wise settings (§7.3),
 	 * at `facilityId` when the caller knows the facility of the record: a card drafted before an admin turned the tool
 	 * off can't be confirmed after.
 	 */
@@ -126,7 +126,7 @@ export class WiseProposalService {
 	}
 
 	/**
-	 * The Wise action card behind `mutation` (DESIGN.md §9.4), or undefined without one: verified from the tools the
+	 * The Wise action card behind `mutation` (DESIGN.md §7.3), or undefined without one: verified from the tools the
 	 * action registry names for it, at the record's facility. Callers run it once they have read the record (it may run
 	 * inside their transaction) and `settleAction` after the change.
 	 */

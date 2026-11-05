@@ -19,7 +19,7 @@ export type IngestOutcome =
 	| { status: 'unmatched'; reason: string; patientId: string | null };
 
 /**
- * Stores the results of a normalized ORU (DESIGN.md §4.1 step 5): deterministic patient matching (no fuzzy matching:
+ * Stores the results of a normalized ORU (DESIGN.md §2 step 5): deterministic patient matching (no fuzzy matching:
  * a wrong match is worse than a message left for review), one `Result` per observation, the order moved to
  * `resulted`, and an audit row per result. Runs in the ingest's system transaction.
  */

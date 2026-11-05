@@ -1,4 +1,4 @@
--- Wise tool settings (DESIGN.md §9.4): a facility's admin turns Wise tools on or off, and a user can turn tools off for
+-- Wise tool settings (DESIGN.md §7.3): a facility's admin turns Wise tools on or off, and a user can turn tools off for
 -- themselves. New table only; nothing existing changes. Not clinical data: no patient, no row-level security; the API
 -- reads and writes it for org admins and for the user's own rows only.
 

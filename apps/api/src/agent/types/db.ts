@@ -1,12 +1,7 @@
-import type {
-	AutomationRun,
-	MessageFeedback as DBMessageFeedback,
-	MessagePart,
-} from '../../generated/prisma/client.js';
+import type { MessageFeedback as DBMessageFeedback, MessagePart } from '../../generated/prisma/client.js';
 
 /** Upstream's Drizzle row types (`db/abstractSchema`), on the Prisma models. */
 export type DBMessagePart = MessagePart;
-export type DBAutomationRun = AutomationRun;
 export type MessageFeedback = DBMessageFeedback;
 
 /** A message part to insert (upstream `NewMessagePart`); JSON columns take any value. */

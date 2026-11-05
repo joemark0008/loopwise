@@ -20,7 +20,7 @@ const PERIOD_START = '$1::timestamp';
 const OPEN_ORDER = "status IN ('sent', 'accepted', 'collected')";
 
 /**
- * Certified metrics (DESIGN.md §12): one definition per headline number, run through the same analytics role as
+ * Certified metrics (DESIGN.md §10): one definition per headline number, run through the same analytics role as
  * Wise's own SQL, so the chat, the dashboard and the reports can't disagree. Each counts only the patients the user
  * may see.
  */

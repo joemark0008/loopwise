@@ -82,7 +82,7 @@ export const checkIsAgentRunning = (agent: Pick<UseChatHelpers<UIMessage>, 'stat
 	return agent.status === 'streaming' || agent.status === 'submitted';
 };
 
-/** Wise action cards wait for the clinician's Confirm: never fold one away (DESIGN.md §9.4). */
+/** Wise action cards wait for the clinician's Confirm: never fold one away (DESIGN.md §7.3). */
 const WISE_ACTION_CARDS = [
 	...WISE_ACTIONS.map((action) => action.name),
 	'list_results_to_review',

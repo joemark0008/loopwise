@@ -1,4 +1,4 @@
--- Wise confirmations for the encounter's documents (DESIGN.md §9.1): prescriptions, medical certificates and bills
+-- Wise confirmations for the encounter's documents (DESIGN.md §7.1): prescriptions, medical certificates and bills
 -- carry a version a Wise card saves against, so a draft changed since the card showed it is never overwritten.
 -- The `*_version` triggers fire after the `*_lock` triggers (name order), so an issued document's lock still sees the
 -- version unchanged and only the allowed columns moving.

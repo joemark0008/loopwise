@@ -19,7 +19,7 @@ void registryPathsAreRoutes;
 const navigatedToolCalls = new Set<string>();
 
 /**
- * Wise's `open_page` (DESIGN.md §9.2): a card that opens the page. When the user asked to go there, the app goes by
+ * Wise's `open_page` (DESIGN.md §7.2): a card that opens the page. When the user asked to go there, the app goes by
  * itself once, after the reply ends, and only for a reply it watched stream: reopening or replaying a chat never
  * navigates. Embedded chats (a patient's chart, the ask bar) never navigate by themselves; their card still opens
  * the page in the main view.

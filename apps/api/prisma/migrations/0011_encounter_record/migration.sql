@@ -1,4 +1,4 @@
--- The encounter record (DESIGN.md §7): the SOAP note and plan on the encounter; vitals, ICD-10 diagnoses, allergies,
+-- The encounter record (DESIGN.md §5): the SOAP note and plan on the encounter; vitals, ICD-10 diagnoses, allergies,
 -- prescriptions, medical certificates and the bill beside it; clinician profiles (PRC license) and facility addresses
 -- for the documents. Row-level security follows 0006_clinical_rls; issued documents are locked by triggers.
 

@@ -1,4 +1,4 @@
-// Synthetic encounter records for the demo (DESIGN.md §7, §14): clinician profiles and letterhead addresses, and
+// Synthetic encounter records for the demo (DESIGN.md §5): clinician profiles and letterhead addresses, and
 // Maria Santos's first visit as a full record (SOAP note, vitals, ICD-10 diagnoses, an issued prescription and
 // medical certificate). Jose Ramos gets a penicillin allergy and a draft prescription. Synthetic data only: the
 // license and PTR numbers are made up. Idempotent: skipped once Dr. Reyes has a clinician profile.

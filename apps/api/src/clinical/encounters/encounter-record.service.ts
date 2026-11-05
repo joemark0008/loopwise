@@ -57,7 +57,7 @@ import type { PatientOverview } from './models/patient-overview.model.js';
 const OVERVIEW_VISITS = 20;
 
 /**
- * The record of an encounter (DESIGN.md §7): the SOAP note, vitals, ICD-10 diagnoses and the patient's allergies, and
+ * The record of an encounter (DESIGN.md §5): the SOAP note, vitals, ICD-10 diagnoses and the patient's allergies, and
  * the whole record in one read. Everything runs as the user under row-level security; only staff at the encounter's
  * facility add to it. Every view and change writes an audit row in the same transaction. Wrong entries are voided.
  */
@@ -379,7 +379,7 @@ export class EncounterRecordService {
 	}
 
 	/**
-	 * The chart's overview (DESIGN.md §9): the latest visits with their diagnoses, prescriptions, orders and bill. Read
+	 * The chart's overview (DESIGN.md §7): the latest visits with their diagnoses, prescriptions, orders and bill. Read
 	 * as the user, so it is empty for a patient not in your care; audited as one view of the patient's record.
 	 */
 	async getPatientOverview(userId: string, patientId: string): Promise<PatientOverview> {

@@ -3,9 +3,9 @@ import { chartFacilityPanel, clinicalChart } from '@loopwise/shared/tools';
 import { createTool, rememberToolOutput, withResultId } from '../utils/tools.js';
 
 /**
- * Charts counts across the user's facility for Wise (DESIGN.md §9.2): encounters, diagnoses by ICD-10 chapter, open
+ * Charts counts across the user's facility for Wise (DESIGN.md §7.2): encounters, diagnoses by ICD-10 chapter, open
  * orders and results awaiting review, from the patients they may see, audited. Counts only, never names. Program
- * metrics (§12) belong to the dashboard.
+ * metrics (§10) belong to the dashboard.
  */
 export default createTool<chartFacilityPanel.Input, chartFacilityPanel.Output>({
 	kind: 'read',

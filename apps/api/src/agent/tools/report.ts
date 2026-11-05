@@ -1,11 +1,18 @@
-import { REPORT_BLOCK_TOOLS, splitReport, ungroundedProseNumbers } from '@loopwise/shared/report-blocks';
+import {
+	type KpiSource,
+	REPORT_BLOCK_TOOLS,
+	reportBlocks,
+	ReportSyntaxError,
+	resolveKpi,
+	ungroundedProseNumbers,
+} from '@loopwise/shared/report-blocks';
 import { report } from '@loopwise/shared/tools';
 
 import type { ToolContext } from '../types/tools.js';
 import { createTool, rememberToolOutput } from '../utils/tools.js';
 
 /**
- * Wise reports in a side panel (DESIGN.md §9.2), ported from loopwise's classic stories: create, a search/replace
+ * Wise reports in a side panel (DESIGN.md §7.2), ported from loopwise's classic stories: create, a search/replace
  * update, a full replace, and a restore of an earlier version, each one a new version kept as this tool's output in
  * the chat. The markdown carries no numbers of its own; its blocks embed tool results of the same chat, checked here,
  * and the prose may only repeat numbers those results hold. It changes no clinical record.
@@ -103,12 +110,20 @@ async function reportVersions(context: ToolContext, reportId: string): Promise<r
 	return [...byVersion.values()].sort((a, b) => a.version - b.version);
 }
 
-/** Every block must embed a result of this chat from a tool that block can show; charts need a chart. */
+/**
+ * Every block must embed a result of this chat from a tool that block can show; charts need a chart, and a KPI a
+ * number in its column. Malformed grids and tabs are refused with what to fix.
+ */
 async function checkBlocks(context: ToolContext, code: string) {
-	const blocks = splitReport(code).filter((segment) => segment.kind !== 'markdown') as {
-		kind: keyof typeof REPORT_BLOCK_TOOLS;
-		ref: string;
-	}[];
+	let blocks;
+	try {
+		blocks = reportBlocks(code);
+	} catch (error) {
+		if (error instanceof ReportSyntaxError) {
+			throw new Error(`The report's layout doesn't parse: ${error.message}`);
+		}
+		throw error;
+	}
 	const missing = blocks.map((block) => block.ref).filter((ref) => !context.toolOutputs?.has(ref));
 	const saved = await context.services.reports.toolOutputs(context.userId, context.chatId, [...new Set(missing)]);
 	return blocks.map((block) => {
@@ -127,6 +142,12 @@ async function checkBlocks(context: ToolContext, code: string) {
 			throw new Error(
 				`The ${result.toolName} result ${block.ref} has no chart; call it again with a chart, or use <table>.`,
 			);
+		}
+		if (block.kind === 'kpi') {
+			const kpi = resolveKpi(block, result.output as KpiSource);
+			if ('problem' in kpi) {
+				throw new Error(kpi.problem);
+			}
 		}
 		return { toolCallId: block.ref, ...result };
 	});

@@ -32,7 +32,7 @@ const URGENCY_BY_FLAG: Record<ResultFlag, ResultUrgency> = {
 const URGENCY_RANK: Record<ResultUrgency, number> = { critical: 0, abnormal: 1, unflagged: 2, normal: 3 };
 
 /**
- * The results inbox (DESIGN.md §4.1 steps 5–6, §4.2 "result not reviewed in 48h"): what the clinician must review,
+ * The results inbox (DESIGN.md §2 steps 5–6, §2 "result not reviewed in 48h"): what the clinician must review,
  * critical first, and the review itself. Row-level security decides what is visible; review is for the ordering
  * clinician, or for any clinician who can see the patient when the result came without a Loopwise order.
  */
