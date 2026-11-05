@@ -1120,6 +1120,9 @@ type Encounter {
   history: String
   id: ID!
   notes: String
+
+  """Other objective data."""
+  objective: String
   patientId: ID!
   patientInstructions: String
 
@@ -1136,10 +1139,16 @@ type Encounter {
   """The chief complaint."""
   reason: String
 
+  """Review of systems (stored as a JSON string value)."""
+  reviewOfSystems: String
+
   """The chart chat Wise drafted it in, if any."""
   sourceChatId: ID
   startedAt: DateTime!
   status: EncounterStatus!
+
+  """Other subjective findings."""
+  subjective: String
   type: EncounterType!
 
   """
@@ -3765,12 +3774,23 @@ input UpdateEncounterNoteInput {
   followUpOn: String
   history: String
   notes: String
+
+  """Other objective data. Left out: kept as it is; null or empty: cleared."""
+  objective: String
   patientInstructions: String
   physicalExam: String
   plan: String
 
   """The chief complaint."""
   reason: String!
+
+  """Review of systems. Left out: kept as it is; null or empty: cleared."""
+  reviewOfSystems: String
+
+  """
+  Other subjective findings. Left out: kept as it is; null or empty: cleared.
+  """
+  subjective: String
 
   """Set by a Wise card (`propose_encounter_note`)."""
   wiseOrigin: WiseOriginInput

@@ -149,7 +149,10 @@ fragment EncounterRecordFields on EncounterRecord {
 	encounter {
 		...EncounterFields
 		history
+		reviewOfSystems
+		subjective
 		physicalExam
+		objective
 		assessment
 		plan
 		patientInstructions

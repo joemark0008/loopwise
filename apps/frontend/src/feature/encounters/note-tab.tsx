@@ -20,7 +20,10 @@ const NO_DISPOSITION = 'none';
 
 const SOAP: { key: Exclude<keyof NoteFormValues, 'disposition'>; label: string; placeholder: string }[] = [
 	{ key: 'history', label: 'History (S)', placeholder: 'History of present illness, relevant past history' },
+	{ key: 'reviewOfSystems', label: 'Review of systems', placeholder: 'Pertinent positives and negatives by system' },
+	{ key: 'subjective', label: 'Other subjective', placeholder: 'Past, family and social history, medicines taken' },
 	{ key: 'physicalExam', label: 'Examination (O)', placeholder: 'Physical examination findings' },
+	{ key: 'objective', label: 'Other objective', placeholder: 'Point-of-care tests, results reviewed' },
 	{ key: 'assessment', label: 'Assessment (A)', placeholder: 'Clinical impression' },
 	{ key: 'plan', label: 'Plan (P)', placeholder: 'Medicines, tests, referrals, advice' },
 	{ key: 'patientInstructions', label: 'Instructions to the patient', placeholder: 'In plain words' },

@@ -21,7 +21,10 @@ export type EncounterNoteForWise = Omit<proposeEncounterNote.Output, '_version' 
 const NOTE_FIELDS = [
 	'reason',
 	'history',
+	'reviewOfSystems',
+	'subjective',
 	'physicalExam',
+	'objective',
 	'assessment',
 	'plan',
 	'patientInstructions',
@@ -31,10 +34,10 @@ const NOTE_FIELDS = [
 ] as const;
 
 /**
- * The SOAP note of an encounter (the reference's chief complaint, history of present illness, physical exam,
- * assessment, plan, follow-up date and disposition, plus Loopwise's notes and patient instructions). The physical exam
- * is stored as a JSON string value. Changed as the user, by staff of the visit's clinic, with optimistic locking on
- * `version` for Wise cards.
+ * The SOAP note of an encounter (the reference's chief complaint, history of present illness, review of systems,
+ * subjective, physical exam, objective, assessment, plan, follow-up date and disposition, plus Loopwise's notes and
+ * patient instructions). The review of systems and the physical exam are stored as JSON string values. Changed as the
+ * user, by staff of the visit's clinic, with optimistic locking on `version` for Wise cards.
  */
 @Injectable()
 export class EncounterNoteService {
@@ -49,11 +52,13 @@ export class EncounterNoteService {
 	/**
 	 * Saves the note. With `expectedVersion`, a note that changed since the edit was drafted is refused
 	 * (STALE_VERSION). With `wiseOrigin` (`propose_encounter_note`), the card is verified and settled in the same
-	 * transaction, and the audit row records it.
+	 * transaction, and the audit row records it. The review of systems, subjective and objective fields are kept as they
+	 * are when left out (forms that don't show them), and cleared when sent empty.
 	 */
 	async update(userId: string, input: UpdateEncounterNoteInput): Promise<Encounter> {
 		const { encounterId, expectedVersion, wiseOrigin, ...fields } = input;
 		const note = parseInput(EncounterNoteSchema, fields);
+		const given = (key: 'reviewOfSystems' | 'subjective' | 'objective') => fields[key] !== undefined;
 		return this.db.asUser(userId, async (tx) => {
 			const encounter = await this.encounterAccess.requireWritable(tx, userId, encounterId);
 			const card = wiseOrigin
@@ -70,8 +75,11 @@ export class EncounterNoteService {
 				{
 					chiefComplaint: note.reason,
 					historyOfPresentIllness: note.history ?? null,
-					// The free text as a JSON string value (the reference's column is structured JSON).
+					// Free text as JSON string values (the reference's columns are structured JSON).
+					...(given('reviewOfSystems') && { reviewOfSystems: note.reviewOfSystems ?? Prisma.DbNull }),
+					...(given('subjective') && { subjective: note.subjective ?? null }),
 					physicalExam: note.physicalExam ?? Prisma.DbNull,
+					...(given('objective') && { objective: note.objective ?? null }),
 					assessment: note.assessment ?? null,
 					plan: note.plan ?? null,
 					patientInstructions: note.patientInstructions ?? null,

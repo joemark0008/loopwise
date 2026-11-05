@@ -39,8 +39,17 @@ export class Encounter {
 	@Field(() => String, { nullable: true, description: 'History of present illness (subjective).' })
 	history: string | null;
 
+	@Field(() => String, { nullable: true, description: 'Review of systems (stored as a JSON string value).' })
+	reviewOfSystems: string | null;
+
+	@Field(() => String, { nullable: true, description: 'Other subjective findings.' })
+	subjective: string | null;
+
 	@Field(() => String, { nullable: true, description: 'Physical examination findings (objective).' })
 	physicalExam: string | null;
+
+	@Field(() => String, { nullable: true, description: 'Other objective data.' })
+	objective: string | null;
 
 	@Field(() => String, { nullable: true })
 	assessment: string | null;
@@ -84,7 +93,10 @@ export function toEncounter(row: EncounterRow): Encounter {
 		reason: row.chiefComplaint,
 		notes: row.notes,
 		history: row.historyOfPresentIllness,
+		reviewOfSystems: physicalExamText(row.reviewOfSystems),
+		subjective: row.subjective,
 		physicalExam: physicalExamText(row.physicalExam),
+		objective: row.objective,
 		assessment: row.assessment,
 		plan: row.plan,
 		patientInstructions: row.patientInstructions,

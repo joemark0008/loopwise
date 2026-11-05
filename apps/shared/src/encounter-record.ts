@@ -65,8 +65,17 @@ export const EncounterNoteSchema = z.object({
 		.max(ENCOUNTER_REASON_MAX_LENGTH, `Keep the chief complaint under ${ENCOUNTER_REASON_MAX_LENGTH} characters.`)
 		.describe('Chief complaint, in a few words.'),
 	history: optionalText(ENCOUNTER_NOTES_MAX_LENGTH, 'history').describe('History of present illness (subjective).'),
+	reviewOfSystems: optionalText(ENCOUNTER_NOTES_MAX_LENGTH, 'review of systems').describe(
+		'Review of systems: pertinent positives and negatives by system.',
+	),
+	subjective: optionalText(ENCOUNTER_NOTES_MAX_LENGTH, 'subjective').describe(
+		'Other subjective findings: past, family and social history, medicines taken, adherence.',
+	),
 	physicalExam: optionalText(ENCOUNTER_NOTES_MAX_LENGTH, 'examination').describe(
 		'Physical examination findings (objective).',
+	),
+	objective: optionalText(ENCOUNTER_NOTES_MAX_LENGTH, 'objective').describe(
+		'Other objective data: point-of-care tests and results reviewed during the visit.',
 	),
 	assessment: optionalText(ENCOUNTER_NOTES_MAX_LENGTH, 'assessment').describe("The clinician's assessment."),
 	plan: optionalText(ENCOUNTER_NOTES_MAX_LENGTH, 'plan').describe('Treatment plan: medicines, tests, advice.'),

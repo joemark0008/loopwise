@@ -36,10 +36,34 @@ export class UpdateEncounterNoteInput {
 	@IsString()
 	history?: string | null;
 
+	@Field(() => String, {
+		nullable: true,
+		description: 'Review of systems. Left out: kept as it is; null or empty: cleared.',
+	})
+	@IsOptional()
+	@IsString()
+	reviewOfSystems?: string | null;
+
+	@Field(() => String, {
+		nullable: true,
+		description: 'Other subjective findings. Left out: kept as it is; null or empty: cleared.',
+	})
+	@IsOptional()
+	@IsString()
+	subjective?: string | null;
+
 	@Field(() => String, { nullable: true })
 	@IsOptional()
 	@IsString()
 	physicalExam?: string | null;
+
+	@Field(() => String, {
+		nullable: true,
+		description: 'Other objective data. Left out: kept as it is; null or empty: cleared.',
+	})
+	@IsOptional()
+	@IsString()
+	objective?: string | null;
 
 	@Field(() => String, { nullable: true })
 	@IsOptional()
