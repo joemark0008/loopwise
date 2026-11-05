@@ -2167,6 +2167,9 @@ type Query {
   """Upstream `clinic.getAgentSettings`, with the instance capabilities."""
   agentSettings: JSON!
 
+  """One appointment you may see (row-level security), else NOT_FOUND."""
+  appointment(appointmentId: ID!): Appointment!
+
   """A doctor's slots on a day: schedule minus leaves and bookings."""
   appointmentSlots(input: AppointmentSlotsInput!): [AppointmentSlot!]!
 

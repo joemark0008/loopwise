@@ -56,6 +56,13 @@ export class AppointmentService {
 		);
 	}
 
+	/** One appointment as the user may see it (a Wise reschedule card loads it), at one of their clinics. */
+	async get(userId: string, appointmentId: string): Promise<Appointment> {
+		const row = await this.requireReadable(userId, appointmentId);
+		await this.access.atClinic(userId, row.clinicId);
+		return toAppointment(row);
+	}
+
 	/**
 	 * Books the patient into one of the doctor's open slots. With `wiseOrigin` (a `propose_appointment` card), the card
 	 * is verified and settled in the same transaction.

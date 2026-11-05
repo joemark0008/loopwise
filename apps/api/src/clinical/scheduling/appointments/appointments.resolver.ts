@@ -32,6 +32,14 @@ export class AppointmentsResolver {
 		return this.appointments.list(user.id, input);
 	}
 
+	@Query(() => Appointment, { description: 'One appointment you may see (row-level security), else NOT_FOUND.' })
+	appointment(
+		@CurrentUser() user: AuthUser,
+		@Args('appointmentId', { type: () => ID }) appointmentId: string,
+	): Promise<Appointment> {
+		return this.appointments.get(user.id, appointmentId);
+	}
+
 	@Query(() => [AppointmentSlot], { description: "A doctor's slots on a day: schedule minus leaves and bookings." })
 	appointmentSlots(
 		@CurrentUser() user: AuthUser,
