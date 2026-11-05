@@ -1,5 +1,5 @@
 /**
- * The blocks of a Wise report (DESIGN.md §9.2), a slim port of loopwise's story segments: markdown that Wise writes,
+ * The blocks of a Wise report (DESIGN.md §7.2), a slim port of loopwise's story segments: markdown that Wise writes,
  * and self-closing tags that embed a tool result of the same chat by its tool call id. The numbers of a report live
  * only in those results; the markdown carries none of its own.
  *

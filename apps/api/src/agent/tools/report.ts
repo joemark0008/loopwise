@@ -5,7 +5,7 @@ import type { ToolContext } from '../types/tools.js';
 import { createTool, rememberToolOutput } from '../utils/tools.js';
 
 /**
- * Wise reports in a side panel (DESIGN.md §9.2), ported from loopwise's classic stories: create, a search/replace
+ * Wise reports in a side panel (DESIGN.md §7.2), ported from loopwise's classic stories: create, a search/replace
  * update, a full replace, and a restore of an earlier version, each one a new version kept as this tool's output in
  * the chat. The markdown carries no numbers of its own; its blocks embed tool results of the same chat, checked here,
  * and the prose may only repeat numbers those results hold. It changes no clinical record.

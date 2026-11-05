@@ -1,7 +1,7 @@
 import z from 'zod/v3';
 
 /**
- * Vital signs of an encounter (DESIGN.md §7): the one set of rules for the API, the vitals form and the Wise card.
+ * Vital signs of an encounter (DESIGN.md §5): the one set of rules for the API, the vitals form and the Wise card.
  * Units are fixed (mmHg, bpm, breaths/min, °C, %, kg, cm, mg/dL); the ranges only catch typos.
  */
 export const VITAL_RANGES = {
@@ -109,7 +109,7 @@ export type VitalFlag = 'critical_low' | 'low' | 'normal' | 'high' | 'critical_h
 /**
  * Adult reference ranges for flagging a measurement (not for validating input: that is `VITAL_RANGES`). `low`/`high`
  * bound the normal range; `criticalLow`/`criticalHigh` call for action now. Generic adult thresholds (BP per the
- * Philippine hypertension guideline's stage 1 at 140/90), to be confirmed by a clinician before a pilot (DESIGN.md §16).
+ * Philippine hypertension guideline's stage 1 at 140/90), to be confirmed by a clinician before a pilot (DESIGN.md §12).
  */
 export const VITAL_REFERENCE: Partial<
 	Record<VitalField, { low?: number; high?: number; criticalLow?: number; criticalHigh?: number }>

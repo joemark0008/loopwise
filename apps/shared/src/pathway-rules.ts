@@ -1,7 +1,7 @@
 import z from 'zod/v3';
 
 /**
- * The clinical pathway definition (DESIGN.md §2 "rules-first decisions", §7 `Pathway`, §8 states): which results a
+ * The clinical pathway definition (DESIGN.md §4.4 "rules-first decisions", §5 `Pathway`, §6 states): which results a
  * pathway applies to, how a value is classified, which case states apply, their SLAs and what closing needs. Stored in
  * the `pathway` row's JSON columns, validated on load by the API and by the seed. One schema for the API, the seed, the
  * rules engine and the read-only pathways page. Deterministic data, no AI.
@@ -17,7 +17,7 @@ export type ResultClassification = (typeof RESULT_CLASSIFICATIONS)[number];
 export const URGENCIES = ['routine', 'soon', 'urgent', 'critical'] as const;
 export type Urgency = (typeof URGENCIES)[number];
 
-/** The Postgres `case_state` enum (DESIGN.md §8). */
+/** The Postgres `case_state` enum (DESIGN.md §6). */
 export const CASE_STATES = [
 	'open',
 	'notified',
@@ -33,7 +33,7 @@ export const CASE_STATES = [
 ] as const;
 export type CaseState = (typeof CASE_STATES)[number];
 
-/** States any case can enter from any step (§8); a pathway doesn't list them among its steps. */
+/** States any case can enter from any step (§6); a pathway doesn't list them among its steps. */
 export const ANY_STEP_STATES: readonly CaseState[] = ['escalated', 'lost_to_follow_up'];
 
 /** The Postgres `evidence_type` enum. */
@@ -52,7 +52,7 @@ const OutcomeSchema = z.object({
 	reason: z.string().min(1),
 	/** The guideline the threshold comes from. */
 	guideline: z.string().min(1),
-	/** The next case state (§8): one of the pathway's steps, or `escalated`. */
+	/** The next case state (§6): one of the pathway's steps, or `escalated`. */
 	nextState: z.enum(CASE_STATES),
 	/** Overrides the SLA of `nextState`'s step, e.g. a shorter one for an urgent band. */
 	slaHours: z.number().positive().optional(),
@@ -132,7 +132,7 @@ export const PathwayStepSchema = z.object({
 
 export const PathwayStepsSchema = z.array(PathwayStepSchema).min(1);
 
-/** Pathway-wide SLAs, not tied to one step (DESIGN.md §4.2). */
+/** Pathway-wide SLAs, not tied to one step (DESIGN.md §2). */
 export const PathwaySlasSchema = z.object({
 	/** A result must be reviewed within this many hours, or it escalates to the clinic head. */
 	resultReviewHours: z.number().positive(),
@@ -141,7 +141,7 @@ export const PathwaySlasSchema = z.object({
 });
 
 export const PathwayClosureSchema = z.object({
-	/** Closing needs one of these `Evidence` types (DESIGN.md §8). */
+	/** Closing needs one of these `Evidence` types (DESIGN.md §6). */
 	anyOf: z.array(z.enum(EVIDENCE_TYPES)).min(1),
 	/** A sign-off must name the clinician and give a reason. */
 	signoffNeedsReason: z.boolean(),

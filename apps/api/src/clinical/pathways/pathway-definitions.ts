@@ -1,9 +1,9 @@
 import type { PathwayDefinitionInput } from '@loopwise/shared/pathway-rules';
 
 /**
- * The clinical pathways (seeded by `prisma/seed-pathways.ts`) (DESIGN.md §2, §7 `Pathway`, §8), in the schema of `@loopwise/shared/pathway-rules`.
+ * The clinical pathways (seeded by `prisma/seed-pathways.ts`) (DESIGN.md §4.4, §5 `Pathway`, §6), in the schema of `@loopwise/shared/pathway-rules`.
  * Synthetic configuration: the thresholds follow the published guidelines cited next to them, but a pilot needs them
- * reviewed and signed off by the facility's clinicians (DESIGN.md §16). Bump a pathway's `version` whenever its rules
+ * reviewed and signed off by the facility's clinicians (DESIGN.md §12). Bump a pathway's `version` whenever its rules
  * change, so every stored evaluation names the rules it came from.
  */
 
@@ -11,8 +11,8 @@ const ADA = 'ADA Standards of Care in Diabetes 2025, §2 (Table 2.1–2.2)';
 const ADA_HYPO = 'ADA Standards of Care in Diabetes 2025, §6 (hypoglycemia levels 1–3)';
 const BIRADS = 'ACR BI-RADS Atlas, 5th edition (2013): assessment categories and management';
 const UKKA = 'UK Kidney Association, Treatment of Acute Hyperkalaemia in Adults (2020)';
-/** A local critical-value list (DESIGN.md §4.2); each facility sets its own (CAP / CLSI GP47 practice). */
-const CRITICAL_LIST = 'Loopwise synthetic critical-value list (DESIGN.md §4.2); to be set by the facility laboratory';
+/** A local critical-value list (DESIGN.md §2); each facility sets its own (CAP / CLSI GP47 practice). */
+const CRITICAL_LIST = 'Loopwise synthetic critical-value list (DESIGN.md §2); to be set by the facility laboratory';
 
 const HOURS_PER_DAY = 24;
 
@@ -82,7 +82,7 @@ export const PATHWAY_DEFINITIONS = [
 							slaHours: 72,
 						},
 						{
-							// DESIGN.md §4.2 names HbA1c 12 % as a critical value for the demo.
+							// DESIGN.md §2 names HbA1c 12 % as a critical value for the demo.
 							min: 12,
 							classification: 'critical',
 							urgency: 'critical',
@@ -377,7 +377,7 @@ export const PATHWAY_DEFINITIONS = [
 							slaHours: 24,
 						},
 						{
-							// DESIGN.md §4.2 names K+ 6.5 as a critical value.
+							// DESIGN.md §2 names K+ 6.5 as a critical value.
 							min: 6.5,
 							classification: 'critical',
 							urgency: 'critical',

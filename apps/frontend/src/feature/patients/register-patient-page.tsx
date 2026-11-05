@@ -14,7 +14,7 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
 import { patientApi } from '@/lib/patient-api';
 
-/** Registers a patient at the clinician's facility (DESIGN.md §7): fields, consent, then duplicate checks. */
+/** Registers a patient at the clinician's facility (DESIGN.md §5): fields, consent, then duplicate checks. */
 export function RegisterPatientPage() {
 	const navigate = useNavigate();
 	const facilities = useQuery(patientApi.patient.facilities.queryOptions());

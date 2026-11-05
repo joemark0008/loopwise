@@ -18,7 +18,7 @@ export function evaluationChipLabel(classification: ResultClassification, urgenc
 }
 
 /**
- * Why a result is normal, actionable or critical: the deterministic rules engine's evaluation (DESIGN.md §6.2), as a
+ * Why a result is normal, actionable or critical: the deterministic rules engine's evaluation (DESIGN.md §4.2), as a
  * chip with the rule in its title, or with `detail` the reason, the next step and the guideline under it. Meant for
  * the results inbox and the patient's results; an evaluation the engine couldn't classify says "Review by hand".
  */

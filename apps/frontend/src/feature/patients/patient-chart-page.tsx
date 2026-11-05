@@ -20,7 +20,7 @@ import { patientApi } from '@/lib/patient-api';
 type Overview = PatientOverviewFieldsFragment;
 
 /**
- * The patient chart's overview (DESIGN.md §9): the visits, each opening its record, where its vitals, results,
+ * The patient chart's overview (DESIGN.md §7): the visits, each opening its record, where its vitals, results,
  * diagnoses and medicines live. The banner, allergies and Wise come from the patient layout.
  */
 export function PatientChartPage({ patientId }: { patientId: string }) {

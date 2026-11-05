@@ -3,7 +3,7 @@ import { getMetric } from '@loopwise/shared/tools';
 import { createTool, rememberToolOutput, withResultId } from '../utils/tools.js';
 import { sampleTable } from './run-analytics-sql.js';
 
-/** A certified metric of the user's own patients (DESIGN.md §12): one fixed definition, run on the analyst role. */
+/** A certified metric of the user's own patients (DESIGN.md §10): one fixed definition, run on the analyst role. */
 export default createTool<getMetric.Input, getMetric.Output>({
 	kind: 'read',
 	description: getMetric.description,

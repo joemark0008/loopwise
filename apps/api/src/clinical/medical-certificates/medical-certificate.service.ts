@@ -19,7 +19,7 @@ import { MedicalCertificateRepository } from './medical-certificate.repository.j
 import { type MedicalCertificate, toMedicalCertificate } from './models/medical-certificate.model.js';
 
 /**
- * Medical certificates (DESIGN.md §7), like prescriptions: a draft is saved freely; issuing needs the clinician's PRC
+ * Medical certificates (DESIGN.md §5), like prescriptions: a draft is saved freely; issuing needs the clinician's PRC
  * license, snapshots the doctor and facility and locks the row (it can only be voided). Every view and change is
  * audited; issuing writes `medical_certificate.issue`.
  */

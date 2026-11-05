@@ -30,7 +30,7 @@ interface ScriptedCall {
 }
 
 /**
- * Wise charts and summary reports (DESIGN.md §9.2): `chart_patient_trend` and `create_report` read as the user, so a
+ * Wise charts and summary reports (DESIGN.md §7.2): `chart_patient_trend` and `create_report` read as the user, so a
  * doctor without a care relationship gets neither; a narrative with a number the record lacks is refused; the PDF is
  * printed only for the chat's owner and audited as `report.export`. The LLM is scripted, one tool call a step.
  */

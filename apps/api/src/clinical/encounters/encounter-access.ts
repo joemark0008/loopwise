@@ -46,7 +46,7 @@ export function dateOnly(value: string): Date {
 }
 
 /**
- * Refuses a save made from a stale draft (DESIGN.md §9.1). The version trigger moves the saved row from
+ * Refuses a save made from a stale draft (DESIGN.md §7.1). The version trigger moves the saved row from
  * `expectedVersion` to `expectedVersion + 1`; anything else means someone changed it since the draft was made, and
  * throwing rolls the transaction back.
  */

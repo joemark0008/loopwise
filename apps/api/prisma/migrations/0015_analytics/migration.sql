@@ -1,4 +1,4 @@
--- Safe analytics for Wise (DESIGN.md §9.2, §10.2): curated read-only views of the clinical tables that Wise may query
+-- Safe analytics for Wise (DESIGN.md §7.2, §8.2): curated read-only views of the clinical tables that Wise may query
 -- with SQL, as the signed-in user and nothing more.
 --
 -- Layers, each enforced by Postgres even if the API's SQL validator misses something:

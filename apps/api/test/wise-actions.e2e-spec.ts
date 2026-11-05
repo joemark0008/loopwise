@@ -21,7 +21,7 @@ const CREATE_ORDERS = `mutation ($input: CreateEncounterOrdersInput!) { createEn
 const REVIEW = `mutation ($input: ReviewResultInput!) { reviewResult(input: $input) { id reviewedAt } }`;
 
 /**
- * Wise actions (DESIGN.md §9.4) end to end, with a scripted model: each tool drafts a card and writes nothing; the
+ * Wise actions (DESIGN.md §7.3) end to end, with a scripted model: each tool drafts a card and writes nothing; the
  * card's Confirm goes through the real mutation as the user, settles the card once, and the audit row records the
  * Wise origin. Another clinician can't confirm the card, a critical result needs a note, and an order card creates
  * all its tests in one transaction, queued for HL7 when the lab uses the connector.

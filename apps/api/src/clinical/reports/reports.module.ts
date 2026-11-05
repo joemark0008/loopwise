@@ -13,7 +13,7 @@ import { REPORTS_READER } from './reports-reader.token.js';
 const readerMatches: ReportsService extends AgentToolServices['reports'] ? true : never = true;
 void readerMatches;
 
-/** Wise reports in a side panel (DESIGN.md §9.2): versions from the chat, PDF export. */
+/** Wise reports in a side panel (DESIGN.md §7.2): versions from the chat, PDF export. */
 @Module({
 	imports: [ClinicalDbModule, ChatsCoreModule, WiseProposalsModule],
 	providers: [

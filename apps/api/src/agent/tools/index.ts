@@ -50,8 +50,8 @@ import suggestFollowUps from './suggest-follow-ups.js';
 export { createWebSearchTools } from './web-search.js';
 
 /**
- * Loopwise keeps loopwise's conversational tools only (DESIGN.md §13). The warehouse, SQL, semantic layer, sandbox,
- * story, onboarding and context-recommendation tools are gone; the clinical tools (§9.2) come with their modules.
+ * Loopwise keeps loopwise's conversational tools only (DESIGN.md §11). The warehouse, SQL, semantic layer, sandbox,
+ * story, onboarding and context-recommendation tools are gone; the clinical tools (§7.2) come with their modules.
  * `display_map` needs the map setting.
  *
  * Only the MCP sub-agent excludes `display_map` upstream; kept for when it's ported.
@@ -80,7 +80,7 @@ export const tools = {
 	get_metric: getMetric,
 	explain_result: explainResult,
 	report: reportTool,
-	// Wise actions (DESIGN.md §9.4): one definition each in `@loopwise/shared/wise-actions`, one shared card.
+	// Wise actions (DESIGN.md §7.3): one definition each in `@loopwise/shared/wise-actions`, one shared card.
 	propose_vitals: createActionTool(proposeVitals),
 	propose_allergy: createActionTool(proposeAllergy),
 	propose_remove_allergy: createActionTool(proposeRemoveAllergy),
@@ -116,7 +116,7 @@ export const getTools = (
 	} = {},
 ) => {
 	// display_chart and display_map plot an execute_sql result, and the SQL tools are gone: they stay in `uiToolset`
-	// so old chats render, but the model charts through chart_patient_trend (DESIGN.md §9.2). chart_facility_panel
+	// so old chats render, but the model charts through chart_patient_trend (DESIGN.md §7.2). chart_facility_panel
 	// gave way to the certified metrics (get_metric), one definition per number; its card still renders old chats.
 	const { suggest_follow_ups, display_chart: _displayChart, chart_facility_panel: _facilityPanel, ...rest } = tools;
 	const allTools = {
@@ -139,7 +139,7 @@ export const getTools = (
 };
 
 /**
- * Fails closed: every tool the model gets must declare what it does (DESIGN.md §9.1), so a tool that could write
+ * Fails closed: every tool the model gets must declare what it does (DESIGN.md §7.1), so a tool that could write
  * without the clinician's Confirm can't slip in unclassified.
  */
 export const assertToolKinds = (toolset: Record<string, unknown>): void => {

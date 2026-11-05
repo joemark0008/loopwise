@@ -20,7 +20,7 @@ const WATERMARK = 'Synthetic data — prototype';
 const markdown = new Marked({ gfm: true, renderer: { html: ({ text }) => escapeHtml(text) } });
 
 /**
- * A Wise report (the `report` tool, DESIGN.md §9.2) as one static HTML page for headless Chrome: its markdown, and
+ * A Wise report (the `report` tool, DESIGN.md §7.2) as one static HTML page for headless Chrome: its markdown, and
  * its blocks drawn from the embedded tool results as server-side SVG charts and tables.
  */
 export function renderReportDocumentHtml(

@@ -3,7 +3,7 @@ import z from 'zod/v3';
 import { ANALYTICS_CHART_TYPES, CellSchema, ResultChartOutputSchema } from './run-analytics-sql';
 
 /**
- * Certified metrics (DESIGN.md §12): one fixed definition each, over the analytics views, so Wise, the dashboard and
+ * Certified metrics (DESIGN.md §10): one fixed definition each, over the analytics views, so Wise, the dashboard and
  * reports report the same number.
  */
 export const METRICS = [

@@ -35,7 +35,7 @@ export interface NavContext {
 	isViewer: boolean;
 }
 
-/** Who the signed-in user is in the loop (DESIGN.md §3); each role has its own home and sidebar. */
+/** Who the signed-in user is in the loop (DESIGN.md §1); each role has its own home and sidebar. */
 export type StaffRole = 'doctor' | 'nurse' | 'lab' | 'specialist' | 'program';
 
 export interface NavLink {

@@ -71,7 +71,7 @@ export function labStatusStep(update: Pick<LabStatusUpdate, 'orderControl' | 'or
 }
 
 /**
- * Orders (DESIGN.md §4.1 steps 1–5, §7, §11). The encounter orders a test and sends it to a lab or imaging facility;
+ * Orders (DESIGN.md §2 steps 1–5, §5, §9). The encounter orders a test and sends it to a lab or imaging facility;
  * the facility's staff accept, reject and mark the specimen collected on the worklist (or its lab system does over
  * HL7); results arrive (`setResulted`, called by the HL7 ingest) and the doctor reviews them
  * (`setReviewed`).
@@ -204,7 +204,7 @@ export class OrderService {
 		}));
 	}
 
-	/** The receiving facility takes the order (DESIGN.md §4.1 step 2). */
+	/** The receiving facility takes the order (DESIGN.md §2 step 2). */
 	accept(userId: string, orderId: string, wiseOrigin?: WiseOriginInput | null): Promise<ClinicalOrder> {
 		return this.asUserStep(userId, orderId, 'accept', null, wiseOrigin);
 	}
@@ -219,7 +219,7 @@ export class OrderService {
 		return this.asUserStep(userId, orderId, 'reject', requireReason(reason), wiseOrigin);
 	}
 
-	/** The specimen is taken (DESIGN.md §4.1 step 4). */
+	/** The specimen is taken (DESIGN.md §2 step 4). */
 	markCollected(userId: string, orderId: string, wiseOrigin?: WiseOriginInput | null): Promise<ClinicalOrder> {
 		return this.asUserStep(userId, orderId, 'collect', null, wiseOrigin);
 	}

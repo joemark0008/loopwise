@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { logIn, trackErrors } from './helpers';
 
 /**
- * "AI drafts, the clinician confirms" for an edit (DESIGN.md §9.1): Wise proposes a change to an encounter's note as a
+ * "AI drafts, the clinician confirms" for an edit (DESIGN.md §7.1): Wise proposes a change to an encounter's note as a
  * before → after card, nothing is saved until Confirm, and a reload shows the card settled, never confirmable again.
  */
 test.describe('Wise edits an encounter note', () => {

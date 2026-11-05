@@ -5,7 +5,7 @@ import { CurrentUser } from '../../common/decorators/current.decorator.js';
 import { InsightsService } from './insights.service.js';
 import { ReportPdf } from './models/report-pdf.model.js';
 
-/** Wise summary reports leaving the system as a PDF (DESIGN.md §9.2). */
+/** Wise summary reports leaving the system as a PDF (DESIGN.md §7.2). */
 @Resolver()
 export class InsightsResolver {
 	constructor(private readonly service: InsightsService) {}

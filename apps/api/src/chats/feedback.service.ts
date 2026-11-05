@@ -3,10 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { HandlerError } from '../common/errors/handler-error.js';
 import type { MessageFeedback } from '../generated/prisma/client.js';
 import { ChatRepository } from './chat.repository.js';
-import { FeedbackRepository, type FeedbackWithDetails } from './feedback.repository.js';
+import { FeedbackRepository } from './feedback.repository.js';
 
 /**
- * Port of the message half of upstream `trpc/feedback.routes.ts` (`submit`, `getRecent`). Story feedback comes
+ * Port of the message half of upstream `trpc/feedback.routes.ts` (`submit`). Story feedback comes
  * with stories (Phase 4) and the data-team notification with notifications (Phase 5).
  */
 @Injectable()
@@ -32,9 +32,5 @@ export class FeedbackService {
 			vote: input.vote,
 			explanation: input.explanation,
 		});
-	}
-
-	listRecent(projectId: string, limit = 10): Promise<FeedbackWithDetails[]> {
-		return this.feedbacks.listRecentFeedbacks(projectId, limit);
 	}
 }

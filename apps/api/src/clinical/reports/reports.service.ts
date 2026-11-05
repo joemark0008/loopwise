@@ -15,7 +15,7 @@ import { type EmbeddedResult, renderReportDocumentHtml } from './report-document
 import { type DocumentRow, ReportsRepository } from './reports.repository.js';
 
 /**
- * Wise reports (DESIGN.md §9.2), loopwise's stories for Loopwise: a report's versions are the `report` tool outputs in
+ * Wise reports (DESIGN.md §7.2), loopwise's stories for Loopwise: a report's versions are the `report` tool outputs in
  * the chat, its numbers the tool results its blocks embed. Reads are owner-only; the PDF is audited as PHI leaving.
  */
 @Injectable()

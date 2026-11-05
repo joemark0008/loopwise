@@ -8,7 +8,7 @@ import { toPathwayView } from './pathway-view.js';
 import { PathwaysService } from './pathways.service.js';
 import { RulesService } from './rules.service.js';
 
-/** Read-only pathways and result evaluations, as the user (DESIGN.md §6.2, §7). Nothing here writes. */
+/** Read-only pathways and result evaluations, as the user (DESIGN.md §4.2, §5). Nothing here writes. */
 @Resolver()
 export class PathwaysResolver {
 	constructor(

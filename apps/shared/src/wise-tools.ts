@@ -1,5 +1,5 @@
 /**
- * The catalogue of Wise tools (DESIGN.md §9.4): what each one does in plain words, what kind it is, where it shows in
+ * The catalogue of Wise tools (DESIGN.md §7.3): what each one does in plain words, what kind it is, where it shows in
  * Settings → Wise tools, and whether a facility of each type has it on by default. The API offers the model only the
  * tools turned on for the user, refuses the others, and the settings page lists them from here.
  *

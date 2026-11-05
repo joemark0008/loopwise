@@ -13,7 +13,7 @@ const TO_REVIEW = `query { resultsToReview { ${FIELDS} } }`;
 const PATIENT_RESULTS = `query ($patientId: ID!) { patientResults(patientId: $patientId) { ${FIELDS} } }`;
 const REVIEW = `mutation ($input: ReviewResultInput!) { reviewResult(input: $input) { ${FIELDS} } }`;
 
-/** The results inbox (DESIGN.md §4.1 steps 5–6): what each clinician must review, critical first, and the review. */
+/** The results inbox (DESIGN.md §2 steps 5–6): what each clinician must review, critical first, and the review. */
 describe('results inbox (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;

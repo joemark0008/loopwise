@@ -46,7 +46,7 @@ import { useRecordMutation } from '@/feature/encounters/use-record-mutation';
 import { encounterRecordApi } from '@/lib/encounter-record-api';
 
 /*
- * The cards of the encounter-document proposal tools (DESIGN.md §9.1). Each loads the encounter as the clinician
+ * The cards of the encounter-document proposal tools (DESIGN.md §7.1). Each loads the encounter as the clinician
  * (RLS), shows Wise's draft and saves it only on Confirm, with the same mutation as the encounter page and the card's
  * `wiseOrigin`; prescriptions, certificates and bills are saved as drafts, which the clinician issues or finalizes on
  * the encounter page. A draft that replaces one already on the visit is an update card (before → after), saved

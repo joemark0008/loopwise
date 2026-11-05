@@ -19,7 +19,7 @@ import { usePatientRegistration } from '@/feature/patients/use-patient-registrat
 const REGISTERED_ANSWER = /^I (registered|used the existing record of) /;
 const TOOL_NAME = 'propose_patient_registration';
 
-/** Wise's patient registration draft: the clinician checks it, records consent and confirms (DESIGN.md §9.1). */
+/** Wise's patient registration draft: the clinician checks it, records consent and confirms (DESIGN.md §7.1). */
 export const ProposePatientRegistrationToolCall = memo(
 	({ toolPart }: ToolCallComponentProps<'propose_patient_registration'>) => {
 		if (toolPart.state === 'input-streaming' || toolPart.state === 'input-available') {

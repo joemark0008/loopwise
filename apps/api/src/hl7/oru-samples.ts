@@ -1,5 +1,5 @@
 /**
- * Synthetic ORU^R01 messages for tests and demos (DESIGN.md §4.1 step 5: Maria's HbA1c 7.2%). Invented data only.
+ * Synthetic ORU^R01 messages for tests and demos (DESIGN.md §2 step 5: Maria's HbA1c 7.2%). Invented data only.
  */
 export interface SampleOruOptions {
 	controlId?: string;

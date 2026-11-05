@@ -15,7 +15,7 @@ export function staffRoleOf(facilities: readonly { type?: string | null }[]): St
 }
 
 /**
- * The signed-in user's role in the loop (DESIGN.md §3), which picks their home and sidebar. The API has no staff
+ * The signed-in user's role in the loop (DESIGN.md §1), which picks their home and sidebar. The API has no staff
  * role yet, so it is read from the facilities the user works at: staff of labs and imaging centers are `lab`, everyone
  * else a doctor (the nurse worklist, referral and dashboard features add theirs here).
  */

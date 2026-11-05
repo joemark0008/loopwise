@@ -39,9 +39,6 @@ export class Chat {
 	@Field(() => GraphQLJSON, { nullable: true, description: 'Where the chat was forked from (`ForkMetadata`).' })
 	forkMetadata: unknown;
 
-	@Field(() => GraphQLJSON, { nullable: true, description: 'The automation run behind the chat (Phase 5).' })
-	automationRun: unknown;
-
 	/** Owner id, for the `author` field. */
 	userId: string;
 }
@@ -173,27 +170,6 @@ export class MessageFeedback {
 
 	@Field()
 	createdAt: Date;
-}
-
-@ObjectType()
-export class RecentFeedback {
-	@Field(() => ID)
-	messageId: string;
-
-	@Field()
-	vote: string;
-
-	@Field(() => String, { nullable: true })
-	explanation: string | null;
-
-	@Field()
-	createdAt: Date;
-
-	@Field()
-	userName: string;
-
-	@Field(() => String, { nullable: true })
-	messageText: string | null;
 }
 
 @ObjectType({ description: 'A saved SQL edit (upstream `sql.updateQuery`).' })

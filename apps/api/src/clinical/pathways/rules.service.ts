@@ -19,7 +19,7 @@ export interface ResultEvaluated {
 }
 
 /**
- * The rules engine's service (DESIGN.md §6.2 "actionable? urgency?", §6.3 step 3): loads a result, evaluates it with
+ * The rules engine's service (DESIGN.md §4.2 "actionable? urgency?", §4.3 step 3): loads a result, evaluates it with
  * the pure `RulesEngine` against the active pathways, and stores why. Deterministic; no AI decides anything here.
  */
 @Injectable()
@@ -65,9 +65,9 @@ export class RulesService {
 			);
 		}
 		if (created) {
-			// TODO(case engine, DESIGN.md §15 Days 7–9): subscribe to `result.evaluated`; open or advance the CareCase
+			// TODO(follow-ups loop, PLAN.md §4.5): subscribe to `result.evaluated`; open or advance the CareCase
 			// toward `nextState`, assign the owner and start the SLA timer (`slaHours`). A `critical` classification
-			// goes to a clinician at once and never gets an automated patient message (§4.2).
+			// goes to a clinician at once and never gets an automated patient message (§2).
 			await this.events.emit('result.evaluated', {
 				resultId,
 				patientId: result.patientId,
@@ -108,7 +108,7 @@ export class RulesService {
 	}
 
 	/**
-	 * The Wise `explain_result` read (DESIGN.md §9.2): the result and why it is (or isn't) actionable, as the user.
+	 * The Wise `explain_result` read (DESIGN.md §7.2): the result and why it is (or isn't) actionable, as the user.
 	 * Row-level security decides whether the user sees the result at all; the read is audited as
 	 * `result_evaluation.view`. With no stored evaluation yet the same engine computes one for the answer. Wise only
 	 * relays it; it never classifies.

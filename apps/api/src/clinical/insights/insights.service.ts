@@ -39,7 +39,7 @@ const monthsAgo = (today: Date, months: number) => {
 };
 
 /**
- * Wise charts and summary reports (DESIGN.md §9.2). Everything is read as the user, so row-level security decides
+ * Wise charts and summary reports (DESIGN.md §7.2). Everything is read as the user, so row-level security decides
  * what a chart or report can show, and every read is audited: a chart as a `patient.view`, a report as
  * `report.generate`. Wise only chooses the dataset; the numbers come from here.
  */

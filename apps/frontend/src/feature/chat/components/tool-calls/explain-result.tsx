@@ -8,7 +8,7 @@ import { ResultEvaluationBadge } from '@/components/clinical/result-evaluation-b
 import { ErrorMessage } from '@/components/ui/error-message';
 
 /**
- * Wise's `explain_result` (DESIGN.md §2, §9.2): the rules engine's evaluation of one result, as the pathway rule says
+ * Wise's `explain_result` (DESIGN.md §4.4, §7.2): the rules engine's evaluation of one result, as the pathway rule says
  * it, with a link to the pathways page. Wise relays this; it never decides.
  */
 export const ExplainResultToolCall = memo(({ toolPart }: ToolCallComponentProps<'explain_result'>) => {

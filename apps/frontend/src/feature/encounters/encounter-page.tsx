@@ -20,7 +20,7 @@ import { encounterRecordApi } from '@/lib/encounter-record-api';
 const TAB_ID = 'encounter';
 
 /**
- * One visit's record (DESIGN.md §7): the note and diagnoses, vitals, orders and results, prescriptions and medical
+ * One visit's record (DESIGN.md §5): the note and diagnoses, vitals, orders and results, prescriptions and medical
  * certificates and the bill, as tabs (`?tab=`), under the patient banner and beside the patient's Wise chat. Every
  * read is audited by the API; only staff at the visit's facility can add to it.
  */

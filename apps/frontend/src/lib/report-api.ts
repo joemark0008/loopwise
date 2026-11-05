@@ -12,7 +12,7 @@ interface PdfFile {
 	data: string;
 }
 
-/** Wise reports (DESIGN.md §9.2): PDFs of reports Wise built in one of your chats, printed on the server and audited. */
+/** Wise reports (DESIGN.md §7.2): PDFs of reports Wise built in one of your chats, printed on the server and audited. */
 export const reportApi = {
 	/** A `create_report` summary card's PDF (`report.export`), saved in the browser. */
 	async downloadPdf({ chatId, toolCallId }: { chatId: string; toolCallId: string }): Promise<void> {

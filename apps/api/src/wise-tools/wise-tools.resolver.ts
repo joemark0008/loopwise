@@ -9,7 +9,7 @@ import { WiseToolSettingsService } from './wise-tool-settings.service.js';
 /** The tools that exist; catalogue entries without one show as "Coming soon". Web tools come with the provider. */
 const AVAILABLE_TOOLS: ReadonlySet<string> = new Set([...Object.keys(uiToolset), 'web_search', 'web_fetch']);
 
-/** Settings → Wise tools (DESIGN.md §9.4). Facility switches are for its admins (checked in the service). */
+/** Settings → Wise tools (DESIGN.md §7.3). Facility switches are for its admins (checked in the service). */
 @Resolver(() => WiseToolSettings)
 export class WiseToolsResolver {
 	constructor(private readonly settings: WiseToolSettingsService) {}

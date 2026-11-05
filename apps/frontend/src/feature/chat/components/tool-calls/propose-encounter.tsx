@@ -25,7 +25,7 @@ import { encounterRecordApi } from '@/lib/encounter-record-api';
 
 const RECORDED_ANSWER = /^I recorded the encounter/;
 
-/** Wise's draft of a visit, from the chart chat: the clinician checks it and confirms (DESIGN.md §9.1). */
+/** Wise's draft of a visit, from the chart chat: the clinician checks it and confirms (DESIGN.md §7.1). */
 export const ProposeEncounterToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_encounter'>) => {
 	if (toolPart.state === 'input-streaming' || toolPart.state === 'input-available') {
 		return <Skeleton className={styles.encounterCardSkeleton} />;

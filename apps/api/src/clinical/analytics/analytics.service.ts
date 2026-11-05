@@ -24,7 +24,7 @@ const SMALL_CELL = 5;
 const DEFAULT_MONTHS = 12;
 
 /**
- * Wise analytics over the user's own data (DESIGN.md §9.2, §10.2): the SQL is checked by the parser-based validator,
+ * Wise analytics over the user's own data (DESIGN.md §7.2, §8.2): the SQL is checked by the parser-based validator,
  * then run by `AnalyticsRepository` on the analyst role, bound to the user, read-only, time- and row-capped. Every
  * query, refused or run, writes an audit row with its SQL, row count and the patients it returned.
  */

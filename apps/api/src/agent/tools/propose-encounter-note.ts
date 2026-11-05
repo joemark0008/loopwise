@@ -3,7 +3,7 @@ import { proposeEncounterNote } from '@loopwise/shared/tools';
 import { createTool } from '../utils/tools.js';
 
 /**
- * Offers a change to an encounter's SOAP note as a before → after card (DESIGN.md §9.1). It writes nothing: it reads
+ * Offers a change to an encounter's SOAP note as a before → after card (DESIGN.md §7.1). It writes nothing: it reads
  * the note as the user and returns it with its version; only the card's Confirm saves (`updateEncounterNote`), and only
  * if the note hasn't changed since.
  */

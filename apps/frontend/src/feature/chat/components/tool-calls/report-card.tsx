@@ -11,7 +11,7 @@ import { ReportSections } from '@/feature/reports/report-sections';
 import { reportApi } from '@/lib/report-api';
 
 /**
- * Wise's `create_report` (DESIGN.md §9.2): the report's data, frozen when Wise built it, and its AI-drafted narrative.
+ * Wise's `create_report` (DESIGN.md §7.2): the report's data, frozen when Wise built it, and its AI-drafted narrative.
  * Viewing is a read; Download PDF prints the same data on the server, audited as PHI leaving the system. Nothing is
  * saved to the chart.
  */

@@ -21,7 +21,7 @@ export const MAX_HL7_MESSAGE_BYTES = 1_000_000;
 const STATUS_BY_ACK: Record<AckCode, Hl7MessageStatus> = { AA: 'accepted', AE: 'error', AR: 'rejected' };
 
 /**
- * The HL7 v2 ingest (DESIGN.md §6.3 step 2, §11): parse, answer resends from the log, store the results in one
+ * The HL7 v2 ingest (DESIGN.md §4.3 step 2, §9): parse, answer resends from the log, store the results in one
  * system transaction with the log row, then publish `result.received`. Always answers an ACK; only transient failures
  * (the database is down) throw, so the connector retries them.
  */

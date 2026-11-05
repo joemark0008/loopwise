@@ -26,7 +26,7 @@ export function useToolOutputs(messages: UIMessage[]): Map<string, { toolName: s
 }
 
 /**
- * A Wise report (DESIGN.md §9.2): Wise's markdown, and blocks drawn from the tool results of the chat they embed —
+ * A Wise report (DESIGN.md §7.2): Wise's markdown, and blocks drawn from the tool results of the chat they embed —
  * the same results the chat shows, so every number on the page traces to a query or metric.
  */
 export function ReportDocument({

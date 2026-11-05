@@ -13,7 +13,7 @@ const SUGGESTIONS = ['Which of my patients are overdue?', 'Find a patient'];
 /**
  * Wise beside any page that isn't a patient's (those dock the patient's own chat): a general chat over the page,
  * opened from the top bar. It stays mounted while you move between pages, and never navigates by itself (DESIGN.md
- * §9.2): its links open pages when you choose.
+ * §7.2): its links open pages when you choose.
  */
 export function WiseDock({ open, onClose }: { open: boolean; onClose: () => void }) {
 	const closeRef = useRef<HTMLButtonElement>(null);

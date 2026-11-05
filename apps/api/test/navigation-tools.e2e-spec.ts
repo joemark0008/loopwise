@@ -21,7 +21,7 @@ interface ScriptedCall {
 }
 
 /**
- * Wise's navigation tools (DESIGN.md §9.2): `find_patient` searches as the user and `open_page` only opens a chart the
+ * Wise's navigation tools (DESIGN.md §7.2): `find_patient` searches as the user and `open_page` only opens a chart the
  * user may see, so a doctor at another facility can neither find nor open the patient. The LLM is scripted: each
  * question runs the queued tool calls, one step each, then answers.
  */

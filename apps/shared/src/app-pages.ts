@@ -1,7 +1,7 @@
 import z from 'zod/v3';
 
 /**
- * The pages Wise may open (`open_page`, DESIGN.md §9.2), one entry each: Wise picks a key and its params, never a URL.
+ * The pages Wise may open (`open_page`, DESIGN.md §7.2), one entry each: Wise picks a key and its params, never a URL.
  * The API validates the params and checks access; the frontend navigates to `path` with them (TanStack Router path
  * syntax). A new screen needs only a line here. Admin-only pages are left out: Wise opens what any clinician can.
  */

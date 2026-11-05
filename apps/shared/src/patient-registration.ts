@@ -1,7 +1,7 @@
 import z from 'zod/v3';
 
 /**
- * Patient registration (DESIGN.md §7): the one set of field rules for the API, the register form and the Wise
+ * Patient registration (DESIGN.md §5): the one set of field rules for the API, the register form and the Wise
  * proposal card, so they never disagree on what a valid patient is.
  */
 export const PATIENT_NAME_MAX_LENGTH = 100;

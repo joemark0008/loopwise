@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { logIn, trackErrors } from './helpers';
 
 /**
- * Wise reports on the patient chart (DESIGN.md §9.2), on the seeded Maria Santos, who has a year of BP readings: the
+ * Wise reports on the patient chart (DESIGN.md §7.2), on the seeded Maria Santos, who has a year of BP readings: the
  * chart chat writes a BP report that opens over the chart, downloads as a PDF, and is saved to the chart, where it is
  * listed under Documents. Real LLM call.
  */

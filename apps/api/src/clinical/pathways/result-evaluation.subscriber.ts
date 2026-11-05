@@ -4,7 +4,7 @@ import { ClinicalEventsService } from '../events/clinical-events.service.js';
 import { RulesService } from './rules.service.js';
 
 /**
- * Evaluates every stored result (DESIGN.md §6.3 step 3): on `result.received` the rules engine evaluates it and stores
+ * Evaluates every stored result (DESIGN.md §4.3 step 3): on `result.received` the rules engine evaluates it and stores
  * why, then publishes `result.evaluated`. Opening or advancing the case is the case engine's, on that event.
  */
 @Injectable()

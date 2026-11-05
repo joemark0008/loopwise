@@ -16,7 +16,7 @@ import { patientApi } from '@/lib/patient-api';
 const RECENT_PATIENTS = 6;
 
 /**
- * The doctor's home (DESIGN.md §3–4): results to review first, then the patients in your care and the loops that are
+ * The doctor's home (DESIGN.md §1–2): results to review first, then the patients in your care and the loops that are
  * overdue, with Wise one question away. Asking Wise here starts a new chat.
  */
 export function TodayPage() {

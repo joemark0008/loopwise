@@ -18,7 +18,7 @@ const SEARCH = `query ($input: SearchPatientsInput!) { searchPatients(input: $in
 const GET = `query ($id: ID!) { patient(id: $id) { id givenName } }`;
 
 /**
- * Patient registration through GraphQL (DESIGN.md §7, §10): system work that grants the registering clinician a care
+ * Patient registration through GraphQL (DESIGN.md §5, §8): system work that grants the registering clinician a care
  * relationship, with row-level security on every read and deterministic duplicate checks.
  */
 describe('patient registration (e2e)', () => {

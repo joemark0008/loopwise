@@ -7,7 +7,7 @@ import { OutboxAckDto } from './dto/outbox-ack.dto.js';
 import { Hl7OutboxService, type OutboxAckResult, type OutboxMessage } from './hl7-outbox.service.js';
 
 /**
- * The edge connector's outbound queue (DESIGN.md §11), authenticated by the facility key: it pulls the pending ORM
+ * The edge connector's outbound queue (DESIGN.md §9), authenticated by the facility key: it pulls the pending ORM
  * messages for its facility and posts the lab system's ACK for each.
  */
 @Controller('api/hl7/outbox')

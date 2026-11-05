@@ -3,7 +3,7 @@ import { DOCTOR, LAB_TECH, logIn, trackErrors } from './helpers';
 import type { Page } from '@playwright/test';
 
 /**
- * Wise actions (DESIGN.md §9.4) with a real LLM: the clinician asks in the chart chat, Wise drafts a card, and only
+ * Wise actions (DESIGN.md §7.3) with a real LLM: the clinician asks in the chart chat, Wise drafts a card, and only
  * Confirm saves, through the same mutation as the page. Turning a tool off in Settings → Wise tools makes Wise say so.
  */
 async function openChart(page: Page, name: string) {

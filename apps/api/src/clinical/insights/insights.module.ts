@@ -13,7 +13,7 @@ import { INSIGHTS_READER } from './insights-reader.token.js';
 const readerMatches: InsightsService extends AgentToolServices['insights'] ? true : never = true;
 void readerMatches;
 
-/** Wise charts and summary reports (DESIGN.md §9.2): fixed clinical datasets read as the user, and their PDF. */
+/** Wise charts and summary reports (DESIGN.md §7.2): fixed clinical datasets read as the user, and their PDF. */
 @Module({
 	imports: [ClinicalDbModule, ChatsCoreModule, OrganizationsModule],
 	providers: [

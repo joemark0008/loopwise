@@ -8,7 +8,6 @@ import { UserMessage } from './user-message';
 import styles from './chat-messages.module.css';
 import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import type { MessageGroup } from '@/types/ai';
-import type { Chat } from '@/queries/use-chat-query';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import {
 	groupMessages,
@@ -29,7 +28,6 @@ import { useDebounceValue } from '@/hooks/use-debounce-value';
 import { useVisibleMessages } from '@/hooks/use-visible-messages';
 import { useScrollToBottomOnNewUserMessage } from '@/hooks/use-scroll-to-bottom-on-new-user-message';
 import { useChatId } from '@/hooks/use-chat-id';
-import { useChatQuery } from '@/queries/use-chat-query';
 import { chatApi } from '@/lib/chat-api';
 
 const DEBUG_MESSAGES = false;
@@ -62,13 +60,11 @@ export const ChatMessagesContent = memo(function ChatMessagesContent() {
 	const chatId = useChatId();
 	const { isRunning } = useAgentContext();
 	const messages = useAgentMessages();
-	const { data: isAutomationRunning = false } = useChatQuery({ chatId, select: selectIsAutomationRunning });
-	const effectiveIsRunning = isRunning || isAutomationRunning;
-	const isAgentGenerating = effectiveIsRunning && checkIsLastMessageStreaming(messages);
-	const someToolsExectuting = effectiveIsRunning && checkIsSomeToolsExecuting(messages);
+	const isAgentGenerating = isRunning && checkIsLastMessageStreaming(messages);
+	const someToolsExectuting = isRunning && checkIsSomeToolsExecuting(messages);
 
 	// Debounce when the agent is running but not generating content yet to prevent flickering
-	const showThinkingLoader = useDebounceValue(effectiveIsRunning && !isAgentGenerating && !someToolsExectuting, {
+	const showThinkingLoader = useDebounceValue(isRunning && !isAgentGenerating && !someToolsExectuting, {
 		delay: 50,
 		skipDebounce: (value) => !value, // Skip debounce if the value equals `false` to immediately remove the loader
 	});
@@ -103,7 +99,7 @@ export const ChatMessagesContent = memo(function ChatMessagesContent() {
 							assistantMessages={group.assistantMessages}
 							showLoader={showThinkingLoader && isLast(group, messageGroups)}
 							lastMessageId={lastMessageId}
-							isRunning={effectiveIsRunning}
+							isRunning={isRunning}
 							storyIntroMessageId={storyIntroMessageId}
 						/>
 					))
@@ -118,10 +114,6 @@ export const ChatMessagesContent = memo(function ChatMessagesContent() {
 		</div>
 	);
 });
-
-function selectIsAutomationRunning(chat: Chat): boolean {
-	return chat.automationRun?.status === 'running';
-}
 
 interface MessageGroupProps {
 	userMessage: UIMessage | null;

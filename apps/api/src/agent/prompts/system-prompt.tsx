@@ -25,15 +25,15 @@ type SystemPromptProps = {
 	currentPatient?: string;
 	/** Names of the tools in the run's tool set — rules for surface-dependent tools (e.g. display_map) are only emitted when the tool is present. Omit to include every rule. */
 	toolNames?: string[];
-	/** Tools turned off in Wise settings for this user (DESIGN.md §9.4): Wise says so instead of failing silently. */
+	/** Tools turned off in Wise settings for this user (DESIGN.md §7.3): Wise says so instead of failing silently. */
 	disabledTools?: string[];
 };
 
 export const MEMORY_TOKEN_LIMIT = 1000;
 
 /**
- * Wise, the doctor's assistant (DESIGN.md §9). The clinical tools and their rules arrive with the clinical modules;
- * the safety rules of §9.3 apply from the start.
+ * Wise, the doctor's assistant (DESIGN.md §7). The clinical tools and their rules arrive with the clinical modules;
+ * the safety rules of §7.4 apply from the start.
  */
 export function SystemPrompt({
 	memories = [],

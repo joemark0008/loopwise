@@ -12,7 +12,7 @@ import { useTimeAgo } from '@/hooks/use-time-ago';
 import { chatApi } from '@/lib/chat-api';
 
 /**
- * Your general Wise chats (questions across patients). Chart chats stay on each patient's chart (DESIGN.md §9), so
+ * Your general Wise chats (questions across patients). Chart chats stay on each patient's chart (DESIGN.md §7), so
  * the sidebar no longer carries a chat history.
  */
 export function WiseChatsPage() {

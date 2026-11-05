@@ -6,7 +6,7 @@ import type { ToolContext } from '../types/tools.js';
 import { createTool } from '../utils/tools.js';
 
 /**
- * The encounter-document proposal tools (DESIGN.md §7, §9.1): a draft prescription, medical certificate or bill for
+ * The encounter-document proposal tools (DESIGN.md §5, §7.1): a draft prescription, medical certificate or bill for
  * one of the chart chat's encounters. They write nothing. The card reads the encounter as the clinician (so
  * row-level security and the patient check apply there) and only its Confirm button saves, as a draft, against the
  * version it showed; issuing or finalizing stays the clinician's own step. The note has its own tool

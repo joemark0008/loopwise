@@ -40,7 +40,7 @@ interface UserToolState {
 }
 
 /**
- * Which Wise tools a user may use (DESIGN.md §9.4). A tool is on for a facility by its type's default unless the
+ * Which Wise tools a user may use (DESIGN.md §7.3). A tool is on for a facility by its type's default unless the
  * facility's admin changed it; a user can turn a tool off for themselves, never on. Locked tools are always on.
  *
  * Enforced three times: the agent offers the model only the enabled tools (`disabledToolNames`), a tool call checks

@@ -4,7 +4,7 @@ import { ENCOUNTER_NOTES_MAX_LENGTH, ENCOUNTER_REASON_MAX_LENGTH } from './encou
 import { ICD10_CODE_PATTERN, normalizeIcd10Code } from './icd10';
 
 /**
- * The encounter's note and diagnoses (DESIGN.md §7): the one set of rules for the API, the encounter page and the
+ * The encounter's note and diagnoses (DESIGN.md §5): the one set of rules for the API, the encounter page and the
  * Wise cards. Vitals are in `./vitals`, prescriptions in `./prescription`, certificates in `./medical-certificate`.
  */
 export const DIAGNOSIS_CERTAINTIES = ['provisional', 'confirmed'] as const;

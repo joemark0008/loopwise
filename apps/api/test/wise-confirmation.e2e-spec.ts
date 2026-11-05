@@ -19,7 +19,7 @@ const CANCEL = `mutation ($input: WiseOriginInput!) { cancelWiseProposal(input: 
 const OUTCOMES = `query ($chatId: ID!) { wiseProposalOutcomes(chatId: $chatId) { toolCallId toolName status resourceId } }`;
 
 /**
- * "AI drafts, the clinician confirms" (DESIGN.md §9.1) end to end: a Wise turn that drafts a note change writes
+ * "AI drafts, the clinician confirms" (DESIGN.md §7.1) end to end: a Wise turn that drafts a note change writes
  * nothing; the card's Confirm goes through `updateEncounterNote` as the user, settles the card once, refuses a stale
  * draft, and the audit row records that it came from Wise. The LLM is a scripted mock calling `propose_encounter_note`.
  */

@@ -39,7 +39,7 @@ import { wiseActionsApi } from '@/lib/wise-actions-api';
 import { resultValue, testName, URGENCY_LABELS } from '@/feature/results/result-format';
 
 /*
- * The cards of the Wise action tools (DESIGN.md §9.4, `@loopwise/shared/wise-actions`). Each is the shared proposal card
+ * The cards of the Wise action tools (DESIGN.md §7.3, `@loopwise/shared/wise-actions`). Each is the shared proposal card
  * in the mode and confirm strength its definition gives, around a small body: the draft, editable, and the record it
  * is about, loaded as the clinician. Confirm calls the action's mutation with the card's `wiseOrigin`, and the API
  * accepts it only from that tool, once.

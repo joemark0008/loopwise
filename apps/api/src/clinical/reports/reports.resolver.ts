@@ -7,7 +7,7 @@ import { WiseOriginInput } from '../wise-proposals/dto/wise-origin.input.js';
 import { ClinicalDocument } from './models/clinical-document.model.js';
 import { ReportsService } from './reports.service.js';
 
-/** Wise reports leaving the system as a PDF (DESIGN.md §9.2). */
+/** Wise reports leaving the system as a PDF (DESIGN.md §7.2). */
 @Resolver()
 export class ReportsResolver {
 	constructor(private readonly service: ReportsService) {}

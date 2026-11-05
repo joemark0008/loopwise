@@ -10,7 +10,7 @@ import type { ToolContext } from '../types/tools.js';
 import { createTool } from '../utils/tools.js';
 
 /**
- * The tool of a Wise action (DESIGN.md §9.4): `propose`, so it writes nothing. It checks the chat and names the
+ * The tool of a Wise action (DESIGN.md §7.3): `propose`, so it writes nothing. It checks the chat and names the
  * record the card is about; the card loads that record as the clinician (row-level security, the patient check), and
  * only its Confirm calls the action's mutation, which accepts the card from this tool only (`wiseActionToolsFor`).
  */

@@ -15,7 +15,7 @@ export class WiseToolFacility {
 	isAdmin: boolean;
 }
 
-@ObjectType({ description: 'One Wise tool in Settings → Wise tools (DESIGN.md §9.4).' })
+@ObjectType({ description: 'One Wise tool in Settings → Wise tools (DESIGN.md §7.3).' })
 export class WiseToolView {
 	@Field()
 	name: string;

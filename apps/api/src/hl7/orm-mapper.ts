@@ -1,7 +1,7 @@
 import { field, type Hl7Message } from './hl7-parser.js';
 import { controlIdOf, messageTypeOf } from './oru-mapper.js';
 
-/** Inbound order messages a lab system sends about our orders (DESIGN.md §11): status updates, not results. */
+/** Inbound order messages a lab system sends about our orders (DESIGN.md §9): status updates, not results. */
 export const ORDER_STATUS_MESSAGE_TYPES = ['ORM^O01', 'OML^O21', 'ORR^O02', 'ORL^O22'] as const;
 
 export interface OrderStatusUpdate {

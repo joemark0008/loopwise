@@ -4,7 +4,7 @@ import { proposePatientRegistration } from '@loopwise/shared/tools';
 import { createTool } from '../utils/tools.js';
 
 /**
- * Offers a prefilled patient registration in a card (DESIGN.md §9.1). It writes nothing: only the clinician registers
+ * Offers a prefilled patient registration in a card (DESIGN.md §7.1). It writes nothing: only the clinician registers
  * the patient, with the card's Confirm button (`registerPatient`). It reads the user's facilities and, once the draft
  * is complete, the possible duplicates, so the card opens with them.
  */

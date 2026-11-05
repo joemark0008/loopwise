@@ -96,7 +96,7 @@ export class PathwayStep {
 	slaHours: number | null;
 }
 
-/** A clinical pathway and its rules, read-only (DESIGN.md §7, §8). */
+/** A clinical pathway and its rules, read-only (DESIGN.md §5, §6). */
 @ObjectType()
 export class Pathway {
 	@Field()

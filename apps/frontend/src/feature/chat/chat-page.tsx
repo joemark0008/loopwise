@@ -223,7 +223,6 @@ function selectChatHeader(chat: Chat) {
 		projectId: chat.projectId,
 		isOnboarding: chat.isOnboarding,
 		forkMetadata: chat.forkMetadata,
-		automationRun: chat.automationRun,
 	};
 }
 

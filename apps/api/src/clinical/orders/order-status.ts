@@ -1,7 +1,7 @@
 import type { OrderStatus } from '../../generated/prisma/enums.js';
 
 /**
- * The order status machine (DESIGN.md §7): `draft → sent → accepted → collected → resulted → reviewed`, plus the
+ * The order status machine (DESIGN.md §5): `draft → sent → accepted → collected → resulted → reviewed`, plus the
  * exits. A lab without a worklist step can result straight from `sent` or `accepted`; a late result reopens a reviewed
  * order. Migration 0018's
  * `check_order_transition` trigger enforces the same edges in Postgres; keep both in step.

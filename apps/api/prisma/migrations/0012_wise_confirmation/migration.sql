@@ -1,4 +1,4 @@
--- Wise confirmations (DESIGN.md §9.1): the audit log records when an action came from a confirmed Wise card, the
+-- Wise confirmations (DESIGN.md §7.1): the audit log records when an action came from a confirmed Wise card, the
 -- encounter carries a version a card confirms against (a stale draft is refused), and each card's outcome is kept once,
 -- so a card can't be confirmed twice.
 

@@ -17,7 +17,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { wiseToolsApi } from '@/lib/wise-tools-api';
 
 /**
- * Settings → Wise tools (DESIGN.md §9.4): every tool Wise can use, by category. A facility's admins turn tools on or
+ * Settings → Wise tools (DESIGN.md §7.3): every tool Wise can use, by category. A facility's admins turn tools on or
  * off at their facility; everyone can turn a tool off for themselves. Locked tools have no switch, and nothing here
  * turns off the clinician's Confirm: Wise never saves anything by itself.
  */

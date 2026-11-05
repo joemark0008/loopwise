@@ -10,7 +10,7 @@ import { MedicalCertificateRepository } from './medical-certificate.repository.j
 import { MedicalCertificateService } from './medical-certificate.service.js';
 import { MedicalCertificatesResolver } from './medical-certificates.resolver.js';
 
-/** Medical certificates of an encounter (DESIGN.md §7): drafts, issuing (locked) and voiding, and the print view. */
+/** Medical certificates of an encounter (DESIGN.md §5): drafts, issuing (locked) and voiding, and the print view. */
 @Module({
 	imports: [
 		ClinicalDbModule,

@@ -16,7 +16,7 @@ import { EncounterRecordService } from './encounter-record.service.js';
 import { EncountersResolver } from './encounters.resolver.js';
 
 /**
- * A patient's encounters (DESIGN.md §7): the chart's visit list, what `propose_encounter` confirms into, and each
+ * A patient's encounters (DESIGN.md §5): the chart's visit list, what `propose_encounter` confirms into, and each
  * encounter's record (note, vitals, diagnoses, allergies; the documents and orders have their own modules).
  */
 @Module({

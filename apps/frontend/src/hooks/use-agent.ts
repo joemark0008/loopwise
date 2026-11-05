@@ -111,7 +111,7 @@ export const useAgent = ({
 	disableNavigation?: boolean;
 	mode?: AgentMode;
 	getWorkbenchContext?: () => QueryWorkbenchContext;
-	/** Starts the patient's chart chat: sent with the first message only (DESIGN.md §9). */
+	/** Starts the patient's chart chat: sent with the first message only (DESIGN.md §7). */
 	patientId?: string;
 } = {}): AgentState => {
 	const navigate = useNavigate();

@@ -19,7 +19,7 @@ const CREATE_ENCOUNTER = `mutation ($input: CreateEncounterInput!) { createEncou
 const ENCOUNTERS = `query ($patientId: ID!) { encounters(patientId: $patientId) { ${ENCOUNTER_FIELDS} } }`;
 
 /**
- * The patient chart (DESIGN.md §9): encounters under row-level security, and one Wise chat per clinician per patient
+ * The patient chart (DESIGN.md §7): encounters under row-level security, and one Wise chat per clinician per patient
  * that knows the patient. The LLM is a scripted mock: it drafts an encounter with `propose_encounter`, then answers.
  */
 describe('patient chart (e2e)', () => {

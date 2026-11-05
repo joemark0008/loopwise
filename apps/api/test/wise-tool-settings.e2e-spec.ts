@@ -25,7 +25,7 @@ const UPDATE_NOTE = `mutation ($input: UpdateEncounterNoteInput!) { updateEncoun
 const CANCEL = `mutation ($input: WiseOriginInput!) { cancelWiseProposal(input: $input) { status } }`;
 
 /**
- * Wise tool settings (DESIGN.md §9.4) end to end: a tool a facility admin turns off is not offered to the model, the
+ * Wise tool settings (DESIGN.md §7.3) end to end: a tool a facility admin turns off is not offered to the model, the
  * system prompt says it is off, a call to it is refused, and a card drafted before the toggle can't be confirmed (but
  * can be cancelled). Users can turn tools off for themselves only; only admins change a facility; changes are audited.
  */

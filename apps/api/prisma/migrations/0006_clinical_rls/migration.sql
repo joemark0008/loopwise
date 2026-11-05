@@ -1,4 +1,4 @@
--- Row-level security on the clinical tables (DESIGN.md §10.2).
+-- Row-level security on the clinical tables (DESIGN.md §8.2).
 --
 -- The app connects as the database owner (a superuser in development), which row-level security never restricts.
 -- User-scoped work therefore runs in a transaction that sets `app.user_id` and switches to `loopwise_app`
