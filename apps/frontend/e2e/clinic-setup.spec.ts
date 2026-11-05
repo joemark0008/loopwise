@@ -150,7 +150,8 @@ test.describe('clinic setup', () => {
 		await logIn(page, '/settings/clinic/profile', USER);
 		for (const screen of ['profile', 'practitioners', 'services', 'staff', 'numbering', 'expiries']) {
 			await page.goto(`/settings/clinic/${screen}`);
-			await expect(page.locator('[data-slot="input"], table, [role="status"]').first()).toBeVisible();
+			await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+			await page.waitForLoadState('networkidle');
 			const results = await new AxeBuilder({ page })
 				.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
 				.analyze();
