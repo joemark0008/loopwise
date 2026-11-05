@@ -5,7 +5,6 @@
 	border-radius: calc(infinity * 1px);
 	--fx-font-weight: 500;
 	font-weight: 500;
-	color: var(--app-white);
 	-webkit-user-select: none;
 	user-select: none;
 }
@@ -32,55 +31,4 @@
 	height: 3rem;
 	font-size: 1.125rem;
 	line-height: var(--fx-leading, calc(1.75 / 1.125));
-}
-.avatarColors {
-	background-color: var(--app-red-500);
-}
-.avatarColors2 {
-	background-color: var(--app-orange-500);
-}
-.avatarColors3 {
-	background-color: var(--app-amber-500);
-}
-.avatarColors4 {
-	background-color: var(--app-yellow-500);
-}
-.avatarColors5 {
-	background-color: var(--app-lime-500);
-}
-.avatarColors6 {
-	background-color: var(--app-green-500);
-}
-.avatarColors7 {
-	background-color: var(--app-emerald-500);
-}
-.avatarColors8 {
-	background-color: var(--app-teal-500);
-}
-.avatarColors9 {
-	background-color: var(--app-cyan-500);
-}
-.avatarColors10 {
-	background-color: var(--app-sky-500);
-}
-.avatarColors11 {
-	background-color: var(--app-blue-500);
-}
-.avatarColors12 {
-	background-color: var(--app-indigo-500);
-}
-.avatarColors13 {
-	background-color: var(--app-violet-500);
-}
-.avatarColors14 {
-	background-color: var(--app-purple-500);
-}
-.avatarColors15 {
-	background-color: var(--app-fuchsia-500);
-}
-.avatarColors16 {
-	background-color: var(--app-pink-500);
-}
-.avatarColors17 {
-	background-color: var(--app-rose-500);
 }
