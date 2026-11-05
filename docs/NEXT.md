@@ -55,6 +55,14 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
   doctor (06:00–23:30, for same-day e2e bookings), bookings today and tomorrow, today's queue (A-001 Ramon and A-002
   Liza at triage, P-001 Jose with Dr. Reyes). `npm run db:seed:scheduling -w @loopwise/api` adds it to a database
   seeded before (no reset).
+- **AI scribe (§7.5, Phase 1):** the encounter page's **AI scribe** tab: recording consent per visit
+  (`patient_consents`, PHOTO_VIDEO, with `encounter_id`; recording refused without it, typing always works), record /
+  stop through `POST /api/scribe/transcribe` (audio not kept), the transcript, the patient summary language, and
+  **Draft with Wise** → one `propose_scribe_note` call → one card per part (SOAP, vitals, each diagnosis, Rx with
+  allergies, tests from the catalog, certificate, follow-up, patient summary), each confirmed, edited or dismissed
+  through its record's own mutation (`wiseOrigin.part`, settled per part). The encounter note now carries the
+  reference's review of systems, subjective and objective. `clinical/scribe/`, `agent/tools/propose-scribe-note.ts`,
+  `@loopwise/shared/scribe`, `feature/scribe/`; synthetic demo consult in `@loopwise/shared/scribe-demo`.
 - **Wise (§7):** proposal cards settled once with versions (`clinical/wise-proposals/`), Wise actions and tool settings
   per organization, navigation (`find_patient`, `open_page`), charts and summary reports (`clinical/insights/`), safe
   analytics SQL (`clinical/analytics/`), reports in a side panel saved to the chart (`clinical/reports/`), the reports
@@ -115,9 +123,16 @@ Known UI issue: the avatar's white initials fail contrast on some palette colour
   encounter status event, or a call from `EncounterService.transition`, would close that); the 2-hour reminder,
   automatic no-show marking and a waitlist (PLAN.md §4.2); a real SMS notifier; a doctor sees only the bookings of
   patients already in their care (a new patient shows in their line at check-in).
-- **AI scribe:** dictation or recording → one structured card set (SOAP, vitals, diagnoses, Rx, orders, med cert,
-  follow-up date, patient summary), each confirmed separately; recording consent per visit (`patient_consents` with
-  `encounter_id`).
+- **AI scribe:** built (above, DESIGN.md §7.5). To check on a stack with an LLM key: the real-LLM Playwright test
+  `e2e/scribe.spec.ts` › "drafts the whole visit as cards … (real LLM call)" (it creates a new visit for Maria Santos).
+  Notes for the other sessions:
+    - The patient layout now reads the chart chat before its pages mount and wraps them in the chart chat's
+      `AgentProvider` (`PatientAgentProvider`); pages under `/patients/:id` can use `useAgentContext()`.
+    - `ENCOUNTER_TABS` has `scribe` (shown to staff who can add to the visit). `WiseOriginInput` has an optional
+      `part`; `WiseProposalOutcome` has `edited`. `TranscribeModule` exports `TranscribeService` (and imports only the
+      agent core); `DiagnosticsModule` exports `DiagnosticTestService` (`listActiveOn`).
+    - `updateEncounterNote` takes `reviewOfSystems`, `subjective`, `objective`; left out, they are kept.
+    - No migration: the scribe uses the reference's `patient_consents` and `encounters` columns as they are.
 
 ## Before real patients: privacy hardening (RA 10173)
 
@@ -140,6 +155,10 @@ processor of sensitive personal information. Everything is synthetic today; befo
   where the thresholds apply, and a review by counsel familiar with the Data Privacy Act and NPC guidance.
 
 ## Later
+
+- **AI scribe, next:** dose ranges by age and weight and interaction checks on the drafted Rx (only the allergy match
+  is built); a setting to keep audio (it is never kept today); speech-to-text tuned for Taglish and Cebuano; a printed
+  patient handout from the saved summary; the scribe on a visit opened from the queue (Scheduling's check-in).
 
 - **Pharmacy and inventory** (`inventory`): items (FDA CPR, dangerous drugs), lots (FEFO), receipts, the dispense queue
   writing `stock_movements` and `prescription_items.dispensed_qty` (the issued-Rx lock already allows those columns).

@@ -26,7 +26,7 @@ the access rules (§8). [docs/NEXT.md](docs/NEXT.md) is the handoff: what is bui
 - **kebab-case file names**: `invoice-totals.service.ts`, `patient-access.guard.ts`.
 - One NestJS module per schema domain under `apps/api/src/clinical/<domain>/` (DESIGN.md §4.5): built `clinics`
   (document numbering), `reference`, `practitioners`, `patients`, `encounters`, `diagnostics`, `prescriptions`,
-  `documents`, `billing`, `audit`, `wise-proposals`, `insights`, `reports`, `analytics` (plus `rls`); planned
+  `documents`, `billing`, `audit`, `wise-proposals`, `scribe`, `insights`, `reports`, `analytics` (plus `rls`); planned
   `scheduling`, `immunizations`, `philhealth`, `hmo`, `inventory`, `portal`. Large domains have sub-feature folders
   (`billing/invoices`, `diagnostics/worklist` …). Each has `<feature>.module.ts`, `.resolver.ts`, `.service.ts`,
   `.repository.ts`, `.loader.ts`, `dto/`, `models/`, and its enums registered in one place.

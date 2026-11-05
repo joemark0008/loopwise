@@ -35,9 +35,10 @@ The flow Loopwise supports end to end. Built parts are marked; the rest is plann
    or by dictation. Check-in opens the visit and gives the queue number (priority lane "P" first); the nurse calls the
    next patient at `/triage` and sends them to the doctor's line (`/my-queue`); the waiting-room board is `/board` (built,
    §5.4).
-3. **Consult with the AI scribe.** The doctor dictates or records the visit; Wise drafts the SOAP note, diagnoses
-   (ICD-10), prescription, lab orders, medical certificate and a patient summary as separate proposal cards, each
-   confirmed by the doctor (the cards: built; one-pass scribe: planned).
+3. **Consult with the AI scribe.** The doctor dictates or records the visit (recording only with the patient's consent
+   for that visit); Wise drafts the SOAP note, vitals, diagnoses (ICD-10), prescription, lab orders, medical
+   certificate, follow-up and a patient summary in one pass, as separate cards on the visit, each confirmed by the
+   doctor (built, §7.5).
 4. **Lab (in-house).** The doctor orders tests from the clinic's catalog; the medtech collects the specimen, enters the
    results on the lab worklist (flags from the parameter's reference range) and releases them; the doctor reviews them
    in the results inbox, critical first (built). Send-out tests are flagged `is_outsourced` / `is_external`.
@@ -151,6 +152,7 @@ The patient never learns bad news from a machine.
 | `diagnostics`                      | `catalog/`, `orders/`, `worklist/` (the lab desk), `results/` (the doctor's inbox)                                                                                                                                                                        |
 | `prescriptions`                    | prescriptions and items (RA 6675, RA 9165)                                                                                                                                                                                                                |
 | `documents`                        | `medical-certificates/`, `referrals/`                                                                                                                                                                                                                     |
+| `scribe`                           | the AI scribe: recording consent per visit, consent-checked transcription, the read behind `propose_scribe_note` (§7.5)                                                                                                                                   |
 | `billing`                          | `service-items/` (the price list invoices use; the catalog and clinic prices of Settings → Services), `invoices/` (with `InvoiceTotalsService`), `payments/`                                                                                              |
 | `scheduling`                       | `appointments/` (slots, booking), `queue/` (check-in, lines, board), `availability/` (adapts `PractitionerScheduleService`), `reminders/` (pg-boss job)                                                                                                   |
 | `audit`                            | `AuditService`, the one writer of `audit_logs`                                                                                                                                                                                                            |
@@ -361,20 +363,24 @@ How it is enforced:
 - **No stale overwrite.** An update card carries the record's version (bumped by a trigger on every update). The
   mutation takes `expectedVersion` and updates only if it is unchanged; otherwise CONFLICT, and the card offers
   **Re-draft**.
+- **Cards with parts.** One tool call may carry several cards: the AI scribe's draft (§7.5). `wiseOrigin.part` names
+  the part; a part confirms through the mutation of the card it stands for (`@loopwise/shared/scribe`
+  `SCRIBE_PART_TOOLS`), only while both that tool and `propose_scribe_note` are on, and settles once under
+  `<toolCallId>#<part>`, so confirming one part leaves the others open. The audit origin records the part, and
+  `wiseProposalOutcomes` says whether each draft was edited.
 
 ### 7.2 Agent tools
 
 Built:
 
-| Kind     | Tools                                                                                                                                                                                                                       |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| read     | `find_patient`, `list_results_to_review`, `list_lab_orders`, `list_appointments`, `list_queue`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search` |
-| navigate | `open_page`                                                                                                                                                                                                                 |
-| display  | `report`, `clarification`, `suggest_follow_ups`                                                                                                                                                                             |
-| propose  | `propose_patient_registration`, `propose_patient_update`, `propose_encounter`, `propose_encounter_note`, `propose_prescription`, `propose_medical_certificate`, `propose_charges`, the actions of §7.3, `propose_skill`     |
+| Kind     | Tools                                                                                                                                                                                                                                                 |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| read     | `find_patient`, `list_results_to_review`, `list_lab_orders`, `list_appointments`, `list_queue`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search`                           |
+| navigate | `open_page`                                                                                                                                                                                                                                           |
+| display  | `report`, `clarification`, `suggest_follow_ups`                                                                                                                                                                                                       |
+| propose  | `propose_patient_registration`, `propose_patient_update`, `propose_encounter`, `propose_encounter_note`, `propose_prescription`, `propose_medical_certificate`, `propose_charges`, `propose_scribe_note` (§7.5), the actions of §7.3, `propose_skill` |
 
-Planned with the clinic modules: the scribe's one-pass card set,
-`propose_dispense`, `propose_referral`, `propose_patient_message`, `get_patient_timeline`.
+Planned with the clinic modules: `propose_dispense`, `propose_referral`, `propose_patient_message`, `get_patient_timeline`.
 
 Notes on the built tools:
 
@@ -466,6 +472,47 @@ Per-role defaults can follow the staff roles (`user_clinic_roles`) later.
 - Only use tools; never invent patients, results or facilities.
 - Ask when patient identity is ambiguous.
 
+### 7.5 AI scribe
+
+The headline feature ([PLAN.md](PLAN.md) §4.3). On the encounter page's **AI scribe** tab (staff who can add to the
+visit) the doctor records the consult or types a dictation, picks the language of the patient summary (default: the
+patient's preferred language) and presses **Draft with Wise**.
+
+- **One pass, one tool.** The panel sends the transcript to the patient's chart chat (the patient layout shares the
+  chart chat's agent with its pages), asking for `propose_scribe_note`. Wise puts every part that was said into that
+  one call: the SOAP note in English (chief complaint, HPI, review of systems, subjective, physical exam, objective,
+  assessment, plan, onto the encounter's reference columns), vitals said aloud, diagnoses with ICD-10 and their type
+  (PRIMARY / SECONDARY / WORKING), the prescription (generic name first, RA 6675; the dangerous-drug flag and quantity
+  in words, RA 9165), tests, a medical certificate (type, rest days), the follow-up date or interval and disposition,
+  and a plain-language patient summary in English, Filipino or Cebuano. One tool rather than orchestrating the single
+  propose tools: those are one card per turn ("never together with another tool") and settle when the clinician's
+  next chat message answers them, so eight of them in one turn would settle each other. The model writes one
+  structured draft; the API resolves it once.
+- **The tool only reads** (`ScribeWiseReader`, as the user, audited `encounter.view`): the visit must be the chat's
+  patient's and the user's to add to; each code is checked against `icd10_codes` (an unknown one is flagged for the
+  doctor to replace); tests are matched to the organization's catalog (`unmatched` ones are named, not orderable);
+  the patient's allergies come back with the drafted medicines that match one.
+- **One card per part** on the visit, on the shared `ProposalCard`, each confirmed, edited or dismissed on its own
+  through the record's own mutation: SOAP, follow-up and summary through `updateEncounterNote` (an update card,
+  before → after, at the note's version; the summary is saved as the visit's patient instructions, a draft for the
+  doctor that nothing sends to the patient), vitals `recordVitals`, each diagnosis `addDiagnosis`, the prescription
+  `savePrescription` (a draft, at the version of a draft it replaces; allergies shown, a warning on a match), tests
+  `createDiagnosticOrder`, the certificate `saveMedicalCertificate` (a draft). Issuing documents stays the doctor's
+  own step. A progress line and each settled card say saved (edited) or dismissed; the chat shows a compact card
+  linking to the visit. A part confirms only with `wiseOrigin.part` (§7.1).
+- **Recording consent.** Before recording the doctor reads the consent text and records the patient's answer:
+  `patient_consents` with `encounter_id`, type `PHOTO_VIDEO` (the reference has no "recording" type; PHOTO_VIDEO is
+  the one about capturing the patient on media, while TELEMEDICINE is about remote care), the text's version and
+  granted or not; the latest answer counts, and withdrawing is a new row. `POST /api/scribe/transcribe` refuses
+  without it (`RECORDING_CONSENT_REQUIRED`), audits the upload as EXPORT (`scribe.transcribe`) and keeps no audio.
+  Typing a dictation needs no consent.
+- **Safety.** Wise only reads or proposes; critical values never get a patient message (the summary never breaks bad
+  news); everything is audited with the scribe card and its part as origin. A synthetic demo consult (Maria Santos,
+  hypertension and diabetes) is in `@loopwise/shared/scribe-demo`.
+
+Not built yet: dose ranges by age and weight, interaction checks beyond the allergy match, keeping audio (it is never
+kept), speech-to-text tuned for Taglish and Cebuano.
+
 ## 8. Access control and data governance
 
 1. **Deny by default.** A user sees a patient only through:
@@ -504,7 +551,8 @@ Per-role defaults can follow the staff roles (`user_clinic_roles`) later.
    entity and before/after changes, plus the specific `event`, the reason, the Wise `origin` and the request's
    correlation id). The log is append-only (a trigger rejects UPDATE and DELETE).
 7. **Consent.** A `DATA_PRIVACY` consent (RA 10173) is recorded at registration (`patient_consents`, with the version of
-   the text); visit-specific consents (procedure, telemedicine, recording a consult) attach to the encounter.
+   the text); visit-specific consents (procedure, telemedicine, recording a consult) attach to the encounter. Recording
+   a consult for the AI scribe is a `PHOTO_VIDEO` consent of the visit (§7.5), checked on the server.
 8. **Synthetic data only** in seeds, fixtures and demos.
 9. **Data Privacy Act.** Purpose limitation, NPC registration, breach process, and a choice of LLM provider (including
    a self-hosted option) per clinic.
