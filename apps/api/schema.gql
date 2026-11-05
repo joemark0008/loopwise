@@ -62,6 +62,36 @@ type AuthProviders {
   smtp: Boolean!
 }
 
+"""
+A weekly session on the date asked for, with the slots a leave leaves free.
+"""
+type AvailabilitySession {
+  """HH:MM, Philippine time."""
+  endTime: String!
+  endsAt: DateTime!
+
+  """Cap of patients for the session; null = no cap."""
+  maxPatients: Int
+
+  """A leave overlaps the session."""
+  onLeave: Boolean!
+
+  """The `practitioner_schedules` row."""
+  scheduleId: ID!
+  slotMinutes: Int!
+  slots: [AvailabilitySlot!]!
+
+  """HH:MM, Philippine time."""
+  startTime: String!
+  startsAt: DateTime!
+}
+
+"""A bookable slot."""
+type AvailabilitySlot {
+  endsAt: DateTime!
+  startsAt: DateTime!
+}
+
 """A barangay of the PSGC (Philippine Standard Geographic Code)."""
 type Barangay {
   """PSGC code of its city or municipality."""
@@ -1784,11 +1814,48 @@ type Practitioner {
   userId: ID
 }
 
+"""
+A practitioner's day at a clinic: weekly sessions of that day of week, cut into slots, minus leaves.
+"""
+type PractitionerAvailability {
+  clinicId: ID!
+
+  """YYYY-MM-DD (Philippine calendar date)."""
+  date: String!
+
+  """0 = Sunday … 6 = Saturday."""
+  dayOfWeek: Int!
+
+  """The leaves that overlap the day."""
+  leaves: [PractitionerLeave!]!
+
+  """A leave overlaps the day."""
+  onLeave: Boolean!
+
+  """
+  The practitioner holds clinic here (an active link to the clinic, an active profile).
+  """
+  practicesHere: Boolean!
+  practitionerId: ID!
+  sessions: [AvailabilitySession!]!
+}
+
 """A clinic where the practitioner holds clinic."""
 type PractitionerClinic {
   clinicId: ID!
   clinicName: String!
   roomName: String
+}
+
+"""
+A leave of a practitioner (conference, holiday, sick): no bookings in it.
+"""
+type PractitionerLeave {
+  endAt: DateTime!
+  id: ID!
+  practitionerId: ID!
+  reason: String
+  startAt: DateTime!
 }
 
 enum PractitionerType {
@@ -2099,6 +2166,11 @@ type Query {
 
   """The patient's released results you can see, newest first."""
   patientResults(patientId: ID!): [DiagnosticReport!]!
+
+  """
+  A practitioner's sessions and free slots at the selected clinic on a date (YYYY-MM-DD).
+  """
+  practitionerAvailability(date: String!, practitionerId: ID!): PractitionerAvailability!
 
   """For printing (audited); null when not in your care."""
   prescription(id: ID!): Prescription

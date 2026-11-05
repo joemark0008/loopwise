@@ -25,3 +25,10 @@ export class PractitionerProfileRequiredError extends DomainError {
 		);
 	}
 }
+
+/** A weekly session or a leave that can't be: end before start, an unknown day, a bad date. */
+export class InvalidScheduleError extends DomainError {
+	constructor(message: string) {
+		super('BAD_REQUEST', 'INVALID_SCHEDULE', message);
+	}
+}

@@ -6,6 +6,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { loadDotenv, parseEnv } from '../src/config/env.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { seedBilling } from './seed-billing.js';
+import { seedClinicSetup } from './seed-clinic-setup.js';
 import {
 	DEMO_CLINIC_CODE,
 	DEMO_CLINIC_NAME,
@@ -58,6 +59,7 @@ async function seed() {
 				// They run once, on the fresh demo; build on the constants of seed-clinical.ts.
 				await seedDiagnostics(tx);
 				await seedBilling(tx);
+				await seedClinicSetup(tx, demo);
 				return true;
 			},
 			{ timeout: 120_000 },
