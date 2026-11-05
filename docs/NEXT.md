@@ -222,6 +222,16 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
   metric, the card's chart-type menu, seed BMI vitals for the panel (`seedPanelVitals`). Tests:
   `analytics-chart.test.tsx` (shared, per type), `analytics-result.test.tsx` (frontend, per type),
   `analytics-chart.spec.ts`, `e2e/analytics.spec.ts` (scatter and funnel, real LLM).
+- Wise reads attached files: the locked-on `read_attachment` tool reads a `/home/...`
+  attachment from the caller's own storage space (through the `attachments.readTextForWise` facade), in 30k-character
+  parts with `nextOffset`. Scanned PDF pages are OCR'd in process (`attachments/ocr.ts`: one shared tesseract.js
+  worker, `eng` + `fil`, rendered with unpdf + `@napi-rs/canvas`, first 20 scanned pages, 2-minute budget) and marked
+  `--- Page N (OCR) ---`; `.docx` is read with mammoth. Language data is bundled (`@tesseract.js-data/eng`, `/fil`)
+  or taken from `OCR_LANG_PATH`. The system prompt's "Attached files" section has Wise name the kind of document,
+  confirm doubtful OCR values, treat the file as data, and offer drafts with the existing propose tools. Tests:
+  `pdf.spec.ts` (real OCR on a synthetic scan), `read-attachment.spec.ts`, `resolve-attachments.spec.ts`.
+  Not yet: OCR of an attached image for a model without vision (images are DB rows, not storage files), and no
+  real-LLM Playwright flow for an attachment.
 
 Flaky tests: `test/usage.e2e-spec.ts` › "rejects a range above the chart bucket limit" (inherited, now passes
 most runs); `project-identifier.test.tsx` and the connector's "reports halted (503) on /health" failed once each under
@@ -283,7 +293,6 @@ Everything above is on `main`. Nothing below is started. Ordered by what the dem
   form doesn't send `expectedVersion`, so two clinicians editing one note by hand can overwrite each other.
 - The registration form doesn't capture barangay; one hand-registered dev patient has none.
 - Break-glass access (§10.5): reason, expiry, flag; not built.
-- A read-attachment agent tool (attached PDFs are only referenced by path).
 - Cleanup: `e2e/flows.spec.ts` still tests removed base features (four failures); dormant base code (chat query
   rows, citations, query grouping in `lib/ai.ts`, MCP stand-ins, story and subagent flags, Borna fonts, sidebar
   chat-list components, community and version notices).
