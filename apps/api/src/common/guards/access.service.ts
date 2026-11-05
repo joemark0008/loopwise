@@ -1,34 +1,76 @@
+import { toUserRole } from '@loopwise/shared/staff-roles';
 import type { UserRole } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
 
-import { ClinicRepository } from '../../clinics/clinic.repository.js';
-import type { Clinic } from '../../generated/prisma/client.js';
-import { OrganizationRepository, type UserOrgMembership } from '../../organizations/organization.repository.js';
+import { ConfigService } from '../../config/config.service.js';
+import type { Clinic, Organization, OrgRole, StaffRole } from '../../generated/prisma/client.js';
 import { HandlerError } from '../errors/handler-error.js';
+import { isUuid } from '../uuid.js';
+import { AccessRepository, type ClinicGrant, type OrganizationGrant } from './access.repository.js';
 
-/** Access checks behind the guard decorators (upstream `trpc/trpc.ts` procedure middlewares). */
+/** A clinic the user can open, with the access level the guards check and the roles behind it. */
+export interface ClinicAccessGrant {
+	clinic: Clinic;
+	userRole: UserRole;
+	staffRoles: StaffRole[];
+}
+
+/** The organization a request works on and the user's role in it. */
+export interface OrganizationMembership {
+	organization: Organization;
+	/**
+	 * The `organization_members` role; a user with only clinic roles in the organization counts as MEMBER (VIEWER when
+	 * they only hold VIEWER).
+	 */
+	role: OrgRole;
+	staffRoles: StaffRole[];
+}
+
+/**
+ * Access checks behind the guard decorators (upstream `trpc/trpc.ts` procedure middlewares), on `user_clinic_roles` and
+ * `organization_members`; the access level is `toUserRole` of `@loopwise/shared/staff-roles`. Exported for the modules
+ * that list a user's clinics or need their level at a given clinic.
+ */
 @Injectable()
 export class AccessService {
 	constructor(
-		private readonly clinics: ClinicRepository,
-		private readonly organizations: OrganizationRepository,
+		private readonly access: AccessRepository,
+		private readonly config: ConfigService,
 	) {}
 
-	/** `clinicProtectedProcedure`, plus the role checks of the admin / non-viewer procedures. */
+	/** Every clinic the user can open, by name, with their access level there. */
+	async listUserClinics(userId: string): Promise<ClinicAccessGrant[]> {
+		return (await this.access.listClinicGrants(userId)).flatMap((grant) => toClinicAccess(grant) ?? []);
+	}
+
+	/** The user's access level at `clinicId`, or null when they have none. */
+	async getUserRoleInClinic(clinicId: string, userId: string): Promise<UserRole | null> {
+		if (!isUuid(clinicId)) {
+			return null;
+		}
+		const grant = await this.access.getClinicGrant(userId, clinicId);
+		return grant ? (toClinicAccess(grant)?.userRole ?? null) : null;
+	}
+
+	/**
+	 * The clinic a request works on (`clinicProtectedProcedure` plus the admin / non-viewer role checks): the selected
+	 * clinic when the user can open it, else the default clinic (`LOOPWISE_DEFAULT_CLINIC_PATH`, else the oldest) when
+	 * they can, else their first clinic.
+	 */
 	async resolveClinicAccess(
 		userId: string,
 		selectedClinicId: string | null,
 		roles?: readonly UserRole[],
-	): Promise<{ clinic: Clinic; userRole: UserRole }> {
-		const clinic = await this.clinics.getClinicByUserId(userId, selectedClinicId);
-		if (!clinic) {
+	): Promise<ClinicAccessGrant> {
+		const grants = await this.listUserClinics(userId);
+		const grant =
+			grants.find(({ clinic }) => clinic.id === selectedClinicId) ??
+			(await this.defaultClinicGrant(grants)) ??
+			grants[0];
+		if (!grant) {
 			throw new HandlerError('BAD_REQUEST', 'No clinic configured');
 		}
-		const userRole = await this.clinics.getUserRoleInClinic(clinic.id, userId);
-		if (!userRole) {
-			throw new HandlerError('FORBIDDEN', 'You do not have access to this clinic.');
-		}
-		if (roles && !roles.includes(userRole)) {
+		if (roles && !roles.includes(grant.userRole)) {
 			throw new HandlerError(
 				'FORBIDDEN',
 				roles.length === 1 && roles[0] === 'admin'
@@ -36,35 +78,51 @@ export class AccessService {
 					: 'Viewers cannot access this resource',
 			);
 		}
-		return { clinic, userRole };
+		return grant;
 	}
 
-	/** `resolveOrganizationMembership`. */
+	/**
+	 * The organization a request works on (`resolveOrganizationMembership`): the selected organization, else the
+	 * selected clinic's, else the user's oldest membership.
+	 */
 	async resolveOrganizationMembership(
 		userId: string,
 		selectedClinicId: string | null,
 		selectedOrganizationId: string | null,
-	): Promise<UserOrgMembership> {
+	): Promise<OrganizationMembership> {
 		if (selectedOrganizationId) {
-			const membership = await this.organizations.getUserOrgMembership(userId, selectedOrganizationId);
-			if (!membership) {
-				throw new HandlerError('NOT_FOUND', 'You are not a member of any organization');
-			}
-			return membership;
+			const [grant] = isUuid(selectedOrganizationId)
+				? await this.access.listOrganizationGrants(userId, { organizationId: selectedOrganizationId })
+				: [];
+			return toMembership(grant, 'You are not a member of any organization');
 		}
-
 		if (selectedClinicId) {
-			const membership = await this.organizations.getUserOrgMembershipByClinic(userId, selectedClinicId);
-			if (!membership) {
-				throw new HandlerError('NOT_FOUND', 'Selected clinic organization was not found');
-			}
-			return membership;
+			const [grant] = isUuid(selectedClinicId)
+				? await this.access.listOrganizationGrants(userId, { clinicId: selectedClinicId })
+				: [];
+			return toMembership(grant, 'Selected clinic organization was not found');
 		}
-
-		const membership = await this.organizations.getUserOrgMembership(userId);
-		if (!membership) {
-			throw new HandlerError('NOT_FOUND', 'You are not a member of any organization');
-		}
-		return membership;
+		const [grant] = await this.access.listOrganizationGrants(userId);
+		return toMembership(grant, 'You are not a member of any organization');
 	}
+
+	private async defaultClinicGrant(grants: ClinicAccessGrant[]): Promise<ClinicAccessGrant | undefined> {
+		const path = this.config.env.LOOPWISE_DEFAULT_CLINIC_PATH;
+		const defaultClinic = path ? await this.access.getClinicByPath(path) : await this.access.getFirstClinic();
+		return defaultClinic ? grants.find(({ clinic }) => clinic.id === defaultClinic.id) : undefined;
+	}
+}
+
+function toClinicAccess({ clinic, staffRoles, orgRole }: ClinicGrant): ClinicAccessGrant | null {
+	const userRole = toUserRole(staffRoles, orgRole);
+	return userRole ? { clinic, userRole, staffRoles } : null;
+}
+
+function toMembership(grant: OrganizationGrant | undefined, notFound: string): OrganizationMembership {
+	if (!grant) {
+		throw new HandlerError('NOT_FOUND', notFound);
+	}
+	const { organization, orgRole, staffRoles } = grant;
+	const role = orgRole ?? (staffRoles.every((r) => r === 'VIEWER') ? 'VIEWER' : 'MEMBER');
+	return { organization, role, staffRoles };
 }

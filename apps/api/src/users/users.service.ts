@@ -103,7 +103,7 @@ export function toUserModel(user: DbUser): User {
 		image: user.image,
 		emailVerified: user.emailVerified,
 		requiresPasswordReset: user.requiresPasswordReset,
-		isActive: !user.deactivatedAt,
+		isActive: user.isActive,
 		createdAt: user.createdAt,
 	};
 }

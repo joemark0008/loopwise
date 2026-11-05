@@ -34,9 +34,13 @@ export default async function setup(project: TestProject) {
 		await client.end();
 	}
 
-	execSync('npx prisma migrate deploy', {
-		cwd: path.join(import.meta.dirname, '..'),
-		env: { ...process.env, DATABASE_URL: testUrl.toString() },
+	const apiRoot = path.join(import.meta.dirname, '..');
+	const env = { ...process.env, DATABASE_URL: testUrl.toString() };
+	execSync('npx prisma migrate deploy', { cwd: apiRoot, env, stdio: 'pipe' });
+	// Reference data (PSGC slice, ICD-10, RVS) the clinical tables reference; `resetDatabase` keeps it.
+	execSync('node --import @swc-node/register/esm-register prisma/run-seed-reference.ts', {
+		cwd: apiRoot,
+		env,
 		stdio: 'pipe',
 	});
 

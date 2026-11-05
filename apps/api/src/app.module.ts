@@ -32,7 +32,6 @@ import { GuardsModule } from './common/guards/guards.module.js';
 import type { LoopwiseRequest } from './common/request.js';
 import { ConfigModule } from './config/config.module.js';
 import { ConfigService } from './config/config.service.js';
-import { FacilityKeysModule } from './facility-keys/facility-keys.module.js';
 import { HealthModule } from './health/health.module.js';
 import { Hl7Module } from './hl7/hl7.module.js';
 import { JobsModule } from './jobs/jobs.module.js';
@@ -77,7 +76,6 @@ export const SCHEMA_FILE = path.join(import.meta.dirname, '..', 'schema.gql');
 		GuardsModule,
 		JobsModule,
 		HealthModule,
-		FacilityKeysModule,
 		UsersModule,
 		UsageModule,
 		UserManagementModule,

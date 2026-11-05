@@ -4,8 +4,7 @@ import { type GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
 import type { Request } from 'express';
 
 import type { AuthSession, AuthUser } from '../auth/auth.service.js';
-import type { Clinic, Organization } from '../generated/prisma/client.js';
-import type { OrgRole } from '../organizations/organization.repository.js';
+import type { Clinic, Organization, OrgRole, StaffRole } from '../generated/prisma/client.js';
 
 /** What the `AuthGuard` attaches to the request, for both REST and GraphQL. */
 export interface LoopwiseRequest extends Request {
@@ -13,12 +12,14 @@ export interface LoopwiseRequest extends Request {
 	session?: AuthSession['session'];
 	/** Set by `@ClinicAccess()` / `@ClinicAdmin()`. */
 	clinic?: Clinic;
+	/** The access level derived from the user's roles (`toUserRole`, `@loopwise/shared/staff-roles`). */
 	userRole?: UserRole;
+	/** The user's roles at `clinic` (`user_clinic_roles`), for desk-specific checks. */
+	staffRoles?: StaffRole[];
 	/** Set by `@OrgMember()` / `@OrgAdmin()`. */
 	organization?: Organization;
+	/** The user's `organization_members` role (MEMBER / VIEWER when they only hold clinic roles there). */
 	orgRole?: OrgRole;
-	/** Set by `@FacilityKey()`: the organization whose facility key authenticated the request. */
-	facility?: Organization;
 }
 
 /** The Express request behind a REST handler or a GraphQL resolver. */

@@ -17,7 +17,6 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
 import { UserRepository } from '../src/users/user.repository.js';
 import { DEMO_PASSWORD, seedClinicalDemo, STAFF } from './seed-clinical.js';
 import { seedEncounterRecords } from './seed-encounter-record.js';
-import { seedFacilityKeys } from './seed-facility-keys.js';
 import { seedPathways, seedResultEvaluations } from './seed-pathways.js';
 import { seedBarangays, seedPanelVitals, seedTrendHistory } from './seed-trends.js';
 
@@ -63,7 +62,7 @@ async function seed() {
 		const demoPassword = await hashPassword(useGithubAuth ? crypto.randomUUID() : DEMO_PASSWORD);
 
 		// Seeding is system work: it runs on the owner's connection, which row-level security does not restrict.
-		const { seeded: seededDemo, facilityKey } = await prisma.$transaction(
+		const { seeded: seededDemo } = await prisma.$transaction(
 			async (tx) => {
 				const userId = existingUser?.id ?? crypto.randomUUID();
 				if (!existingUser) {
@@ -120,8 +119,7 @@ async function seed() {
 				await seedBarangays(tx);
 				await seedPanelVitals(tx);
 				await seedResultEvaluations(tx);
-				const facilityKey = await seedFacilityKeys(tx);
-				return { seeded, facilityKey };
+				return { seeded };
 			},
 			{ timeout: 60_000 },
 		);
@@ -144,9 +142,6 @@ async function seed() {
 			}
 		} else {
 			console.log('  Clinical demo already present.');
-		}
-		if (facilityKey) {
-			console.log(`  Dev facility key (bohol-diagnostics, synthetic, dev only): ${facilityKey}`);
 		}
 	} finally {
 		await app.close();

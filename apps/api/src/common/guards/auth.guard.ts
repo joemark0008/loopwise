@@ -6,6 +6,7 @@ import { ACCESS_KEY, type AccessRequirement } from '../decorators/access.decorat
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 import { HandlerError } from '../errors/handler-error.js';
 import { getArgs, getRequest, type LoopwiseRequest } from '../request.js';
+import { currentRequestContext, getRequestContext } from '../request-context.js';
 import { convertHeaders } from '../utils/auth-utils.js';
 import { AccessService } from './access.service.js';
 
@@ -52,13 +53,21 @@ export class AuthGuard implements CanActivate {
 
 		const selectedClinicId = readSelection(getArgs(context).clinicId) ?? readHeader(req.headers[CLINIC_HEADER]);
 		if (requirement.kind === 'clinic') {
-			const { clinic, userRole } = await this.access.resolveClinicAccess(
+			const { clinic, userRole, staffRoles } = await this.access.resolveClinicAccess(
 				req.user.id,
 				selectedClinicId,
 				requirement.roles,
 			);
+			if (
+				requirement.staffRoles &&
+				userRole !== 'admin' &&
+				!staffRoles.some((role) => requirement.staffRoles?.includes(role))
+			) {
+				throw new HandlerError('FORBIDDEN', 'Your role at this clinic does not allow this action.');
+			}
 			req.clinic = clinic;
 			req.userRole = userRole;
+			req.staffRoles = staffRoles;
 			return true;
 		}
 
@@ -67,11 +76,11 @@ export class AuthGuard implements CanActivate {
 			selectedClinicId,
 			readHeader(req.headers[ORGANIZATION_HEADER]),
 		);
-		if (requirement.adminOnly && membership.role !== 'admin') {
+		if (requirement.adminOnly && membership.role !== 'ADMIN') {
 			throw new HandlerError('FORBIDDEN', 'Only organization admins can perform this action');
 		}
 		req.organization = membership.organization;
-		req.orgRole = membership.role as typeof req.orgRole;
+		req.orgRole = membership.role;
 		return true;
 	}
 
@@ -83,6 +92,11 @@ export class AuthGuard implements CanActivate {
 		if (session?.user) {
 			req.user = session.user;
 			req.session = session.session;
+			// For the logs; the audit trail takes the user explicitly.
+			const context = getRequestContext(req) ?? currentRequestContext();
+			if (context) {
+				context.userId = session.user.id;
+			}
 		}
 	}
 }

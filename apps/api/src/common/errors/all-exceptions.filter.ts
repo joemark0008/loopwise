@@ -3,12 +3,14 @@ import type { GqlContextType } from '@nestjs/graphql';
 import type { Response } from 'express';
 import { GraphQLError } from 'graphql';
 
+import { currentRequestId } from '../request-context.js';
 import { mapError } from './error-mapping.js';
 
 /**
- * Global exception filter: maps domain errors (`HandlerError`), Nest HTTP exceptions and known
- * Prisma errors to GraphQL errors (`extensions.code`) or HTTP status codes. Anything else is
- * logged and reported as an internal error without leaking its message.
+ * Global exception filter: maps domain errors (`DomainError`, `HandlerError`), Nest HTTP exceptions and known
+ * Prisma / Postgres errors to GraphQL errors (`extensions.code`, plus `extensions.errorCode` and `details` for a
+ * `DomainError`) or HTTP status codes. Anything else is logged and reported as an internal error without leaking its
+ * message. Both carry the request id, so a user's report can be matched to the logs.
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -16,13 +18,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 	catch(exception: unknown, host: ArgumentsHost) {
 		const mapped = mapError(exception);
+		const requestId = currentRequestId();
+		const specific = {
+			...(mapped.errorCode ? { errorCode: mapped.errorCode } : {}),
+			...(mapped.details ? { details: mapped.details } : {}),
+			...(requestId ? { requestId } : {}),
+		};
 		if (mapped.internal) {
 			this.logger.error(exception instanceof Error ? (exception.stack ?? exception.message) : String(exception));
 		}
 
 		if (host.getType<GqlContextType>() === 'graphql') {
 			return new GraphQLError(mapped.message, {
-				extensions: { code: mapped.code, http: { status: mapped.status } },
+				extensions: { code: mapped.code, ...specific, http: { status: mapped.status } },
 			});
 		}
 
@@ -30,6 +38,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
 		if (response.headersSent) {
 			return;
 		}
-		response.status(mapped.status).json({ error: mapped.message, code: mapped.code });
+		response.status(mapped.status).json({ error: mapped.message, code: mapped.code, ...specific });
 	}
 }

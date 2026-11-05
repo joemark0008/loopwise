@@ -22,19 +22,19 @@ export const CurrentUserRole = createParamDecorator(
 	(_data: unknown, context: ExecutionContext) => getRequest(context).userRole,
 );
 
+/** The user's staff roles in the clinic resolved by `@ClinicAccess()` (e.g. DOCTOR, CASHIER). */
+export const CurrentStaffRoles = createParamDecorator(
+	(_data: unknown, context: ExecutionContext) => getRequest(context).staffRoles ?? [],
+);
+
 /** The organization resolved by `@OrgMember()` / `@OrgAdmin()`. */
 export const CurrentOrganization = createParamDecorator(
 	(_data: unknown, context: ExecutionContext) => getRequest(context).organization,
 );
 
-/** The user's role in the organization resolved by `@OrgMember()` / `@OrgAdmin()`. */
+/** The user's role (`OrgRole`: ADMIN / MEMBER / VIEWER) in the organization resolved by `@OrgMember()` / `@OrgAdmin()`. */
 export const CurrentOrgRole = createParamDecorator(
 	(_data: unknown, context: ExecutionContext) => getRequest(context).orgRole,
-);
-
-/** The facility (organization) authenticated by `@FacilityKey()`. */
-export const CurrentFacility = createParamDecorator(
-	(_data: unknown, context: ExecutionContext) => getRequest(context).facility,
 );
 
 /** The clinic id the client selected (`x-loopwise-clinic-id` header), for handlers without `@ClinicAccess()`. */

@@ -40,6 +40,7 @@
 		"./lab-tests": "./src/lab-tests.ts",
 		"./medical-certificate": "./src/medical-certificate.ts",
 		"./prescription": "./src/prescription.ts",
+		"./staff-roles": "./src/staff-roles.ts",
 		"./vitals": "./src/vitals.ts",
 		"./wise-proposal": "./src/wise-proposal.ts",
 		"./wise-actions": "./src/wise-actions.ts",

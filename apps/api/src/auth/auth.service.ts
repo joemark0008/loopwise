@@ -5,6 +5,7 @@ import { bearer } from 'better-auth/plugins/bearer';
 
 import { buildUsernameAllowlist } from '../common/utils/auth-utils.js';
 import { memoizeUntilRejected } from '../common/utils/memoize-until-rejected.js';
+import { uuidv7 } from '../common/uuid.js';
 import { ConfigService } from '../config/config.service.js';
 import { OrganizationRepository } from '../organizations/organization.repository.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -161,7 +162,10 @@ export class AuthService {
 			secret: env.BETTER_AUTH_SECRET,
 			baseURL,
 			basePath: '/api/auth',
+			// Models User / Account / Session / Verification (tables users, accounts, sessions, verifications); every id
+			// is a uuid column, so better-auth's own ids are UUIDv7.
 			database: prismaAdapter(this.prisma, { provider: 'postgresql' }),
+			advanced: { database: { generateId: () => uuidv7() } },
 			plugins: [bearer()],
 			trustedOrigins: [baseURL, ...(this.config.isDev ? ['http://localhost:3000'] : [])],
 			emailAndPassword: {

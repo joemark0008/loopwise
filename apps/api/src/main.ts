@@ -6,11 +6,15 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 
 import { AppModule } from './app.module.js';
 import { configureApp } from './app.setup.js';
+import { RequestContextLogger } from './common/request-context-logger.js';
 import { ConfigService } from './config/config.service.js';
 import { serveFrontend } from './frontend-static.js';
 
 async function bootstrap() {
-	const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
+	const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+		bodyParser: false,
+		logger: new RequestContextLogger(),
+	});
 	configureApp(app);
 
 	const config = app.get(ConfigService);

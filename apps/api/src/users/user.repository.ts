@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import type { UserPreferences } from '@loopwise/shared/types';
 import { Injectable } from '@nestjs/common';
 
+import { uuidv7 } from '../common/uuid.js';
 import type { Prisma, User } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { DbExecutor } from '../prisma/prisma.types.js';
@@ -21,6 +22,22 @@ export interface UserProfile {
 	name: string;
 	email: string;
 	image: string | null;
+}
+
+/** A new user: the reference's `firstName` / `lastName` are derived from `name` when left out. */
+export type NewUser = Omit<Prisma.UserCreateInput, 'messagingProviderCode' | 'firstName' | 'lastName'> & {
+	firstName?: string;
+	lastName?: string;
+};
+
+/** `Maria dela Cruz` → `Maria dela` / `Cruz`; a single word is both the first and the last name. */
+export function splitName(name: string): { firstName: string; lastName: string } {
+	const trimmed = name.trim().replace(/\s+/g, ' ');
+	const cut = trimmed.lastIndexOf(' ');
+	if (cut <= 0) {
+		return { firstName: trimmed, lastName: trimmed };
+	}
+	return { firstName: trimmed.slice(0, cut), lastName: trimmed.slice(cut + 1) };
 }
 
 export const createMessagingProviderCode = (): string => {
@@ -55,8 +72,8 @@ export class UserRepository {
 	}
 
 	async isUserDeactivated(userId: string): Promise<boolean> {
-		const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { deactivatedAt: true } });
-		return Boolean(user?.deactivatedAt);
+		const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { isActive: true } });
+		return user ? !user.isActive : false;
 	}
 
 	async getUserMemoryEnabled(userId: string): Promise<boolean> {
@@ -86,17 +103,24 @@ export class UserRepository {
 		return this.prisma.user.findMany({ where: { id: { in: [...userIds] } } });
 	}
 
-	/** Creates a user with its credential (or provider) account. */
+	/**
+	 * Creates a user with its credential (or provider) account. `firstName` / `lastName` default to `name` split on its
+	 * last space (a single word is both).
+	 */
 	createUser(
-		user: Omit<Prisma.UserCreateInput, 'messagingProviderCode'>,
+		user: NewUser,
 		account: Omit<Prisma.AccountUncheckedCreateInput, 'userId'>,
 		executor: DbExecutor = this.prisma,
 	): Promise<User> {
+		const derived = splitName(user.name);
 		return executor.user.create({
 			data: {
 				...user,
+				id: user.id ?? uuidv7(),
+				firstName: user.firstName ?? derived.firstName,
+				lastName: user.lastName ?? derived.lastName,
 				messagingProviderCode: createMessagingProviderCode(),
-				accounts: { create: account },
+				accounts: { create: { ...account, id: account.id ?? uuidv7() } },
 			},
 		});
 	}
@@ -143,7 +167,7 @@ export class UserRepository {
 		return this.prisma.$transaction(async (tx) => {
 			await tx.userPreference.upsert({ where: { userId }, create: { userId, preferences: {} }, update: {} });
 			const [row] = await tx.$queryRaw<{ preferences: StoredUserPreferences }[]>`
-				SELECT preferences FROM user_preference WHERE user_id = ${userId} FOR UPDATE`;
+				SELECT preferences FROM user_preferences WHERE user_id = ${userId}::uuid FOR UPDATE`;
 			const preferences = transform(row?.preferences ?? {});
 			await tx.userPreference.update({
 				where: { userId },
