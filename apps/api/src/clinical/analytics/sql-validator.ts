@@ -1,6 +1,6 @@
 import { parse } from 'libpg-query';
 
-/** The views of migration 0015 Wise may read. */
+/** The views Wise may read (section 5 of migration 0001_rls_and_triggers); keep in step with it. */
 export const ANALYTICS_VIEWS = [
 	'patients',
 	'encounters',
@@ -11,8 +11,8 @@ export const ANALYTICS_VIEWS = [
 	'prescription_items',
 	'orders',
 	'results',
-	'bills',
-	'bill_charges',
+	'invoices',
+	'invoice_lines',
 ] as const;
 
 /** Plain functions: aggregates, windows, maths, text, dates. Nothing that reads settings, files, catalogs or sleeps. */

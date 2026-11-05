@@ -19,15 +19,15 @@ export const METRIC_LABELS: Record<PanelMetric, string> = {
 };
 
 export const description = [
-	"Chart counts across the user's facility, from the patients they may see: encounters_by_week,",
-	'diagnoses_by_icd10_chapter (top chapters), open_orders_by_age (sent, not yet resulted) and',
-	'results_awaiting_review (by flag). Counts only, never names. For program metrics (time to treatment, referral',
-	'completion, equity) point the user to the dashboard instead. facilityId only when the user works at several.',
+	"Chart counts across the user's clinic, from the patients they may see: encounters_by_week,",
+	'diagnoses_by_icd10_chapter (top chapters), open_orders_by_age (tests ordered, not yet resulted) and',
+	'results_awaiting_review (by flag). Counts only, never names. Prefer get_metric, whose definitions are certified.',
+	'facilityId (a clinic id) only when the user works at several clinics.',
 ].join(' ');
 
 export const InputSchema = z.object({
 	metric: z.enum(PANEL_METRICS),
-	facilityId: z.string().optional().describe('One of your facilities; omit when you work at one.'),
+	facilityId: z.string().optional().describe('One of your clinics; omit when you work at one.'),
 	months: z.number().int().min(1).max(24).optional().describe('How far back, in months (default 6).'),
 });
 

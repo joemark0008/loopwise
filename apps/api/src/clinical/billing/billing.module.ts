@@ -1,17 +1,38 @@
 import { Module } from '@nestjs/common';
 
-import { OrganizationsModule } from '../../organizations/organizations.module.js';
-import { ClinicalAuditModule } from '../audit/clinical-audit.module.js';
-import { EncountersModule } from '../encounters/encounters.module.js';
+import { AuditModule } from '../audit/audit.module.js';
+import { DocumentSequencesModule } from '../clinics/document-sequences/document-sequences.module.js';
 import { ClinicalDbModule } from '../rls/clinical-db.module.js';
 import { WiseProposalsModule } from '../wise-proposals/wise-proposals.module.js';
-import { BillingRepository } from './billing.repository.js';
-import { BillingResolver } from './billing.resolver.js';
-import { BillingService } from './billing.service.js';
+import { EncounterBillingService } from './invoices/encounter-billing.service.js';
+import { InvoiceRepository } from './invoices/invoice.repository.js';
+import { InvoiceResolver } from './invoices/invoice.resolver.js';
+import { InvoiceService } from './invoices/invoice.service.js';
+import { InvoiceTotalsService } from './invoices/invoice-totals.service.js';
+import { PaymentRepository } from './payments/payment.repository.js';
+import { PaymentResolver } from './payments/payment.resolver.js';
+import { PaymentService } from './payments/payment.service.js';
+import { ServiceItemRepository } from './service-items/service-item.repository.js';
+import { ServiceItemService } from './service-items/service-item.service.js';
 
-/** The bill of an encounter (DESIGN.md §5): charges, senior/PWD discount, PhilHealth package; finalize, pay, void. */
+/**
+ * Billing (`billing.prisma`): the price list (`service-items`), visit invoices with the senior citizen / PWD discount
+ * (`invoices`) and payments at the cashier desk, PhilHealth package coverage included (`payments`).
+ */
 @Module({
-	imports: [ClinicalDbModule, ClinicalAuditModule, OrganizationsModule, EncountersModule, WiseProposalsModule],
-	providers: [BillingResolver, BillingService, BillingRepository],
+	imports: [ClinicalDbModule, AuditModule, DocumentSequencesModule, WiseProposalsModule],
+	providers: [
+		ServiceItemRepository,
+		ServiceItemService,
+		InvoiceRepository,
+		InvoiceTotalsService,
+		InvoiceService,
+		EncounterBillingService,
+		InvoiceResolver,
+		PaymentRepository,
+		PaymentService,
+		PaymentResolver,
+	],
+	exports: [InvoiceService, ServiceItemService],
 })
 export class BillingModule {}

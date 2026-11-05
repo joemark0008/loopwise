@@ -17,6 +17,7 @@ describe('analytics SQL validator', () => {
 		'SELECT extract(year FROM age(current_date, resulted_at)) FROM results',
 		"SELECT d::date FROM generate_series(now() - interval '1 year', now(), interval '1 month') d",
 		'SELECT 1 UNION ALL SELECT 2',
+		'SELECT i.status, sum(l.line_total) FROM invoices i JOIN invoice_lines l USING (invoice_id) GROUP BY 1',
 	])('accepts %s', async (sql) => {
 		await expect(validateAnalyticsSql(sql)).resolves.toBeTypeOf('string');
 	});
@@ -29,6 +30,8 @@ describe('analytics SQL validator', () => {
 		['SELECT * FROM patients FOR UPDATE', /FOR UPDATE/],
 		['SELECT * FROM public.patient', /Only the analytics views/],
 		['SELECT * FROM patient', /Unknown view "patient"/],
+		['SELECT * FROM bills', /Unknown view "bills"/],
+		['SELECT * FROM public.invoices', /Only the analytics views/],
 		['SELECT * FROM pg_catalog.pg_class', /Only the analytics views/],
 		['SELECT * FROM pg_stat_activity', /Unknown view/],
 		["SELECT set_config('app.user_id', 'x', true)", /set_config\(\) is not allowed/],

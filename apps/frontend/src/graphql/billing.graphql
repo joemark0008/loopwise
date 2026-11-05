@@ -1,0 +1,123 @@
+fragment InvoiceFields on Invoice {
+	id
+	version
+	encounterId
+	invoiceNo
+	invoiceDate
+	status
+	buyerName
+	lines {
+		id
+		serviceItemId
+		serviceItemCode
+		category
+		description
+		quantity
+		unitPrice
+		taxType
+		vatAmount
+		discountAmount
+		lineTotal
+	}
+	discounts {
+		id
+		type
+		rate
+		amount
+		vatExempted
+		beneficiaryName
+		idNumber
+		identificationId
+	}
+	payments {
+		id
+		paymentNo
+		method
+		amount
+		tenderedAmount
+		changeAmount
+		referenceNo
+		status
+		receivedAt
+	}
+	grossAmount
+	vatableSales
+	vatExemptSales
+	zeroRatedSales
+	vatAmount
+	lessVatScPwd
+	scPwdDiscount
+	otherDiscount
+	netAmount
+	amountPaid
+	balance
+	issuedAt
+	voidedAt
+	voidReason
+	createdAt
+}
+
+fragment EncounterBillingFields on EncounterBilling {
+	encounterId
+	clinicId
+	patientId
+	canDraft
+	canCollect
+	invoices {
+		...InvoiceFields
+	}
+	priceList {
+		id
+		code
+		name
+		category
+		price
+		taxType
+	}
+	suggestedLines {
+		serviceItemId
+		description
+		quantity
+		unitPrice
+		taxType
+	}
+	discountIdentifications {
+		id
+		discountType
+		idNumber
+	}
+}
+
+query EncounterBilling($encounterId: ID!) {
+	encounterBilling(encounterId: $encounterId) {
+		...EncounterBillingFields
+	}
+}
+
+mutation SaveInvoiceDraft($input: SaveInvoiceDraftInput!) {
+	saveInvoiceDraft(input: $input) {
+		id
+		version
+	}
+}
+
+mutation IssueInvoice($input: IssueInvoiceInput!) {
+	issueInvoice(input: $input) {
+		id
+		invoiceNo
+	}
+}
+
+mutation RecordPayment($input: RecordPaymentInput!) {
+	recordPayment(input: $input) {
+		id
+		status
+		balance
+	}
+}
+
+mutation VoidInvoice($input: VoidInvoiceInput!) {
+	voidInvoice(input: $input) {
+		id
+	}
+}

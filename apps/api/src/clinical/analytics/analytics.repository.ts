@@ -4,7 +4,6 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import pg from 'pg';
 
 import { ConfigService } from '../../config/config.service.js';
-import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
 /** How long one analytics query may run. */
@@ -28,9 +27,10 @@ const NUMERIC_TYPES = new Set([20, 1700]);
 const DATE_TYPE = 1082;
 
 /**
- * Wise analytics (migration 0015). Queries run on their own pool, logged in as `loopwise_analyst`: a role that can
- * read the `analytics` views and nothing else, bound to the user per transaction by a one-time token the system
- * issues here. The system side (tokens, audit, schema description) uses Prisma.
+ * Wise analytics (section 5 of migration 0001_rls_and_triggers). Queries run on their own pool, logged in as
+ * `loopwise_analyst`: a role that can read the `analytics` views and nothing else, bound to the user per transaction
+ * by a one-time token the system issues here. The system side (tokens, schema description) uses Prisma; the audit
+ * rows go through `AuditService`.
  */
 @Injectable()
 export class AnalyticsRepository implements OnModuleDestroy {
@@ -97,7 +97,7 @@ export class AnalyticsRepository implements OnModuleDestroy {
 	async issueGrant(token: string, userId: string, ttlSeconds = 30): Promise<void> {
 		await this.prisma.$executeRaw`
 			INSERT INTO app_private.analytics_grant (token_hash, user_id, expires_at)
-			VALUES (${hash(token)}, ${userId}, now() + make_interval(secs => ${ttlSeconds}))`;
+			VALUES (${hash(token)}, ${userId}::uuid, now() + make_interval(secs => ${ttlSeconds}))`;
 	}
 
 	async revokeGrant(token: string): Promise<void> {
@@ -115,27 +115,6 @@ export class AnalyticsRepository implements OnModuleDestroy {
 			JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
 			WHERE c.relkind = 'v'
 			ORDER BY c.relname, a.attnum`;
-	}
-
-	writeAudit(entry: {
-		userId: string;
-		action: string;
-		patientId?: string | null;
-		resourceId?: string | null;
-		reason?: string | null;
-		origin: Prisma.InputJsonValue;
-	}): Promise<unknown> {
-		return this.prisma.auditLog.create({
-			data: {
-				userId: entry.userId,
-				action: entry.action,
-				resource: 'analytics',
-				resourceId: entry.resourceId ?? null,
-				patientId: entry.patientId ?? null,
-				reason: entry.reason ?? null,
-				origin: entry.origin,
-			},
-		});
 	}
 
 	private analystPool(): pg.Pool {

@@ -867,6 +867,8 @@ JOIN encounters e ON e.id = o.encounter_id
 JOIN diagnostic_tests t ON t.id = i.test_id
 LEFT JOIN diagnostic_test_parameters p ON p.id = v.parameter_id;
 
+-- Invoices are the clinic's (no patient column, clinic-scoped policy); a visit's invoice is shown only when the user
+-- may see the visit's patient, so a doctor's figures cover their own patients and the cashier's the whole clinic.
 CREATE VIEW "analytics"."invoices" WITH (security_barrier = true) AS
 SELECT
     inv.id AS invoice_id,
@@ -885,7 +887,7 @@ SELECT
     inv.issued_at
 FROM invoices inv
 LEFT JOIN encounters e ON e.id = inv.encounter_id
-WHERE inv.status <> 'VOID';
+WHERE inv.status <> 'VOID' AND (inv.encounter_id IS NULL OR e.id IS NOT NULL);
 
 CREATE VIEW "analytics"."invoice_lines" WITH (security_barrier = true) AS
 SELECT
@@ -904,7 +906,8 @@ JOIN invoices inv ON inv.id = l.invoice_id
 LEFT JOIN service_items s ON s.id = l.service_item_id
 LEFT JOIN encounters le ON le.id = l.encounter_id
 LEFT JOIN encounters ie ON ie.id = inv.encounter_id
-WHERE inv.status <> 'VOID';
+WHERE inv.status <> 'VOID' AND (inv.encounter_id IS NULL OR ie.id IS NOT NULL)
+    AND (l.encounter_id IS NULL OR le.id IS NOT NULL);
 
 DO $$
 DECLARE
@@ -978,9 +981,17 @@ COMMENT ON COLUMN "analytics"."results"."loinc_code" IS 'LOINC code of the analy
 COMMENT ON COLUMN "analytics"."results"."flag" IS 'normal, low, high, abnormal, critical_low or critical_high.';
 COMMENT ON COLUMN "analytics"."results"."reviewed_at" IS 'When a clinician reviewed it (null: awaiting review).';
 
-COMMENT ON VIEW "analytics"."invoices" IS 'Invoices (voided excluded), in PHP.';
+COMMENT ON VIEW "analytics"."invoices" IS 'Invoices (voided excluded), in PHP; a visit''s invoice only when its patient is visible.';
+COMMENT ON COLUMN "analytics"."invoices"."status" IS 'draft, issued, partially_paid or paid.';
+COMMENT ON COLUMN "analytics"."invoices"."gross_amount" IS 'Total of the lines as charged (VAT included), PHP.';
+COMMENT ON COLUMN "analytics"."invoices"."vat_amount" IS 'VAT (12%) in the VATable sales, PHP.';
+COMMENT ON COLUMN "analytics"."invoices"."amount_paid" IS 'Payments allocated so far (cash, e-wallet, PhilHealth package …), PHP.';
+COMMENT ON COLUMN "analytics"."invoices"."balance" IS 'Amount still due, PHP.';
+COMMENT ON COLUMN "analytics"."invoices"."invoice_date" IS 'Invoice date (timestamptz).';
 COMMENT ON COLUMN "analytics"."invoices"."sc_pwd_discount" IS 'Senior citizen / PWD discount (RA 9994 / RA 10754), PHP.';
 COMMENT ON COLUMN "analytics"."invoices"."net_amount" IS 'Amount due after discounts, PHP.';
 
 COMMENT ON VIEW "analytics"."invoice_lines" IS 'Lines of the invoices.';
+COMMENT ON COLUMN "analytics"."invoice_lines"."category" IS 'Catalog category: consultation, laboratory, imaging, medicine, supply, certificate … (null: free-text line).';
+COMMENT ON COLUMN "analytics"."invoice_lines"."discount_amount" IS 'Senior citizen / PWD VAT removed plus discount on the line, PHP.';
 COMMENT ON COLUMN "analytics"."invoice_lines"."line_total" IS 'Line amount, PHP.';

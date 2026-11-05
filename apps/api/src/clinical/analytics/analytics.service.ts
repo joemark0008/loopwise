@@ -1,11 +1,10 @@
 import { chartProblem, retype } from '@loopwise/shared/analytics-chart';
-import type { PathwayDefinition } from '@loopwise/shared/pathway-rules';
 import { describeAnalytics, getMetric, runAnalyticsSql } from '@loopwise/shared/tools';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { HandlerError } from '../../common/errors/handler-error.js';
-import { OrganizationRepository } from '../../organizations/organization.repository.js';
-import { PathwaysService } from '../pathways/pathways.service.js';
+import { AccessService } from '../../common/guards/access.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { AnalyticsRepository, type AnalyticsRows } from './analytics.repository.js';
 import { METRIC_DEFINITIONS, type MetricParams, periodStart } from './metrics.js';
 import { SqlRejected, validateAnalyticsSql } from './sql-validator.js';
@@ -19,7 +18,7 @@ export interface AnalyticsOrigin {
 
 /** Patient ids listed in an audit row; past this, only their number. */
 const MAX_AUDITED_PATIENT_IDS = 50;
-/** Program users see aggregates with counts under this shown as "<5" (small-cell suppression). */
+/** Viewer-only users see aggregates with counts under this shown as "<5" (small-cell suppression). */
 const SMALL_CELL = 5;
 const DEFAULT_MONTHS = 12;
 
@@ -30,10 +29,12 @@ const DEFAULT_MONTHS = 12;
  */
 @Injectable()
 export class AnalyticsService {
+	private readonly logger = new Logger(AnalyticsService.name);
+
 	constructor(
 		private readonly analytics: AnalyticsRepository,
-		private readonly organizations: OrganizationRepository,
-		private readonly pathways: PathwaysService,
+		private readonly access: AccessService,
+		private readonly audit: AuditService,
 	) {}
 
 	async describe(): Promise<Omit<describeAnalytics.Output, '_version'>> {
@@ -68,9 +69,9 @@ export class AnalyticsService {
 			sql = await validateAnalyticsSql(input.sql);
 		} catch (error) {
 			if (error instanceof SqlRejected) {
-				await this.audit(
+				await this.recordAudit(
 					userId,
-					'analytics.rejected',
+					'analytics.query.rejected',
 					origin,
 					{ sql: input.sql, purpose: input.purpose },
 					null,
@@ -92,9 +93,7 @@ export class AnalyticsService {
 			rowCount: rows.length,
 			truncated,
 			suppressed: suppressed.applied,
-			chart: input.chart
-				? await this.withThresholds(checkChart(input.chart, result.columns, suppressed.rows))
-				: null,
+			chart: input.chart ? withThresholds(checkChart(input.chart, result.columns, suppressed.rows)) : null,
 		};
 	}
 
@@ -123,20 +122,10 @@ export class AnalyticsService {
 			columns: result.columns,
 			rows: suppressed.rows,
 			suppressed: suppressed.applied,
-			chart: await this.withThresholds(
+			chart: withThresholds(
 				metricChart(definition.chart?.(params) ?? null, input.chart, result.columns, suppressed.rows),
 			),
 		};
-	}
-
-	/** The chart with its threshold keys resolved to reference lines and bands. */
-	private async withThresholds(
-		chart: runAnalyticsSql.ResultChart | null,
-	): Promise<runAnalyticsSql.ResultChart | null> {
-		if (!chart?.thresholds?.length) {
-			return chart;
-		}
-		return { ...chart, references: thresholdReferences(chart.thresholds, await this.pathways.active()) };
 	}
 
 	private async execute(
@@ -152,16 +141,21 @@ export class AnalyticsService {
 			result = await this.analytics.runAsUser(userId, sql, params, maxRows);
 		} catch (error) {
 			const message = databaseMessage(error);
-			await this.audit(userId, 'analytics.failed', origin, { sql, purpose }, null, message);
+			this.logger.warn(`Analytics query failed: ${message}`);
+			await this.recordAudit(userId, 'analytics.query.failed', origin, { sql, purpose }, null, message);
 			throw new HandlerError('BAD_REQUEST', `Query failed: ${message}`);
 		}
-		await this.audit(userId, 'analytics.query', origin, { sql, purpose }, result, null);
+		await this.recordAudit(userId, 'analytics.query', origin, { sql, purpose }, result, null);
 		return result;
 	}
 
-	private async audit(
+	/**
+	 * One audit row per query, run or refused (RA 10173: who read which patient data): its SQL, the row count and the
+	 * patients it returned. Written in a transaction of its own, since the query ran on the analyst's connection.
+	 */
+	private async recordAudit(
 		userId: string,
-		action: string,
+		event: 'analytics.query' | 'analytics.query.rejected' | 'analytics.query.failed',
 		origin: AnalyticsOrigin,
 		query: { sql: string; purpose: string },
 		result: AnalyticsRows | null,
@@ -178,10 +172,12 @@ export class AnalyticsService {
 						),
 					]
 				: [];
-		await this.analytics.writeAudit({
+		await this.audit.recordOutsideTransaction({
+			action: 'VIEW',
+			event,
+			entityType: 'AnalyticsQuery',
+			entityId: origin.toolCallId,
 			userId,
-			action,
-			resourceId: origin.toolCallId,
 			reason: error ?? query.purpose,
 			origin: {
 				source: 'wise',
@@ -201,12 +197,15 @@ export class AnalyticsService {
 		});
 	}
 
-	/** Counts 1–4 become "<5" in aggregate results of users who only work at program offices (not clinicians). */
+	/**
+	 * Counts 1–4 become "<5" in aggregate results of users whose only role, at every clinic, is VIEWER (read-only
+	 * staff, not clinicians): small cells could identify a patient (RA 10173).
+	 */
 	private async suppress(
 		userId: string,
 		result: AnalyticsRows,
 	): Promise<{ rows: AnalyticsRows['rows']; applied: boolean }> {
-		if (result.columns.includes('patient_id') || !(await this.isProgramOnly(userId))) {
+		if (result.columns.includes('patient_id') || !(await this.isViewerOnly(userId))) {
 			return { rows: result.rows, applied: false };
 		}
 		let applied = false;
@@ -222,9 +221,9 @@ export class AnalyticsService {
 		return { rows, applied };
 	}
 
-	private async isProgramOnly(userId: string): Promise<boolean> {
-		const facilities = await this.organizations.getUserFacilities(userId);
-		return facilities.length > 0 && facilities.every((facility) => facility.type === 'program');
+	private async isViewerOnly(userId: string): Promise<boolean> {
+		const clinics = await this.access.listUserClinics(userId);
+		return clinics.length > 0 && clinics.every((grant) => grant.userRole === 'viewer');
 	}
 }
 
@@ -268,47 +267,38 @@ export function checkChart(
 	return rest;
 }
 
-/** Fixed vital-sign cut-offs a chart may draw ("bp"), the ones `chart_patient_trend` uses. */
-const BP_REFERENCES: runAnalyticsSql.ChartReference[] = [
-	{ label: 'Systolic 140', axis: 'y', value: 140, tone: 'actionable' },
-	{ label: 'Diastolic 90', axis: 'y', value: 90, tone: 'actionable' },
-];
-
 /**
- * The reference lines and bands of threshold keys, from the active pathways' numeric bands (a line where each band
- * starts, a band over each actionable or critical range) or the fixed BP cut-offs. Unknown keys draw nothing.
+ * The fixed clinical cut-offs a chart may draw, by threshold key: HbA1c 5.7 / 6.5 % (prediabetes / diabetes range),
+ * fasting glucose 100 / 126 mg/dL (impaired / diabetes range), blood pressure 140/90 mmHg (hypertension).
  */
-export function thresholdReferences(keys: string[], pathways: PathwayDefinition[]): runAnalyticsSql.ChartReference[] {
-	const references: runAnalyticsSql.ChartReference[] = [];
-	for (const key of keys) {
-		if (key === 'bp') {
-			references.push(...BP_REFERENCES);
-			continue;
-		}
-		for (const trigger of pathways.flatMap((pathway) => pathway.rules.triggers)) {
-			if (trigger.type !== 'numeric' || trigger.code !== key) {
-				continue;
-			}
-			for (const band of trigger.bands) {
-				if (band.min !== undefined) {
-					references.push({
-						label: `${trigger.display} ${band.min} ${trigger.unit} (${band.classification})`,
-						axis: 'y',
-						value: band.min,
-						tone: band.classification,
-					});
-				}
-				if (band.classification !== 'normal' && (band.min !== undefined || band.below !== undefined)) {
-					references.push({
-						label: band.reason,
-						axis: 'y',
-						from: band.min,
-						to: band.below,
-						tone: band.classification,
-					});
-				}
-			}
-		}
+const THRESHOLDS: Record<runAnalyticsSql.ThresholdKey, runAnalyticsSql.ChartReference[]> = {
+	'4548-4': [
+		{ label: 'HbA1c 5.7 %', axis: 'y', value: 5.7, tone: 'actionable' },
+		{ label: 'Prediabetes range', axis: 'y', from: 5.7, to: 6.5, tone: 'actionable' },
+		{ label: 'HbA1c 6.5 %', axis: 'y', value: 6.5, tone: 'actionable' },
+		{ label: 'Diabetes range', axis: 'y', from: 6.5, tone: 'actionable' },
+	],
+	'1558-6': [
+		{ label: 'Fasting glucose 100 mg/dL', axis: 'y', value: 100, tone: 'actionable' },
+		{ label: 'Impaired fasting glucose', axis: 'y', from: 100, to: 126, tone: 'actionable' },
+		{ label: 'Fasting glucose 126 mg/dL', axis: 'y', value: 126, tone: 'actionable' },
+		{ label: 'Diabetes range', axis: 'y', from: 126, tone: 'actionable' },
+	],
+	bp: [
+		{ label: 'Systolic 140', axis: 'y', value: 140, tone: 'actionable' },
+		{ label: 'Diastolic 90', axis: 'y', value: 90, tone: 'actionable' },
+	],
+};
+
+/** The reference lines and bands of threshold keys. Unknown keys draw nothing. */
+export function thresholdReferences(keys: readonly string[]): runAnalyticsSql.ChartReference[] {
+	return keys.flatMap((key) => THRESHOLDS[key as runAnalyticsSql.ThresholdKey] ?? []);
+}
+
+/** The chart with its threshold keys resolved to reference lines and bands. */
+function withThresholds(chart: runAnalyticsSql.ResultChart | null): runAnalyticsSql.ResultChart | null {
+	if (!chart?.thresholds?.length) {
+		return chart;
 	}
-	return references;
+	return { ...chart, references: thresholdReferences(chart.thresholds) };
 }

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 
 import type { AgentToolServices } from '../../agent/types/tools.js';
-import { OrganizationsModule } from '../../organizations/organizations.module.js';
-import { PathwaysModule } from '../pathways/pathways.module.js';
+import { GuardsModule } from '../../common/guards/guards.module.js';
+import { AuditModule } from '../audit/audit.module.js';
 import { AnalyticsRepository } from './analytics.repository.js';
 import { AnalyticsService } from './analytics.service.js';
 import { ANALYTICS_READER } from './analytics-reader.token.js';
@@ -13,7 +13,7 @@ void readerMatches;
 
 /** Safe analytics for Wise (DESIGN.md §7.2, §8.2): validated SQL and certified metrics on the analyst role. */
 @Module({
-	imports: [OrganizationsModule, PathwaysModule],
+	imports: [GuardsModule, AuditModule],
 	providers: [AnalyticsService, AnalyticsRepository, { provide: ANALYTICS_READER, useExisting: AnalyticsService }],
 	exports: [AnalyticsService, ANALYTICS_READER],
 })

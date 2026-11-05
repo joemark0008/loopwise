@@ -47,14 +47,16 @@ export const ANALYTICS_CHART_TYPES = [
 export type AnalyticsChartType = (typeof ANALYTICS_CHART_TYPES)[number];
 
 /**
- * Clinical thresholds a chart may draw, by key, never by number: the server resolves them from the active pathways'
- * bands (by LOINC code, e.g. 4548-4 for HbA1c) or the fixed BP cut-offs ("bp": 140/90).
+ * Clinical thresholds a chart may draw, by key, never by number: the server resolves them to fixed cut-offs, HbA1c
+ * ("4548-4": 5.7 and 6.5 %), fasting glucose ("1558-6": 100 and 126 mg/dL) and blood pressure ("bp": 140/90).
  */
-export const ThresholdKeySchema = z.string().regex(/^(bp|[0-9]{1,6}-[0-9])$/);
+export const THRESHOLD_KEYS = ['4548-4', '1558-6', 'bp'] as const;
+export const ThresholdKeySchema = z.enum(THRESHOLD_KEYS);
+export type ThresholdKey = (typeof THRESHOLD_KEYS)[number];
 
 /**
  * A chart of the result's own rows, checked against the result on the server, so a chart can only show numbers the
- * query returned (and thresholds the pathways define).
+ * query returned (and the fixed clinical cut-offs).
  */
 export const ResultChartSchema = z.object({
 	type: z.enum(ANALYTICS_CHART_TYPES),
@@ -83,7 +85,7 @@ export const ResultChartSchema = z.object({
 		.max(4)
 		.optional()
 		.describe(
-			'Clinical thresholds to draw as reference lines and bands: a LOINC code of a pathway (4548-4 HbA1c, 1558-6 FBS) or "bp".',
+			'Clinical cut-offs to draw as reference lines and bands: 4548-4 (HbA1c 5.7 / 6.5 %), 1558-6 (fasting glucose 100 / 126 mg/dL) or "bp" (140/90).',
 		),
 	title: z.string().max(120).optional(),
 });

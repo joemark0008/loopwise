@@ -15,9 +15,13 @@ interface MetricDefinition {
 	chart?: (params: MetricParams) => runAnalyticsSql.ResultChart;
 }
 
-const PERIOD_START = '$1::timestamp';
-/** Orders still with the lab: sent, accepted or collected, not resulted. */
-const OPEN_ORDER = "status IN ('sent', 'accepted', 'collected')";
+const PERIOD_START = '$1::timestamptz';
+/** Ordered tests still with the lab: requested, paid, specimen collected or in progress, not resulted. */
+const OPEN_ORDER = "status IN ('requested', 'paid', 'specimen_collected', 'in_progress')";
+/** Result flags from most to least severe. */
+const FLAG_RANK =
+	"CASE flag WHEN 'critical_high' THEN 6 WHEN 'critical_low' THEN 5 WHEN 'high' THEN 4 WHEN 'low' THEN 3 " +
+	"WHEN 'abnormal' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END";
 
 /**
  * Certified metrics (DESIGN.md §10): one definition per headline number, run through the same analytics role as
@@ -27,7 +31,8 @@ const OPEN_ORDER = "status IN ('sent', 'accepted', 'collected')";
 export const METRIC_DEFINITIONS: Record<getMetric.Metric, MetricDefinition> = {
 	panel_size: {
 		label: 'Patients in your care',
-		definition: 'Patients you may see (your care relationships and patients who reached your facility).',
+		definition:
+			'Patients you may see (your care relationships, and patients with a visit at a clinic where you work the desk).',
 		sql: () => 'SELECT count(*)::int AS patients FROM patients',
 	},
 	patients_by_age_band: {
@@ -93,20 +98,22 @@ export const METRIC_DEFINITIONS: Record<getMetric.Metric, MetricDefinition> = {
 	results_awaiting_review: {
 		label: 'Results awaiting review',
 		chart: () => ({ type: 'bar', x: 'flag', y: ['results'] }),
-		definition: 'Results not yet reviewed by a clinician, by flag (any date).',
+		definition: 'Test results not yet reviewed by a clinician, by their most severe analyte flag (any date).',
 		sql: () =>
-			"SELECT coalesce(flag, 'none') AS flag, count(*)::int AS results FROM results WHERE reviewed_at IS NULL " +
-			"GROUP BY 1 ORDER BY CASE coalesce(flag, 'none') WHEN 'critical_high' THEN 0 WHEN 'critical_low' THEN 1 " +
-			"WHEN 'high' THEN 2 WHEN 'low' THEN 3 WHEN 'abnormal' THEN 4 ELSE 5 END",
+			"SELECT CASE worst WHEN 6 THEN 'critical_high' WHEN 5 THEN 'critical_low' WHEN 4 THEN 'high' " +
+			"WHEN 3 THEN 'low' WHEN 2 THEN 'abnormal' WHEN 1 THEN 'normal' ELSE 'none' END AS flag, " +
+			`count(*)::int AS results FROM (SELECT order_id, max(${FLAG_RANK}) AS worst FROM results ` +
+			'WHERE reviewed_at IS NULL GROUP BY order_id) pending GROUP BY worst ORDER BY worst DESC',
 	},
 	open_orders: {
 		label: 'Open orders by age',
 		chart: () => ({ type: 'bar', x: 'age', y: ['orders'] }),
-		definition: 'Orders sent, accepted or collected but not resulted, by days since sent: 0-2, 3-7, 8-14, over 14.',
+		definition:
+			'Ordered tests requested, paid, collected or in progress but not resulted, by days since ordered: 0-2, 3-7, 8-14, over 14.',
 		sql: () =>
 			"SELECT CASE WHEN age_days <= 2 THEN '0-2 days' WHEN age_days <= 7 THEN '3-7 days' " +
 			"WHEN age_days <= 14 THEN '8-14 days' ELSE 'over 14 days' END AS age, count(*)::int AS orders " +
-			'FROM (SELECT extract(day FROM now() - coalesce(sent_at, created_at))::int AS age_days FROM orders ' +
+			'FROM (SELECT extract(day FROM now() - created_at)::int AS age_days FROM orders ' +
 			`WHERE ${OPEN_ORDER}) open_orders GROUP BY 1 ORDER BY min(age_days)`,
 	},
 	overdue_follow_ups: {
@@ -130,17 +137,19 @@ export const METRIC_DEFINITIONS: Record<getMetric.Metric, MetricDefinition> = {
 	},
 	billing_totals: {
 		label: 'Billing totals',
-		chart: () => ({ type: 'bar', x: 'status', y: ['total'] }),
-		definition: 'Bills of visits in the period by status, with totals in PHP (voided bills excluded).',
+		chart: () => ({ type: 'bar', x: 'status', y: ['net'] }),
+		definition:
+			'Invoices dated in the period by status (voided excluded), in PHP: gross, senior citizen / PWD and other discounts, amount due (net), paid (PhilHealth package payments included) and balance.',
 		sql: () =>
-			'SELECT status, count(*)::int AS bills, round(sum(subtotal), 2) AS subtotal, ' +
-			'round(sum(discount_amount), 2) AS discounts, round(sum(coalesce(philhealth_coverage, 0)), 2) AS philhealth, ' +
-			`round(sum(total), 2) AS total FROM bills WHERE created_at >= ${PERIOD_START} GROUP BY 1 ORDER BY 1`,
+			'SELECT status, count(*)::int AS invoices, round(sum(gross_amount), 2) AS gross, ' +
+			'round(sum(sc_pwd_discount + other_discount), 2) AS discounts, round(sum(net_amount), 2) AS net, ' +
+			'round(sum(amount_paid), 2) AS paid, round(sum(balance), 2) AS balance FROM invoices ' +
+			`WHERE invoice_date >= ${PERIOD_START} GROUP BY 1 ORDER BY 1`,
 	},
 	screening_funnel: {
 		label: 'Screening-to-care funnel',
 		definition:
-			'Orders placed in the period, then how many were resulted, reviewed by a clinician, and actioned (the patient had a visit after the result).',
+			'Tests ordered in the period, then how many were resulted, reviewed by a clinician, and actioned (the patient had a visit after the result).',
 		chart: () => ({ type: 'funnel', x: 'step', y: ['orders'] }),
 		sql: () =>
 			`SELECT 'Ordered' AS step, count(*)::int AS orders FROM orders WHERE created_at >= ${PERIOD_START} ` +

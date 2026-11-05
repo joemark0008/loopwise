@@ -1,4 +1,3 @@
-import type { PathwayDefinition } from '@loopwise/shared/pathway-rules';
 import { describe, expect, it } from 'vitest';
 
 import { checkChart, thresholdReferences } from './analytics.service.js';
@@ -33,35 +32,22 @@ describe('analytics result charts', () => {
 });
 
 describe('chart thresholds', () => {
-	const pathway = {
-		rules: {
-			triggers: [
-				{
-					type: 'numeric',
-					code: '4548-4',
-					display: 'HbA1c',
-					unit: '%',
-					bands: [
-						{ below: 5.7, classification: 'normal', reason: 'Normal' },
-						{ min: 5.7, below: 6.5, classification: 'actionable', reason: 'Prediabetes range' },
-						{ min: 6.5, classification: 'actionable', reason: 'Diabetes range' },
-					],
-				},
-			],
-		},
-	} as unknown as PathwayDefinition;
-
-	it("draws a pathway's bands as lines where they start and shaded actionable ranges", () => {
-		expect(thresholdReferences(['4548-4'], [pathway])).toEqual([
-			{ label: 'HbA1c 5.7 % (actionable)', axis: 'y', value: 5.7, tone: 'actionable' },
+	it('draws the fixed HbA1c cut-offs as lines and shaded ranges', () => {
+		expect(thresholdReferences(['4548-4'])).toEqual([
+			{ label: 'HbA1c 5.7 %', axis: 'y', value: 5.7, tone: 'actionable' },
 			{ label: 'Prediabetes range', axis: 'y', from: 5.7, to: 6.5, tone: 'actionable' },
-			{ label: 'HbA1c 6.5 % (actionable)', axis: 'y', value: 6.5, tone: 'actionable' },
-			{ label: 'Diabetes range', axis: 'y', from: 6.5, to: undefined, tone: 'actionable' },
+			{ label: 'HbA1c 6.5 %', axis: 'y', value: 6.5, tone: 'actionable' },
+			{ label: 'Diabetes range', axis: 'y', from: 6.5, tone: 'actionable' },
 		]);
 	});
 
-	it('draws the fixed BP cut-offs, and nothing for a code no pathway has', () => {
-		expect(thresholdReferences(['bp', '9999-9'], [pathway]).map((reference) => reference.value)).toEqual([140, 90]);
+	it('draws fasting glucose at 100 and 126 mg/dL, BP at 140/90, and nothing for an unknown key', () => {
+		const values = (keys: string[]) =>
+			thresholdReferences(keys)
+				.map((reference) => reference.value)
+				.filter((value) => value !== undefined);
+		expect(values(['1558-6'])).toEqual([100, 126]);
+		expect(values(['bp', '9999-9'])).toEqual([140, 90]);
 	});
 
 	it('never keeps references the model sent', () => {
