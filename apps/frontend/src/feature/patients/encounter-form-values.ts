@@ -1,9 +1,16 @@
 import { encounterDraftErrors } from '@loopwise/shared/encounter';
+import type { EncounterType } from '@loopwise/shared/encounter';
 import type { CreateEncounterInput } from '@/graphql/generated/graphql';
+
+/** How a new visit starts: checked in and waiting (OPEN), straight in with the doctor, or the API's default. */
+export type InitialEncounterStatus = 'OPEN' | 'IN_PROGRESS' | '';
 
 /** What the New encounter form and the Wise card edit. `startedAt` is a `datetime-local` value (local time). */
 export interface EncounterFormValues {
-	facilityId: string;
+	clinicId: string;
+	type: EncounterType;
+	/** Empty: the API decides (IN_PROGRESS for a practitioner, OPEN at the front desk). */
+	status: InitialEncounterStatus;
 	reason: string;
 	notes: string;
 	startedAt: string;
@@ -29,8 +36,10 @@ export function draftStartToLocalInput(value: string | undefined, now = new Date
 	return value && !Number.isNaN(Date.parse(value)) ? toLocalInput(new Date(value)) : toLocalInput(now);
 }
 
-export const emptyEncounterForm = (facilityId = '', now = new Date()): EncounterFormValues => ({
-	facilityId,
+export const emptyEncounterForm = (clinicId = '', now = new Date()): EncounterFormValues => ({
+	clinicId,
+	type: 'CONSULTATION',
+	status: '',
 	reason: '',
 	notes: '',
 	startedAt: toLocalInput(now),
@@ -48,11 +57,12 @@ const toIso = (local: string) => {
 export function validateEncounterForm(values: EncounterFormValues): EncounterFormErrors {
 	const errors: EncounterFormErrors = encounterDraftErrors({
 		reason: values.reason,
+		type: values.type,
 		notes: values.notes,
 		startedAt: toIso(values.startedAt),
 	});
-	if (!values.facilityId) {
-		errors.facilityId = 'Choose the facility.';
+	if (!values.clinicId) {
+		errors.clinicId = 'Choose the clinic.';
 	}
 	return errors;
 }
@@ -64,7 +74,9 @@ export function toCreateEncounterInput(
 ): CreateEncounterInput {
 	return {
 		patientId,
-		facilityId: values.facilityId,
+		clinicId: values.clinicId,
+		type: values.type,
+		status: values.status || null,
 		reason: values.reason,
 		notes: values.notes.trim() ? values.notes : null,
 		startedAt: toIso(values.startedAt) ?? null,

@@ -11,7 +11,6 @@ export * as executePython from './execute-python';
 export * as executeSandboxedCode from './execute-sandboxed-code';
 export * as executeSemanticQuery from './execute-semantic-query';
 export * as executeSql from './execute-sql';
-export * as explainResult from './explain-result';
 export * as findPatient from './find-patient';
 export * as generateOnboardingRules from './generate-onboarding-rules';
 export * as getMetric from './get-metric';

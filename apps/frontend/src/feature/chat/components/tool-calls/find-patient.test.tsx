@@ -40,18 +40,26 @@ describe('FindPatientToolCall', () => {
 				{
 					id: 'p1',
 					name: 'Maria Santos',
+					patientNo: 'TAG-PT-2026-000001',
 					birthDate: '1972-03-14',
-					sex: 'female',
-					identifiers: [{ system: 'MRN', value: 'TAG-0001' }],
+					sex: 'FEMALE',
+					identifications: [{ label: 'PhilHealth', idNumber: 'SYN-0000-0001' }],
 				},
-				{ id: 'p2', name: 'Rosa Santos', birthDate: '1990-01-02', sex: 'female', identifiers: [] },
+				{
+					id: 'p2',
+					name: 'Rosa Santos',
+					patientNo: 'TAG-PT-2026-000002',
+					birthDate: '1990-01-02',
+					sex: 'FEMALE',
+					identifications: [],
+				},
 			],
 			truncated: false,
 		});
 		expect(screen.getByText('2 found for “Santos”')).toBeTruthy();
 		const links = screen.getAllByRole('link');
 		expect(links.map((link) => link.getAttribute('href'))).toEqual(['/patients/p1', '/patients/p2']);
-		expect(links[0].textContent).toContain('F · born 14 Mar 1972 · MRN TAG-0001');
+		expect(links[0].textContent).toContain('born 14 Mar 1972 · TAG-PT-2026-000001 · PhilHealth SYN-0000-0001');
 	});
 
 	it('says when nothing matched', () => {

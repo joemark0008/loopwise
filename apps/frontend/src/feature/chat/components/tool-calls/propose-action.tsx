@@ -1,20 +1,17 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ALLERGY_KINDS, ALLERGY_SEVERITIES, AllergyDraftSchema, fieldErrors } from '@loopwise/shared/encounter-record';
+import { ALLERGY_TYPES, ALLERGY_SEVERITIES, AllergyDraftSchema, fieldErrors } from '@loopwise/shared/encounter-record';
 import { VITAL_FIELDS, VITAL_RANGES } from '@loopwise/shared/vitals';
 import { wiseAction } from '@loopwise/shared/wise-actions';
-import { ClipboardCheck, FlaskConical, HeartPulse, ShieldAlert, ShieldX, TestTubes } from 'lucide-react';
+import { HeartPulse, ShieldAlert, ShieldX } from 'lucide-react';
 import { memo, useState } from 'react';
 import { ProposalCard } from './proposal-card/proposal-card';
 import styles from './propose-action.module.css';
 import type { ProposalConfirm } from './proposal-card/proposal-card';
-import type { listResultsToReview } from '@loopwise/shared/tools';
 import type {
 	ActionOutput,
 	ProposeAllergyInput,
-	ProposeOrderInput,
 	ProposeRemoveAllergyInput,
-	ProposeResultReviewInput,
 	ProposeVitalsInput,
 } from '@loopwise/shared/wise-actions';
 import type { z } from 'zod/v3';
@@ -25,7 +22,6 @@ import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAgentContext } from '@/contexts/agent.provider';
 import { emptyVitalsForm, toRecordVitalsInput, validateVitalsForm } from '@/feature/encounters/encounter-form-values';
@@ -33,10 +29,6 @@ import { formatDay } from '@/feature/encounters/encounter-format';
 import { FormField } from '@/feature/encounters/form-field';
 import { useRecordMutation } from '@/feature/encounters/use-record-mutation';
 import { encounterRecordApi } from '@/lib/encounter-record-api';
-import { patientApi } from '@/lib/patient-api';
-import { resultApi } from '@/lib/result-api';
-import { wiseActionsApi } from '@/lib/wise-actions-api';
-import { resultValue, testName, URGENCY_LABELS } from '@/feature/results/result-format';
 
 /*
  * The cards of the Wise action tools (DESIGN.md §7.3, `@loopwise/shared/wise-actions`). Each is the shared proposal card
@@ -287,9 +279,9 @@ function VitalsCard({
 	);
 }
 
-type AllergyForm = { substance: string; kind: string; reaction: string; severity: string };
+type AllergyForm = { allergen: string; type: string; reaction: string; severity: string };
 
-/** `propose_allergy`: an allergy for the patient's record, saved with `addAllergy` at the clinician's facility. */
+/** `propose_allergy`: an allergy for the patient's record, saved with `addAllergy`. */
 export const ProposeAllergyToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_allergy'>) => (
 	<ActionFrame<ProposeAllergyInput> toolPart={toolPart}>
 		{(input, output) => <AllergyCard toolPart={toolPart} input={input} output={output} />}
@@ -307,22 +299,19 @@ function AllergyCard({
 }) {
 	const queryClient = useQueryClient();
 	const { queueOrSendMessage } = useAgentContext();
-	const facilities = useQuery(patientApi.patient.facilities.queryOptions());
 	const [initial] = useState<AllergyForm>(() => ({
-		substance: input.substance ?? '',
-		kind: input.kind ?? 'drug',
+		allergen: input.allergen ?? '',
+		type: input.type ?? 'DRUG',
 		reaction: input.reaction ?? '',
 		severity: input.severity ?? '',
 	}));
 	const [values, setValues] = useState(initial);
-	const [facilityId, setFacilityId] = useState('');
 	const [isEditing, setIsEditing] = useState(false);
 	const save = useRecordMutation(encounterRecordApi.encounterRecord.addAllergy);
 	const errors = fieldErrors(AllergyDraftSchema, values);
-	const facility = facilityId || (facilities.data?.length === 1 ? facilities.data[0].id : '');
 
 	const confirm = ({ origin }: ProposalConfirm) => {
-		if (Object.keys(errors).length > 0 || !facility) {
+		if (Object.keys(errors).length > 0) {
 			setIsEditing(true);
 			return;
 		}
@@ -330,16 +319,15 @@ function AllergyCard({
 		return save
 			.mutateAsync({
 				patientId: output.patientId ?? '',
-				facilityId: facility,
-				substance: parsed.substance,
-				kind: parsed.kind,
+				allergen: parsed.allergen,
+				type: parsed.type,
 				reaction: parsed.reaction ?? null,
 				severity: parsed.severity ?? null,
 				wiseOrigin: { ...origin, edited: isEdited(values, initial) },
 			})
 			.then(() => {
 				void queryClient.invalidateQueries(encounterRecordApi.encounterRecord.allergies.pathFilter());
-				void queueOrSendMessage({ text: `I added the allergy: ${parsed.substance}.` });
+				void queueOrSendMessage({ text: `I added the allergy: ${parsed.allergen}.` });
 			});
 	};
 
@@ -356,7 +344,7 @@ function AllergyCard({
 					{optional && <option value=''>Not stated</option>}
 					{options.map((option) => (
 						<option key={option} value={option}>
-							{option}
+							{enumLabel(option)}
 						</option>
 					))}
 				</select>
@@ -376,22 +364,21 @@ function AllergyCard({
 			isPending={save.isPending}
 			isEditing={isEditing}
 			onEditToggle={() => setIsEditing(!isEditing)}
-			error={save.error?.message ?? facilities.error?.message}
-			isConfirmDisabled={!facilities.data}
+			error={save.error?.message}
 		>
 			{isEditing ? (
 				<div className={styles.grid}>
-					<FormField label='Substance' error={errors.substance}>
+					<FormField label='Allergen' error={errors.allergen}>
 						{(id) => (
 							<Input
 								id={id}
-								value={values.substance}
+								value={values.allergen}
 								disabled={save.isPending}
-								onChange={(event) => setValues({ ...values, substance: event.target.value })}
+								onChange={(event) => setValues({ ...values, allergen: event.target.value })}
 							/>
 						)}
 					</FormField>
-					{select('kind', ALLERGY_KINDS, 'Kind')}
+					{select('type', ALLERGY_TYPES, 'Type')}
 					<FormField label='Reaction' error={errors.reaction}>
 						{(id) => (
 							<Input
@@ -403,36 +390,20 @@ function AllergyCard({
 						)}
 					</FormField>
 					{select('severity', ALLERGY_SEVERITIES, 'Severity', true)}
-					{(facilities.data?.length ?? 0) > 1 && (
-						<FormField label='Recorded at'>
-							{(id) => (
-								<select
-									id={id}
-									className={styles.select}
-									value={facilityId}
-									onChange={(event) => setFacilityId(event.target.value)}
-								>
-									<option value=''>Pick a facility</option>
-									{facilities.data?.map((candidate) => (
-										<option key={candidate.id} value={candidate.id}>
-											{candidate.name}
-										</option>
-									))}
-								</select>
-							)}
-						</FormField>
-					)}
 				</div>
 			) : (
 				<p className={styles.summary} data-testid='drafted-allergy'>
-					<strong>{values.substance || 'No substance'}</strong> ({values.kind})
+					<strong>{values.allergen || 'No allergen'}</strong> ({enumLabel(values.type)})
 					{values.reaction && ` · ${values.reaction}`}
-					{values.severity && ` · ${values.severity}`}
+					{values.severity && ` · ${enumLabel(values.severity)}`}
 				</p>
 			)}
 		</ActionCard>
 	);
 }
+
+/** `DRUG` → `drug`, `TRANSFERRED_ER` → `transferred er`: an enum value as words. */
+const enumLabel = (value: string) => value.toLowerCase().replaceAll('_', ' ');
 
 /** `propose_remove_allergy`: voids one recorded allergy (it stays, struck through) with the clinician's reason. */
 export const ProposeRemoveAllergyToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_remove_allergy'>) => (
@@ -462,10 +433,10 @@ function RemoveAllergyCard({
 	if (allergies.error) {
 		return <ErrorMessage message={allergies.error.message} />;
 	}
-	const wanted = input.substance.trim().toLowerCase();
-	const allergy = allergies.data.find((candidate) => candidate.substance.trim().toLowerCase() === wanted);
+	const wanted = input.allergen.trim().toLowerCase();
+	const allergy = allergies.data.find((candidate) => candidate.allergen.trim().toLowerCase() === wanted);
 	if (!allergy) {
-		return <ErrorMessage message={`This patient has no recorded allergy to ${input.substance}.`} />;
+		return <ErrorMessage message={`This patient has no recorded allergy to ${input.allergen}.`} />;
 	}
 
 	const confirm = ({ origin, reason }: ProposalConfirm) =>
@@ -473,7 +444,7 @@ function RemoveAllergyCard({
 			.mutateAsync({ id: allergy.id, reason: reason ?? '', wiseOrigin: { ...origin, edited: false } })
 			.then(() => {
 				void queryClient.invalidateQueries(encounterRecordApi.encounterRecord.allergies.pathFilter());
-				void queueOrSendMessage({ text: `I removed the allergy: ${allergy.substance}.` });
+				void queueOrSendMessage({ text: `I removed the allergy: ${allergy.allergen}.` });
 			});
 
 	return (
@@ -485,8 +456,12 @@ function RemoveAllergyCard({
 			resolved='Allergy removed'
 			answer='I removed the allergy'
 			target={{
-				label: `${allergy.substance} (${allergy.kind})`,
-				detail: [allergy.reaction, allergy.severity, 'stays in the record, struck through']
+				label: `${allergy.allergen} (${enumLabel(allergy.type)})`,
+				detail: [
+					allergy.reaction,
+					allergy.severity && enumLabel(allergy.severity),
+					'stays in the record, struck through',
+				]
 					.filter(Boolean)
 					.join(' · '),
 			}}
@@ -498,275 +473,3 @@ function RemoveAllergyCard({
 		</ActionCard>
 	);
 }
-
-/** `propose_result_review`: marks one result reviewed with the clinician's note; a critical one needs it, twice. */
-export const ProposeResultReviewToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_result_review'>) => (
-	<ActionFrame<ProposeResultReviewInput> toolPart={toolPart}>
-		{(input, output) => <ResultReviewCard toolPart={toolPart} input={input} output={output} />}
-	</ActionFrame>
-));
-
-function ResultReviewCard({
-	toolPart,
-	input,
-	output,
-}: {
-	toolPart: ToolPart;
-	input: ProposeResultReviewInput;
-	output: ActionOutput;
-}) {
-	const queryClient = useQueryClient();
-	const { queueOrSendMessage } = useAgentContext();
-	const results = useQuery(resultApi.result.forPatient.queryOptions({ patientId: output.patientId ?? '' }));
-	const evaluation = useQuery(wiseActionsApi.resultEvaluation.queryOptions({ resultId: output.subjectId ?? '' }));
-	const [note, setNote] = useState(input.note ?? '');
-	const review = useRecordMutation(resultApi.result.review);
-	if (results.isPending) {
-		return <Skeleton className={styles.skeleton} />;
-	}
-	if (results.error) {
-		return <ErrorMessage message={results.error.message} />;
-	}
-	const result = results.data.find((candidate) => candidate.id === output.subjectId);
-	if (!result) {
-		return <ErrorMessage message="Wise named a result that isn't this patient's, or that you can't see." />;
-	}
-	if (result.reviewedAt) {
-		return <p className={styles.meta}>{testName(result)} is already reviewed.</p>;
-	}
-	const isCritical = result.urgency === 'critical';
-	const needsNote = isCritical && !note.trim();
-
-	const confirm = ({ origin }: ProposalConfirm) =>
-		review
-			.mutateAsync({
-				resultId: result.id,
-				note: note.trim() || null,
-				wiseOrigin: { ...origin, edited: note !== (input.note ?? '') },
-			})
-			.then(() => {
-				void queryClient.invalidateQueries(resultApi.result.toReview.pathFilter());
-				void queryClient.invalidateQueries(resultApi.result.forPatient.pathFilter());
-				void queueOrSendMessage({ text: `I reviewed the result: ${testName(result)}.` });
-			});
-
-	return (
-		<ActionCard
-			toolPart={toolPart}
-			icon={ClipboardCheck}
-			title='Review result'
-			confirmLabel={isCritical ? 'Mark critical result reviewed' : 'Mark reviewed'}
-			resolved='Reviewed'
-			answer='I reviewed the result'
-			confirmStrength={isCritical ? 'strong' : 'standard'}
-			onConfirm={confirm}
-			isPending={review.isPending}
-			isConfirmDisabled={needsNote}
-			error={review.error?.message}
-			warnings={
-				isCritical && (
-					<p className={styles.critical} role='alert'>
-						Critical value: act now. Note what you did (called the patient, referred); you confirm twice.
-					</p>
-				)
-			}
-		>
-			<p className={styles.summary} data-testid='review-result'>
-				<strong>{testName(result)}</strong> {resultValue(result)}
-				{result.refRange && ` (ref ${result.refRange})`} · {URGENCY_LABELS[result.urgency]} ·{' '}
-				{result.sourceFacility.name}
-			</p>
-			{evaluation.data && (
-				<p className={styles.meta}>
-					{evaluation.data.pathwayName}: {evaluation.data.classification} · {evaluation.data.reason}
-					{evaluation.data.slaHours !== null && ` · act within ${evaluation.data.slaHours} h`}
-				</p>
-			)}
-			<FormField label={isCritical ? 'Note (required)' : 'Note'}>
-				{(id) => (
-					<Textarea
-						id={id}
-						rows={2}
-						value={note}
-						disabled={review.isPending}
-						onChange={(event) => setNote(event.target.value)}
-					/>
-				)}
-			</FormField>
-		</ActionCard>
-	);
-}
-
-/** `propose_order`: lab or imaging tests for a visit, to the lab the clinician picks, all saved in one transaction. */
-export const ProposeOrderToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_order'>) => (
-	<ActionFrame<ProposeOrderInput> toolPart={toolPart}>
-		{(input, output) => (
-			<EncounterGate output={output}>
-				{(record) => <OrderCard toolPart={toolPart} input={input} output={output} record={record} />}
-			</EncounterGate>
-		)}
-	</ActionFrame>
-));
-
-function OrderCard({
-	toolPart,
-	input,
-	output,
-	record,
-}: {
-	toolPart: ToolPart;
-	input: ProposeOrderInput;
-	output: ActionOutput;
-	record: EncounterRecordFieldsFragment;
-}) {
-	const { queueOrSendMessage } = useAgentContext();
-	const options = useQuery(encounterRecordApi.encounterRecord.orderOptions.queryOptions());
-	const tests = output.tests ?? [];
-	const named = input.targetFacility?.trim().toLowerCase();
-	const suggested = named
-		? options.data?.orderTargets.find((target) => target.name.toLowerCase().includes(named))?.id
-		: undefined;
-	const [targetId, setTargetId] = useState<string | null>(null);
-	const [priority, setPriority] = useState(input.priority ?? 'routine');
-	const [notes, setNotes] = useState(input.notes ?? '');
-	const target =
-		targetId ?? suggested ?? (options.data?.orderTargets.length === 1 ? options.data.orderTargets[0].id : '');
-	const save = useRecordMutation(encounterRecordApi.encounterRecord.createOrders);
-	const targetName = options.data?.orderTargets.find((candidate) => candidate.id === target)?.name;
-
-	const confirm = ({ origin }: ProposalConfirm) => {
-		if (!target) {
-			return;
-		}
-		return save
-			.mutateAsync({
-				encounterId: record.encounter.id,
-				codes: tests.map((test) => test.code),
-				targetOrgId: target,
-				priority,
-				notes: notes.trim() || null,
-				wiseOrigin: {
-					...origin,
-					edited:
-						targetId !== null ||
-						priority !== (input.priority ?? 'routine') ||
-						notes !== (input.notes ?? ''),
-				},
-			})
-			.then(
-				() =>
-					void queueOrSendMessage({
-						text: `I ordered ${tests.map((test) => test.display).join(', ')} at ${targetName}.`,
-					}),
-			);
-	};
-
-	return (
-		<ActionCard
-			toolPart={toolPart}
-			icon={TestTubes}
-			title='Order tests'
-			confirmLabel={tests.length > 1 ? `Order ${tests.length} tests` : 'Order test'}
-			resolved='Ordered'
-			answer='I ordered'
-			onConfirm={confirm}
-			isPending={save.isPending}
-			isConfirmDisabled={!target}
-			error={save.error?.message ?? options.error?.message}
-		>
-			<VisitLink record={record} tab='orders' />
-			<ul className={styles.list} data-testid='drafted-tests'>
-				{tests.map((test) => (
-					<li key={test.code}>
-						{test.display} <span className={styles.meta}>LOINC {test.code}</span>
-					</li>
-				))}
-			</ul>
-			<div className={styles.grid}>
-				<FormField label='Send to'>
-					{(id) => (
-						<select
-							id={id}
-							className={styles.select}
-							value={target}
-							disabled={save.isPending || !options.data}
-							onChange={(event) => setTargetId(event.target.value)}
-						>
-							<option value=''>Pick a lab</option>
-							{options.data?.orderTargets.map((candidate) => (
-								<option key={candidate.id} value={candidate.id}>
-									{candidate.name}
-								</option>
-							))}
-						</select>
-					)}
-				</FormField>
-				<FormField label='Priority'>
-					{(id) => (
-						<select
-							id={id}
-							className={styles.select}
-							value={priority}
-							disabled={save.isPending}
-							onChange={(event) => setPriority(event.target.value as typeof priority)}
-						>
-							<option value='routine'>Routine</option>
-							<option value='urgent'>Urgent</option>
-							<option value='stat'>STAT</option>
-						</select>
-					)}
-				</FormField>
-				<FormField label='Notes for the lab' wide>
-					{(id) => (
-						<Input
-							id={id}
-							value={notes}
-							disabled={save.isPending}
-							onChange={(event) => setNotes(event.target.value)}
-						/>
-					)}
-				</FormField>
-			</div>
-		</ActionCard>
-	);
-}
-
-/** `list_results_to_review`: what Wise read from the inbox, critical first, each with the rules engine's reading. */
-export const ListResultsToReviewToolCall = memo(({ toolPart }: ToolCallComponentProps<'list_results_to_review'>) => {
-	if (toolPart.state === 'input-streaming' || toolPart.state === 'input-available') {
-		return <Skeleton className={styles.skeleton} />;
-	}
-	if (toolPart.state === 'output-error') {
-		return <ErrorMessage message={toolPart.errorText} />;
-	}
-	const output = toolPart.output as listResultsToReview.Output | undefined;
-	if (!output) {
-		return null;
-	}
-	return (
-		<div className={styles.resultsCard} data-testid='results-to-review'>
-			<p className={styles.resultsTitle}>
-				<FlaskConical aria-hidden /> Results to review ({output.results.length}
-				{output.truncated && '+'})
-				<Link to='/results' className={styles.link}>
-					Open the inbox
-				</Link>
-			</p>
-			{output.results.length === 0 ? (
-				<p className={styles.meta}>Nothing waiting for your review.</p>
-			) : (
-				<ul className={styles.list}>
-					{output.results.map((result) => (
-						<li key={result.id} data-urgency={result.urgency}>
-							<strong>{result.test}</strong> {result.value}
-							{result.unit && ` ${result.unit}`}
-							{result.refRange && ` (ref ${result.refRange})`} · {URGENCY_LABELS[result.urgency]} ·{' '}
-							{result.patient.name}
-							{result.evaluation && <span className={styles.meta}> · {result.evaluation.reason}</span>}
-						</li>
-					))}
-				</ul>
-			)}
-		</div>
-	);
-});

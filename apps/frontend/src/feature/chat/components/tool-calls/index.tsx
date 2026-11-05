@@ -5,33 +5,26 @@ import { ClinicalChartToolCall } from './clinical-chart';
 import { DefaultToolCall } from './default';
 import { DisplayChartToolCall } from './display-chart';
 import { DisplayMapToolCall } from './display-map';
-import { ExplainResultToolCall } from './explain-result';
 import { FindPatientToolCall } from './find-patient';
 import { McpToolCall } from './mcp';
 import { OpenPageToolCall } from './open-page';
-import {
-	ListResultsToReviewToolCall,
-	ProposeAllergyToolCall,
-	ProposeOrderToolCall,
-	ProposeRemoveAllergyToolCall,
-	ProposeResultReviewToolCall,
-	ProposeVitalsToolCall,
-} from './propose-action';
-import { ProposeEncounterToolCall } from './propose-encounter';
-import { ProposeEncounterNoteToolCall } from './propose-encounter-note';
-import {
-	ProposeChargesToolCall,
-	ProposeMedicalCertificateToolCall,
-	ProposePrescriptionToolCall,
-} from './propose-encounter-record';
-import { ProposePatientRegistrationToolCall } from './propose-patient-registration';
+import { ProposeAllergyToolCall, ProposeRemoveAllergyToolCall, ProposeVitalsToolCall } from './propose-action';
+import { ProposeBillStepToolCall, ProposeChargesToolCall } from './propose-billing';
 import {
 	ListLabOrdersToolCall,
-	ProposeBillStepToolCall,
+	ListResultsToReviewToolCall,
 	ProposeCancelOrderToolCall,
+	ProposeLabOrderStepToolCall,
+	ProposeOrderToolCall,
+	ProposeResultReviewToolCall,
+} from './propose-diagnostics-actions';
+import { ProposeEncounterToolCall } from './propose-encounter';
+import { ProposeEncounterNoteToolCall } from './propose-encounter-note';
+import { ProposeMedicalCertificateToolCall, ProposePrescriptionToolCall } from './propose-encounter-record';
+import { ProposePatientRegistrationToolCall } from './propose-patient-registration';
+import {
 	ProposeDiagnosisToolCall,
 	ProposeIssueDocumentToolCall,
-	ProposeLabOrderStepToolCall,
 	ProposePatientUpdateToolCall,
 	ProposeSaveReportToolCall,
 	ProposeVoidDiagnosisToolCall,
@@ -63,7 +56,6 @@ const toolComponents: Partial<{
 	propose_encounter: ProposeEncounterToolCall,
 	propose_encounter_note: ProposeEncounterNoteToolCall,
 	find_patient: FindPatientToolCall,
-	explain_result: ExplainResultToolCall,
 	chart_patient_trend: ClinicalChartToolCall,
 	chart_facility_panel: ClinicalChartToolCall,
 	create_report: ReportToolCall,

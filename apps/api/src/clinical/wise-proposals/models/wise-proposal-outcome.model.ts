@@ -14,10 +14,10 @@ export class WiseProposalOutcome {
 	@Field({ description: '`confirmed` or `cancelled`.' })
 	status: string;
 
-	@Field(() => String, { nullable: true })
+	@Field(() => String, { nullable: true, description: 'The record the card was confirmed into (`entity_id`).' })
 	resourceId: string | null;
 }
 
 export function toWiseProposalOutcome(row: WiseProposalOutcomeRow): WiseProposalOutcome {
-	return { toolCallId: row.toolCallId, toolName: row.toolName, status: row.status, resourceId: row.resourceId };
+	return { toolCallId: row.toolCallId, toolName: row.toolName, status: row.status, resourceId: row.entityId };
 }

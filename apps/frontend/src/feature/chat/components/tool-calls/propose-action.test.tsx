@@ -5,13 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-	ProposeAllergyToolCall,
-	ProposeOrderToolCall,
-	ProposeRemoveAllergyToolCall,
-	ProposeResultReviewToolCall,
-	ProposeVitalsToolCall,
-} from './propose-action';
+import { ProposeAllergyToolCall, ProposeRemoveAllergyToolCall, ProposeVitalsToolCall } from './propose-action';
 import type { ReactNode } from 'react';
 
 const mocks = vi.hoisted(() => ({
@@ -65,7 +59,7 @@ vi.mock('@/lib/wise-actions-api', () => ({
 	wiseActionsApi: { resultEvaluation: mocks.query('evaluation', () => null) },
 }));
 vi.mock('@/lib/patient-api', () => ({
-	patientApi: { patient: { facilities: mocks.query('facilities', () => [{ id: 'hc', name: 'Health Center' }]) } },
+	patientApi: { patient: { clinics: mocks.query('clinics', () => [{ id: 'c1', name: 'Health Center' }]) } },
 }));
 vi.mock('@/lib/encounter-api', () => ({
 	encounterApi: { encounter: { list: { pathFilter: () => ({ queryKey: ['encounters'] }) } } },
@@ -155,8 +149,8 @@ describe('Wise action cards', () => {
 		expect(await screen.findByText(/isn't this patient's/)).toBeTruthy();
 	});
 
-	it('adds an allergy at the clinician’s only facility', async () => {
-		renderCard(ProposeAllergyToolCall, 'propose_allergy', { substance: 'Penicillin', reaction: 'Rash' });
+	it('adds an allergy to the chart patient', async () => {
+		renderCard(ProposeAllergyToolCall, 'propose_allergy', { allergen: 'Penicillin', reaction: 'Rash' });
 		expect((await screen.findByTestId('drafted-allergy')).textContent).toContain('Penicillin');
 		await waitFor(() =>
 			expect(screen.getByRole('button', { name: /Add allergy/ })).toHaveProperty('disabled', false),
@@ -165,9 +159,8 @@ describe('Wise action cards', () => {
 		await waitFor(() =>
 			expect(mocks.addAllergy).toHaveBeenCalledWith({
 				patientId: 'p1',
-				facilityId: 'hc',
-				substance: 'Penicillin',
-				kind: 'drug',
+				allergen: 'Penicillin',
+				type: 'DRUG',
 				reaction: 'Rash',
 				severity: null,
 				wiseOrigin: origin('propose_allergy'),
@@ -176,8 +169,8 @@ describe('Wise action cards', () => {
 	});
 
 	it('removes a recorded allergy only with a reason and a second click', async () => {
-		mocks.allergies = [{ id: 'a1', substance: 'Penicillin', kind: 'drug', reaction: 'Rash', severity: null }];
-		renderCard(ProposeRemoveAllergyToolCall, 'propose_remove_allergy', { substance: 'penicillin' });
+		mocks.allergies = [{ id: 'a1', allergen: 'Penicillin', type: 'DRUG', reaction: 'Rash', severity: null }];
+		renderCard(ProposeRemoveAllergyToolCall, 'propose_remove_allergy', { allergen: 'penicillin' });
 		const confirm = await screen.findByRole('button', { name: /Remove allergy/ });
 		expect(confirm).toHaveProperty('disabled', true);
 		fireEvent.change(screen.getByLabelText(/Reason/), { target: { value: 'Entered in error' } });
@@ -194,69 +187,7 @@ describe('Wise action cards', () => {
 	});
 
 	it('says so when the allergy to remove is not recorded', async () => {
-		renderCard(ProposeRemoveAllergyToolCall, 'propose_remove_allergy', { substance: 'Shrimp' });
+		renderCard(ProposeRemoveAllergyToolCall, 'propose_remove_allergy', { allergen: 'Shrimp' });
 		expect(await screen.findByText(/no recorded allergy to Shrimp/)).toBeTruthy();
-	});
-
-	it('reviews a critical result only with a note and a second click', async () => {
-		mocks.results = [
-			{
-				id: 'r1',
-				code: '4548-4',
-				display: 'Hemoglobin A1c',
-				value: '12.4',
-				unit: '%',
-				refRange: '4.0-5.6',
-				urgency: 'critical',
-				reviewedAt: null,
-				sourceFacility: { id: 'lab1', name: 'Bohol Diagnostics' },
-			},
-		];
-		renderCard(ProposeResultReviewToolCall, 'propose_result_review', { resultId: 'r1' }, { subjectId: 'r1' });
-		expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('act now'));
-		expect(screen.getByRole('button', { name: /Mark critical result reviewed/ })).toHaveProperty('disabled', true);
-		fireEvent.change(screen.getByLabelText(/Note/), { target: { value: 'Called the patient' } });
-		click(/Mark critical result reviewed/);
-		expect(mocks.review).not.toHaveBeenCalled();
-		click(/Yes, mark critical result reviewed/);
-		await waitFor(() =>
-			expect(mocks.review).toHaveBeenCalledWith({
-				resultId: 'r1',
-				note: 'Called the patient',
-				wiseOrigin: { ...origin('propose_result_review'), edited: true },
-			}),
-		);
-	});
-
-	it('orders the resolved tests at the lab the clinician named, in one call', async () => {
-		renderCard(
-			ProposeOrderToolCall,
-			'propose_order',
-			{ encounterId: 'e1', tests: ['HbA1c', 'FBS'], targetFacility: 'bohol' },
-			{
-				subjectId: 'e1',
-				tests: [
-					{ code: '4548-4', display: 'Hemoglobin A1c', kind: 'lab' },
-					{ code: '1558-6', display: 'Fasting glucose', kind: 'lab' },
-				],
-			},
-		);
-		await waitFor(() => expect(screen.getByLabelText('Send to')).toHaveProperty('value', 'lab1'));
-		click(/Order 2 tests/);
-		await waitFor(() =>
-			expect(mocks.createOrders).toHaveBeenCalledWith({
-				encounterId: 'e1',
-				codes: ['4548-4', '1558-6'],
-				targetOrgId: 'lab1',
-				priority: 'routine',
-				notes: null,
-				wiseOrigin: origin('propose_order'),
-			}),
-		);
-		await waitFor(() =>
-			expect(mocks.queueOrSendMessage).toHaveBeenCalledWith({
-				text: 'I ordered Hemoglobin A1c, Fasting glucose at Bohol Diagnostics.',
-			}),
-		);
 	});
 });

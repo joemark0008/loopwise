@@ -1,77 +1,64 @@
 import { Injectable } from '@nestjs/common';
 
-import type { Prisma } from '../../generated/prisma/client.js';
+import type { ClinicalDocument, Prisma } from '../../generated/prisma/client.js';
+import type { ClinicalTx } from '../rls/clinical-db.service.js';
 
-const withAuthor = { createdBy: { select: { name: true } } } satisfies Prisma.ClinicalDocumentInclude;
-export type DocumentRow = Prisma.ClinicalDocumentGetPayload<{ include: typeof withAuthor }>;
+/** A saved report with the name of who saved it (`created_by_id` is a plain id: the user is looked up). */
+export type DocumentRow = ClinicalDocument & { createdByName: string };
 
-type Tx = Prisma.TransactionClient;
-
-/** Clinical reads and audit rows of Wise reports, in the transaction of `ClinicalDbService.asUser`. */
+/** Clinical reads and writes of Wise reports, in the transaction of `ClinicalDbService.asUser`. */
 @Injectable()
 export class ReportsRepository {
-	async isVisible(tx: Tx, patientId: string): Promise<boolean> {
-		return (await tx.patient.count({ where: { id: patientId } })) > 0;
+	/** The patient's organization, when the user may see them (row-level security); null otherwise. */
+	visiblePatient(tx: ClinicalTx, patientId: string): Promise<{ organizationId: string } | null> {
+		return tx.patient.findFirst({ where: { id: patientId, deletedAt: null }, select: { organizationId: true } });
 	}
 
 	/** Names of the patients the user may see, by id; a patient they can't see is simply missing. */
-	async patientNames(tx: Tx, patientIds: string[]): Promise<Map<string, string>> {
+	async patientNames(tx: ClinicalTx, patientIds: string[]): Promise<Map<string, string>> {
 		if (patientIds.length === 0) {
 			return new Map();
 		}
 		const rows = await tx.patient.findMany({
 			where: { id: { in: patientIds } },
-			select: { id: true, givenName: true, familyName: true },
+			select: { id: true, firstName: true, lastName: true },
 		});
-		return new Map(rows.map((row) => [row.id, `${row.givenName} ${row.familyName}`]));
+		return new Map(rows.map((row) => [row.id, `${row.firstName} ${row.lastName}`]));
 	}
 
-	async userName(tx: Tx, userId: string): Promise<string> {
-		return (await tx.user.findUnique({ where: { id: userId }, select: { name: true } }))?.name ?? 'Unknown user';
+	async userName(tx: ClinicalTx, userId: string): Promise<string> {
+		return (await this.userNames(tx, [userId])).get(userId) ?? 'Unknown user';
 	}
 
-	writeAudit(
-		tx: Tx,
-		entry: {
-			userId: string;
-			patientId: string | null;
-			action: string;
-			resource?: string;
-			resourceId: string;
-			reason: string;
-			origin?: Prisma.InputJsonValue;
-		},
-	) {
-		return tx.auditLog.create({
-			data: {
-				userId: entry.userId,
-				patientId: entry.patientId,
-				action: entry.action,
-				resource: entry.resource ?? 'report',
-				resourceId: entry.resourceId,
-				reason: entry.reason,
-				...(entry.origin && { origin: entry.origin }),
-			},
-		});
+	async createDocument(tx: ClinicalTx, data: Prisma.ClinicalDocumentUncheckedCreateInput): Promise<DocumentRow> {
+		return (await this.withAuthors(tx, [await tx.clinicalDocument.create({ data })]))[0];
 	}
 
-	createDocument(tx: Tx, data: Prisma.ClinicalDocumentUncheckedCreateInput): Promise<DocumentRow> {
-		return tx.clinicalDocument.create({ data, include: withAuthor });
+	async documentBySource(tx: ClinicalTx, sourceToolCallId: string): Promise<DocumentRow | null> {
+		const row = await tx.clinicalDocument.findUnique({ where: { sourceToolCallId } });
+		return row && (await this.withAuthors(tx, [row]))[0];
 	}
 
-	documentBySource(tx: Tx, sourceToolCallId: string): Promise<DocumentRow | null> {
-		return tx.clinicalDocument.findUnique({ where: { sourceToolCallId }, include: withAuthor });
+	async document(tx: ClinicalTx, id: string): Promise<DocumentRow | null> {
+		const row = await tx.clinicalDocument.findUnique({ where: { id } });
+		return row && (await this.withAuthors(tx, [row]))[0];
 	}
 
-	document(tx: Tx, id: string): Promise<DocumentRow | null> {
-		return tx.clinicalDocument.findUnique({ where: { id }, include: withAuthor });
+	async patientDocuments(tx: ClinicalTx, patientId: string): Promise<DocumentRow[]> {
+		const rows = await tx.clinicalDocument.findMany({ where: { patientId }, orderBy: { createdAt: 'desc' } });
+		return this.withAuthors(tx, rows);
 	}
 
-	patientDocuments(tx: Tx, patientId: string): Promise<DocumentRow[]> {
-		return tx.clinicalDocument.findMany({
-			where: { patientId },
-			include: withAuthor,
-			orderBy: { createdAt: 'desc' },
-		});
+	private async withAuthors(tx: ClinicalTx, rows: ClinicalDocument[]): Promise<DocumentRow[]> {
+		const names = await this.userNames(tx, [...new Set(rows.map((row) => row.createdById))]);
+		return rows.map((row) => ({ ...row, createdByName: names.get(row.createdById) ?? 'Unknown user' }));
+	}
+
+	private async userNames(tx: ClinicalTx, ids: string[]): Promise<Map<string, string>> {
+		if (ids.length === 0) {
+			return new Map();
+		}
+		const users = await tx.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } });
+		return new Map(users.map((user) => [user.id, user.name]));
 	}
 }

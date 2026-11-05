@@ -1,7 +1,9 @@
+import { ENCOUNTER_TYPE_LABELS, ENCOUNTER_TYPES } from '@loopwise/shared/encounter';
 import { useId } from 'react';
 import styles from './patient-fields.module.css';
+import type { EncounterType } from '@loopwise/shared/encounter';
 import type { ReactNode } from 'react';
-import type { EncounterFormErrors, EncounterFormValues } from './encounter-form-values';
+import type { EncounterFormErrors, EncounterFormValues, InitialEncounterStatus } from './encounter-form-values';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,13 +12,13 @@ import { Textarea } from '@/components/ui/textarea';
 export function EncounterFields({
 	values,
 	errors,
-	facilities,
+	clinics,
 	onChange,
 	disabled,
 }: {
 	values: EncounterFormValues;
 	errors: EncounterFormErrors;
-	facilities: { id: string; name: string }[];
+	clinics: { id: string; name: string }[];
 	onChange: (values: EncounterFormValues) => void;
 	disabled?: boolean;
 }) {
@@ -25,7 +27,7 @@ export function EncounterFields({
 
 	return (
 		<div className={styles.patientFields}>
-			<Field label='Reason for visit' error={errors.reason} wide>
+			<Field label='Chief complaint' error={errors.reason} wide>
 				{(id) => (
 					<Input
 						id={id}
@@ -60,17 +62,57 @@ export function EncounterFields({
 					/>
 				)}
 			</Field>
-			{facilities.length > 1 && (
-				<Field label='Facility' error={errors.facilityId}>
+			<Field label='Kind of visit' error={errors.type}>
+				{() => (
+					<Select
+						value={values.type}
+						onValueChange={(value) => set('type', value as EncounterType)}
+						disabled={disabled}
+					>
+						<SelectTrigger className={styles.patientFieldControl} aria-label='Kind of visit'>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{ENCOUNTER_TYPES.map((type) => (
+								<SelectItem key={type} value={type}>
+									{ENCOUNTER_TYPE_LABELS[type]}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				)}
+			</Field>
+			<Field label='Status' error={errors.status}>
+				{() => (
+					<Select
+						value={values.status || 'DEFAULT'}
+						onValueChange={(value) =>
+							set('status', value === 'DEFAULT' ? '' : (value as InitialEncounterStatus))
+						}
+						disabled={disabled}
+					>
+						<SelectTrigger className={styles.patientFieldControl} aria-label='Status'>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value='DEFAULT'>Automatic</SelectItem>
+							<SelectItem value='OPEN'>Waiting (checked in)</SelectItem>
+							<SelectItem value='IN_PROGRESS'>With the doctor</SelectItem>
+						</SelectContent>
+					</Select>
+				)}
+			</Field>
+			{clinics.length > 1 && (
+				<Field label='Clinic' error={errors.clinicId}>
 					{() => (
-						<Select value={values.facilityId} onValueChange={(value) => set('facilityId', value)}>
-							<SelectTrigger className={styles.patientFieldControl} aria-label='Facility'>
-								<SelectValue placeholder='Choose the facility' />
+						<Select value={values.clinicId} onValueChange={(value) => set('clinicId', value)}>
+							<SelectTrigger className={styles.patientFieldControl} aria-label='Clinic'>
+								<SelectValue placeholder='Choose the clinic' />
 							</SelectTrigger>
 							<SelectContent>
-								{facilities.map((facility) => (
-									<SelectItem key={facility.id} value={facility.id}>
-										{facility.name}
+								{clinics.map((clinic) => (
+									<SelectItem key={clinic.id} value={clinic.id}>
+										{clinic.name}
 									</SelectItem>
 								))}
 							</SelectContent>

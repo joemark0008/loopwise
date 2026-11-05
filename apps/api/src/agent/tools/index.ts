@@ -27,7 +27,6 @@ import createReport from './create-report.js';
 import describeAnalytics from './describe-analytics.js';
 import displayChart from './display-chart.js';
 import { createDisplayMapTool } from './display-map.js';
-import explainResult from './explain-result.js';
 import findPatient from './find-patient.js';
 import getMetric from './get-metric.js';
 import listLabOrders from './list-lab-orders.js';
@@ -80,7 +79,6 @@ export const tools = {
 	describe_analytics: describeAnalytics,
 	run_analytics_sql: runAnalyticsSql,
 	get_metric: getMetric,
-	explain_result: explainResult,
 	report: reportTool,
 	// Wise actions (DESIGN.md §7.3): one definition each in `@loopwise/shared/wise-actions`, one shared card.
 	propose_vitals: createActionTool(proposeVitals),

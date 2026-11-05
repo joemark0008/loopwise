@@ -50,13 +50,20 @@ vi.mock('./clarification', () => ({
 	findAnswerForToolCall: (messages: unknown[]) => (messages[0] as string | undefined) ?? null,
 }));
 
-const DRAFT = { givenName: 'Juan', familyName: 'Dela Cruz', birthDate: '1980-05-02', sex: 'male', mrn: 'THC-9001' };
-const FACILITIES = [{ id: 'hc', name: 'Tagbilaran City Health Center' }];
+const DRAFT = {
+	givenName: 'Juan',
+	familyName: 'Dela Cruz',
+	birthDate: '1980-05-02',
+	sex: 'MALE',
+	philHealthId: '12-345678901-2',
+};
+const CLINICS = [{ id: 'c1', name: 'Tagbilaran City Health Center' }];
 const PATIENT = {
 	id: 'p-new',
 	givenName: 'Juan',
 	familyName: 'Dela Cruz',
-	identifiers: [{ system: 'MRN', value: 'THC-9001', facility: null }],
+	patientNo: 'TAG-PT-2026-000009',
+	identifications: [{ id: 'i1', type: 'PHILHEALTH_ID', idNumber: '12-345678901-2', label: 'PhilHealth' }],
 };
 const MASKED = {
 	patientId: 'p-old',
@@ -65,7 +72,6 @@ const MASKED = {
 	matchedOn: 'name, birth date and sex',
 	displayName: 'J. D.',
 	birthYear: 1980,
-	facilityNames: ['Bohol Regional Hospital'],
 };
 
 const renderCard = (output: object = {}, input: object = DRAFT) => {
@@ -74,7 +80,7 @@ const renderCard = (output: object = {}, input: object = DRAFT) => {
 		toolCallId: 'call_1',
 		state: 'output-available',
 		input,
-		output: { success: true, facilities: FACILITIES, duplicates: [], ...output },
+		output: { success: true, clinics: CLINICS, duplicates: [], ...output },
 	} as unknown as ToolCallComponentProps<'propose_patient_registration'>['toolPart'];
 	return render(
 		<MantineProvider>
@@ -101,7 +107,8 @@ describe('ProposePatientRegistrationToolCall', () => {
 	it('shows the draft and registers nothing until consent and Confirm', async () => {
 		renderCard();
 		expect(screen.getByText('Juan Dela Cruz')).toBeTruthy();
-		expect(screen.getByText('THC-9001')).toBeTruthy();
+		expect(screen.getByText('12-345678901-2')).toBeTruthy();
+		expect(screen.getByText('Assigned by the clinic')).toBeTruthy();
 		expect(screen.getByText('Tagbilaran City Health Center')).toBeTruthy();
 		expect(confirmButton().disabled).toBe(true);
 
@@ -109,15 +116,18 @@ describe('ProposePatientRegistrationToolCall', () => {
 		fireEvent.click(confirmButton());
 		await waitFor(() =>
 			expect(mocks.register).toHaveBeenCalledWith({
-				facilityId: 'hc',
+				clinicId: 'c1',
 				givenName: 'Juan',
+				middleName: null,
 				familyName: 'Dela Cruz',
 				birthDate: '1980-05-02',
-				sex: 'male',
+				sex: 'MALE',
 				phone: null,
 				preferredLanguage: 'en',
-				mrn: 'THC-9001',
-				philHealthId: null,
+				patientNo: null,
+				philHealthId: '12-345678901-2',
+				barangayCode: null,
+				addressLine: null,
 				consentGiven: true,
 				acknowledgeDuplicates: false,
 				wiseOrigin: {
@@ -130,7 +140,7 @@ describe('ProposePatientRegistrationToolCall', () => {
 		);
 		await waitFor(() =>
 			expect(mocks.queueOrSendMessage).toHaveBeenCalledWith({
-				text: 'I registered Juan Dela Cruz (MRN THC-9001).',
+				text: 'I registered Juan Dela Cruz (patient no. TAG-PT-2026-000009).',
 			}),
 		);
 	});
@@ -183,14 +193,14 @@ describe('ProposePatientRegistrationToolCall', () => {
 	});
 
 	it('cannot register over an identifier match', () => {
-		renderCard({ duplicates: [{ ...MASKED, match: 'EXACT_IDENTIFIER', matchedOn: 'MRN THC-9001' }] });
+		renderCard({ duplicates: [{ ...MASKED, match: 'EXACT_IDENTIFIER', matchedOn: 'PhilHealth 12-345678901-2' }] });
 		giveConsent();
 		expect(confirmButton().disabled).toBe(true);
 		expect(screen.getByText('This patient is already registered')).toBeTruthy();
 	});
 
 	it('shrinks to how it ended once answered', () => {
-		mocks.messages = ['I registered Juan Dela Cruz (MRN THC-9001).'];
+		mocks.messages = ['I registered Juan Dela Cruz (patient no. TAG-PT-2026-000009).'];
 		renderCard();
 		expect(screen.getByText('Registered')).toBeTruthy();
 		expect(screen.queryByRole('button')).toBeNull();

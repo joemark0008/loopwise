@@ -3,31 +3,35 @@
 # ------------------------------------------------------
 
 input AddAllergyInput {
-  """The facility recording it (`myFacilities`)."""
-  facilityId: ID!
-  kind: AllergyKind
+  """e.g. "Penicillin", "Shrimp"."""
+  allergen: String!
   patientId: ID!
   reaction: String
-  severity: AllergySeverity
-  substance: String!
+  severity: Severity
+
+  """Default DRUG."""
+  type: AllergyType
 
   """Set by a Wise card (`propose_allergy`)."""
   wiseOrigin: WiseOriginInput
 }
 
 input AddDiagnosisInput {
-  certainty: DiagnosisCertainty
-
-  """The diagnosis as written, normally the ICD-10 title."""
-  display: String!
+  """The diagnosis as printed, normally the ICD-10 title."""
+  description: String!
   encounterId: ID!
 
-  """ICD-10 (WHO 2010), e.g. `I10` or `E11.9`."""
+  """ICD-10 code of `icd10_codes`, e.g. `I10` or `E11.9`."""
   icd10Code: String!
 
-  """Makes it the primary diagnosis (the previous one stops being)."""
-  isPrimary: Boolean
+  """Default true; false for a provisional diagnosis."""
+  isFinal: Boolean
   notes: String
+
+  """
+  Default: PRIMARY for the first diagnosis, else SECONDARY. A new PRIMARY demotes the previous one.
+  """
+  type: DiagnosisType
 
   """
   Set when completing a confirmed `propose_encounter` card (its drafted vitals and diagnoses).
@@ -35,17 +39,11 @@ input AddDiagnosisInput {
   wiseOrigin: WiseOriginInput
 }
 
-enum AllergyKind {
-  drug
-  environment
-  food
-  other
-}
-
-enum AllergySeverity {
-  mild
-  moderate
-  severe
+enum AllergyType {
+  DRUG
+  ENVIRONMENTAL
+  FOOD
+  OTHER
 }
 
 type AppVersion {
@@ -64,18 +62,14 @@ type AuthProviders {
   smtp: Boolean!
 }
 
-"""The 20% senior citizen / PWD discount."""
-enum BillDiscountKind {
-  pwd
-  senior_citizen
-}
+"""A barangay of the PSGC (Philippine Standard Geographic Code)."""
+type Barangay {
+  """PSGC code of its city or municipality."""
+  cityMunicipalityCode: String!
 
-"""Draft (editable), finalized (locked), paid, voided."""
-enum BillStatus {
-  draft
-  finalized
-  paid
-  voided
+  """PSGC code."""
+  code: String!
+  name: String!
 }
 
 type CancelChatResult {
@@ -85,43 +79,40 @@ type CancelChatResult {
   outcome: String!
 }
 
-enum CaseState {
-  accepted
-  acknowledged
-  closed
-  confirming
-  escalated
-  lost_to_follow_up
-  notified
-  open
-  referred
-  seen
-  treatment_started
+"""
+Cancelling one test of an order (or every test still open), with the reason.
+"""
+input CancelDiagnosticOrderInput {
+  """One test of the order; without it, every test still open."""
+  itemId: ID
+  orderId: ID!
+
+  """Why, as the doctor or the lab sees it."""
+  reason: String!
+
+  """Set by a Wise card (`propose_cancel_order`, `propose_lab_order_step`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+input CancelReferralInput {
+  id: ID!
+  reason: String!
+}
+
+enum CertificateType {
+  APE_CERTIFICATE
+  DRIVERS_LICENSE_MEDICAL
+  FIT_TO_WORK
+  MEDICAL_CERTIFICATE
+  MEDICAL_CLEARANCE
+  PEME_CERTIFICATE
+  SSS_SICKNESS
+  VACCINATION_CERTIFICATE
 }
 
 input ChangePasswordInput {
   currentPassword: String!
   newPassword: String!
-}
-
-input ChargeInput {
-  code: String
-  description: String!
-  kind: ChargeKind!
-  quantity: Int!
-
-  """Pesos."""
-  unitPrice: Float!
-}
-
-enum ChargeKind {
-  consultation
-  imaging
-  laboratory
-  medicine
-  other
-  procedure
-  supply
 }
 
 """Source of a clinic chart plugin (upstream `chartPlugin.source`)."""
@@ -210,19 +201,56 @@ type ChatShareOptions {
   visibility: String
 }
 
-"""A clinic the user can access, with their role in it."""
-type ClinicSummary {
-  createdAt: DateTime!
+input ClinicEncountersInput {
+  clinicId: ID!
+
+  """Visits started on or after this ISO 8601 time."""
+  startedFrom: String
+
+  """Default: every status but CANCELLED."""
+  statuses: [EncounterStatus!]
+}
+
+"""
+A clinic as the clinical screens name it: where a patient registers or a visit happens.
+"""
+type ClinicRef {
+  """PSGC code of its city or municipality."""
+  cityMunicipalityCode: String
+
+  """Short code used in document numbers, e.g. "TAG"."""
+  code: String!
   id: ID!
   name: String!
-  orgId: String
+  organizationId: ID!
+}
+
+"""A clinic the user can access, with their role in it."""
+type ClinicSummary {
+  """
+  Short code used in document numbers, unique in the organization (e.g. `TAG`).
+  """
+  code: String!
+  createdAt: DateTime!
+  id: ID!
+
+  """Where the clinic context lives: `local` (a folder on the server)."""
+  kind: String!
+  name: String!
+  organizationId: ID!
 
   """Folder holding the clinic context and `loopwise_config.yaml`."""
   path: String
-  type: String!
+
+  """
+  The user's roles at the clinic (`user_clinic_roles`), e.g. DOCTOR or CASHIER: they pick the desks.
+  """
+  staffRoles: [StaffRole!]!
   updatedAt: DateTime!
 
-  """The user's role: admin, user, viewer or context_admin."""
+  """
+  The user's access level, derived from their roles: admin, user, viewer or context_admin.
+  """
   userRole: String!
 }
 
@@ -242,42 +270,6 @@ type ClinicalDocument {
   version: Int!
 }
 
-"""
-A test ordered for the patient (FHIR ServiceRequest), with its results.
-"""
-type ClinicalOrder {
-  acceptedAt: DateTime
-
-  """When it was rejected or cancelled."""
-  closedAt: DateTime
-  code: String!
-  codeSystem: String!
-  collectedAt: DateTime
-  createdAt: DateTime!
-  display: String
-  encounterId: ID
-  id: ID!
-  notes: String
-  priority: OrderPriority!
-  resultedAt: DateTime
-  results: [OrderResult!]!
-  reviewedAt: DateTime
-  sentAt: DateTime
-  status: OrderStatus!
-
-  """Why it was rejected or cancelled."""
-  statusReason: String
-  targetFacility: Facility
-}
-
-"""What prescriptions and certificates print about a clinician."""
-type ClinicianProfile {
-  credentials: String
-  prcLicenseNumber: String
-  ptrNumber: String
-  specialty: String
-}
-
 input CompleteSetupInput {
   email: String!
   name: String!
@@ -294,11 +286,39 @@ input CreateClinicInput {
   name: String!
 }
 
+"""
+A lab or imaging request for a visit: one order, one item per test of the clinic's catalog.
+"""
+input CreateDiagnosticOrderInput {
+  """The indication printed on the request."""
+  clinicalInfo: String
+  encounterId: ID!
+
+  """
+  The outside doctor of a walk-in lab request, when the user isn't a practitioner.
+  """
+  externalPhysician: String
+
+  """To be done outside the clinic (the request is printed)."""
+  isExternal: Boolean
+
+  """Default ROUTINE."""
+  priority: OrderPriority
+
+  """Tests of the organization's catalog (`diagnosticTests`)."""
+  testIds: [ID!]!
+
+  """Set by a Wise card (`propose_order`)."""
+  wiseOrigin: WiseOriginInput
+}
+
 input CreateEncounterInput {
-  """The facility of the visit (`myFacilities`)."""
-  facilityId: ID!
+  """The clinic of the visit (`myCareClinics`)."""
+  clinicId: ID!
   notes: String
   patientId: ID!
+
+  """The chief complaint."""
   reason: String!
 
   """The patient's chart chat, when Wise drafted the encounter."""
@@ -307,42 +327,35 @@ input CreateEncounterInput {
   """ISO 8601; now when left out."""
   startedAt: String
 
+  """
+  OPEN (checked in) or IN_PROGRESS (with the doctor). Default: IN_PROGRESS for a practitioner.
+  """
+  status: EncounterStatus
+
+  """Default CONSULTATION."""
+  type: EncounterType
+
   """Set by the Wise card (`propose_encounter`)."""
   wiseOrigin: WiseOriginInput
 }
 
-"""A test ordered from an encounter, sent to a lab or imaging facility."""
-input CreateEncounterOrderInput {
-  """LOINC code from the test list (`orderableTests`)."""
-  code: String!
+input CreateReferralInput {
+  clinicalSummary: String
   encounterId: ID!
-  notes: String
-  priority: OrderPriority
+  reason: String!
+  specialty: String
 
-  """The lab, imaging center or hospital (`orderTargets`)."""
-  targetOrgId: ID!
-}
+  """External referral: the doctor."""
+  toExternalDoctor: String
 
-"""
-Several tests ordered from one encounter, sent to one facility, in one transaction.
-"""
-input CreateEncounterOrdersInput {
-  """LOINC codes from the test list (`orderableTests`)."""
-  codes: [String!]!
-  encounterId: ID!
-  notes: String
-  priority: OrderPriority
+  """External referral: the hospital or facility."""
+  toFacility: String
 
-  """The lab, imaging center or hospital (`orderTargets`)."""
-  targetOrgId: ID!
+  """Internal referral: a practitioner (`clinicPractitioners`)."""
+  toPractitionerId: ID
 
-  """Set by a Wise card (`propose_order`)."""
-  wiseOrigin: WiseOriginInput
-}
-
-input CreateFacilityKeyInput {
-  """What the key is for, e.g. "LIS edge connector"."""
-  name: String!
+  """Default ROUTINE."""
+  urgency: OrderPriority
 }
 
 input CreateSharedChatInput {
@@ -366,16 +379,13 @@ input CreateUserInput {
   email: String!
   name: String!
 
-  """admin, user or viewer."""
+  """
+  Organization access level: admin, user or viewer (OrgRole ADMIN / MEMBER / VIEWER).
+  """
   role: String!
-}
 
-"""A newly issued facility key."""
-type CreatedFacilityKey {
-  facilityKey: FacilityKey!
-
-  """Shown once: only a hash of it is stored."""
-  key: String!
+  """Roles at the selected clinic, e.g. NURSE."""
+  staffRoles: [StaffRole!]
 }
 
 type CreatedSkill {
@@ -409,29 +419,326 @@ type DeletedSavedUsagePeriod {
   selection: UsagePeriodSelection
 }
 
-enum DiagnosisCertainty {
-  confirmed
-  provisional
+enum DiagnosisType {
+  COMORBIDITY
+  PRIMARY
+  SECONDARY
+  WORKING
+}
+
+"""Laboratory, imaging, cardio (ECG, 2D echo) or other."""
+enum DiagnosticCategory {
+  CARDIO
+  IMAGING
+  LABORATORY
+  OTHER
+}
+
+"""A lab step on one test (start the run, release the result)."""
+input DiagnosticItemStepInput {
+  itemId: ID!
+
+  """Set by a Wise card (`propose_lab_order_step`)."""
+  wiseOrigin: WiseOriginInput
+}
+
+"""A lab or imaging request of a visit (one order, one item per test)."""
+type DiagnosticOrder {
+  """The indication printed on the request."""
+  clinicalInfo: String
+  createdAt: DateTime!
+  encounterId: ID!
+
+  """The outside doctor of a walk-in lab request."""
+  externalPhysician: String
+  id: ID!
+
+  """The test is to be done outside the clinic (the request is printed)."""
+  isExternal: Boolean!
+  items: [DiagnosticOrderItem!]!
+
+  """E.g. `TAG-LAB-2026-000042` (per clinic, yearly)."""
+  orderNo: String!
+  priority: OrderPriority!
+
+  """The requesting practitioner, e.g. "Dr. Ana Reyes"."""
+  requestedByName: String
+
+  """Derived from its tests: the least advanced one still running."""
+  status: DiagnosticOrderStatus!
+}
+
+"""One ordered test, with its own status and, once entered, its result."""
+type DiagnosticOrderItem {
+  """The specimen label (barcode / accession number)."""
+  accessionNo: String
+  cancelledAt: DateTime
+  id: ID!
+  result: DiagnosticResult
+  specimenCollectedAt: DateTime
+  status: DiagnosticOrderStatus!
+
+  """Why it was cancelled."""
+  statusReason: String
+  test: DiagnosticTest!
 }
 
 """
-The clinician and facility printed on a document: the issue-time snapshot, or today's values for a draft.
+REQUESTED → (PAID) → SPECIMEN_COLLECTED → IN_PROGRESS → RESULTED → RELEASED, or CANCELLED before the result; a result that needs correcting goes back to IN_PROGRESS.
+"""
+enum DiagnosticOrderStatus {
+  CANCELLED
+  IN_PROGRESS
+  PAID
+  RELEASED
+  REQUESTED
+  RESULTED
+  SPECIMEN_COLLECTED
+}
+
+"""
+The request header of an order: its number, priority and requesting physician.
+"""
+type DiagnosticOrderSummary {
+  """The indication printed on the request."""
+  clinicalInfo: String
+  createdAt: DateTime!
+  encounterId: ID!
+
+  """The outside doctor of a walk-in lab request."""
+  externalPhysician: String
+  id: ID!
+
+  """The test is to be done outside the clinic (the request is printed)."""
+  isExternal: Boolean!
+
+  """E.g. `TAG-LAB-2026-000042` (per clinic, yearly)."""
+  orderNo: String!
+  priority: OrderPriority!
+
+  """The requesting practitioner, e.g. "Dr. Ana Reyes"."""
+  requestedByName: String
+
+  """Derived from its tests: the least advanced one still running."""
+  status: DiagnosticOrderStatus!
+}
+
+"""
+The patient a test belongs to, as the lab desk and the results inbox show them.
+"""
+type DiagnosticPatient {
+  """`YYYY-MM-DD`."""
+  birthDate: String!
+  firstName: String!
+  id: ID!
+  lastName: String!
+  middleName: String
+
+  """The MRN / chart number."""
+  patientNo: String!
+  sex: Sex!
+}
+
+"""
+A result with its test, request and patient (FHIR DiagnosticReport): a row of the results inbox and of the patient's results.
+"""
+type DiagnosticReport {
+  """The clinic whose lab did the test."""
+  clinicName: String!
+
+  """Imaging narrative."""
+  findings: String
+
+  """The worst flag of its values."""
+  flag: ResultFlag
+  id: ID!
+  impression: String
+  order: DiagnosticOrderSummary!
+  orderItemId: ID!
+  patient: DiagnosticPatient!
+
+  """When the lab released it to the doctor."""
+  releasedAt: DateTime
+  remarks: String
+  resultedAt: DateTime
+
+  """When the doctor reviewed it in the results inbox."""
+  reviewedAt: DateTime
+
+  """The test's status: RESULTED, RELEASED, or IN_PROGRESS again."""
+  status: DiagnosticOrderStatus!
+  test: DiagnosticTest!
+  urgency: ResultUrgency!
+  values: [DiagnosticResultValue!]!
+}
+
+"""
+The result of one ordered test: analyte values, or the findings of an imaging report.
+"""
+type DiagnosticResult {
+  """Imaging narrative."""
+  findings: String
+
+  """The worst flag of its values."""
+  flag: ResultFlag
+  id: ID!
+  impression: String
+
+  """When the lab released it to the doctor."""
+  releasedAt: DateTime
+  remarks: String
+  resultedAt: DateTime
+
+  """When the doctor reviewed it in the results inbox."""
+  reviewedAt: DateTime
+  urgency: ResultUrgency!
+  values: [DiagnosticResultValue!]!
+}
+
+"""One analyte of a result, with the range and flag printed at the time."""
+type DiagnosticResultValue {
+  flag: ResultFlag
+  id: ID!
+
+  """LOINC of the analyte, else the test's."""
+  loincCode: String
+  name: String!
+  numericValue: Float
+  parameterId: ID
+  referenceRange: String
+  unit: String
+
+  """As entered; the number is also in `numericValue`."""
+  value: String!
+}
+
+"""One analyte of a result as the medtech enters it."""
+input DiagnosticResultValueInput {
+  """
+  The lab calls the value in as critical (only outside its reference range).
+  """
+  critical: Boolean
+
+  """The name of a free analyte (no parameter)."""
+  name: String
+
+  """One of the test's parameters; leave out for a free analyte."""
+  parameterId: ID
+
+  """Unit of a free analyte; a parameter uses its own."""
+  unit: String
+
+  """As read; blank values are skipped."""
+  value: String!
+}
+
+"""
+A test of the organization's catalog: CBC, FBS, lipid profile, chest X-ray PA …
+"""
+type DiagnosticTest {
+  category: DiagnosticCategory!
+
+  """The catalog code, unique per organization, e.g. `HBA1C`."""
+  code: String!
+  id: ID!
+  isActive: Boolean!
+
+  """LOINC of the test (`lis_code`)."""
+  loincCode: String
+  name: String!
+
+  """In report order."""
+  parameters: [DiagnosticTestParameter!]!
+  requiresFasting: Boolean!
+
+  """Hematology, Clinical Chemistry, X-Ray …"""
+  section: String
+  specimenType: String
+  turnaroundHours: Int
+}
+
+"""
+An analyte of a test (CBC → Hgb, Hct, WBC …), with its reference range by sex.
+"""
+type DiagnosticTestParameter {
+  code: String!
+  id: ID!
+
+  """LOINC of the analyte (`lis_code`)."""
+  loincCode: String
+  name: String!
+
+  """The answers of an OPTION analyte."""
+  options: [String!]!
+  refHighFemale: Float
+  refHighMale: Float
+  refLowFemale: Float
+  refLowMale: Float
+
+  """The range when it is not numeric, e.g. "Negative"."""
+  refRangeText: String
+  sortOrder: Int!
+  unit: String
+  valueType: ResultValueType!
+}
+
+"""The patient's senior citizen (OSCA) or PWD ID on file."""
+type DiscountIdentification {
+  """The discount the ID proves."""
+  discountType: DiscountType!
+  id: ID!
+  idNumber: String!
+}
+
+"""SENIOR_CITIZEN (RA 9994) and PWD (RA 10754): 20% plus VAT exemption."""
+enum DiscountType {
+  EMPLOYEE
+  NATIONAL_ATHLETE
+  PROMO
+  PWD
+  SENIOR_CITIZEN
+  SOLO_PARENT
+  SPECIAL
+}
+
+enum Disposition {
+  ADMITTED
+  EXPIRED
+  FOR_FOLLOW_UP
+  REFERRED
+  SENT_HOME
+  TRANSFERRED_ER
+}
+
+"""
+The practitioner and clinic printed on a document: the issue-time snapshot, or today's for a draft.
 """
 type DocumentSignatory {
+  """Post-nominals, e.g. "MD"."""
   credentials: String
   facilityAddress: String
   facilityName: String!
   facilityPhone: String
+
+  """PRC license number."""
   licenseNumber: String
   name: String!
+  practitionerId: ID
+
+  """PTR number."""
   ptrNumber: String
+
+  """PDEA S2 license number."""
+  s2LicenseNo: String
+  specialty: String
 }
 
-"""Draft (editable), issued (locked), voided."""
+"""
+DRAFT (editable) or ISSUED (signed and locked; it can then only be voided).
+"""
 enum DocumentStatus {
-  draft
-  issued
-  voided
+  DRAFT
+  ISSUED
 }
 
 enum DuplicateMatch {
@@ -444,11 +751,18 @@ input EditMemoryInput {
   memoryId: ID!
 }
 
-"""A visit of a patient at a facility (DESIGN.md §5)."""
+"""
+A visit of a patient at a clinic (DESIGN.md §5): the hub every clinical record hangs off.
+"""
 type Encounter {
   assessment: String
-  doctor: EncounterDoctor
-  facility: Facility
+  clinic: ClinicRef
+  clinicId: ID!
+  disposition: Disposition
+
+  """The clinic's visit number, e.g. TAG-ENC-2026-000012."""
+  encounterNo: String!
+  endedAt: DateTime
 
   """YYYY-MM-DD."""
   followUpOn: String
@@ -464,12 +778,20 @@ type Encounter {
   physicalExam: String
   plan: String
 
+  """The doctor of the visit."""
+  practitioner: Practitioner
+
+  """The practitioner (doctor) of the visit."""
+  practitionerId: ID
+
   """The chief complaint."""
   reason: String
 
   """The chart chat Wise drafted it in, if any."""
   sourceChatId: ID
   startedAt: DateTime!
+  status: EncounterStatus!
+  type: EncounterType!
 
   """
   Moves on every change; pass it back as `expectedVersion` to refuse a stale edit.
@@ -477,137 +799,120 @@ type Encounter {
   version: Int!
 }
 
-"""The bill of an encounter (DESIGN.md §5). Amounts in pesos."""
-type EncounterBill {
-  charges: [EncounterCharge!]!
-  createdAt: DateTime!
-  discountAmount: Float!
-  discountKind: BillDiscountKind
+"""
+A visit's billing: its invoices and what the desk needs to draft or collect one.
+"""
+type EncounterBilling {
+  """
+  The user may take payments and void (cashier, billing clerk or admin at the clinic).
+  """
+  canCollect: Boolean!
+
+  """
+  The user may draft and issue (doctor, cashier, billing clerk or admin at the clinic).
+  """
+  canDraft: Boolean!
+  clinicId: ID!
+  discountIdentifications: [DiscountIdentification!]!
   encounterId: ID!
-  finalizedAt: DateTime
-  id: ID!
 
-  """Official receipt number."""
-  orNumber: String
-  paidAt: DateTime
-  philhealthCoverage: Float!
-  philhealthPackageCode: String
-  status: BillStatus!
-  subtotal: Float!
+  """Newest first, voided included; at most one is not void."""
+  invoices: [Invoice!]!
+  patientId: ID!
 
-  """What the patient pays."""
-  total: Float!
-
-  """Moves on every change; pass it back as `expectedVersion`."""
-  version: Int!
-  voidReason: String
-  voidedAt: DateTime
+  """The clinic's price list."""
+  priceList: [ServiceItemPrice!]!
+  suggestedLines: [SuggestedInvoiceLine!]!
 }
 
-type EncounterCharge {
-  """Pesos: quantity × unit price."""
-  amount: Float!
-  code: String
-  description: String!
-  id: ID!
-  kind: ChargeKind!
-  position: Int!
-  quantity: Int!
-
-  """Pesos."""
-  unitPrice: Float!
-}
-
-"""An ICD-10 coded diagnosis of the encounter."""
+"""A diagnosis of the encounter, ICD-10 coded (PhilHealth)."""
 type EncounterDiagnosis {
-  certainty: DiagnosisCertainty!
-  createdAt: DateTime!
-  display: String!
-  icd10Code: String!
+  """As printed on the Rx and certificate, normally the ICD-10 title."""
+  description: String!
+  encounterId: ID!
+
+  """ICD-10 code of `icd10_codes`."""
+  icd10Code: String
   id: ID!
-  isPrimary: Boolean!
+
+  """False while it is still an impression being worked up."""
+  isFinal: Boolean!
   notes: String
+  recordedAt: DateTime!
+  sortOrder: Int!
+
+  """One PRIMARY per encounter."""
+  type: DiagnosisType!
   voidReason: String
   voidedAt: DateTime
-}
-
-type EncounterDoctor {
-  id: ID!
-  name: String!
 }
 
 """
-An encounter and everything recorded in it, read as the user (row-level security).
+An encounter and what was recorded in it, read as the user (row-level security). Prescriptions, certificates, referrals, orders and invoices are fields their own modules add.
 """
 type EncounterRecord {
-  """The patient's allergies (not voided)."""
+  """The patient's active allergies."""
   allergies: [PatientAllergy!]!
 
-  """Newest first: at most one is not voided."""
-  bills: [EncounterBill!]!
-
-  """The user works at the encounter’s facility, so may add to its record."""
+  """The user works at the clinic of the visit, so may add to its record."""
   canEdit: Boolean!
 
-  """Primary first, voided included."""
+  """Primary first, then by sort order; voided included."""
   diagnoses: [EncounterDiagnosis!]!
   encounter: Encounter!
 
-  """Newest first."""
+  """Newest first, voided included."""
   medicalCertificates: [MedicalCertificate!]!
-  orders: [ClinicalOrder!]!
+
+  """Newest first, voided included."""
+  prescriptions: [Prescription!]!
 
   """Newest first."""
-  prescriptions: [Prescription!]!
+  referrals: [Referral!]!
 
   """Newest first, voided included."""
   vitals: [VitalSigns!]!
 }
 
-type EvaluatedRule {
-  """The band's range or codes; null when the value was not recognised."""
-  band: String
-  code: String!
-  comparedUnit: String
-
-  """The value in the band's unit, after conversion."""
-  comparedValue: Float
-  display: String!
-
-  """The value as received, with its unit."""
-  received: String!
+"""
+OPEN (checked in, triage) → IN_PROGRESS (with the doctor) → FOR_BILLING → COMPLETED; or CANCELLED.
+"""
+enum EncounterStatus {
+  CANCELLED
+  COMPLETED
+  FOR_BILLING
+  IN_PROGRESS
+  OPEN
 }
 
-enum EvidenceType {
-  dispense
-  result
-  signoff
-  visit_note
-}
-
-"""A facility (organization) the user works at."""
-type Facility {
-  id: ID!
-  name: String!
-  slug: String!
-
-  """
-  `clinic`, `lab`, `imaging`, `hospital`, `pharmacy` or `program`: picks the staff role on screen.
-  """
-  type: String
+enum EncounterType {
+  APE
+  CONSULTATION
+  DENTAL
+  EMERGENCY
+  FOLLOW_UP
+  IMMUNIZATION
+  KONSULTA_FPE
+  KONSULTA_VISIT
+  LAB_ONLY
+  PEME
+  PRENATAL
+  PROCEDURE
+  TELECONSULTATION
+  WELL_BABY
 }
 
 """
-A facility's machine key for the HL7 / edge-connector ingest. The key itself is never shown again.
+The result of one test: analyte values (laboratory) or findings and impression (imaging). Entering it again before release replaces it; after release it is a correction that needs releasing again.
 """
-type FacilityKey {
-  createdAt: DateTime!
-  id: ID!
+input EnterDiagnosticResultInput {
+  findings: String
+  impression: String
+  itemId: ID!
 
-  """The first characters of the key, to tell keys apart."""
-  keyPrefix: String!
-  lastUsedAt: DateTime
-  name: String!
+  """For a correction: what changed and why."""
+  remarks: String
+  values: [DiagnosticResultValueInput!]! = []
 }
 
 input ForkSharedChatInput {
@@ -626,61 +931,234 @@ type Icd10Code {
   title: String!
 }
 
+enum IdentificationType {
+  BARANGAY_ID
+  COMPANY_ID
+  DRIVERS_LICENSE
+  GSIS
+  OTHER
+  PASSPORT
+  PHILHEALTH_ID
+  PHILSYS_NATIONAL_ID
+  POSTAL_ID
+  PRC_ID
+  PWD
+  SENIOR_CITIZEN_OSCA
+  SOLO_PARENT
+  SSS
+  STUDENT_ID
+  TIN
+  UMID
+  VOTERS_ID
+}
+
+"""A sales invoice (BIR, RA 11976). Amounts in pesos."""
+type Invoice {
+  amountPaid: Float!
+  balance: Float!
+  buyerName: String!
+  clinicId: ID!
+  createdAt: DateTime!
+  discounts: [InvoiceDiscount!]!
+  docType: InvoiceDocType!
+  encounterId: ID
+
+  """Total of the lines as charged."""
+  grossAmount: Float!
+  id: ID!
+  invoiceDate: DateTime!
+
+  """Assigned when issued."""
+  invoiceNo: String
+  issuedAt: DateTime
+
+  """VAT removed for a senior citizen / PWD."""
+  lessVatScPwd: Float!
+  lines: [InvoiceLine!]!
+
+  """Amount due."""
+  netAmount: Float!
+  otherDiscount: Float!
+
+  """Oldest first."""
+  payments: [InvoicePayment!]!
+  scPwdDiscount: Float!
+  status: InvoiceStatus!
+  vatAmount: Float!
+  vatExemptSales: Float!
+  vatableSales: Float!
+
+  """Moves on every change; pass it back as `expectedVersion`."""
+  version: Int!
+  voidReason: String
+  voidedAt: DateTime
+  zeroRatedSales: Float!
+}
+
+"""
+A statutory discount with the ID the beneficiary presented (RA 9994 / RA 10754).
+"""
+type InvoiceDiscount {
+  amount: Float!
+  beneficiaryName: String
+  id: ID!
+
+  """The OSCA / PWD ID number as presented."""
+  idNumber: String
+
+  """The patient's ID on file, when it matched."""
+  identificationId: ID
+
+  """0.2 = 20%."""
+  rate: Float!
+  type: DiscountType!
+
+  """VAT removed for the beneficiary."""
+  vatExempted: Float!
+}
+
+enum InvoiceDocType {
+  ACKNOWLEDGMENT_RECEIPT
+  BILLING_STATEMENT
+  OFFICIAL_RECEIPT
+  SALES_INVOICE
+}
+
+"""A line of an invoice (pesos)."""
+type InvoiceLine {
+  category: ServiceCategory
+  description: String!
+
+  """SC/PWD VAT removed plus discount on the line."""
+  discountAmount: Float!
+
+  """The visit the charge came from."""
+  encounterId: ID
+  id: ID!
+  isProfessionalFee: Boolean!
+  lineTotal: Float!
+  quantity: Float!
+  serviceItemCode: String
+
+  """The catalog item, when the line is one."""
+  serviceItemId: ID
+  taxType: TaxType!
+
+  """As charged: VAT included for VATABLE lines."""
+  unitPrice: Float!
+  vatAmount: Float!
+}
+
+input InvoiceLineInput {
+  description: String!
+  quantity: Float!
+
+  """The catalog item; else matched by name, else a free line."""
+  serviceItemId: ID
+
+  """Ignored for catalog items (the item's applies)."""
+  taxType: TaxType
+
+  """Pesos, VAT included for VATABLE items."""
+  unitPrice: Float!
+}
+
+"""A payment allocated to an invoice (amount = the part allocated to it)."""
+type InvoicePayment {
+  amount: Float!
+  changeAmount: Float
+  id: ID!
+  method: PaymentMethod!
+  paymentNo: String!
+  receivedAt: DateTime!
+
+  """OR number, e-wallet reference or PhilHealth package code."""
+  referenceNo: String
+  status: PaymentStatus!
+  tenderedAmount: Float
+  voidReason: String
+}
+
+"""
+DRAFT (editable), ISSUED (numbered and locked), PARTIALLY_PAID, PAID, VOID.
+"""
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  PARTIALLY_PAID
+  VOID
+}
+
+input IssueInvoiceInput {
+  expectedVersion: Int
+  id: ID!
+
+  """Set by a Wise card (`propose_bill_step`)."""
+  wiseOrigin: WiseOriginInput
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
 scalar JSON
 
 """
-An order on the receiving facility's worklist (DESIGN.md §2 steps 2–4).
+How many tests of the lab worklist are at one step (the worklist tabs).
 """
-type LabOrder {
-  acceptedAt: DateTime
-  code: String!
-  collectedAt: DateTime
-  createdAt: DateTime!
-  display: String
-  id: ID!
-  notes: String
-  orderingDoctorName: String!
-  orderingFacilityName: String!
-  patient: LabOrderPatient!
-  priority: OrderPriority!
-  resultedAt: DateTime
-  sentAt: DateTime
-  status: OrderStatus!
-  targetOrgId: ID!
-}
-
-"""How many orders the facility has in one status (the worklist tabs)."""
-type LabOrderCount {
+type LabWorklistCount {
   count: Int!
-  status: OrderStatus!
+  status: DiagnosticOrderStatus!
 }
 
-"""The patient as the lab sees them on its worklist."""
-type LabOrderPatient {
-  birthDate: String!
-  familyName: String!
-  givenName: String!
+"""A test on the clinic's lab worklist, with its request and patient."""
+type LabWorklistItem {
+  """The specimen label (barcode / accession number)."""
+  accessionNo: String
+  cancelledAt: DateTime
   id: ID!
-  sex: String!
+  order: DiagnosticOrderSummary!
+  patient: DiagnosticPatient!
+  result: DiagnosticResult
+  specimenCollectedAt: DateTime
+  status: DiagnosticOrderStatus!
+
+  """Why it was cancelled."""
+  statusReason: String
+  test: DiagnosticTest!
 }
 
 """
 Use an existing patient that `checkPatientDuplicates` matched, instead of a new one.
 """
 input LinkExistingPatientInput {
+  """House no., street, purok / sitio."""
+  addressLine: String
+
+  """PSGC code of the barangay of residence (`barangays`)."""
+  barangayCode: String
+
   """YYYY-MM-DD."""
   birthDate: String!
+
+  """
+  The clinic registering the patient (`myCareClinics`); its organization owns them.
+  """
+  clinicId: ID!
   consentGiven: Boolean!
 
-  """The facility registering the patient (`myFacilities`)."""
-  facilityId: ID!
+  """Last name."""
   familyName: String!
+
+  """First name."""
   givenName: String!
-  mrn: String
+  middleName: String
   patientId: ID!
+
+  """
+  An existing chart number to keep; left out, the clinic's next patient number is assigned.
+  """
+  patientNo: String
   philHealthId: String
   phone: String
   preferredLanguage: String
@@ -697,8 +1175,15 @@ type ManagedUser {
   id: ID!
   name: String!
 
-  """Organization role: admin, user or viewer. Clinics fall back to it."""
+  """
+  Organization access level: admin, user or viewer. Clinics fall back to it.
+  """
   role: String!
+
+  """
+  Roles at the selected clinic (empty when no clinic of the organization is selected).
+  """
+  staffRoles: [StaffRole!]!
   status: ManagedUserStatus!
 }
 
@@ -708,59 +1193,64 @@ enum ManagedUserStatus {
   INVITED
 }
 
-input MarkBillPaidInput {
-  id: ID!
+"""The specimen of a test was taken."""
+input MarkSpecimenCollectedInput {
+  """
+  The specimen label (barcode); default the order number and the test code.
+  """
+  accessionNo: String
+  itemId: ID!
 
-  """Official receipt number."""
-  orNumber: String!
-
-  """Set by a Wise card (`propose_bill_step`)."""
+  """Set by a Wise card (`propose_lab_order_step`)."""
   wiseOrigin: WiseOriginInput
 }
 
 """A medical certificate issued from an encounter (DESIGN.md §5)."""
 type MedicalCertificate {
-  certificateNumber: String
+  """
+  The clinic's certificate number, e.g. TAG-MC-2026-000042 (assigned with the draft).
+  """
+  certNo: String!
   createdAt: DateTime!
-  diagnosisText: String!
+  diagnosisText: String
+  documentStatus: DocumentStatus!
   encounterId: ID!
 
   """YYYY-MM-DD."""
   examinedOn: String!
-  fitness: WorkFitness!
+  findings: String
   id: ID!
+  isFitToWork: Boolean
+  isVoid: Boolean!
+
+  """Null while a draft."""
   issuedAt: DateTime
-  issuedById: ID!
   patientId: ID!
+
+  """PEME / APE: Class A, B, C or Pending."""
+  peClassification: String
+
+  """The signing practitioner."""
+  practitionerId: ID!
   purpose: String
-  remarks: String
+  recommendation: String
   restDays: Int
 
   """YYYY-MM-DD."""
   restFrom: String
+
+  """YYYY-MM-DD, the last day of rest."""
+  restTo: String
   signatory: DocumentSignatory
-  status: DocumentStatus!
+  type: CertificateType!
+
+  """Printed (and as a QR) to deter fake certificates."""
+  verificationCode: String!
 
   """Moves on every change; pass it back as `expectedVersion`."""
   version: Int!
   voidReason: String
   voidedAt: DateTime
-}
-
-enum MedicationRoute {
-  inhalation
-  intramuscular
-  intravenous
-  nasal
-  ophthalmic
-  oral
-  other
-  otic
-  rectal
-  subcutaneous
-  sublingual
-  topical
-  vaginal
 }
 
 """
@@ -813,8 +1303,6 @@ input ModifyPasswordInput {
 }
 
 type Mutation {
-  """The receiving facility accepts the order."""
-  acceptOrder(orderId: ID!, wiseOrigin: WiseOriginInput): ClinicalOrder!
   addAllergy(input: AddAllergyInput!): PatientAllergy!
   addDiagnosis(input: AddDiagnosisInput!): EncounterDiagnosis!
 
@@ -825,8 +1313,13 @@ type Mutation {
   askSharedChat(input: ForkSharedChatInput!): ChatIdResult!
   cancelChat(chatId: ID!): CancelChatResult!
 
-  """The ordering doctor withdraws the order before collection."""
-  cancelOrder(input: OrderReasonInput!): ClinicalOrder!
+  """
+  Cancels one test of the order (or every test still open) before its result, with the reason.
+  """
+  cancelDiagnosticOrder(input: CancelDiagnosticOrderInput!): DiagnosticOrder!
+
+  """Cancels a referral not yet completed or declined."""
+  cancelReferral(input: CancelReferralInput!): Referral!
 
   """Cancels a Wise card, so it can no longer be confirmed."""
   cancelWiseProposal(input: WiseOriginInput!): WiseProposalOutcome!
@@ -839,23 +1332,22 @@ type Mutation {
   """Creates the first admin; needs the setup token from the server log."""
   completeSetup(input: CompleteSetupInput!): Boolean!
   createClinic(input: CreateClinicInput!): ClinicSummary!
+
+  """
+  Requests tests for the visit: one order, one item per test (a Wise `propose_order` card too).
+  """
+  createDiagnosticOrder(input: CreateDiagnosticOrderInput!): DiagnosticOrder!
+
+  """Opens a visit at one of your clinics."""
   createEncounter(input: CreateEncounterInput!): Encounter!
-
-  """Orders a test from the encounter and sends it to the facility."""
-  createEncounterOrder(input: CreateEncounterOrderInput!): ClinicalOrder!
-
-  """
-  Orders several tests from the encounter to one facility, all or none (a Wise `propose_order` card).
-  """
-  createEncounterOrders(input: CreateEncounterOrdersInput!): [ClinicalOrder!]!
-
-  """Issues a facility key; the key is shown only in this reply."""
-  createFacilityKey(input: CreateFacilityKeyInput!): CreatedFacilityKey!
 
   """
   A new set-password link for the user (an invite or a reset); the user's earlier links stop working.
   """
   createPasswordLink(userId: ID!): PasswordLink!
+
+  """Refers the patient of a visit (internal practitioner or outside)."""
+  createReferral(input: CreateReferralInput!): Referral!
   createSavedPrompt(input: SavedPromptInput!): SavedPrompt!
 
   """Saves a period and selects it."""
@@ -882,6 +1374,11 @@ type Mutation {
   editMemory(input: EditMemoryInput!): Memory!
 
   """
+  Enters the result of a test (values flagged from their reference range, or an imaging report).
+  """
+  enterDiagnosticResult(input: EnterDiagnosticResultInput!): LabWorklistItem!
+
+  """
   Prints a report Wise built in your own chat to PDF; audited as `report.export`.
   """
   exportReportPdf(chatId: ID!, toolCallId: String!): ReportPdf!
@@ -891,48 +1388,50 @@ type Mutation {
   """
   exportWiseReportPdf(chatId: ID!, toolCallId: String!): ReportPdf!
 
-  """Locks the bill; it can then only be paid or voided."""
-  finalizeEncounterBill(id: ID!, wiseOrigin: WiseOriginInput): EncounterBill!
-
   """Forks a shared chat, or a selection of it (upstream `chatFork.fork`)."""
   forkSharedChat(input: ForkSharedChatInput!): ChatIdResult!
 
-  """Issues the draft as you; it is locked from then on."""
+  """Numbers and locks a draft; it can then only be paid or voided."""
+  issueInvoice(input: IssueInvoiceInput!): Invoice!
+
+  """Issues (signs) the draft as you; it is locked from then on."""
   issueMedicalCertificate(id: ID!, wiseOrigin: WiseOriginInput): MedicalCertificate!
 
-  """Issues the draft as you; it is locked from then on."""
+  """Issues (signs) the draft as you; it is locked from then on."""
   issuePrescription(id: ID!, overrideAllergyWarning: Boolean! = false, wiseOrigin: WiseOriginInput): Prescription!
 
-  """Uses a matched existing patient at this facility instead of a new one."""
+  """Uses a matched existing patient instead of registering a new one."""
   linkExistingPatient(input: LinkExistingPatientInput!): Patient!
-  markEncounterBillPaid(input: MarkBillPaidInput!): EncounterBill!
 
-  """The receiving facility took the specimen."""
-  markOrderCollected(orderId: ID!, wiseOrigin: WiseOriginInput): ClinicalOrder!
+  """The specimen was taken (with its accession number)."""
+  markSpecimenCollected(input: MarkSpecimenCollectedInput!): LabWorklistItem!
   modifyPassword(input: ModifyPasswordInput!): Boolean!
+
+  """Records a payment against an issued invoice; returns the invoice."""
+  recordPayment(input: RecordPaymentInput!): Invoice!
   recordVitals(input: RecordVitalsInput!): VitalSigns!
 
   """
-  Registers a patient at the facility, unless duplicates stop it (then `patient` is null).
+  Registers a patient at the clinic, unless duplicates stop it (then `patient` is null).
   """
   registerPatient(input: RegisterPatientInput!): RegisterPatientPayload!
 
-  """The receiving facility refuses the order, with a reason."""
-  rejectOrder(input: OrderReasonInput!): ClinicalOrder!
+  """Releases the entered result to the requesting doctor's inbox."""
+  releaseDiagnosticResult(input: DiagnosticItemStepInput!): LabWorklistItem!
   renameChat(input: RenameChatInput!): Boolean!
   renameClinic(input: RenameClinicInput!): ClinicSummary!
 
-  """Marks a result reviewed (audited, with the optional note)."""
-  reviewResult(input: ReviewResultInput!): ResultItem!
+  """Marks a released result reviewed (audited, with the note)."""
+  reviewResult(input: ReviewResultInput!): DiagnosticReport!
 
-  """Revokes a facility key: requests with it get 401 from now on."""
-  revokeFacilityKey(id: ID!): Boolean!
-
-  """Creates or replaces the encounter's draft bill."""
-  saveEncounterBill(input: SaveEncounterBillInput!): EncounterBill!
+  """Creates or replaces the visit's draft invoice."""
+  saveInvoiceDraft(input: SaveInvoiceDraftInput!): Invoice!
 
   """Creates a draft, or replaces the draft `id`."""
   saveMedicalCertificate(input: SaveMedicalCertificateInput!): MedicalCertificate!
+
+  """Creates or updates your practitioner profile."""
+  saveMyPractitioner(input: SaveMyPractitionerInput!): Practitioner!
 
   """Creates a draft, or replaces the draft `id`."""
   savePrescription(input: SavePrescriptionInput!): Prescription!
@@ -945,7 +1444,7 @@ type Mutation {
   setMemoryEnabled(memoryEnabled: Boolean!): MemorySettings!
 
   """
-  Turns a Wise tool off for yourself, or back on (as far as your facilities allow).
+  Turns a Wise tool off for yourself, or back on (as far as your organizations allow).
   """
   setMyWiseToolEnabled(enabled: Boolean!, toolName: String!): Boolean!
 
@@ -955,10 +1454,16 @@ type Mutation {
   """Deactivating signs the user out and voids their password links."""
   setUserActive(active: Boolean!, userId: ID!): ManagedUser!
 
+  """Sets the user's roles at the selected clinic (they pick the desks)."""
+  setUserStaffRoles(input: SetUserStaffRolesInput!): ManagedUser!
+
   """
-  Turns a Wise tool on or off at a facility (the facility's admins only).
+  Turns a Wise tool on or off in an organization (the organization's admins only).
   """
-  setWiseToolEnabled(enabled: Boolean!, facilityId: ID!, toolName: String!): Boolean!
+  setWiseToolEnabled(enabled: Boolean!, organizationId: ID!, toolName: String!): Boolean!
+
+  """The run started (the specimen is on the analyser, the study is on)."""
+  startDiagnosticOrderItem(input: DiagnosticItemStepInput!): LabWorklistItem!
 
   """Stops the running agent of a chat (the Stop button)."""
   stopChat(chatId: ID!): Boolean!
@@ -966,6 +1471,9 @@ type Mutation {
   """Upstream `feedback.submit`."""
   submitMessageFeedback(input: MessageFeedbackInput!): MessageFeedback!
   switchMessageVersion(chatId: ID!, messageId: ID!): Boolean!
+
+  """Moves a visit to its next status (EncounterStatus)."""
+  transitionEncounter(input: TransitionEncounterInput!): Encounter!
 
   """Upstream `clinic.updateAgentSettings`: merges each section."""
   updateAgentSettings(input: JSON!): JSON!
@@ -986,9 +1494,8 @@ type Mutation {
 
   """Upstream `map.updateConfig`: the chat owner edits a `display_map`."""
   updateMapConfig(config: JSON!, mapId: String!): Boolean!
-  updateMyClinicianProfile(input: UpdateClinicianProfileInput!): ClinicianProfile!
 
-  """Changes a patient's contact details (phone, language, barangay)."""
+  """Changes a patient's contact details (mobile, language, address)."""
   updatePatient(input: UpdatePatientInput!): Patient!
   updateProfile(input: UpdateProfileInput!): User!
   updateSavedPrompt(input: UpdateSavedPromptInput!): SavedPrompt!
@@ -1008,58 +1515,24 @@ type Mutation {
   validateMapBoundaryUrl(url: String!): JSON!
   voidAllergy(input: VoidAllergyInput!): PatientAllergy!
   voidDiagnosis(input: VoidEntryInput!): EncounterDiagnosis!
-  voidEncounterBill(input: VoidEntryInput!): EncounterBill!
+
+  """
+  Voids an invoice (kept, marked void) and the payments that settle only it.
+  """
+  voidInvoice(input: VoidInvoiceInput!): Invoice!
+
+  """Voids the certificate; it stays in the record, marked void."""
   voidMedicalCertificate(input: VoidEntryInput!): MedicalCertificate!
+
+  """Voids the prescription (status CANCELLED); it stays in the record."""
   voidPrescription(input: VoidEntryInput!): Prescription!
   voidVitals(input: VoidEntryInput!): VitalSigns!
 }
 
 enum OrderPriority {
-  routine
-  stat
-  urgent
-}
-
-"""Rejecting or cancelling an order: the reason the other side sees."""
-input OrderReasonInput {
-  orderId: ID!
-  reason: String!
-
-  """Set by a Wise card (`propose_lab_order_step`, `propose_cancel_order`)."""
-  wiseOrigin: WiseOriginInput
-}
-
-"""A lab or imaging result (DESIGN.md §5)."""
-type OrderResult {
-  code: String!
-  display: String
-  flag: ResultFlag
-  id: ID!
-  refRange: String
-  resultedAt: DateTime!
-  reviewedAt: DateTime
-  unit: String
-  value: String!
-}
-
-enum OrderStatus {
-  accepted
-  cancelled
-  collected
-  draft
-  rejected
-  resulted
-  reviewed
-  sent
-}
-
-"""A test that can be ordered from an encounter (LOINC)."""
-type OrderableTest {
-  code: String!
-  display: String!
-
-  """`lab` or `imaging`."""
-  kind: String!
+  ROUTINE
+  STAT
+  URGENT
 }
 
 """
@@ -1082,118 +1555,96 @@ type PasswordLinkInfo {
   name: String!
 }
 
-type Pathway {
-  closureDescription: String!
-
-  """Closing needs one of these."""
-  closureEvidence: [EvidenceType!]!
-
-  """A critical value must reach a clinician within this many hours."""
-  criticalAlertHours: Float!
-
-  """
-  Where a result the lab flagged critical goes when its band is less urgent.
-  """
-  criticalFlagNextState: CaseState!
-  key: String!
-  name: String!
-
-  """A result must be reviewed within this many hours."""
-  resultReviewHours: Float!
-
-  """The guidelines the pathway follows."""
-  source: String!
-  steps: [PathwayStep!]!
-  triggers: [PathwayTrigger!]!
-  version: Int!
-}
-
-type PathwayBand {
-  """Upper bound, exclusive (numeric bands)."""
-  below: Float
-  classification: ResultClassification!
-  guideline: String!
-
-  """The range ("6.5 – < 10 %") or the codes ("BI-RADS 4") the band covers."""
-  label: String!
-
-  """Lower bound, inclusive (numeric bands)."""
-  min: Float
-  nextState: CaseState!
-  reason: String!
-
-  """Hours allowed in the next state: the band's own or the step's."""
-  slaHours: Float
-  urgency: Urgency!
-
-  """The codes of a coded band."""
-  values: [String!]
-}
-
-type PathwayStep {
-  label: String!
-  slaHours: Float
-  state: CaseState!
-}
-
-type PathwayTrigger {
-  bands: [PathwayBand!]!
-  code: String!
-  codeSystem: String!
-  conversions: [PathwayUnitConversion!]!
-  display: String!
-
-  """`numeric` (thresholds) or `coded` (code lists, e.g. BI-RADS)."""
-  type: String!
-
-  """The unit numeric bands are written in."""
-  unit: String
-}
-
-type PathwayUnitConversion {
-  factor: Float!
-  from: [String!]!
-  note: String
-  offset: Float!
-}
-
 """A patient the signed-in user may see (row-level security)."""
 type Patient {
-  """Barangay of residence."""
+  address: PatientAddress
+
+  """Barangay of residence (from the primary address)."""
   barangay: String
 
   """YYYY-MM-DD."""
   birthDate: String!
+
+  """
+  When the data-privacy consent (RA 10173) was signed; null when none is on file.
+  """
   consentAt: DateTime
   createdAt: DateTime!
+  email: String
+
+  """Last name."""
   familyName: String!
+
+  """First name."""
   givenName: String!
   id: ID!
-  identifiers: [PatientIdentifier!]!
+  identifications: [PatientIdentification!]!
+  middleName: String
+  organizationId: ID!
+
+  """The organization's patient (chart) number, e.g. TAG-PT-2026-000001."""
+  patientNo: String!
+
+  """Mobile number, +639XXXXXXXXX."""
   phone: String
-  preferredLanguage: String!
+
+  """`en`, `fil` or `ceb`."""
+  preferredLanguage: String
   sex: Sex!
+
+  """Jr., Sr., III."""
+  suffix: String
+}
+
+"""The patient's primary address (PSGC barangay)."""
+type PatientAddress {
+  """House no., street, purok / sitio."""
+  addressLine: String
+  barangayCode: String
+  barangayName: String
+  cityMunicipalityName: String
 }
 
 """A known allergy of the patient."""
 type PatientAllergy {
-  createdAt: DateTime!
+  """e.g. "Penicillin", "Shrimp"."""
+  allergen: String!
   id: ID!
-  kind: AllergyKind!
+  notedAt: DateTime!
+  patientId: ID!
   reaction: String
-  severity: AllergySeverity
-  substance: String!
+  severity: Severity
+  type: AllergyType!
+  voidReason: String
+  voidedAt: DateTime
 }
 
 input PatientDraftInput {
+  """House no., street, purok / sitio."""
+  addressLine: String
+
+  """PSGC code of the barangay of residence (`barangays`)."""
+  barangayCode: String
+
   """YYYY-MM-DD."""
   birthDate: String!
 
-  """The facility registering the patient (`myFacilities`)."""
-  facilityId: ID!
+  """
+  The clinic registering the patient (`myCareClinics`); its organization owns them.
+  """
+  clinicId: ID!
+
+  """Last name."""
   familyName: String!
+
+  """First name."""
   givenName: String!
-  mrn: String
+  middleName: String
+
+  """
+  An existing chart number to keep; left out, the clinic's next patient number is assigned.
+  """
+  patientNo: String
   philHealthId: String
   phone: String
   preferredLanguage: String
@@ -1208,12 +1659,11 @@ type PatientDuplicate {
 
   """The full name when visible, else initials ("M. S.")."""
   displayName: String!
-
-  """Facilities the patient is registered at."""
-  facilityNames: [String!]!
   match: DuplicateMatch!
 
-  """What matched, e.g. `MRN THC-0001` or `name, birth date and sex`."""
+  """
+  What matched, e.g. `patient no. TAG-PT-2026-000001` or `name, birth date and sex`.
+  """
   matchedOn: String!
   patientId: ID!
 
@@ -1221,49 +1671,172 @@ type PatientDuplicate {
   visible: Boolean!
 }
 
-type PatientIdentifier {
-  facility: Facility
+"""
+A government or discount ID of the patient (PhilHealth, PhilSys, senior citizen, PWD …).
+"""
+type PatientIdentification {
+  id: ID!
+  idNumber: String!
 
-  """`MRN` or `PhilHealth`."""
-  system: String!
-  value: String!
+  """How the ID is named on screen, e.g. "PhilHealth"."""
+  label: String!
+  type: IdentificationType!
 }
 
 """
 The patient chart's overview, read as the user (row-level security): the recent visits.
 """
 type PatientOverview {
+  patientId: ID!
+
   """Newest first (the latest 20)."""
   visits: [PatientVisit!]!
 }
 
-"""One visit as the chart lists it: the encounter and what came of it."""
+"""
+One visit as the chart lists it: the encounter and its diagnoses (more fields per module).
+"""
 type PatientVisit {
-  """The bill that is not voided, if any."""
-  billStatus: BillStatus
-
   """Not voided, primary first."""
   diagnoses: [EncounterDiagnosis!]!
   encounter: Encounter!
-  orders: [ClinicalOrder!]!
 
   """Not voided, newest first."""
   prescriptions: [Prescription!]!
 }
 
+enum PaymentMethod {
+  BANK_TRANSFER
+  CASH
+  CHECK
+  CORPORATE_CHARGE
+  CREDIT_CARD
+  DEBIT_CARD
+  GCASH
+  HMO
+  MAYA
+  OTHER
+  PHILHEALTH
+  QR_PH
+}
+
+enum PaymentStatus {
+  POSTED
+  REFUNDED
+  VOIDED
+}
+
+"""
+A doctor, dentist, midwife …: what prescriptions, certificates and referrals print about who signs them.
+"""
+type Practitioner {
+  clinics: [PractitionerClinic!]!
+
+  """As printed: "Dra. Ana Reyes, MD"."""
+  displayName: String!
+  email: String
+  firstName: String!
+  id: ID!
+  lastName: String!
+  middleName: String
+  mobileNo: String
+
+  """PhilHealth accreditation number (PAN)."""
+  philhealthPan: String
+
+  """YYYY-MM-DD."""
+  philhealthPanExpiry: String
+
+  """"MD, FPCP"."""
+  postNominals: String
+
+  """YYYY-MM-DD."""
+  prcLicenseExpiry: String
+
+  """PRC license number."""
+  prcLicenseNo: String!
+
+  """The LGU that issued the PTR."""
+  ptrIssuedAt: String
+
+  """YYYY-MM-DD."""
+  ptrIssuedDate: String
+
+  """Professional tax receipt number (renewed yearly)."""
+  ptrNo: String
+
+  """YYYY-MM-DD."""
+  s2LicenseExpiry: String
+
+  """PDEA S2 license, needed to prescribe dangerous drugs."""
+  s2LicenseNo: String
+  specialty: String
+  subspecialty: String
+  suffix: String
+
+  """
+  "Dr.", "Dra."
+  """
+  title: String
+  type: PractitionerType!
+
+  """The Loopwise user, when the practitioner signs in."""
+  userId: ID
+}
+
+"""A clinic where the practitioner holds clinic."""
+type PractitionerClinic {
+  clinicId: ID!
+  clinicName: String!
+  roomName: String
+}
+
+enum PractitionerType {
+  DENTIST
+  MIDWIFE
+  NURSE
+  NUTRITIONIST_DIETITIAN
+  OPTOMETRIST
+  OTHER
+  PHYSICAL_THERAPIST
+  PHYSICIAN
+  PSYCHOLOGIST
+}
+
 """A prescription (℞) of an encounter (DESIGN.md §5)."""
 type Prescription {
   createdAt: DateTime!
+  documentStatus: DocumentStatus!
   encounterId: ID!
   id: ID!
+
+  """A dangerous drug (S2 / yellow Rx, RA 9165)."""
+  isDangerousDrug: Boolean!
+
+  """Null while a draft."""
   issuedAt: DateTime
   items: [PrescriptionItem!]!
   notes: String
   patientId: ID!
-  prescriberId: ID!
-  rxNumber: String
+
+  """The prescriber."""
+  practitionerId: ID!
+
+  """
+  The clinic's Rx number, e.g. TAG-RX-2026-000123 (assigned with the draft).
+  """
+  rxNo: String!
+  s2FormSerialNo: String
   signatory: DocumentSignatory
-  status: DocumentStatus!
+
+  """CANCELLED once voided."""
+  status: PrescriptionStatus!
+
+  """YYYY-MM-DD."""
+  validUntil: String
+
+  """Printed (and as a QR) so a pharmacy can check the Rx."""
+  verificationCode: String!
 
   """Moves on every change; pass it back as `expectedVersion`."""
   version: Int!
@@ -1271,36 +1844,72 @@ type Prescription {
   voidedAt: DateTime
 }
 
+"""One medicine of a prescription (generic name first, RA 6675)."""
 type PrescriptionItem {
   brandName: String
-  dose: String!
+  dispensedQty: Float!
+
+  """e.g. "tablet", "suspension 250 mg/5 mL"."""
+  dosageForm: String
   durationDays: Int
-  form: String
-  frequency: String!
+  frequency: String
   genericName: String!
   id: ID!
-  instructions: String
-  position: Int!
-  quantity: Int!
-  quantityUnit: String
-  refills: Int!
-  route: MedicationRoute!
+
+  """As needed."""
+  isPrn: Boolean!
+  quantity: Float!
+
+  """Dangerous drugs (RA 9165): "twenty (20)"."""
+  quantityInWords: String
+
+  """PO, SL, TOP, IM …"""
+  route: String
+
+  """The directions as printed."""
+  sig: String!
+  sortOrder: Int!
   strength: String
+  unit: String
 }
 
 input PrescriptionItemInput {
   brandName: String
-  dose: String!
+  dosageForm: String
+
+  """Per intake, e.g. "1 tablet"; writes the sig when none."""
+  dose: String
   durationDays: Int
-  form: String
-  frequency: String!
+  frequency: String
+
+  """Generic name (required, RA 6675)."""
   genericName: String!
-  instructions: String
-  quantity: Int!
-  quantityUnit: String
-  refills: Int
-  route: MedicationRoute
+
+  """As needed (PRN)."""
+  isPrn: Boolean
+  quantity: Float!
+
+  """Required for dangerous drugs (RA 9165)."""
+  quantityInWords: String
+
+  """PO (default), SL, TOP, INH, NAS, OPH, OTIC, PR, PV, IM, IV, SC."""
+  route: String
+
+  """The directions as printed."""
+  sig: String
   strength: String
+  unit: String
+}
+
+"""
+Dispensing state: ACTIVE → PARTIALLY_DISPENSED → DISPENSED; CANCELLED when voided; EXPIRED.
+"""
+enum PrescriptionStatus {
+  ACTIVE
+  CANCELLED
+  DISPENSED
+  EXPIRED
+  PARTIALLY_DISPENSED
 }
 
 type PublicConfig {
@@ -1327,6 +1936,9 @@ type Query {
   """
   availableModels: JSON!
 
+  """The barangays of a city or municipality (PSGC code), by name."""
+  barangays(cityMunicipalityCode: String!): [Barangay!]!
+
   """Upstream `chart.download`: the chart rendered as a base64 PNG."""
   chartDownload(toolCallId: String!): String!
 
@@ -1350,15 +1962,21 @@ type Query {
   chatShareMembers(chatId: ID!): [ShareableMember!]!
   chatShareOptions(chatId: ID!): ChatShareOptions!
 
-  """Existing patients a registration would duplicate."""
+  """The organization's patients a registration would duplicate."""
   checkPatientDuplicates(input: PatientDraftInput!): [PatientDuplicate!]!
   checkUpdate: UpdateCheck!
 
   """SQL and column lineage behind a cited value (upstream `citation.get`)."""
   citation(column: String!, queryId: String!): JSON!
 
+  """The visits at one of your clinics, oldest first (the queue)."""
+  clinicEncounters(input: ClinicEncountersInput!): [Encounter!]!
+
   """Whether the clinic allows memory (admin agent setting)."""
   clinicMemorySettings: MemorySettings!
+
+  """The practitioners holding clinic at a clinic, by name."""
+  clinicPractitioners(clinicId: ID!): [Practitioner!]!
 
   """A clinic's saved prompts; empty when the user is not in it."""
   clinicSavedPrompts(clinicId: ID!): [SavedPrompt!]!
@@ -1372,7 +1990,7 @@ type Query {
   """The selected clinic (`x-loopwise-clinic-id`)."""
   currentClinic: ClinicSummary
 
-  """The signed-in user's organization role: admin, user or viewer."""
+  """The signed-in user's organization access level: admin, user or viewer."""
   currentOrgRole: String!
 
   """Synced warehouse tables of the selected clinic (`@` mentions)."""
@@ -1384,17 +2002,25 @@ type Query {
   """Upstream `clinic.getDefaultModels`."""
   defaultModels: JSON!
 
+  """
+  The tests the clinic's organization offers (its catalog), each with its analytes and ranges.
+  """
+  diagnosticTests(includeInactive: Boolean): [DiagnosticTest!]!
+
   """Upstream `clinic.getDisplaySettings`: the date format."""
   displaySettings: JSON!
+
+  """A visit's invoices, price list and suggested lines."""
+  encounterBilling(encounterId: ID!): EncounterBilling!
+
+  """The visit's orders with their tests and results, oldest first."""
+  encounterDiagnosticOrders(encounterId: ID!): [DiagnosticOrder!]!
 
   """Null when the encounter is not in your care."""
   encounterRecord(encounterId: ID!): EncounterRecord
 
   """The patient's encounters, newest first (empty if not in your care)."""
   encounters(patientId: ID!): [Encounter!]!
-
-  """The organization's facility keys (admins only)."""
-  facilityKeys: [FacilityKey!]!
 
   """
   Whether any user exists yet (when none does, the app sends visitors to the /setup wizard).
@@ -1409,16 +2035,20 @@ type Query {
   """
   knownTranscribeModels: JSON!
 
-  """How many orders each worklist tab holds."""
-  labOrderCounts: [LabOrderCount!]!
+  """
+  The clinic's tests at these steps (default: every step before release), STAT first then oldest.
+  """
+  labWorklist(statuses: [DiagnosticOrderStatus!]): [LabWorklistItem!]!
 
-  """Orders sent to the user's facilities in one status, oldest first."""
-  labOrders(status: OrderStatus!): [LabOrder!]!
+  """How many tests each worklist tab holds."""
+  labWorklistCounts: [LabWorklistCount!]!
 
   """Upstream `clinic.getLlmConfigs`: provider configs, keys previewed."""
   llmConfigs: JSON!
 
-  """Every user of the organization (admins only)."""
+  """
+  Every user of the organization, with their roles at the selected clinic (admins only).
+  """
   managedUsers: [ManagedUser!]!
 
   """Upstream `clinic.getMapBoundaries`."""
@@ -1427,7 +2057,7 @@ type Query {
   """The signed-in user."""
   me: User!
 
-  """For printing; null when not in your care."""
+  """For printing (audited); null when not in your care."""
   medicalCertificate(id: ID!): MedicalCertificate
 
   """The signed-in user's active memories."""
@@ -1436,30 +2066,23 @@ type Query {
   """Whether the signed-in user has memory turned on."""
   memorySettings: MemorySettings!
 
-  """Your PRC license, PTR and credentials (empty until set)."""
-  myClinicianProfile: ClinicianProfile!
+  """The clinics where you register patients and record visits."""
+  myCareClinics: [ClinicRef!]!
 
-  """The facilities the signed-in user works at."""
-  myFacilities: [Facility!]!
+  """
+  Your practitioner profile (PRC license, PTR, S2 …); null until you add one.
+  """
+  myPractitioner: Practitioner
 
   """
   Your Wise reports across your chats, the latest version of each, newest first.
   """
   myReports: [WiseReportSummary!]!
 
-  """Labs, imaging centers and hospitals that receive orders."""
-  orderTargets: [Facility!]!
-
-  """The tests that can be ordered from an encounter."""
-  orderableTests: [OrderableTest!]!
-
   """Null when the link is invalid or expired."""
   passwordLink(token: String!): PasswordLinkInfo
 
-  """The active clinical pathways and their rules: bands, steps, SLAs."""
-  pathways: [Pathway!]!
-
-  """Null when the user may not see the patient."""
+  """Null when you may not see the patient."""
   patient(id: ID!): Patient
 
   """The patient's active allergies (empty if not in your care)."""
@@ -1471,28 +2094,21 @@ type Query {
   """A patient's saved documents, newest first."""
   patientDocuments(patientId: ID!): [ClinicalDocument!]!
 
-  """
-  The patient chart's overview: recent visits, vitals, problems, medicines and results.
-  """
+  """The patient chart's overview: the recent visits."""
   patientOverview(patientId: ID!): PatientOverview!
 
-  """The patient's results you can see, newest first."""
-  patientResults(patientId: ID!): [ResultItem!]!
+  """The patient's released results you can see, newest first."""
+  patientResults(patientId: ID!): [DiagnosticReport!]!
 
-  """For printing; null when not in your care."""
+  """For printing (audited); null when not in your care."""
   prescription(id: ID!): Prescription
   publicConfig: PublicConfig!
 
   """Upstream `chat.getQueryRows`."""
   queryRows(input: QueryRowsInput!): QueryRowsPage!
 
-  """
-  Why a result is normal, actionable or critical. Null when none is stored or the user can’t see it.
-  """
-  resultEvaluation(resultId: ID!): ResultEvaluation
-
-  """Results waiting for your review: critical first, then abnormal."""
-  resultsToReview: [ResultItem!]!
+  """Released results waiting for your review: critical first."""
+  resultsToReview: [DiagnosticReport!]!
   savedPrompts: [SavedPrompt!]!
 
   """The chart document a report version was saved as."""
@@ -1502,7 +2118,7 @@ type Query {
   """Common ICD-10 codes by code prefix or title words."""
   searchIcd10(query: String!): [Icd10Code!]!
 
-  """Patients the user may see, by name words, identifier or birth date."""
+  """Patients you may see, by name words, patient no. / ID or birth date."""
   searchPatients(input: SearchPatientsInput!): [Patient!]!
   sharedChat(shareId: ID!): SharedChatView!
   sharedChatQuickQuestions(shareId: ID!): [QuickQuestionChat!]!
@@ -1553,9 +2169,9 @@ type Query {
   wiseProposalOutcomes(chatId: ID!): [WiseProposalOutcome!]!
 
   """
-  Every Wise tool with its state at one of the user's facilities (default: one they administer).
+  Every Wise tool with its state in one of the user's organizations (default: one they administer).
   """
-  wiseToolSettings(facilityId: ID): WiseToolSettings!
+  wiseToolSettings(organizationId: ID): WiseToolSettings!
 }
 
 input QueryRowsInput {
@@ -1589,6 +2205,30 @@ type QuickQuestionChat {
   updatedAt: DateTime!
 }
 
+input RecordPaymentInput {
+  """Pesos applied to the invoice; at most its balance."""
+  amount: Float!
+
+  """The invoice's `version` the card showed."""
+  expectedVersion: Int
+  invoiceId: ID!
+
+  """PHILHEALTH records a package (e.g. Konsulta) PhilHealth pays."""
+  method: PaymentMethod!
+  notes: String
+
+  """
+  Official receipt number, e-wallet / card reference, or the PhilHealth package code.
+  """
+  referenceNo: String!
+
+  """Cash handed over; the change is computed."""
+  tenderedAmount: Float
+
+  """Set by a Wise card (`propose_bill_step`)."""
+  wiseOrigin: WiseOriginInput
+}
+
 input RecordVitalsInput {
   bloodGlucoseMgDl: Int
   diastolicMmHg: Int
@@ -1608,25 +2248,85 @@ input RecordVitalsInput {
   wiseOrigin: WiseOriginInput
 }
 
+"""
+A referral from an encounter: to a practitioner of the organization, or an outside doctor / facility.
+"""
+type Referral {
+  clinicalSummary: String
+  encounterId: ID!
+
+  """The referring practitioner."""
+  fromPractitioner: Practitioner
+
+  """The referring practitioner."""
+  fromPractitionerId: ID!
+  id: ID!
+  patientId: ID!
+  reason: String!
+  referredAt: DateTime!
+  respondedAt: DateTime
+  responseNotes: String
+  specialty: String
+  status: ReferralStatus!
+  toExternalDoctor: String
+  toFacility: String
+
+  """The practitioner referred to (internal)."""
+  toPractitioner: Practitioner
+
+  """Internal referral: the practitioner referred to."""
+  toPractitionerId: ID
+  urgency: OrderPriority!
+}
+
+"""
+SENT → ACCEPTED → COMPLETED, or DECLINED / CANCELLED (DRAFT unused for now).
+"""
+enum ReferralStatus {
+  ACCEPTED
+  CANCELLED
+  COMPLETED
+  DECLINED
+  DRAFT
+  SENT
+}
+
 input RegisterPatientInput {
   """
   Register although a patient with the same name, birth date and sex exists (never for an identifier match).
   """
   acknowledgeDuplicates: Boolean! = false
 
+  """House no., street, purok / sitio."""
+  addressLine: String
+
+  """PSGC code of the barangay of residence (`barangays`)."""
+  barangayCode: String
+
   """YYYY-MM-DD."""
   birthDate: String!
 
   """
-  The patient agreed to be registered; sets `consentAt`. Registration needs it.
+  The clinic registering the patient (`myCareClinics`); its organization owns them.
+  """
+  clinicId: ID!
+
+  """
+  The patient agreed to the data-privacy notice (RA 10173); recorded as a consent. Required.
   """
   consentGiven: Boolean!
 
-  """The facility registering the patient (`myFacilities`)."""
-  facilityId: ID!
+  """Last name."""
   familyName: String!
+
+  """First name."""
   givenName: String!
-  mrn: String
+  middleName: String
+
+  """
+  An existing chart number to keep; left out, the clinic's next patient number is assigned.
+  """
+  patientNo: String
   philHealthId: String
   phone: String
   preferredLanguage: String
@@ -1660,111 +2360,57 @@ type ReportPdf {
   mimeType: String!
 }
 
-enum ResultClassification {
-  actionable
-  critical
-  normal
-}
-
-type ResultEvaluation {
-  """
-  `band`, `critical_flag` (the lab flag raised it) or `unrecognised` (review by hand).
-  """
-  basis: String!
-  classification: ResultClassification!
-  evaluatedAt: DateTime!
-  guideline: String!
-  id: ID!
-
-  """The case state the case engine should aim for."""
-  nextState: CaseState!
-  pathwayKey: String!
-  pathwayName: String!
-  reason: String!
-  resultId: ID!
-  rule: EvaluatedRule!
-
-  """The pathway version the rule came from."""
-  ruleVersion: Int!
-  slaHours: Float
-  urgency: Urgency!
-}
-
+"""A value against the test's reference range."""
 enum ResultFlag {
-  abnormal
-  critical_high
-  critical_low
-  high
-  low
-  normal
-}
-
-"""
-A lab or imaging result with its patient, source and order (DESIGN.md §2 steps 5–6).
-"""
-type ResultItem {
-  code: String!
-  codeSystem: String!
-  display: String
-  flag: ResultFlag
-  id: ID!
-  orderId: ID
-  orderPriority: OrderPriority
-  orderStatus: OrderStatus
-  patient: ResultPatient!
-  receivedAt: DateTime!
-  refRange: String
-  resultedAt: DateTime!
-  reviewedAt: DateTime
-
-  """The lab or imaging facility that sent it."""
-  sourceFacility: Facility!
-  unit: String
-  urgency: ResultUrgency!
-
-  """The value as sent; a report text for radiology."""
-  value: String!
-}
-
-"""The patient a result belongs to, as the inbox shows them."""
-type ResultPatient {
-  """`YYYY-MM-DD`."""
-  birthDate: String!
-  familyName: String!
-  givenName: String!
-  id: ID!
-  sex: Sex!
+  ABNORMAL
+  CRITICAL_HIGH
+  CRITICAL_LOW
+  HIGH
+  LOW
+  NORMAL
 }
 
 enum ResultUrgency {
-  abnormal
-  critical
-  normal
-  unflagged
+  ABNORMAL
+  CRITICAL
+  NORMAL
+  UNFLAGGED
 }
 
+"""
+A numeric analyte, free text, or one of fixed options (Positive / Negative …).
+"""
+enum ResultValueType {
+  NUMERIC
+  OPTION
+  TEXT
+}
+
+"""The doctor's review of a released result."""
 input ReviewResultInput {
   """The reviewer's note, kept in the audit row."""
   note: String
+
+  """The result (`DiagnosticReport.id`)."""
   resultId: ID!
 
   """Set by a Wise card (`propose_result_review`)."""
   wiseOrigin: WiseOriginInput
 }
 
-input SaveEncounterBillInput {
-  charges: [ChargeInput!]!
-  discountKind: BillDiscountKind
+input SaveInvoiceDraftInput {
+  """The OSCA / PWD ID number presented."""
+  discountIdNumber: String
+
+  """SENIOR_CITIZEN or PWD only."""
+  discountType: DiscountType
   encounterId: ID!
 
   """
-  The bill's `version` the draft was made from; refused with CONFLICT if it changed since.
+  The draft's `version` the change was made from; refused with STALE_VERSION if it moved.
   """
   expectedVersion: Int
-
-  """Pesos PhilHealth covers."""
-  philhealthCoverage: Float
-  philhealthPackageCode: String
+  lines: [InvoiceLineInput!]!
 
   """Set by the Wise card (`propose_charges`)."""
   wiseOrigin: WiseOriginInput
@@ -1778,36 +2424,97 @@ input SaveMedicalCertificateInput {
   examinedOn: String!
 
   """
-  The certificate's `version` the draft was made from; refused with CONFLICT if it changed since.
+  The certificate's `version` the draft was made from; refused (STALE_VERSION) if it changed since.
   """
   expectedVersion: Int
-  fitness: WorkFitness
+  findings: String
 
   """The draft to replace; a new draft when left out."""
   id: ID
+  isFitToWork: Boolean
+  peClassification: String
   purpose: String
-  remarks: String
+  recommendation: String
   restDays: Int
 
   """YYYY-MM-DD."""
   restFrom: String
 
+  """Default MEDICAL_CERTIFICATE."""
+  type: CertificateType
+
   """Set by the Wise card (`propose_medical_certificate`)."""
   wiseOrigin: WiseOriginInput
+}
+
+input SaveMyPractitionerInput {
+  """Default: the user's first name."""
+  firstName: String
+
+  """Default: the user's last name."""
+  lastName: String
+  middleName: String
+
+  """PhilHealth accreditation number (PAN)."""
+  philhealthPan: String
+
+  """YYYY-MM-DD."""
+  philhealthPanExpiry: String
+
+  """e.g. "MD, FPCP"."""
+  postNominals: String
+
+  """YYYY-MM-DD."""
+  prcLicenseExpiry: String
+
+  """PRC license number (required, unique)."""
+  prcLicenseNo: String!
+
+  """The LGU that issued the PTR, e.g. "Tagbilaran City"."""
+  ptrIssuedAt: String
+
+  """YYYY-MM-DD."""
+  ptrIssuedDate: String
+
+  """Professional tax receipt number."""
+  ptrNo: String
+
+  """YYYY-MM-DD."""
+  s2LicenseExpiry: String
+
+  """PDEA S2 license number (dangerous drugs, RA 9165)."""
+  s2LicenseNo: String
+  specialty: String
+  subspecialty: String
+  suffix: String
+
+  """
+  "Dr.", "Dra."
+  """
+  title: String
+
+  """Default PHYSICIAN."""
+  type: PractitionerType
 }
 
 input SavePrescriptionInput {
   encounterId: ID!
 
   """
-  The prescription's `version` the draft was made from; refused with CONFLICT if it changed since.
+  The prescription's `version` the draft was made from; refused (STALE_VERSION) if it changed since.
   """
   expectedVersion: Int
 
   """The draft to replace; a new draft when left out."""
   id: ID
+
+  """A dangerous drug (S2 / yellow Rx, RA 9165)."""
+  isDangerousDrug: Boolean
   items: [PrescriptionItemInput!]!
   notes: String
+
+  """The DOH dangerous-drugs prescription form serial number."""
+  s2FormSerialNo: String
 
   """Set by the Wise card (`propose_prescription`)."""
   wiseOrigin: WiseOriginInput
@@ -1845,7 +2552,7 @@ input SearchPatientsInput {
   """YYYY-MM-DD."""
   birthDate: String
 
-  """Name words, or an exact MRN / PhilHealth number."""
+  """Name words, or an exact patient no. / PhilHealth number."""
   query: String
 }
 
@@ -1855,16 +2562,57 @@ input SelectionInput {
   text: String!
 }
 
+enum ServiceCategory {
+  CERTIFICATE
+  CONSULTATION
+  IMAGING
+  LABORATORY
+  MEDICINE
+  OTHER
+  PACKAGE
+  PROCEDURE
+  PROFESSIONAL_FEE
+  SUPPLY
+  VACCINE
+}
+
+"""
+An item of the organization's price list, at the clinic's price (pesos).
+"""
+type ServiceItemPrice {
+  category: ServiceCategory!
+  code: String!
+
+  """The lab or imaging test this item bills."""
+  diagnosticTestId: ID
+  id: ID!
+  name: String!
+
+  """The clinic's price, else the organization's default."""
+  price: Float!
+  taxType: TaxType!
+}
+
 input SetPasswordWithLinkInput {
   password: String!
   token: String!
 }
 
+input SetUserStaffRolesInput {
+  """Every role the user holds at the selected clinic; empty removes them."""
+  staffRoles: [StaffRole!]!
+  userId: ID!
+}
+
+enum Severity {
+  MILD
+  MODERATE
+  SEVERE
+}
+
 enum Sex {
-  female
-  male
-  other
-  unknown
+  FEMALE
+  MALE
 }
 
 """
@@ -1931,9 +2679,63 @@ type SkillSaveStatus {
   mode: String!
 }
 
+"""
+A role a user holds at a clinic (`user_clinic_roles`); a user holds one row per role.
+"""
+enum StaffRole {
+  ADMIN
+  BILLING_CLERK
+  CASHIER
+  CONTEXT_ADMIN
+  DOCTOR
+  INVENTORY_CLERK
+  MEDTECH
+  MEMBER
+  MIDWIFE
+  NURSE
+  PHARMACIST
+  PHARMACY_ASSISTANT
+  RADTECH
+  RECEPTIONIST
+  SUPER_ADMIN
+  VIEWER
+}
+
+"""
+A line to start a new invoice with: the consultation and the tests ordered.
+"""
+type SuggestedInvoiceLine {
+  description: String!
+  quantity: Float!
+  serviceItemId: ID
+  taxType: TaxType!
+
+  """The clinic price; 0 for a test missing from the price list."""
+  unitPrice: Float!
+}
+
+"""VATABLE (12% VAT included in the price), VAT_EXEMPT, ZERO_RATED."""
+enum TaxType {
+  VATABLE
+  VAT_EXEMPT
+  ZERO_RATED
+}
+
 type TotalUsage {
   totalMessages: Int!
   uniqueUsers: Int!
+}
+
+"""Moves a visit along its status machine (`EncounterStatus`)."""
+input TransitionEncounterInput {
+  encounterId: ID!
+
+  """The encounter's `version` on screen; refused if it changed."""
+  expectedVersion: Int
+
+  """Why, for a cancellation."""
+  reason: String
+  status: EncounterStatus!
 }
 
 type UpdateCheck {
@@ -1942,23 +2744,13 @@ type UpdateCheck {
   updateAvailable: Boolean!
 }
 
-input UpdateClinicianProfileInput {
-  """e.g. "MD"."""
-  credentials: String
-
-  """PRC license number."""
-  prcLicenseNumber: String
-
-  """Professional tax receipt number."""
-  ptrNumber: String
-  specialty: String
-}
-
 input UpdateDiagnosisInput {
-  certainty: DiagnosisCertainty
   id: ID!
-  isPrimary: Boolean
+  isFinal: Boolean
   notes: String
+
+  """A new PRIMARY demotes the previous one."""
+  type: DiagnosisType
 
   """Set by a Wise card (`propose_diagnosis`)."""
   wiseOrigin: WiseOriginInput
@@ -1966,6 +2758,9 @@ input UpdateDiagnosisInput {
 
 input UpdateEncounterNoteInput {
   assessment: String
+
+  """How the visit ended."""
+  disposition: Disposition
   encounterId: ID!
 
   """
@@ -1989,9 +2784,15 @@ input UpdateEncounterNoteInput {
 }
 
 """
-Changes a patient's contact details; names, birth date, sex and identifiers stay.
+Changes a patient's contact details; names, birth date, sex and IDs stay.
 """
 input UpdatePatientInput {
+  """House no., street, purok / sitio."""
+  addressLine: String
+
+  """
+  The barangay of residence: a PSGC code, or a name in the clinic's city.
+  """
   barangay: String
   patientId: ID!
   phone: String
@@ -2036,7 +2837,7 @@ input UpdateUserPreferencesInput {
 }
 
 input UpdateUserRoleInput {
-  """admin, user or viewer."""
+  """Organization access level: admin, user or viewer."""
   role: String!
   userId: ID!
 }
@@ -2044,13 +2845,6 @@ input UpdateUserRoleInput {
 type UpdatedSkill {
   hash: String!
   name: String!
-}
-
-enum Urgency {
-  critical
-  routine
-  soon
-  urgent
 }
 
 type UsageByUserRecord {
@@ -2153,17 +2947,19 @@ type UserUsageBreakdown {
 
 """One set of vital signs. Units: mmHg, bpm, /min, °C, %, kg, cm, mg/dL."""
 type VitalSigns {
-  bloodGlucoseMgDl: Int
+  """Capillary blood glucose (CBG), mg/dL."""
+  bloodGlucoseMgDl: Float
 
   """Computed from weight and height."""
   bmi: Float
   diastolicMmHg: Int
+  encounterId: ID!
   heartRateBpm: Int
   heightCm: Float
   id: ID!
   painScore: Int
   recordedAt: DateTime!
-  recordedById: ID!
+  recordedById: ID
   respiratoryRate: Int
   spo2Pct: Int
   systolicMmHg: Int
@@ -2180,9 +2976,7 @@ input VoidAllergyInput {
   id: ID!
   reason: String!
 
-  """
-  Set by a Wise card (`propose_void_*`, `propose_bill_step`): verified and settled with the void.
-  """
+  """Set by a Wise card (`propose_remove_allergy`)."""
   wiseOrigin: WiseOriginInput
 }
 
@@ -2199,6 +2993,15 @@ input VoidEntryInput {
   wiseOrigin: WiseOriginInput
 }
 
+input VoidInvoiceInput {
+  expectedVersion: Int
+  id: ID!
+  reason: String!
+
+  """Set by a Wise card (`propose_bill_step`)."""
+  wiseOrigin: WiseOriginInput
+}
+
 input WiseOriginInput {
   chatId: ID!
 
@@ -2211,6 +3014,7 @@ input WiseOriginInput {
 }
 
 type WiseProposalOutcome {
+  """The record the card was confirmed into (`entity_id`)."""
   resourceId: String
 
   """`confirmed` or `cancelled`."""
@@ -2240,22 +3044,18 @@ type WiseReportSummary {
 }
 
 """
-A facility whose Wise tools the user sees, and whether they administer it.
+An organization whose Wise tools the user sees, and whether they administer it.
 """
-type WiseToolFacility {
+type WiseToolOrganization {
   id: ID!
   isAdmin: Boolean!
   name: String!
-
-  """The facility type (clinic, lab, …), which sets the defaults."""
-  type: String!
 }
 
 type WiseToolSettings {
-  facilities: [WiseToolFacility!]!
-
-  """The facility the `facility*` fields are about."""
-  facilityId: ID
+  """The organization the `organization*` fields are about."""
+  organizationId: ID
+  organizations: [WiseToolOrganization!]!
   tools: [WiseToolView!]!
 }
 
@@ -2269,12 +3069,6 @@ type WiseToolView {
   """Whether Wise offers it to the user now."""
   enabled: Boolean!
 
-  """The facility type's default at the selected facility."""
-  facilityDefault: Boolean!
-
-  """On at the selected facility (its override, else the default)."""
-  facilityEnabled: Boolean!
-
   """read, navigate, display or propose."""
   kind: String!
   label: String!
@@ -2285,11 +3079,11 @@ type WiseToolView {
   """False when the user turned it off for themselves."""
   myEnabled: Boolean!
   name: String!
-  summary: String!
-}
 
-enum WorkFitness {
-  fit_to_work
-  fit_with_restrictions
-  unfit
+  """The default in an organization, before its admin changes it."""
+  organizationDefault: Boolean!
+
+  """On in the selected organization (its override, else the default)."""
+  organizationEnabled: Boolean!
+  summary: String!
 }

@@ -19,17 +19,17 @@ import { encounterApi } from '@/lib/encounter-api';
 /** Records a visit by hand; Wise's `propose_encounter` card does the same from the chart chat. */
 export function NewEncounterDialog({
 	patientId,
-	facilities,
+	clinics,
 	open,
 	onOpenChange,
 }: {
 	patientId: string;
-	facilities: { id: string; name: string }[];
+	clinics: { id: string; name: string }[];
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
 	const queryClient = useQueryClient();
-	const initial = () => emptyEncounterForm(facilities.length === 1 ? facilities[0].id : '');
+	const initial = () => emptyEncounterForm(clinics.length === 1 ? clinics[0].id : '');
 	const [values, setValues] = useState<EncounterFormValues>(initial);
 	const [showErrors, setShowErrors] = useState(false);
 	const create = useMutation(
@@ -69,7 +69,7 @@ export function NewEncounterDialog({
 					<EncounterFields
 						values={values}
 						errors={showErrors ? errors : {}}
-						facilities={facilities}
+						clinics={clinics}
 						onChange={setValues}
 						disabled={create.isPending}
 					/>

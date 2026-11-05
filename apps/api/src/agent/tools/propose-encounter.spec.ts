@@ -3,11 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ToolContext } from '../types/tools.js';
 import proposeEncounter from './propose-encounter.js';
 
-const run = (patientId: string | undefined, facilities = [{ id: 'hc', name: 'Health Center', slug: 'hc' }]) => {
+const run = (
+	patientId: string | undefined,
+	clinics = [{ id: 'c1', name: 'Health Center', code: 'TAG', organizationId: 'o1', cityMunicipalityCode: null }],
+) => {
 	const context = {
 		userId: 'u',
 		patientId,
-		services: { patients: { myFacilities: vi.fn().mockResolvedValue(facilities) } },
+		services: { patients: { myCareClinics: vi.fn().mockResolvedValue(clinics) } },
 	} as unknown as ToolContext;
 	return proposeEncounter.execute!(
 		{ reason: 'BP check' },
@@ -16,12 +19,12 @@ const run = (patientId: string | undefined, facilities = [{ id: 'hc', name: 'Hea
 };
 
 describe('propose_encounter tool', () => {
-	it("returns the chat's patient and the user's facilities, and writes nothing", async () => {
+	it("returns the chat's patient and the user's clinics, and writes nothing", async () => {
 		expect(await run('p1')).toEqual({
 			_version: '1',
 			success: true,
 			patientId: 'p1',
-			facilities: [{ id: 'hc', name: 'Health Center' }],
+			clinics: [{ id: 'c1', name: 'Health Center' }],
 		});
 	});
 
@@ -29,7 +32,7 @@ describe('propose_encounter tool', () => {
 		await expect(run(undefined)).rejects.toThrow(/open the patient's chart/);
 	});
 
-	it('refuses for a user without a facility', async () => {
-		await expect(run('p1', [])).rejects.toThrow(/facility/);
+	it('refuses for a user without a clinic', async () => {
+		await expect(run('p1', [])).rejects.toThrow(/clinic/);
 	});
 });

@@ -1,6 +1,7 @@
 import { chartPatientTrend, clinicalChart } from '@loopwise/shared/tools';
 
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { LabValueRow } from './insights.repository.js';
 
 type PatientMeasure = chartPatientTrend.PatientMeasure;
 type ChartSpec = clinicalChart.ChartSpec;
@@ -9,14 +10,19 @@ const { MEASURE_LABELS } = chartPatientTrend;
 
 type VitalsRow = Pick<
 	Prisma.VitalSignsGetPayload<object>,
-	'recordedAt' | 'systolicMmHg' | 'diastolicMmHg' | 'heartRateBpm' | 'weightKg' | 'bmi' | 'bloodGlucoseMgDl'
+	'recordedAt' | 'systolicBp' | 'diastolicBp' | 'heartRate' | 'weightKg' | 'bmi' | 'bloodGlucose'
 >;
-type ResultRow = Pick<Prisma.ResultGetPayload<object>, 'code' | 'resultedAt' | 'valueNumeric'>;
+type ResultRow = Pick<LabValueRow, 'code' | 'resultedAt' | 'valueNumeric'>;
 
-/** LOINC codes of the lab measures (the seed's and the orderable tests'). */
+/**
+ * LOINC codes of the lab measures: the `lis_code` of the diagnostic test parameter (or of a single-value test) that
+ * the lab catalog maps them to.
+ */
 export const LAB_CODES: Partial<Record<PatientMeasure, string>> = { hba1c: '4548-4', fbs: '1558-6' };
 
-/** Thresholds drawn as a flat line: the diagnostic cut-offs the pathways use (DESIGN.md §6), not targets. */
+/**
+ * Thresholds drawn as a flat line: fixed diagnostic cut-offs (BP 140/90, HbA1c 6.5 %, FBS 126 mg/dL), not targets.
+ */
 const THRESHOLDS = {
 	systolic: 140,
 	diastolic: 90,
@@ -34,11 +40,11 @@ export function buildTrendChart(measure: PatientMeasure, vitals: VitalsRow[], re
 	switch (measure) {
 		case 'blood_pressure': {
 			const rows = vitals
-				.filter((row) => row.systolicMmHg !== null)
+				.filter((row) => row.systolicBp !== null)
 				.map((row) => ({
 					date: day(row.recordedAt),
-					systolic: row.systolicMmHg,
-					diastolic: row.diastolicMmHg,
+					systolic: row.systolicBp,
+					diastolic: row.diastolicBp,
 					systolic_threshold: THRESHOLDS.systolic,
 					diastolic_threshold: THRESHOLDS.diastolic,
 				}));
@@ -101,9 +107,9 @@ export function buildTrendChart(measure: PatientMeasure, vitals: VitalsRow[], re
 			};
 		}
 		case 'heart_rate':
-			return singleVital(title, 'bpm', vitals, (row) => row.heartRateBpm, 'heart_rate', 'Heart rate');
+			return singleVital(title, 'bpm', vitals, (row) => row.heartRate, 'heart_rate', 'Heart rate');
 		case 'capillary_glucose':
-			return singleVital(title, 'mg/dL', vitals, (row) => row.bloodGlucoseMgDl, 'glucose', 'Glucose');
+			return singleVital(title, 'mg/dL', vitals, (row) => num(row.bloodGlucose), 'glucose', 'Glucose');
 		case 'hba1c':
 		case 'fbs': {
 			const unit = measure === 'hba1c' ? '%' : 'mg/dL';

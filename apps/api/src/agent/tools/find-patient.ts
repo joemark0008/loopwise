@@ -22,12 +22,13 @@ export default createTool<findPatient.Input, findPatient.Output>({
 		);
 		return {
 			_version: '1' as const,
-			patients: patients.map(({ id, givenName, familyName, birthDate, sex, identifiers }) => ({
+			patients: patients.map(({ id, givenName, familyName, patientNo, birthDate, sex, identifications }) => ({
 				id,
 				name: `${givenName} ${familyName}`,
+				patientNo,
 				birthDate,
 				sex,
-				identifiers: identifiers.map(({ system, value }) => ({ system, value })),
+				identifications: identifications.map(({ label, idNumber }) => ({ label, idNumber })),
 			})),
 			truncated,
 		};

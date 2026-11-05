@@ -6,19 +6,15 @@ import {
 	FileText,
 	FlaskConical,
 	HardDrive,
-	ListChecks,
 	MessageSquare,
 	MessagesSquare,
 	Palette,
-	Route,
-	Send,
 	Settings2,
 	Sparkles,
 	Sun,
 	TestTubes,
 	UserRound,
 	Users,
-	Waypoints,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -36,8 +32,11 @@ export interface NavContext {
 	isViewer: boolean;
 }
 
-/** Who the signed-in user is in the loop (DESIGN.md §1); each role has its own home and sidebar. */
-export type StaffRole = 'doctor' | 'nurse' | 'lab' | 'specialist' | 'program';
+/**
+ * Who the signed-in user is in the loop (DESIGN.md §1): their desk, from their clinic roles (`use-staff-role.ts`).
+ * Each desk has its own home and sidebar.
+ */
+export type StaffRole = 'doctor' | 'nurse' | 'lab' | 'front_desk' | 'cashier' | 'specialist' | 'program';
 
 export interface NavLink {
 	icon: LucideIcon;
@@ -86,9 +85,7 @@ export const navLinks: NavLink[] = [
 		shortcut: 'G H',
 		roles: ['doctor', 'specialist'],
 	},
-	{ icon: ListChecks, label: 'Worklist', to: '/worklist', section: 'workspace', roles: ['nurse'] },
-	{ icon: TestTubes, label: 'Orders', to: '/orders', section: 'workspace', roles: ['lab'] },
-	{ icon: Send, label: 'Referrals', to: '/referrals', section: 'workspace', roles: ['specialist'] },
+	{ icon: TestTubes, label: 'Lab worklist', to: '/orders', section: 'workspace', roles: ['lab'] },
 	{
 		icon: Contact,
 		label: 'Patients',
@@ -106,8 +103,6 @@ export const navLinks: NavLink[] = [
 		shortcut: 'G R',
 		roles: ['doctor', 'specialist'],
 	},
-	{ icon: Waypoints, label: 'Cases', to: '/cases', section: 'workspace', shortcut: 'G C', roles: CLINICIANS },
-	{ icon: ChartColumn, label: 'Dashboard', to: '/dashboard', section: 'workspace', roles: ['program'] },
 	{
 		icon: MessageSquare,
 		label: 'Wise chats',
@@ -120,15 +115,6 @@ export const navLinks: NavLink[] = [
 		icon: FileText,
 		label: 'Reports',
 		to: '/reports',
-		section: 'workspace',
-		roles: ['doctor', 'specialist', 'program'],
-	},
-	// The rules the engine applies, for program staff and the clinicians who act on them (everyone is a doctor until
-	// the API exposes roles, see use-staff-role.ts).
-	{
-		icon: Route,
-		label: 'Pathways',
-		to: '/pathways',
 		section: 'workspace',
 		roles: ['doctor', 'specialist', 'program'],
 	},
@@ -245,6 +231,22 @@ export function roleNavLinks(role: StaffRole): NavLink[] {
 	return navLinks.filter((link) => link.section === 'workspace' && link.roles?.includes(role));
 }
 
+/**
+ * The sidebar of a user who can open several desks (`useDesks()`: an admin opens every desk): their own desk's links,
+ * then the home of each other desk they can open.
+ */
+export function deskNavLinks(desks: readonly StaffRole[]): NavLink[] {
+	const [own, ...others] = desks;
+	const links = own ? roleNavLinks(own) : [];
+	for (const desk of others) {
+		const home = roleNavLinks(desk)[0];
+		if (home && !links.some((link) => link.to === home.to)) {
+			links.push(home);
+		}
+	}
+	return links;
+}
+
 export interface Crumb {
 	label: string;
 	/** Links back up the trail; the last crumb is the current page. */
@@ -296,8 +298,6 @@ export function crumbs(pathname: string, names: { patient?: string; encounter?: 
 /** The patient's own pages beside the chart (routes/_protected/patients.$patientId.*). */
 export const PATIENT_TABS: Record<string, string> = {
 	results: 'Results',
-	cases: 'Cases',
-	messages: 'Messages',
 };
 
 /**

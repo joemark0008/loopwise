@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 
 import type { AgentToolServices } from '../../agent/types/tools.js';
 import { ChatsCoreModule } from '../../chats/chats-core.module.js';
-import { OrganizationsModule } from '../../organizations/organizations.module.js';
+import { AuditModule } from '../audit/audit.module.js';
+import { PatientsModule } from '../patients/patients.module.js';
 import { ClinicalDbModule } from '../rls/clinical-db.module.js';
 import { InsightsRepository } from './insights.repository.js';
 import { InsightsResolver } from './insights.resolver.js';
@@ -15,7 +16,7 @@ void readerMatches;
 
 /** Wise charts and summary reports (DESIGN.md §7.2): fixed clinical datasets read as the user, and their PDF. */
 @Module({
-	imports: [ClinicalDbModule, ChatsCoreModule, OrganizationsModule],
+	imports: [ClinicalDbModule, AuditModule, ChatsCoreModule, PatientsModule],
 	providers: [
 		InsightsResolver,
 		InsightsService,

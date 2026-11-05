@@ -1,9 +1,6 @@
-import { WORK_FITNESS_LABELS } from '@loopwise/shared/medical-certificate';
-import type {
-	PrescriptionItemFieldsFragment,
-	VitalSignsFieldsFragment,
-	WorkFitness,
-} from '@/graphql/generated/graphql';
+import { CERTIFICATE_TYPE_LABELS } from '@loopwise/shared/medical-certificate';
+import type { CertificateType } from '@loopwise/shared/medical-certificate';
+import type { PrescriptionItemFieldsFragment, VitalSignsFieldsFragment } from '@/graphql/generated/graphql';
 
 /**
  * Clinical dates read one way everywhere: `22 Oct 2026`, times on a 24-hour clock. Day and month names never swap
@@ -24,7 +21,11 @@ export const formatDateTime = (value: string) => {
 /** `2026-11-20` → `20 Nov 2026`, without shifting the day through a time zone. */
 export const formatDay = (value: string) => day(new Date(`${value}T00:00:00`));
 
-export const fitnessLabel = (fitness: WorkFitness) => WORK_FITNESS_LABELS[fitness];
+/** `Fit to work`, `Unfit to work`, or null when the certificate doesn't say. */
+export const fitnessLabel = (isFitToWork: boolean | null) =>
+	isFitToWork === null ? null : isFitToWork ? 'Fit to work' : 'Unfit to work';
+
+export const certificateTypeLabel = (type: CertificateType) => CERTIFICATE_TYPE_LABELS[type];
 
 /** The chips of a set of vitals, e.g. `BP 140/90`, `HR 88`, `BMI 30.0`. */
 export function vitalChips(vitals: VitalSignsFieldsFragment): string[] {
@@ -64,17 +65,16 @@ export function vitalChips(vitals: VitalSignsFieldsFragment): string[] {
 
 /** `Amlodipine (Norvasc) 5 mg tablet`. */
 export function medicineName(
-	item: Pick<PrescriptionItemFieldsFragment, 'genericName' | 'brandName' | 'strength' | 'form'>,
+	item: Pick<PrescriptionItemFieldsFragment, 'genericName' | 'brandName' | 'strength' | 'dosageForm'>,
 ) {
-	return [item.genericName, item.brandName && `(${item.brandName})`, item.strength, item.form]
+	return [item.genericName, item.brandName && `(${item.brandName})`, item.strength, item.dosageForm]
 		.filter(Boolean)
 		.join(' ');
 }
 
-/** `1 tablet, once a day, for 30 days (oral)`. */
-export function sig(item: Pick<PrescriptionItemFieldsFragment, 'dose' | 'frequency' | 'durationDays' | 'route'>) {
-	return [item.dose, item.frequency, item.durationDays && `for ${item.durationDays} days`]
+/** `#30 tablets`, with the quantity in words for a dangerous drug: `#10 (ten) capsules`. */
+export function quantityLabel(item: Pick<PrescriptionItemFieldsFragment, 'quantity' | 'unit' | 'quantityInWords'>) {
+	return [`#${item.quantity}`, item.quantityInWords && `(${item.quantityInWords})`, item.unit]
 		.filter(Boolean)
-		.join(', ')
-		.concat(item.route === 'oral' ? '' : ` (${item.route})`);
+		.join(' ');
 }

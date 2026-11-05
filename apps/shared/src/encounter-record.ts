@@ -7,9 +7,42 @@ import { ICD10_CODE_PATTERN, normalizeIcd10Code } from './icd10';
  * The encounter's note and diagnoses (DESIGN.md §5): the one set of rules for the API, the encounter page and the
  * Wise cards. Vitals are in `./vitals`, prescriptions in `./prescription`, certificates in `./medical-certificate`.
  */
-export const DIAGNOSIS_CERTAINTIES = ['provisional', 'confirmed'] as const;
-export const ALLERGY_KINDS = ['drug', 'food', 'environment', 'other'] as const;
-export const ALLERGY_SEVERITIES = ['mild', 'moderate', 'severe'] as const;
+/**
+ * `diagnosis_type`: the main reason for the visit (PRIMARY, one per encounter), others found (SECONDARY), an
+ * impression or rule-out still being worked up (WORKING), and a chronic condition that bears on care (COMORBIDITY).
+ */
+export const DIAGNOSIS_TYPES = ['PRIMARY', 'SECONDARY', 'WORKING', 'COMORBIDITY'] as const;
+export type DiagnosisType = (typeof DIAGNOSIS_TYPES)[number];
+export const DIAGNOSIS_TYPE_LABELS: Record<DiagnosisType, string> = {
+	PRIMARY: 'Primary',
+	SECONDARY: 'Secondary',
+	WORKING: 'Working (impression)',
+	COMORBIDITY: 'Comorbidity',
+};
+
+export const ALLERGY_TYPES = ['DRUG', 'FOOD', 'ENVIRONMENTAL', 'OTHER'] as const;
+export type AllergyType = (typeof ALLERGY_TYPES)[number];
+export const ALLERGY_SEVERITIES = ['MILD', 'MODERATE', 'SEVERE'] as const;
+export type AllergySeverity = (typeof ALLERGY_SEVERITIES)[number];
+
+/** `disposition`: how the visit ended. */
+export const DISPOSITIONS = [
+	'SENT_HOME',
+	'FOR_FOLLOW_UP',
+	'REFERRED',
+	'ADMITTED',
+	'TRANSFERRED_ER',
+	'EXPIRED',
+] as const;
+export type Disposition = (typeof DISPOSITIONS)[number];
+export const DISPOSITION_LABELS: Record<Disposition, string> = {
+	SENT_HOME: 'Sent home',
+	FOR_FOLLOW_UP: 'For follow-up',
+	REFERRED: 'Referred',
+	ADMITTED: 'Admitted',
+	TRANSFERRED_ER: 'Transferred to ER',
+	EXPIRED: 'Expired',
+};
 
 const emptyToUndefined = (value: unknown) =>
 	value === null || (typeof value === 'string' && value.trim() === '') ? undefined : value;
@@ -41,6 +74,7 @@ export const EncounterNoteSchema = z.object({
 		'What the patient should do, in plain words.',
 	),
 	followUpOn: z.preprocess(emptyToUndefined, DateOnlySchema.optional()).describe('Follow-up date, YYYY-MM-DD.'),
+	disposition: z.preprocess(emptyToUndefined, z.enum(DISPOSITIONS).optional()).describe('How the visit ended.'),
 	notes: optionalText(ENCOUNTER_NOTES_MAX_LENGTH, 'notes').describe('Other notes.'),
 });
 
@@ -52,22 +86,22 @@ export const DiagnosisDraftSchema = z.object({
 		.transform(normalizeIcd10Code)
 		.refine((code) => ICD10_CODE_PATTERN.test(code), 'Use an ICD-10 code like I10 or E11.9.')
 		.describe('ICD-10 code (WHO 2010), e.g. "I10".'),
-	display: z
+	description: z
 		.string()
 		.trim()
 		.min(1, 'Add the diagnosis.')
 		.max(300, 'Keep the diagnosis under 300 characters.')
-		.describe('The diagnosis as written, normally the ICD-10 title.'),
-	certainty: z.enum(DIAGNOSIS_CERTAINTIES).default('provisional'),
-	isPrimary: z.boolean().default(false),
+		.describe('The diagnosis as written on the Rx and certificate, normally the ICD-10 title.'),
+	type: z.enum(DIAGNOSIS_TYPES).optional().describe('Default: PRIMARY for the first diagnosis, else SECONDARY.'),
+	isFinal: z.boolean().default(true).describe('False for a provisional diagnosis still being worked up.'),
 	notes: optionalText(1000, 'notes'),
 });
 
 export type DiagnosisDraft = z.output<typeof DiagnosisDraftSchema>;
 
 export const AllergyDraftSchema = z.object({
-	substance: z.string().trim().min(1, 'Add the substance.').max(120, 'Keep the substance under 120 characters.'),
-	kind: z.enum(ALLERGY_KINDS).default('drug'),
+	allergen: z.string().trim().min(1, 'Add the allergen.').max(120, 'Keep the allergen under 120 characters.'),
+	type: z.enum(ALLERGY_TYPES).default('DRUG'),
 	reaction: optionalText(300, 'reaction'),
 	severity: z.preprocess(emptyToUndefined, z.enum(ALLERGY_SEVERITIES).optional()),
 });

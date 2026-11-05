@@ -1,12 +1,13 @@
+import { IDENTIFICATION_LABELS } from '@loopwise/shared/patient-registration';
 import type { chartPatientTrend, createReport } from '@loopwise/shared/tools';
 
 import type { Prisma } from '../../generated/prisma/client.js';
-import type { EncounterSummaryRow, PatientHeaderRow, PrescriptionRow } from './insights.repository.js';
+import type { EncounterSummaryRow, LabValueRow, PatientHeaderRow, PrescriptionRow } from './insights.repository.js';
 import { buildTrendChart } from './trend-chart.js';
 
 type Section = createReport.Section;
 type Vitals = Prisma.VitalSignsGetPayload<object>;
-type Result = Prisma.ResultGetPayload<object>;
+type Result = LabValueRow;
 type Diagnosis = Prisma.EncounterDiagnosisGetPayload<{ include: { encounter: { select: { startedAt: true } } } }>;
 
 export interface PatientSummaryData {
@@ -36,8 +37,8 @@ export function ageOn(birthDate: Date, today: Date): number {
 }
 
 export function patientSubject(patient: PatientHeaderRow, today: Date): string {
-	const sex = { female: 'F', male: 'M' }[patient.sex as string] ?? patient.sex;
-	return `${patient.givenName} ${patient.familyName} · ${sex} · ${ageOn(patient.birthDate, today)} y`;
+	const sex = { FEMALE: 'F', MALE: 'M' }[patient.sex as string] ?? patient.sex;
+	return `${patient.firstName} ${patient.lastName} · ${sex} · ${ageOn(patient.birthDate, today)} y`;
 }
 
 /** The data sections of a patient clinical summary, in reading order. */
@@ -48,23 +49,27 @@ export function buildPatientSummarySections(data: PatientSummaryData, today: Dat
 			kind: 'facts',
 			title: 'Patient',
 			facts: [
-				{ label: 'Name', value: `${patient.givenName} ${patient.familyName}` },
+				{ label: 'Name', value: `${patient.firstName} ${patient.lastName}` },
+				{ label: 'Patient no.', value: patient.patientNo },
 				{ label: 'Born', value: `${day(patient.birthDate)} (age ${ageOn(patient.birthDate, today)})` },
 				{ label: 'Sex', value: patient.sex },
-				...patient.identifiers.map((identifier) => ({
-					label: identifier.system,
-					value: `${identifier.value} (${identifier.organization.name})`,
+				...patient.identifications.map((identification) => ({
+					label: IDENTIFICATION_LABELS[identification.type] ?? identification.type,
+					value: identification.idNumber,
 				})),
-				{ label: 'Consent', value: patient.consentAt ? day(patient.consentAt) : 'not recorded' },
+				{
+					label: 'Data-privacy consent',
+					value: patient.consents[0] ? day(patient.consents[0].signedAt) : 'not on file',
+				},
 			],
 		},
 		{
 			kind: 'table',
 			title: 'Allergies',
-			columns: ['Substance', 'Kind', 'Reaction', 'Severity'],
+			columns: ['Allergen', 'Type', 'Reaction', 'Severity'],
 			rows: patient.allergies.map((allergy) => [
-				allergy.substance,
-				allergy.kind,
+				allergy.allergen,
+				allergy.type,
 				allergy.reaction ?? '—',
 				allergy.severity ?? '—',
 			]),
@@ -79,9 +84,9 @@ export function buildPatientSummarySections(data: PatientSummaryData, today: Dat
 			columns: ['Date', 'Test', 'Result', 'Reference', 'Flag'],
 			rows: data.recentResults.map((result) => [
 				day(result.resultedAt),
-				result.display ?? result.code,
+				result.name,
 				`${result.value}${result.unit ? ` ${result.unit}` : ''}`,
-				result.refRange ?? '—',
+				result.referenceRange ?? '—',
 				result.flag ?? '—',
 			]),
 			empty: 'No results on file.',
@@ -93,13 +98,14 @@ export function buildPatientSummarySections(data: PatientSummaryData, today: Dat
 		{
 			kind: 'table',
 			title: 'Encounters',
-			columns: ['Date', 'Reason', 'Primary diagnosis'],
+			columns: ['Date', 'Visit no.', 'Chief complaint', 'Primary diagnosis'],
 			rows: data.encounters.map((encounter) => {
-				const primary = encounter.diagnoses[0];
+				const primary = encounter.diagnosis.find((diagnosis) => diagnosis.type === 'PRIMARY');
 				return [
 					day(encounter.startedAt),
-					encounter.reason ?? '—',
-					primary ? `${primary.icd10Code} ${primary.display}` : '—',
+					encounter.encounterNo,
+					encounter.chiefComplaint ?? '—',
+					primary ? [primary.icd10Code, primary.description].filter(Boolean).join(' ') : '—',
 				];
 			}),
 			empty: 'No encounters yet.',
@@ -112,20 +118,22 @@ function problems(diagnoses: Diagnosis[]): Section {
 	const byCode = new Map<string, { code: string; display: string; first: Date; last: Date; primary: boolean }>();
 	for (const diagnosis of diagnoses) {
 		const at = diagnosis.encounter.startedAt;
-		const entry = byCode.get(diagnosis.icd10Code);
+		const key = diagnosis.icd10Code ?? diagnosis.description.toLowerCase();
+		const isPrimary = diagnosis.type === 'PRIMARY';
+		const entry = byCode.get(key);
 		if (!entry) {
-			byCode.set(diagnosis.icd10Code, {
-				code: diagnosis.icd10Code,
-				display: diagnosis.display,
+			byCode.set(key, {
+				code: diagnosis.icd10Code ?? '—',
+				display: diagnosis.description,
 				first: at,
 				last: at,
-				primary: diagnosis.isPrimary,
+				primary: isPrimary,
 			});
 			continue;
 		}
 		entry.first = at < entry.first ? at : entry.first;
 		entry.last = at > entry.last ? at : entry.last;
-		entry.primary ||= diagnosis.isPrimary;
+		entry.primary ||= isPrimary;
 	}
 	const rows = [...byCode.values()]
 		.sort((a, b) => Number(b.primary) - Number(a.primary) || b.last.getTime() - a.last.getTime())
@@ -152,7 +160,7 @@ function medicines(prescriptions: PrescriptionRow[]): Section {
 			seen.add(key);
 			rows.push([
 				[item.genericName, item.strength].filter(Boolean).join(' '),
-				`${item.dose}, ${item.route}, ${item.frequency}`,
+				item.sig,
 				item.durationDays ? `${item.durationDays} days` : '—',
 				prescription.issuedAt ? day(prescription.issuedAt) : '—',
 			]);
@@ -176,12 +184,12 @@ function latestVitals(rows: Vitals[]): Section {
 	const facts = [
 		pick(
 			'Blood pressure',
-			(row) => (row.systolicMmHg !== null ? row : null),
-			(row) => `${row.systolicMmHg}/${row.diastolicMmHg ?? '—'} mmHg`,
+			(row) => (row.systolicBp !== null ? row : null),
+			(row) => `${row.systolicBp}/${row.diastolicBp ?? '—'} mmHg`,
 		),
 		pick(
 			'Heart rate',
-			(row) => row.heartRateBpm,
+			(row) => row.heartRate,
 			(value) => `${value} bpm`,
 		),
 		pick(
@@ -196,7 +204,7 @@ function latestVitals(rows: Vitals[]): Section {
 		),
 		pick(
 			'SpO2',
-			(row) => row.spo2Pct,
+			(row) => row.oxygenSaturation,
 			(value) => `${value}%`,
 		),
 		pick(
@@ -216,8 +224,8 @@ function latestVitals(rows: Vitals[]): Section {
 		),
 		pick(
 			'Capillary glucose',
-			(row) => row.bloodGlucoseMgDl,
-			(value) => `${value} mg/dL`,
+			(row) => row.bloodGlucose,
+			(value) => `${Number(value)} mg/dL`,
 		),
 	].filter((fact) => fact !== null);
 	return { kind: 'facts', title: 'Latest vital signs', facts };

@@ -1,17 +1,23 @@
 fragment EncounterFields on Encounter {
 	id
+	encounterNo
 	patientId
+	clinicId
+	type
+	status
 	reason
 	notes
 	startedAt
+	endedAt
 	sourceChatId
-	facility {
+	version
+	clinic {
 		id
 		name
 	}
-	doctor {
+	practitioner {
 		id
-		name
+		displayName
 	}
 }
 
@@ -23,6 +29,18 @@ query Encounters($patientId: ID!) {
 
 mutation CreateEncounter($input: CreateEncounterInput!) {
 	createEncounter(input: $input) {
+		...EncounterFields
+	}
+}
+
+query ClinicEncounters($input: ClinicEncountersInput!) {
+	clinicEncounters(input: $input) {
+		...EncounterFields
+	}
+}
+
+mutation TransitionEncounter($input: TransitionEncounterInput!) {
+	transitionEncounter(input: $input) {
 		...EncounterFields
 	}
 }

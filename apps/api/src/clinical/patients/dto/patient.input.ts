@@ -2,25 +2,33 @@ import { Field, ID, InputType } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
 
-import { Sex } from '../../../generated/prisma/enums.js';
 import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
+import { Sex } from '../patients.enums.js';
 
 /**
- * The fields of a patient being registered. The DTO only checks shapes; `PatientService` parses them with the shared
- * `PatientDraftSchema` (`@loopwise/shared/patient-registration`), the same rules the form and the Wise card use.
+ * The fields of a patient being registered. The DTO only checks shapes; the registration service parses them with the
+ * shared `PatientDraftSchema` (`@loopwise/shared/patient-registration`), the same rules the form and the Wise card use.
  */
 @InputType()
 export class PatientDraftInput {
-	@Field(() => ID, { description: 'The facility registering the patient (`myFacilities`).' })
+	@Field(() => ID, {
+		description: 'The clinic registering the patient (`myCareClinics`); its organization owns them.',
+	})
 	@IsUUID()
-	facilityId: string;
+	clinicId: string;
 
-	@Field()
+	@Field({ description: 'First name.' })
 	@IsString()
 	@MaxLength(200)
 	givenName: string;
 
-	@Field()
+	@Field(() => String, { nullable: true })
+	@IsOptional()
+	@IsString()
+	@MaxLength(200)
+	middleName?: string | null;
+
+	@Field({ description: 'Last name.' })
 	@IsString()
 	@MaxLength(200)
 	familyName: string;
@@ -44,22 +52,39 @@ export class PatientDraftInput {
 	@IsString()
 	preferredLanguage?: string | null;
 
-	@Field(() => String, { nullable: true })
+	@Field(() => String, {
+		nullable: true,
+		description: "An existing chart number to keep; left out, the clinic's next patient number is assigned.",
+	})
 	@IsOptional()
 	@IsString()
 	@MaxLength(200)
-	mrn?: string | null;
+	patientNo?: string | null;
 
 	@Field(() => String, { nullable: true })
 	@IsOptional()
 	@IsString()
 	@MaxLength(40)
 	philHealthId?: string | null;
+
+	@Field(() => String, { nullable: true, description: 'PSGC code of the barangay of residence (`barangays`).' })
+	@IsOptional()
+	@IsString()
+	@MaxLength(20)
+	barangayCode?: string | null;
+
+	@Field(() => String, { nullable: true, description: 'House no., street, purok / sitio.' })
+	@IsOptional()
+	@IsString()
+	@MaxLength(300)
+	addressLine?: string | null;
 }
 
 @InputType()
 export class RegisterPatientInput extends PatientDraftInput {
-	@Field({ description: 'The patient agreed to be registered; sets `consentAt`. Registration needs it.' })
+	@Field({
+		description: 'The patient agreed to the data-privacy notice (RA 10173); recorded as a consent. Required.',
+	})
 	@IsBoolean()
 	consentGiven: boolean;
 
@@ -104,7 +129,7 @@ export class LinkExistingPatientInput extends PatientDraftInput {
 
 @InputType()
 export class SearchPatientsInput {
-	@Field(() => String, { nullable: true, description: 'Name words, or an exact MRN / PhilHealth number.' })
+	@Field(() => String, { nullable: true, description: 'Name words, or an exact patient no. / PhilHealth number.' })
 	@IsOptional()
 	@IsString()
 	@MaxLength(200)
@@ -116,7 +141,7 @@ export class SearchPatientsInput {
 	birthDate?: string | null;
 }
 
-@InputType({ description: "Changes a patient's contact details; names, birth date, sex and identifiers stay." })
+@InputType({ description: "Changes a patient's contact details; names, birth date, sex and IDs stay." })
 export class UpdatePatientInput {
 	@Field(() => ID)
 	@IsUUID()
@@ -134,11 +159,20 @@ export class UpdatePatientInput {
 	@MaxLength(40)
 	preferredLanguage?: string | null;
 
-	@Field(() => String, { nullable: true })
+	@Field(() => String, {
+		nullable: true,
+		description: "The barangay of residence: a PSGC code, or a name in the clinic's city.",
+	})
 	@IsOptional()
 	@IsString()
 	@MaxLength(120)
 	barangay?: string | null;
+
+	@Field(() => String, { nullable: true, description: 'House no., street, purok / sitio.' })
+	@IsOptional()
+	@IsString()
+	@MaxLength(300)
+	addressLine?: string | null;
 
 	@Field(() => WiseOriginInput, { nullable: true, description: 'Set by a Wise card (`propose_patient_update`).' })
 	@IsOptional()

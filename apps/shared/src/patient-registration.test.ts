@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import { normalizeName, normalizePhone, patientDraftErrors, PatientDraftSchema } from './patient-registration';
 
-const valid = { givenName: '  Maria ', familyName: 'Dela  Cruz', birthDate: '1980-05-02', sex: 'female' };
+const valid = { givenName: '  Maria ', familyName: 'Dela  Cruz', birthDate: '1980-05-02', sex: 'FEMALE' };
 
 describe('PatientDraftSchema', () => {
 	it('trims names, defaults the language and drops empty optional fields', () => {
-		expect(PatientDraftSchema.parse({ ...valid, phone: ' ', mrn: '' })).toEqual({
+		expect(PatientDraftSchema.parse({ ...valid, phone: ' ', patientNo: '' })).toEqual({
 			givenName: 'Maria',
 			familyName: 'Dela Cruz',
 			birthDate: '1980-05-02',
-			sex: 'female',
+			sex: 'FEMALE',
 			preferredLanguage: 'en',
 		});
 	});

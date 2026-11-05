@@ -1,20 +1,30 @@
 fragment PatientFields on Patient {
 	id
+	organizationId
+	patientNo
 	givenName
+	middleName
 	familyName
+	suffix
 	birthDate
 	sex
 	phone
+	email
 	preferredLanguage
+	barangay
+	address {
+		addressLine
+		barangayCode
+		barangayName
+		cityMunicipalityName
+	}
 	consentAt
 	createdAt
-	identifiers {
-		system
-		value
-		facility {
-			id
-			name
-		}
+	identifications {
+		id
+		type
+		idNumber
+		label
 	}
 }
 
@@ -25,14 +35,22 @@ fragment PatientDuplicateFields on PatientDuplicate {
 	matchedOn
 	displayName
 	birthYear
-	facilityNames
 }
 
-query MyFacilities {
-	myFacilities {
+query MyCareClinics {
+	myCareClinics {
 		id
 		name
-		type
+		code
+		organizationId
+		cityMunicipalityCode
+	}
+}
+
+query Barangays($cityMunicipalityCode: String!) {
+	barangays(cityMunicipalityCode: $cityMunicipalityCode) {
+		code
+		name
 	}
 }
 

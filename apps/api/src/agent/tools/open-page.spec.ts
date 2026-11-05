@@ -48,7 +48,7 @@ describe('open_page tool', () => {
 		);
 		expect(await result).toMatchObject({ key: 'patients.results', label: "Patient's results (Maria Santos)" });
 		expect(getById).toHaveBeenCalledWith('u', PATIENT_ID, 'Wise open_page');
-		const refused = run({ page: 'patients.cases', params: { patientId: PATIENT_ID }, userAskedToOpen: false });
+		const refused = run({ page: 'patients.detail', params: { patientId: PATIENT_ID }, userAskedToOpen: false });
 		await expect(refused.result).rejects.toThrow(/No patient the user may see/);
 	});
 

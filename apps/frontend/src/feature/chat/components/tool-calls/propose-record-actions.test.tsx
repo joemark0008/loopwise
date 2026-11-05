@@ -6,17 +6,14 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	ProposeBillStepToolCall,
 	ProposeDiagnosisToolCall,
 	ProposeIssueDocumentToolCall,
-	ProposeLabOrderStepToolCall,
 	ProposePatientUpdateToolCall,
 } from './propose-record-actions';
 import type { ReactNode } from 'react';
 
 const mocks = vi.hoisted(() => ({
 	record: null as unknown,
-	labOrders: { sent: [] as unknown[], accepted: [] as unknown[] },
 	contact: null as unknown,
 	calls: {} as Record<string, ReturnType<typeof vi.fn>>,
 	queueOrSendMessage: vi.fn(),
@@ -44,17 +41,6 @@ vi.mock('@/lib/encounter-record-api', () => ({
 			voidVitals: mocks.call('voidVitals'),
 			voidPrescription: mocks.call('voidPrescription'),
 			voidCertificate: mocks.call('voidCertificate'),
-			markBillPaid: mocks.call('markBillPaid'),
-			voidBill: mocks.call('voidBill'),
-		},
-	},
-}));
-vi.mock('@/lib/orders-api', () => ({
-	ordersApi: {
-		order: {
-			labOrders: mocks.query('labOrders', (input) => mocks.labOrders[input?.status as 'sent' | 'accepted']),
-			reject: mocks.call('reject'),
-			cancel: mocks.call('cancel'),
 		},
 	},
 }));
@@ -63,9 +49,6 @@ vi.mock('@/lib/wise-actions-api', () => ({
 		patientContact: mocks.query('contact', () => mocks.contact),
 		issuePrescription: mocks.call('issuePrescription'),
 		issueCertificate: mocks.call('issueCertificate'),
-		finalizeBill: mocks.call('finalizeBill'),
-		acceptOrder: mocks.call('acceptOrder'),
-		markOrderCollected: mocks.call('markOrderCollected'),
 		saveReportToChart: mocks.call('saveReportToChart'),
 		updatePatient: mocks.call('updatePatient'),
 	},
@@ -99,7 +82,6 @@ const record = (overrides: object = {}) => ({
 	orders: [],
 	prescriptions: [],
 	medicalCertificates: [],
-	bills: [],
 	...overrides,
 });
 
@@ -127,7 +109,6 @@ const button = (name: RegExp) => screen.findByRole('button', { name });
 beforeEach(() => {
 	vi.clearAllMocks();
 	mocks.record = record();
-	mocks.labOrders = { sent: [], accepted: [] };
 	mocks.contact = null;
 	for (const fn of Object.values(mocks.calls)) {
 		fn.mockResolvedValue({ id: 'x' });
@@ -142,9 +123,9 @@ describe('Wise record action cards', () => {
 				{
 					id: 'd1',
 					icd10Code: 'I10',
-					display: 'Hypertension',
-					certainty: 'provisional',
-					isPrimary: true,
+					description: 'Hypertension',
+					type: 'PRIMARY',
+					isFinal: false,
 					notes: null,
 					voidedAt: null,
 				},
@@ -153,15 +134,15 @@ describe('Wise record action cards', () => {
 		renderCard(ProposeDiagnosisToolCall, 'propose_diagnosis', {
 			encounterId: 'e1',
 			icd10Code: 'i10',
-			display: 'Hypertension',
-			certainty: 'confirmed',
+			description: 'Hypertension',
+			isFinal: true,
 		});
 		fireEvent.click(await button(/Save changes/));
 		await waitFor(() =>
 			expect(mocks.calls.updateDiagnosis).toHaveBeenCalledWith({
 				id: 'd1',
-				certainty: 'confirmed',
-				isPrimary: true,
+				type: 'PRIMARY',
+				isFinal: true,
 				notes: null,
 				wiseOrigin: origin('propose_diagnosis'),
 			}),
@@ -174,9 +155,19 @@ describe('Wise record action cards', () => {
 			prescriptions: [
 				{
 					id: 'rx1',
-					status: 'draft',
+					documentStatus: 'DRAFT',
+					status: 'ACTIVE',
+					voidedAt: null,
 					createdAt: '2026-11-03T02:00:00.000Z',
-					items: [{ id: 'i1', genericName: 'Amlodipine', brandName: null, strength: '5 mg', form: 'tablet' }],
+					items: [
+						{
+							id: 'i1',
+							genericName: 'Amlodipine',
+							brandName: null,
+							strength: '5 mg',
+							dosageForm: 'tablet',
+						},
+					],
 				},
 			],
 		});
@@ -202,54 +193,6 @@ describe('Wise record action cards', () => {
 			document: 'medical_certificate',
 		});
 		expect(await screen.findByText(/no draft medical certificate to issue/)).toBeTruthy();
-	});
-
-	it('marks the bill paid only with the OR number', async () => {
-		mocks.record = record({ bills: [{ id: 'b1', status: 'finalized', total: 300, charges: [{ id: 'c1' }] }] });
-		renderCard(ProposeBillStepToolCall, 'propose_bill_step', { encounterId: 'e1', step: 'pay' });
-		const confirm = await button(/Mark paid/);
-		expect(confirm).toHaveProperty('disabled', true);
-		fireEvent.change(screen.getByLabelText(/Official receipt/), { target: { value: 'OR-1001' } });
-		fireEvent.click(confirm);
-		await waitFor(() =>
-			expect(mocks.calls.markBillPaid).toHaveBeenCalledWith({
-				id: 'b1',
-				orNumber: 'OR-1001',
-				wiseOrigin: origin('propose_bill_step', true),
-			}),
-		);
-	});
-
-	it('rejects an order on the worklist only with a reason and a second click', async () => {
-		mocks.labOrders.sent = [
-			{
-				id: 'o1',
-				code: '1558-6',
-				display: 'Fasting glucose',
-				priority: 'stat',
-				patient: { givenName: 'Maria', familyName: 'Santos' },
-				orderingDoctorName: 'Dr. Reyes',
-				orderingFacilityName: 'Health Center',
-			},
-		];
-		renderCard(
-			ProposeLabOrderStepToolCall,
-			'propose_lab_order_step',
-			{ orderId: 'o1', step: 'reject' },
-			{ patientId: undefined, subjectId: 'o1' },
-		);
-		const confirm = await button(/Reject order/);
-		expect(confirm).toHaveProperty('disabled', true);
-		fireEvent.change(screen.getByLabelText(/Reason/), { target: { value: 'Patient not fasting' } });
-		fireEvent.click(confirm);
-		fireEvent.click(await button(/Yes, reject order/));
-		await waitFor(() =>
-			expect(mocks.calls.reject).toHaveBeenCalledWith({
-				orderId: 'o1',
-				reason: 'Patient not fasting',
-				wiseOrigin: origin('propose_lab_order_step'),
-			}),
-		);
 	});
 
 	it('changes only the contact details that differ, showing the current value', async () => {

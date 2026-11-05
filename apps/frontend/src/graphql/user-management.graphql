@@ -3,6 +3,7 @@ fragment ManagedUserFields on ManagedUser {
 	name
 	email
 	role
+	staffRoles
 	status
 	createdAt
 }
@@ -39,6 +40,12 @@ mutation CreatePasswordLink($userId: ID!) {
 
 mutation UpdateUserRole($input: UpdateUserRoleInput!) {
 	updateUserRole(input: $input) {
+		...ManagedUserFields
+	}
+}
+
+mutation SetUserStaffRoles($input: SetUserStaffRolesInput!) {
+	setUserStaffRoles(input: $input) {
 		...ManagedUserFields
 	}
 }

@@ -5,18 +5,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-	ProposeChargesToolCall,
-	ProposeMedicalCertificateToolCall,
-	ProposePrescriptionToolCall,
-} from './propose-encounter-record';
+import { ProposeMedicalCertificateToolCall, ProposePrescriptionToolCall } from './propose-encounter-record';
 import type { ReactNode } from 'react';
 
 const mocks = vi.hoisted(() => ({
 	record: null as unknown,
 	savePrescription: vi.fn(),
 	saveCertificate: vi.fn(),
-	saveBill: vi.fn(),
 	queueOrSendMessage: vi.fn(),
 	cancel: vi.fn(),
 	outcomes: [] as unknown[],
@@ -38,7 +33,6 @@ vi.mock('@/lib/encounter-record-api', () => ({
 			},
 			savePrescription: mocks.mutation((input) => mocks.savePrescription(input)),
 			saveCertificate: mocks.mutation((input) => mocks.saveCertificate(input)),
-			saveBill: mocks.mutation((input) => mocks.saveBill(input)),
 		},
 	},
 }));
@@ -82,11 +76,10 @@ const record = (overrides: object = {}) => ({
 	},
 	vitals: [],
 	diagnoses: [],
-	allergies: [{ id: 'a1', substance: 'Penicillin' }],
+	allergies: [{ id: 'a1', allergen: 'Penicillin' }],
 	orders: [{ code: '4548-4' }],
 	prescriptions: [],
 	medicalCertificates: [],
-	bills: [],
 	...overrides,
 });
 
@@ -114,7 +107,6 @@ beforeEach(() => {
 	mocks.record = record();
 	mocks.savePrescription.mockResolvedValue({ id: 'rx1' });
 	mocks.saveCertificate.mockResolvedValue({ id: 'mc1' });
-	mocks.saveBill.mockResolvedValue({ id: 'b1' });
 });
 afterEach(cleanup);
 
@@ -142,7 +134,14 @@ describe('encounter-record proposal cards', () => {
 				expect.objectContaining({
 					id: null,
 					encounterId: 'e1',
-					items: [expect.objectContaining({ genericName: 'Amoxicillin', quantity: 21 })],
+					items: [
+						expect.objectContaining({
+							genericName: 'Amoxicillin',
+							quantity: 21,
+							dose: '1 capsule',
+							route: 'PO',
+						}),
+					],
 					expectedVersion: null,
 					wiseOrigin: {
 						chatId: 'chat-1',
@@ -172,19 +171,25 @@ describe('encounter-record proposal cards', () => {
 				{
 					id: 'rx0',
 					version: 3,
-					status: 'draft',
+					documentStatus: 'DRAFT',
+					voidedAt: null,
+					isDangerousDrug: false,
+					s2FormSerialNo: null,
 					notes: null,
 					items: [
 						{
 							genericName: 'Amlodipine',
 							brandName: null,
 							strength: '5 mg',
-							form: 'tablet',
-							dose: '1 tablet',
-							route: 'oral',
+							dosageForm: 'tablet',
+							sig: '1 tablet by mouth once a day for 30 days',
+							route: 'PO',
 							frequency: 'once a day',
 							durationDays: 30,
+							isPrn: false,
 							quantity: 30,
+							unit: null,
+							quantityInWords: null,
 						},
 					],
 				},
@@ -195,7 +200,7 @@ describe('encounter-record proposal cards', () => {
 				{
 					genericName: 'Amlodipine',
 					strength: '10 mg',
-					form: 'tablet',
+					dosageForm: 'tablet',
 					dose: '1 tablet',
 					frequency: 'once a day',
 					durationDays: 30,
@@ -242,6 +247,7 @@ describe('encounter-record proposal cards', () => {
 	it('saves a certificate draft with the card origin', async () => {
 		renderCard(ProposeMedicalCertificateToolCall, 'propose_medical_certificate', {
 			diagnosisText: 'Hypertension',
+			isFitToWork: false,
 			restDays: 2,
 		});
 		fireEvent.click(await screen.findByRole('button', { name: /Save draft certificate/ }));
@@ -249,7 +255,9 @@ describe('encounter-record proposal cards', () => {
 			expect(mocks.saveCertificate).toHaveBeenCalledWith(
 				expect.objectContaining({
 					diagnosisText: 'Hypertension',
+					isFitToWork: false,
 					restDays: 2,
+					type: 'MEDICAL_CERTIFICATE',
 					expectedVersion: null,
 					wiseOrigin: expect.objectContaining({ toolName: 'propose_medical_certificate' }),
 				}),
@@ -257,27 +265,9 @@ describe('encounter-record proposal cards', () => {
 		);
 	});
 
-	it('starts a bill from the fee schedule and totals the senior discount', async () => {
-		renderCard(ProposeChargesToolCall, 'propose_charges', { discountKind: 'senior_citizen' });
-		expect(await screen.findByText('₱520.00')).toBeTruthy();
-		fireEvent.click(screen.getByRole('button', { name: /Save draft bill/ }));
-		await waitFor(() =>
-			expect(mocks.saveBill).toHaveBeenCalledWith(
-				expect.objectContaining({
-					discountKind: 'senior_citizen',
-					charges: [
-						expect.objectContaining({ code: 'CONSULT' }),
-						expect.objectContaining({ code: '4548-4' }),
-					],
-					wiseOrigin: expect.objectContaining({ toolName: 'propose_charges' }),
-				}),
-			),
-		);
-	});
-
 	it('shrinks to how it ended once answered', async () => {
-		mocks.messages = ['I saved the bill draft: ₱520.00.'];
-		renderCard(ProposeChargesToolCall, 'propose_charges', {});
+		mocks.messages = ['I saved the certificate draft.'];
+		renderCard(ProposeMedicalCertificateToolCall, 'propose_medical_certificate', { diagnosisText: 'Hypertension' });
 		expect(await screen.findByText('Saved as draft')).toBeTruthy();
 	});
 });

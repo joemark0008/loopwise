@@ -1,42 +1,40 @@
 import { Injectable } from '@nestjs/common';
 
-import type { EncounterDiagnosis, PatientAllergy, Prisma, VitalSigns } from '../../generated/prisma/client.js';
+import type { EncounterDiagnosis, Prisma, VitalSigns } from '../../generated/prisma/client.js';
+import type { ClinicalTx } from '../rls/clinical-db.service.js';
 
-type Tx = Prisma.TransactionClient;
-
-const RECORD_INCLUDE = {
-	vitalSigns: { orderBy: { recordedAt: 'desc' } },
-	diagnoses: { orderBy: [{ isPrimary: 'desc' }, { rank: 'asc' }, { createdAt: 'asc' }] },
-	orders: { include: { results: true }, orderBy: { createdAt: 'asc' } },
-	prescriptions: { include: { items: true }, orderBy: { createdAt: 'desc' } },
-	certificates: { orderBy: { createdAt: 'desc' } },
-	bills: { include: { charges: true }, orderBy: { createdAt: 'desc' } },
-} satisfies Prisma.EncounterInclude;
-
-export type EncounterRecordRow = Prisma.EncounterGetPayload<{ include: typeof RECORD_INCLUDE }>;
+const DIAGNOSIS_ORDER = [
+	{ voidedAt: { sort: 'asc', nulls: 'first' } },
+	{ sortOrder: 'asc' },
+	{ recordedAt: 'asc' },
+] satisfies Prisma.EncounterDiagnosisOrderByWithRelationInput[];
 
 const VISIT_INCLUDE = {
-	diagnoses: { where: { voidedAt: null }, orderBy: [{ isPrimary: 'desc' }, { rank: 'asc' }, { createdAt: 'asc' }] },
-	orders: { include: { results: true }, orderBy: { createdAt: 'desc' } },
-	prescriptions: { where: { status: { not: 'voided' } }, include: { items: true }, orderBy: { createdAt: 'desc' } },
-	bills: { where: { status: { not: 'voided' } }, orderBy: { createdAt: 'desc' }, take: 1 },
+	diagnosis: { where: { voidedAt: null }, orderBy: [{ type: 'asc' }, ...DIAGNOSIS_ORDER] },
 } satisfies Prisma.EncounterInclude;
 
 export type PatientVisitRow = Prisma.EncounterGetPayload<{ include: typeof VISIT_INCLUDE }>;
 
 /**
- * The encounter record: vitals, diagnoses and the patient's allergies, and the whole record in one read. Every method
- * takes the transaction of `ClinicalDbService.asUser`, so row-level security applies.
+ * The encounter record: vitals and diagnoses (encounter children, reached through the encounter) and the chart's
+ * visit list. Every method takes the transaction of `ClinicalDbService.asUser`, so row-level security applies.
  */
 @Injectable()
 export class EncounterRecordRepository {
-	/** Null when row-level security hides the encounter. */
-	findRecord(tx: Tx, encounterId: string): Promise<EncounterRecordRow | null> {
-		return tx.encounter.findUnique({ where: { id: encounterId }, include: RECORD_INCLUDE });
+	listVitals(tx: ClinicalTx, encounterId: string): Promise<VitalSigns[]> {
+		return tx.vitalSigns.findMany({ where: { encounterId }, orderBy: { recordedAt: 'desc' } });
 	}
 
-	/** The patient's latest visits with what was recorded in them, newest first (empty when RLS hides the patient). */
-	listVisits(tx: Tx, patientId: string, take: number): Promise<PatientVisitRow[]> {
+	/** Primary first (the type order), voided last. */
+	listDiagnoses(tx: ClinicalTx, encounterId: string): Promise<EncounterDiagnosis[]> {
+		return tx.encounterDiagnosis.findMany({
+			where: { encounterId },
+			orderBy: [{ type: 'asc' }, ...DIAGNOSIS_ORDER],
+		});
+	}
+
+	/** The patient's latest visits with their diagnoses, newest first (empty when RLS hides the patient). */
+	listVisits(tx: ClinicalTx, patientId: string, take: number): Promise<PatientVisitRow[]> {
 		return tx.encounter.findMany({
 			where: { patientId },
 			include: VISIT_INCLUDE,
@@ -45,59 +43,44 @@ export class EncounterRecordRepository {
 		});
 	}
 
-	listAllergies(tx: Tx, patientId: string): Promise<PatientAllergy[]> {
-		return tx.patientAllergy.findMany({ where: { patientId, voidedAt: null }, orderBy: { createdAt: 'asc' } });
-	}
-
-	createVitals(tx: Tx, data: Prisma.VitalSignsUncheckedCreateInput): Promise<VitalSigns> {
+	createVitals(tx: ClinicalTx, data: Prisma.VitalSignsUncheckedCreateInput): Promise<VitalSigns> {
 		return tx.vitalSigns.create({ data });
 	}
 
-	findVitals(tx: Tx, id: string): Promise<VitalSigns | null> {
+	findVitals(tx: ClinicalTx, id: string): Promise<VitalSigns | null> {
 		return tx.vitalSigns.findUnique({ where: { id } });
 	}
 
-	voidVitals(tx: Tx, id: string, voided: { voidedById: string; voidReason: string }): Promise<VitalSigns> {
+	voidVitals(tx: ClinicalTx, id: string, voided: { voidedById: string; voidReason: string }): Promise<VitalSigns> {
 		return tx.vitalSigns.update({ where: { id }, data: { ...voided, voidedAt: new Date() } });
 	}
 
-	findDiagnosis(tx: Tx, id: string): Promise<EncounterDiagnosis | null> {
+	findDiagnosis(tx: ClinicalTx, id: string): Promise<EncounterDiagnosis | null> {
 		return tx.encounterDiagnosis.findUnique({ where: { id } });
 	}
 
-	countDiagnoses(tx: Tx, encounterId: string): Promise<number> {
-		return tx.encounterDiagnosis.count({ where: { encounterId } });
+	/** The diagnoses of the encounter that are not voided. */
+	listActiveDiagnoses(tx: ClinicalTx, encounterId: string): Promise<EncounterDiagnosis[]> {
+		return tx.encounterDiagnosis.findMany({ where: { encounterId, voidedAt: null }, orderBy: DIAGNOSIS_ORDER });
 	}
 
-	/** Clears the current primary, so another diagnosis can take it (one primary per encounter). */
-	clearPrimary(tx: Tx, encounterId: string) {
+	/** Makes the current primary a secondary diagnosis, so another can take its place (one primary per encounter). */
+	demotePrimary(tx: ClinicalTx, encounterId: string): Promise<Prisma.BatchPayload> {
 		return tx.encounterDiagnosis.updateMany({
-			where: { encounterId, isPrimary: true, voidedAt: null },
-			data: { isPrimary: false },
+			where: { encounterId, type: 'PRIMARY', voidedAt: null },
+			data: { type: 'SECONDARY' },
 		});
 	}
 
-	createDiagnosis(tx: Tx, data: Prisma.EncounterDiagnosisUncheckedCreateInput): Promise<EncounterDiagnosis> {
+	createDiagnosis(tx: ClinicalTx, data: Prisma.EncounterDiagnosisUncheckedCreateInput): Promise<EncounterDiagnosis> {
 		return tx.encounterDiagnosis.create({ data });
 	}
 
 	updateDiagnosis(
-		tx: Tx,
+		tx: ClinicalTx,
 		id: string,
 		data: Prisma.EncounterDiagnosisUncheckedUpdateInput,
 	): Promise<EncounterDiagnosis> {
 		return tx.encounterDiagnosis.update({ where: { id }, data });
-	}
-
-	createAllergy(tx: Tx, data: Prisma.PatientAllergyUncheckedCreateInput): Promise<PatientAllergy> {
-		return tx.patientAllergy.create({ data });
-	}
-
-	findAllergy(tx: Tx, id: string): Promise<PatientAllergy | null> {
-		return tx.patientAllergy.findUnique({ where: { id } });
-	}
-
-	voidAllergy(tx: Tx, id: string, voided: { voidedById: string; voidReason: string }): Promise<PatientAllergy> {
-		return tx.patientAllergy.update({ where: { id }, data: { ...voided, voidedAt: new Date() } });
 	}
 }

@@ -3,7 +3,8 @@ import type { ApiInputs, ApiOutputs } from '@/lib/api-types';
 import {
 	CheckPatientDuplicatesDocument,
 	LinkExistingPatientDocument,
-	MyFacilitiesDocument,
+	BarangaysDocument,
+	MyCareClinicsDocument,
 	PatientChatDocument,
 	PatientDocument,
 	RegisterPatientDocument,
@@ -17,9 +18,13 @@ type Outputs = ApiOutputs['patient'];
 /** Patient registration and lookup (`apps/api/src/clinical/patients`), shared by the patient pages and the Wise card. */
 export const patientApi = {
 	patient: {
-		facilities: query<void, Outputs['facilities']>(
-			['patient', 'facilities'],
-			async () => (await runQuery(MyFacilitiesDocument, {})).myFacilities,
+		clinics: query<void, Outputs['clinics']>(
+			['patient', 'clinics'],
+			async () => (await runQuery(MyCareClinicsDocument, {})).myCareClinics,
+		),
+		barangays: query<Inputs['barangays'], Outputs['barangays']>(
+			['patient', 'barangays'],
+			async ({ cityMunicipalityCode }) => (await runQuery(BarangaysDocument, { cityMunicipalityCode })).barangays,
 		),
 		chat: query<Inputs['chat'], Outputs['chat']>(
 			['patient', 'chat'],

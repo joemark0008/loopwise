@@ -21,7 +21,7 @@ describe('createActionTool', () => {
 			patientId: 'p1',
 			subjectId: 'e1',
 		});
-		expect(await run(createActionTool(proposeAllergy), { substance: 'Penicillin' }, chart)).toEqual({
+		expect(await run(createActionTool(proposeAllergy), { allergen: 'Penicillin' }, chart)).toEqual({
 			_version: '1',
 			success: true,
 			patientId: 'p1',
@@ -45,12 +45,12 @@ describe('createActionTool', () => {
 		);
 		expect(output).toMatchObject({
 			tests: [
-				{ code: '4548-4', display: 'Hemoglobin A1c' },
-				{ code: '1558-6', display: 'Fasting glucose' },
+				{ code: 'HBA1C', display: 'Hemoglobin A1c (HbA1c)', category: 'LABORATORY' },
+				{ code: 'FBS', display: 'Fasting blood sugar (FBS)', category: 'LABORATORY' },
 			],
 		});
 		await expect(
 			run(createActionTool(proposeOrder), { encounterId: 'e1', tests: ['HbA1c', 'Thyroid panel'] }, chart),
-		).rejects.toThrow(/Not an orderable test: Thyroid panel.*Lipid panel/);
+		).rejects.toThrow(/Not an orderable test: Thyroid panel.*Lipid profile/);
 	});
 });

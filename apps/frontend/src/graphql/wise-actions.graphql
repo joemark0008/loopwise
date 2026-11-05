@@ -1,15 +1,3 @@
-query WiseResultEvaluation($resultId: ID!) {
-	resultEvaluation(resultId: $resultId) {
-		id
-		pathwayName
-		classification
-		urgency
-		reason
-		guideline
-		slaHours
-	}
-}
-
 mutation WiseIssuePrescription($id: ID!, $wiseOrigin: WiseOriginInput) {
 	issuePrescription(id: $id, wiseOrigin: $wiseOrigin) {
 		id
@@ -19,26 +7,6 @@ mutation WiseIssuePrescription($id: ID!, $wiseOrigin: WiseOriginInput) {
 mutation WiseIssueMedicalCertificate($id: ID!, $wiseOrigin: WiseOriginInput) {
 	issueMedicalCertificate(id: $id, wiseOrigin: $wiseOrigin) {
 		id
-	}
-}
-
-mutation WiseFinalizeEncounterBill($id: ID!, $wiseOrigin: WiseOriginInput) {
-	finalizeEncounterBill(id: $id, wiseOrigin: $wiseOrigin) {
-		id
-	}
-}
-
-mutation WiseAcceptOrder($orderId: ID!, $wiseOrigin: WiseOriginInput) {
-	acceptOrder(orderId: $orderId, wiseOrigin: $wiseOrigin) {
-		id
-		status
-	}
-}
-
-mutation WiseMarkOrderCollected($orderId: ID!, $wiseOrigin: WiseOriginInput) {
-	markOrderCollected(orderId: $orderId, wiseOrigin: $wiseOrigin) {
-		id
-		status
 	}
 }
 
@@ -54,6 +22,9 @@ mutation UpdatePatient($input: UpdatePatientInput!) {
 		phone
 		preferredLanguage
 		barangay
+		address {
+			addressLine
+		}
 	}
 }
 
@@ -65,5 +36,8 @@ query WisePatientContact($id: ID!) {
 		phone
 		preferredLanguage
 		barangay
+		address {
+			addressLine
+		}
 	}
 }

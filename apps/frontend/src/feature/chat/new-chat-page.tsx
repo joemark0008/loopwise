@@ -17,6 +17,7 @@ import { useMultiClinic } from '@/hooks/use-multi-clinic';
 import { useIsCloud } from '@/hooks/use-loopwise-mode';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useStaffRole } from '@/hooks/use-staff-role';
+import { roleNavLinks } from '@/lib/navigation';
 import { useClinicSwitch } from '@/hooks/use-clinic-switch';
 import { useSession } from '@/lib/auth-client';
 import { capitalize, cn } from '@/lib/utils';
@@ -26,10 +27,11 @@ const Route = getRouteApi('/_protected/_chat-layout/');
 
 export function RouteComponent() {
 	const { isViewer } = usePermissions();
-	const role = useStaffRole();
-	if (role === 'lab') {
-		// Lab staff have no Today: their home is the order worklist (docs/design-system.md, roles and homes).
-		return <Navigate to='/orders' replace />;
+	const home = roleNavLinks(useStaffRole())[0];
+	if (home && home.to !== '/') {
+		// Desks without Today (lab, nurse, front desk, cashier) open on their own home (docs/design-system.md, roles
+		// and homes).
+		return <Navigate to={home.to} replace />;
 	}
 	if (isViewer) {
 		return <ViewerHome />;

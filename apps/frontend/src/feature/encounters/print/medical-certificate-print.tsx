@@ -1,7 +1,6 @@
 import { skipToken, useQuery } from '@tanstack/react-query';
-import { restUntil } from '@loopwise/shared/medical-certificate';
 import { fitnessLabel, formatDay } from '../encounter-format';
-import { Letterhead, PatientLines, PrintShell, SignatureBlock, watermarkFor } from './print-shell';
+import { documentWatermark, Letterhead, PatientLines, PrintShell, SignatureBlock } from './print-shell';
 import styles from './print.module.css';
 import { ageOf, patientName } from '@/feature/patients/patient-format';
 import { encounterRecordApi } from '@/lib/encounter-record-api';
@@ -19,13 +18,13 @@ export function MedicalCertificatePrint({ certificateId }: { certificateId: stri
 
 	return (
 		<PrintShell
-			title={mc?.certificateNumber ? `Medical certificate ${mc.certificateNumber}` : 'Medical certificate'}
+			title={mc ? `Medical certificate ${mc.certNo}` : 'Medical certificate'}
 			state={{
 				isPending: certificate.isPending || (Boolean(patientId) && patient.isPending),
 				error: certificate.error ?? patient.error,
 				isMissing: !mc || !patient.data,
 			}}
-			watermark={mc ? watermarkFor(mc.status) : null}
+			watermark={mc ? documentWatermark({ documentStatus: mc.documentStatus, voided: mc.isVoid }) : null}
 		>
 			{mc && patient.data && mc.signatory && (
 				<>
@@ -42,18 +41,20 @@ export function MedicalCertificatePrint({ certificateId }: { certificateId: stri
 						<p>
 							<strong>{mc.diagnosisText}</strong>
 						</p>
+						{mc.findings && <p>Findings: {mc.findings}</p>}
 						<p>
-							{fitnessLabel(mc.fitness)}.
-							{mc.restFrom && mc.restDays && (
+							{fitnessLabel(mc.isFitToWork) && `${fitnessLabel(mc.isFitToWork)}.`}
+							{mc.restFrom && mc.restDays && mc.restTo && (
 								<>
 									{' '}
 									The patient is advised to rest for {mc.restDays} day
 									{mc.restDays === 1 ? '' : 's'}, from {formatDay(mc.restFrom)} to{' '}
-									{formatDay(restUntil(mc.restFrom, mc.restDays))}.
+									{formatDay(mc.restTo)}.
 								</>
 							)}
 						</p>
-						{mc.remarks && <p>Remarks: {mc.remarks}</p>}
+						{mc.recommendation && <p>Recommendation: {mc.recommendation}</p>}
+						{mc.peClassification && <p>Classification: {mc.peClassification}</p>}
 						<p>
 							This certificate is issued upon request
 							{mc.purpose ? ` for ${mc.purpose} purposes` : ''}, and not for medico-legal use.
@@ -61,7 +62,9 @@ export function MedicalCertificatePrint({ certificateId }: { certificateId: stri
 					</div>
 					<SignatureBlock signatory={mc.signatory} />
 					<div className={styles.footer}>
-						<span>{mc.certificateNumber ?? 'Not issued'}</span>
+						<span>
+							{mc.certNo} · Verification {mc.verificationCode}
+						</span>
 						<span>Synthetic demo data · Loopwise</span>
 					</div>
 				</>

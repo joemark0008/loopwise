@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { BillDraftSchema, computeBillTotals } from './encounter-bill';
 import { DiagnosisDraftSchema, EncounterNoteSchema, fieldErrors } from './encounter-record';
 import { findIcd10, normalizeIcd10Code, searchIcd10 } from './icd10';
-import { MedicalCertificateDraftSchema, restUntil } from './medical-certificate';
-import { allergyWarnings, PrescriptionDraftSchema } from './prescription';
+import { MedicalCertificateDraftSchema, ReferralDraftSchema, restUntil } from './medical-certificate';
+import { allergyWarnings, composeSig, PrescriptionDraftSchema } from './prescription';
 import { bmiCategory, computeBmi, vitalsDraftErrors, VitalsDraftSchema } from './vitals';
 
 describe('vitals', () => {
@@ -36,20 +35,22 @@ describe('ICD-10', () => {
 	});
 
 	it('accepts any well-formed code but not free text', () => {
-		expect(DiagnosisDraftSchema.parse({ icd10Code: 'j069', display: 'URTI' })).toMatchObject({
+		expect(DiagnosisDraftSchema.parse({ icd10Code: 'j069', description: 'URTI' })).toEqual({
 			icd10Code: 'J06.9',
-			certainty: 'provisional',
-			isPrimary: false,
+			description: 'URTI',
+			isFinal: true,
 		});
-		expect(fieldErrors(DiagnosisDraftSchema, { icd10Code: 'flu', display: 'Flu' }).icd10Code).toMatch(/ICD-10/);
+		expect(fieldErrors(DiagnosisDraftSchema, { icd10Code: 'flu', description: 'Flu' }).icd10Code).toMatch(/ICD-10/);
 	});
 });
 
 describe('encounter note', () => {
 	it('needs the chief complaint and a real follow-up date', () => {
-		expect(EncounterNoteSchema.parse({ reason: ' BP check ', plan: ' ', followUpOn: '' })).toEqual({
-			reason: 'BP check',
-		});
+		expect(EncounterNoteSchema.parse({ reason: ' BP check ', plan: ' ', followUpOn: '', disposition: '' })).toEqual(
+			{
+				reason: 'BP check',
+			},
+		);
 		expect(fieldErrors(EncounterNoteSchema, { reason: 'x', followUpOn: '20 Nov' }).followUpOn).toMatch(/date/);
 	});
 });
@@ -57,65 +58,64 @@ describe('encounter note', () => {
 describe('prescription', () => {
 	const amlodipine = { genericName: 'Amlodipine', dose: '1 tablet', frequency: 'once a day', quantity: '30' };
 
-	it('needs a medicine with dose, frequency and quantity', () => {
+	it('needs a medicine with directions and a quantity, and writes the sig', () => {
 		expect(PrescriptionDraftSchema.parse({ items: [amlodipine] }).items[0]).toMatchObject({
 			quantity: 30,
-			refills: 0,
-			route: 'oral',
+			isPrn: false,
+			sig: '1 tablet by mouth once a day',
 		});
+		expect(composeSig({ dose: '1 capsule', route: 'PO', frequency: 'every 8 hours', durationDays: 7 })).toBe(
+			'1 capsule by mouth every 8 hours for 7 days',
+		);
 		expect(fieldErrors(PrescriptionDraftSchema, { items: [] }).items).toMatch(/at least one/);
-		expect(fieldErrors(PrescriptionDraftSchema, { items: [{ ...amlodipine, dose: '' }] })['items.0.dose']).toMatch(
-			/dose/,
+		expect(fieldErrors(PrescriptionDraftSchema, { items: [{ ...amlodipine, dose: '' }] })['items.0.sig']).toMatch(
+			/sig/,
+		);
+		expect(fieldErrors(PrescriptionDraftSchema, { items: [{ ...amlodipine, quantity: '1.555' }] })).toHaveProperty(
+			'items.0.quantity',
 		);
 	});
 
-	it('warns about allergies, by name or drug class', () => {
+	it('needs the quantity in words for a dangerous drug (RA 9165)', () => {
+		const items = [{ genericName: 'Tramadol', sig: '1 capsule every 8 hours as needed', quantity: 10 }];
+		expect(
+			fieldErrors(PrescriptionDraftSchema, { isDangerousDrug: true, items })['items.0.quantityInWords'],
+		).toMatch(/words/);
+		expect(
+			PrescriptionDraftSchema.parse({
+				isDangerousDrug: true,
+				items: [{ ...items[0], quantityInWords: 'ten (10)' }],
+			}).items[0].quantityInWords,
+		).toBe('ten (10)');
+	});
+
+	it('warns about allergies, by generic name or drug class', () => {
 		const items = [
 			amlodipine,
 			{ genericName: 'Co-amoxiclav' },
 			{ genericName: 'Paracetamol', brandName: 'Biogesic' },
 		];
-		expect(allergyWarnings(items, [{ substance: 'Penicillin' }])).toEqual([
-			{ itemIndex: 1, genericName: 'Co-amoxiclav', substance: 'Penicillin' },
+		expect(allergyWarnings(items, [{ allergen: 'Penicillin' }])).toEqual([
+			{ itemIndex: 1, genericName: 'Co-amoxiclav', allergen: 'Penicillin' },
 		]);
-		expect(allergyWarnings(items, [{ substance: 'paracetamol' }]).map((warning) => warning.itemIndex)).toEqual([2]);
-		expect(allergyWarnings(items, [{ substance: 'Shrimp' }])).toEqual([]);
+		expect(allergyWarnings(items, [{ allergen: 'paracetamol' }]).map((warning) => warning.itemIndex)).toEqual([2]);
+		expect(allergyWarnings(items, [{ allergen: 'Shrimp' }])).toEqual([]);
 	});
 });
 
 describe('medical certificate', () => {
 	it('needs rest days when unfit and a start date for any rest', () => {
 		const base = { examinedOn: '2026-11-03', diagnosisText: 'Acute URTI' };
-		expect(MedicalCertificateDraftSchema.parse(base).fitness).toBe('fit_to_work');
-		expect(fieldErrors(MedicalCertificateDraftSchema, { ...base, fitness: 'unfit' }).restDays).toMatch(/days/);
+		expect(MedicalCertificateDraftSchema.parse(base).type).toBe('MEDICAL_CERTIFICATE');
+		expect(fieldErrors(MedicalCertificateDraftSchema, { ...base, isFitToWork: false }).restDays).toMatch(/days/);
 		expect(fieldErrors(MedicalCertificateDraftSchema, { ...base, restDays: 2 }).restFrom).toMatch(/from when/);
 		expect(restUntil('2026-11-03', 3)).toBe('2026-11-05');
 	});
 });
 
-describe('encounter bill', () => {
-	it('totals charges with the senior discount and PhilHealth, never below zero', () => {
-		const charges = [
-			{ quantity: 1, unitPrice: 300 },
-			{ quantity: 2, unitPrice: 350.5 },
-		];
-		expect(computeBillTotals(charges)).toMatchObject({ subtotal: 1001, discountAmount: 0, total: 1001 });
-		expect(computeBillTotals(charges, 'senior_citizen', 500)).toEqual({
-			amounts: [300, 701],
-			subtotal: 1001,
-			discountAmount: 200.2,
-			philhealthCoverage: 500,
-			total: 300.8,
-		});
-		expect(computeBillTotals(charges, 'pwd', 5000)).toMatchObject({ philhealthCoverage: 800.8, total: 0 });
-	});
-
-	it('needs a charge with a description and a price of at most 2 decimals', () => {
-		expect(fieldErrors(BillDraftSchema, { charges: [] }).charges).toMatch(/at least one/);
-		const charge = { kind: 'consultation', description: 'Consultation', quantity: '1', unitPrice: '300.555' };
-		expect(fieldErrors(BillDraftSchema, { charges: [charge] })['charges.0.unitPrice']).toMatch(/2 decimals/);
-		expect(BillDraftSchema.parse({ charges: [{ ...charge, unitPrice: '300' }], discountKind: '' })).toMatchObject({
-			philhealthCoverage: 0,
-		});
+describe('referral', () => {
+	it('needs a target', () => {
+		expect(fieldErrors(ReferralDraftSchema, { reason: 'For IM evaluation' }).toPractitionerId).toMatch(/Refer/);
+		expect(ReferralDraftSchema.parse({ reason: 'For CT scan', toFacility: 'GCGMMC' }).urgency).toBe('ROUTINE');
 	});
 });

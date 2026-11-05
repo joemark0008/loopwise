@@ -19,9 +19,10 @@ fragment VitalSignsFields on VitalSigns {
 fragment DiagnosisFields on EncounterDiagnosis {
 	id
 	icd10Code
-	display
-	certainty
-	isPrimary
+	description
+	type
+	isFinal
+	sortOrder
 	notes
 	voidedAt
 	voidReason
@@ -29,57 +30,29 @@ fragment DiagnosisFields on EncounterDiagnosis {
 
 fragment AllergyFields on PatientAllergy {
 	id
-	substance
-	kind
+	allergen
+	type
 	reaction
 	severity
-}
-
-fragment OrderFields on ClinicalOrder {
-	id
-	code
-	display
-	priority
-	status
-	notes
-	sentAt
-	acceptedAt
-	collectedAt
-	resultedAt
-	closedAt
-	statusReason
-	createdAt
-	targetFacility {
-		id
-		name
-	}
-	results {
-		id
-		display
-		value
-		unit
-		refRange
-		flag
-		resultedAt
-		reviewedAt
-	}
+	notedAt
 }
 
 fragment PrescriptionItemFields on PrescriptionItem {
 	id
-	position
+	sortOrder
 	genericName
 	brandName
 	strength
-	form
-	dose
+	dosageForm
+	sig
 	route
 	frequency
 	durationDays
+	isPrn
 	quantity
-	quantityUnit
-	refills
-	instructions
+	unit
+	quantityInWords
+	dispensedQty
 }
 
 fragment PrescriptionFields on Prescription {
@@ -87,8 +60,13 @@ fragment PrescriptionFields on Prescription {
 	version
 	encounterId
 	patientId
+	practitionerId
+	rxNo
+	documentStatus
 	status
-	rxNumber
+	isDangerousDrug
+	s2FormSerialNo
+	verificationCode
 	notes
 	issuedAt
 	voidedAt
@@ -104,58 +82,66 @@ fragment MedicalCertificateFields on MedicalCertificate {
 	version
 	encounterId
 	patientId
-	status
-	certificateNumber
+	practitionerId
+	certNo
+	type
+	documentStatus
 	examinedOn
 	diagnosisText
-	fitness
+	findings
+	recommendation
+	isFitToWork
 	restFrom
+	restTo
 	restDays
-	remarks
 	purpose
+	peClassification
+	verificationCode
 	issuedAt
+	isVoid
 	voidedAt
 	voidReason
 	createdAt
+}
+
+fragment ReferralFields on Referral {
+	id
+	encounterId
+	status
+	urgency
+	reason
+	specialty
+	toExternalDoctor
+	toFacility
+	referredAt
+	toPractitioner {
+		id
+		displayName
+	}
 }
 
 fragment SignatoryFields on DocumentSignatory {
 	name
 	credentials
+	specialty
 	licenseNumber
 	ptrNumber
+	s2LicenseNo
 	facilityName
 	facilityAddress
 	facilityPhone
 }
 
-fragment EncounterBillFields on EncounterBill {
-	id
-	version
-	encounterId
-	status
-	charges {
-		id
-		position
-		kind
-		description
-		code
-		quantity
-		unitPrice
-		amount
+fragment EncounterDocumentsFields on EncounterRecord {
+	prescriptions {
+		...PrescriptionFields
 	}
-	subtotal
-	discountKind
-	discountAmount
-	philhealthPackageCode
-	philhealthCoverage
-	total
-	finalizedAt
-	paidAt
-	orNumber
-	voidedAt
-	voidReason
-	createdAt
+	medicalCertificates {
+		...MedicalCertificateFields
+	}
+	referrals {
+		...ReferralFields
+	}
 }
 
 fragment EncounterRecordFields on EncounterRecord {
@@ -168,6 +154,7 @@ fragment EncounterRecordFields on EncounterRecord {
 		plan
 		patientInstructions
 		followUpOn
+		disposition
 	}
 	vitals {
 		...VitalSignsFields
@@ -178,18 +165,7 @@ fragment EncounterRecordFields on EncounterRecord {
 	allergies {
 		...AllergyFields
 	}
-	orders {
-		...OrderFields
-	}
-	prescriptions {
-		...PrescriptionFields
-	}
-	medicalCertificates {
-		...MedicalCertificateFields
-	}
-	bills {
-		...EncounterBillFields
-	}
+	...EncounterDocumentsFields
 }
 
 query EncounterRecord($encounterId: ID!) {
@@ -199,6 +175,7 @@ query EncounterRecord($encounterId: ID!) {
 }
 
 fragment PatientOverviewFields on PatientOverview {
+	patientId
 	visits {
 		encounter {
 			...EncounterFields
@@ -209,10 +186,6 @@ fragment PatientOverviewFields on PatientOverview {
 		prescriptions {
 			...PrescriptionFields
 		}
-		orders {
-			...OrderFields
-		}
-		billStatus
 	}
 }
 
@@ -235,18 +208,6 @@ query SearchIcd10($query: String!) {
 	}
 }
 
-query OrderOptions {
-	orderableTests {
-		code
-		display
-		kind
-	}
-	orderTargets {
-		id
-		name
-	}
-}
-
 query PrescriptionPrint($id: ID!) {
 	prescription(id: $id) {
 		...PrescriptionFields
@@ -265,21 +226,38 @@ query MedicalCertificatePrint($id: ID!) {
 	}
 }
 
-query MyClinicianProfile {
-	myClinicianProfile {
-		credentials
-		specialty
-		prcLicenseNumber
-		ptrNumber
+fragment PractitionerFields on Practitioner {
+	id
+	type
+	title
+	firstName
+	middleName
+	lastName
+	suffix
+	postNominals
+	displayName
+	specialty
+	subspecialty
+	prcLicenseNo
+	prcLicenseExpiry
+	ptrNo
+	ptrIssuedDate
+	ptrIssuedAt
+	s2LicenseNo
+	s2LicenseExpiry
+	philhealthPan
+	philhealthPanExpiry
+}
+
+query MyPractitioner {
+	myPractitioner {
+		...PractitionerFields
 	}
 }
 
-mutation UpdateMyClinicianProfile($input: UpdateClinicianProfileInput!) {
-	updateMyClinicianProfile(input: $input) {
-		credentials
-		specialty
-		prcLicenseNumber
-		ptrNumber
+mutation SaveMyPractitioner($input: SaveMyPractitionerInput!) {
+	saveMyPractitioner(input: $input) {
+		...PractitionerFields
 	}
 }
 
@@ -332,20 +310,14 @@ mutation VoidAllergy($input: VoidAllergyInput!) {
 	}
 }
 
-mutation CreateEncounterOrder($input: CreateEncounterOrderInput!) {
-	createEncounterOrder(input: $input) {
-		id
-	}
-}
-
 mutation SavePrescription($input: SavePrescriptionInput!) {
 	savePrescription(input: $input) {
 		id
 	}
 }
 
-mutation IssuePrescription($id: ID!, $overrideAllergyWarning: Boolean) {
-	issuePrescription(id: $id, overrideAllergyWarning: $overrideAllergyWarning) {
+mutation IssuePrescription($id: ID!, $overrideAllergyWarning: Boolean, $wiseOrigin: WiseOriginInput) {
+	issuePrescription(id: $id, overrideAllergyWarning: $overrideAllergyWarning, wiseOrigin: $wiseOrigin) {
 		id
 	}
 }
@@ -362,8 +334,8 @@ mutation SaveMedicalCertificate($input: SaveMedicalCertificateInput!) {
 	}
 }
 
-mutation IssueMedicalCertificate($id: ID!) {
-	issueMedicalCertificate(id: $id) {
+mutation IssueMedicalCertificate($id: ID!, $wiseOrigin: WiseOriginInput) {
+	issueMedicalCertificate(id: $id, wiseOrigin: $wiseOrigin) {
 		id
 	}
 }
@@ -371,37 +343,5 @@ mutation IssueMedicalCertificate($id: ID!) {
 mutation VoidMedicalCertificate($input: VoidEntryInput!) {
 	voidMedicalCertificate(input: $input) {
 		id
-	}
-}
-
-mutation SaveEncounterBill($input: SaveEncounterBillInput!) {
-	saveEncounterBill(input: $input) {
-		id
-	}
-}
-
-mutation FinalizeEncounterBill($id: ID!) {
-	finalizeEncounterBill(id: $id) {
-		id
-	}
-}
-
-mutation MarkEncounterBillPaid($input: MarkBillPaidInput!) {
-	markEncounterBillPaid(input: $input) {
-		id
-	}
-}
-
-mutation VoidEncounterBill($input: VoidEntryInput!) {
-	voidEncounterBill(input: $input) {
-		id
-	}
-}
-
-mutation CreateEncounterOrders($input: CreateEncounterOrdersInput!) {
-	createEncounterOrders(input: $input) {
-		id
-		code
-		display
 	}
 }

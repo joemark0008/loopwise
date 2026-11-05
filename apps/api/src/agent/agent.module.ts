@@ -3,13 +3,11 @@ import { Module } from '@nestjs/common';
 import { AttachmentsModule } from '../attachments/attachments.module.js';
 import { ChatsCoreModule } from '../chats/chats-core.module.js';
 import { AnalyticsModule } from '../clinical/analytics/analytics.module.js';
+import { DiagnosticsModule } from '../clinical/diagnostics/diagnostics.module.js';
 import { EncountersModule } from '../clinical/encounters/encounters.module.js';
 import { InsightsModule } from '../clinical/insights/insights.module.js';
-import { OrdersModule } from '../clinical/orders/orders.module.js';
-import { PathwaysModule } from '../clinical/pathways/pathways.module.js';
 import { PatientsModule } from '../clinical/patients/patients.module.js';
 import { ReportsModule } from '../clinical/reports/reports.module.js';
-import { ResultsModule } from '../clinical/results/results.module.js';
 import { ClinicsCoreModule } from '../clinics/clinics-core.module.js';
 import { MemoryModule } from '../memory/memory.module.js';
 import { SkillsModule } from '../skills/skills.module.js';
@@ -32,11 +30,9 @@ import { CompactionService } from './services/compaction.js';
 		InsightsModule,
 		AnalyticsModule,
 		ReportsModule,
-		ResultsModule,
-		OrdersModule,
+		DiagnosticsModule,
 		EncountersModule,
 		WiseToolsModule,
-		PathwaysModule,
 	],
 	controllers: [AgentController],
 	providers: [AgentService, CompactionService],

@@ -14,7 +14,8 @@ import type { ProviderModelResult } from '../src/agent/providers/providers.js';
 import { InsightsService } from '../src/clinical/insights/insights.service.js';
 import { closeBrowser, hasChrome } from '../src/clinical/insights/report-pdf/headless-browser.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
+import { createClinic, createClinicScene, createOrganization } from './fixtures/clinic-fixtures.js';
+import { createTestApp, resetDatabase, signIn, useTestDatabase } from './test-app.js';
 
 const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
 const DAY = 24 * 60 * 60 * 1000;
@@ -40,7 +41,9 @@ describe('charts and reports (e2e)', () => {
 	let clinicId = '';
 	let patientId = '';
 	let facilityId = '';
+	let otherClinicId = '';
 	let encounterId = '';
+	let doctorName = '';
 	const script: ScriptedCall[][] = [];
 	const users = {
 		reyes: { cookie: [] as string[], id: '' },
@@ -75,11 +78,11 @@ describe('charts and reports (e2e)', () => {
 	/** The stored `create_report` part of the user's latest report: its chat and (possibly remapped) call id. */
 	const latestReport = async (userId: string) => {
 		const part = await prisma.messagePart.findFirstOrThrow({
-			where: { toolName: 'create_report', toolState: 'output-available', chatMessage: { chat: { userId } } },
+			where: { toolName: 'create_report', toolState: 'output-available', message: { chat: { userId } } },
 			orderBy: { createdAt: 'desc' },
-			select: { toolCallId: true, chatMessage: { select: { chatId: true } } },
+			select: { toolCallId: true, message: { select: { chatId: true } } },
 		});
-		return { chatId: part.chatMessage.chatId, toolCallId: part.toolCallId! };
+		return { chatId: part.message.chatId, toolCallId: part.toolCallId! };
 	};
 
 	beforeAll(async () => {
@@ -92,90 +95,94 @@ describe('charts and reports (e2e)', () => {
 			scriptedModel(script),
 		);
 
-		const password = 'Sup3r-secret!';
-		const reyes = await createTestUser(app, { name: 'Dr. Reyes', email: 'reyes@example.com', password });
-		const cruz = await createTestUser(app, { name: 'Dr. Cruz', email: 'cruz@example.com', password });
-		users.reyes = { cookie: reyes.cookie, id: reyes.userId };
-		users.cruz = { cookie: cruz.cookie, id: cruz.userId };
+		// Synthetic: Maria, in Dr. Reyes's care (not Dr. Cruz's), with three visits of vitals and two released HbA1c.
+		const scene = await createClinicScene(prisma);
+		clinicId = scene.clinic.id;
+		facilityId = scene.clinic.id;
+		await prisma.clinic.update({ where: { id: clinicId }, data: { path: process.env.LOOPWISE_CLINICS_DIR } });
+		users.reyes = { cookie: await signIn(app, scene.doctor), id: scene.doctor.id };
+		users.cruz = { cookie: await signIn(app, scene.otherDoctor), id: scene.otherDoctor.id };
+		doctorName = scene.doctor.name;
+		patientId = scene.patient.id;
+		const elsewhere = await createOrganization(prisma);
+		otherClinicId = (await createClinic(prisma, { organizationId: elsewhere.id })).id;
 
-		const clinic = await graphql(users.reyes.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }');
-		clinicId = clinic.body.data.createClinic.id;
-		await prisma.clinicMember.createMany({
-			data: [{ clinicId, userId: users.cruz.id, role: 'user' }],
-			skipDuplicates: true,
-		});
-
-		const healthCenter = await prisma.organization.create({
-			data: { name: 'Health Center', slug: 'hc', type: 'clinic' },
-		});
-		facilityId = healthCenter.id;
-		const lab = await prisma.organization.create({ data: { name: 'Bohol Lab', slug: 'lab', type: 'lab' } });
-		const hospital = await prisma.organization.create({
-			data: { name: 'Regional Hospital', slug: 'rh', type: 'hospital' },
-		});
-		await prisma.orgMember.createMany({
-			data: [
-				{ orgId: healthCenter.id, userId: users.reyes.id, role: 'user' },
-				{ orgId: hospital.id, userId: users.cruz.id, role: 'user' },
-			],
-		});
-
-		// Synthetic: Maria, in Dr. Reyes's care only, with three visits of vitals and two HbA1c results.
-		const maria = await prisma.patient.create({
+		const hba1c = await prisma.diagnosticTest.create({
 			data: {
-				givenName: 'Maria',
-				familyName: 'Santos',
-				birthDate: new Date('1981-04-12'),
-				sex: 'female',
-				careRelationships: {
-					create: [{ userId: users.reyes.id, orgId: healthCenter.id, reason: 'encounter' }],
-				},
+				organizationId: scene.organization.id,
+				code: 'HBA1C',
+				name: 'Hemoglobin A1c',
+				category: 'LABORATORY',
+				parameters: { create: [{ code: 'HBA1C', name: 'HbA1c', unit: '%', lisCode: '4548-4' }] },
 			},
+			include: { parameters: true },
 		});
-		patientId = maria.id;
 		const now = Date.now();
-		for (const [daysAgo, systolic, diastolic] of [
-			[180, 132, 84],
-			[90, 136, 86],
-			[10, 140, 90],
-		] as const) {
+		const visits: string[] = [];
+		for (const [index, [daysAgo, systolic, diastolic]] of (
+			[
+				[180, 132, 84],
+				[90, 136, 86],
+				[10, 140, 90],
+			] as const
+		).entries()) {
 			const encounter = await prisma.encounter.create({
 				data: {
+					clinicId,
 					patientId,
-					doctorId: users.reyes.id,
-					orgId: healthCenter.id,
-					reason: 'BP check',
+					practitionerId: scene.doctorPractitioner.id,
+					encounterNo: `TEST-ENC-${index + 1}`,
+					status: 'COMPLETED',
+					chiefComplaint: 'BP check',
 					startedAt: new Date(now - daysAgo * DAY),
 				},
 			});
+			visits.push(encounter.id);
 			encounterId = encounter.id;
 			await prisma.vitalSigns.create({
 				data: {
 					encounterId: encounter.id,
-					patientId,
-					orgId: healthCenter.id,
-					systolicMmHg: systolic,
-					diastolicMmHg: diastolic,
+					systolicBp: systolic,
+					diastolicBp: diastolic,
 					recordedAt: new Date(now - daysAgo * DAY),
 					recordedById: users.reyes.id,
 				},
 			});
 		}
-		for (const [daysAgo, value] of [
-			[170, 6.1],
-			[8, 7.2],
-		] as const) {
-			await prisma.result.create({
+		for (const [index, [daysAgo, value]] of (
+			[
+				[170, 6.1],
+				[8, 7.2],
+			] as const
+		).entries()) {
+			const at = new Date(now - daysAgo * DAY);
+			await prisma.diagnosticOrder.create({
 				data: {
-					patientId,
-					sourceOrgId: lab.id,
-					code: '4548-4',
-					display: 'Hemoglobin A1c',
-					value: String(value),
-					valueNumeric: value,
-					unit: '%',
-					flag: 'high',
-					resultedAt: new Date(now - daysAgo * DAY),
+					orderNo: `TEST-LAB-${index + 1}`,
+					encounterId: visits[index * 2],
+					status: 'RELEASED',
+					items: {
+						create: {
+							testId: hba1c.id,
+							status: 'RELEASED',
+							result: {
+								create: {
+									resultedAt: at,
+									releasedAt: at,
+									values: {
+										create: {
+											parameterId: hba1c.parameters[0].id,
+											name: 'HbA1c',
+											value: String(value),
+											numericValue: value,
+											unit: '%',
+											flag: 'HIGH',
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			});
 		}
@@ -199,7 +206,7 @@ describe('charts and reports (e2e)', () => {
 		]);
 		expect(output.chart.rows[0]).toMatchObject({ systolic_threshold: 140, diastolic_threshold: 90 });
 		const audit = await prisma.auditLog.findMany({
-			where: { userId: users.reyes.id, patientId, action: 'patient.view' },
+			where: { userId: users.reyes.id, patientId, event: 'patient.view' },
 			select: { reason: true },
 		});
 		expect(audit.map((row) => row.reason)).toContain('Wise chart blood_pressure');
@@ -227,7 +234,7 @@ describe('charts and reports (e2e)', () => {
 			type: 'patient_summary',
 			subject: expect.stringMatching(/^Maria Santos · F · \d+ y$/),
 			patientId,
-			generatedBy: 'Dr. Reyes',
+			generatedBy: doctorName,
 		});
 		const titles = output.snapshot.sections.map((section: { title: string }) => section.title);
 		expect(titles).toEqual([
@@ -241,14 +248,14 @@ describe('charts and reports (e2e)', () => {
 			'HbA1c',
 			'Encounters',
 		]);
-		expect(await prisma.auditLog.count({ where: { patientId, action: 'report.generate' } })).toBe(1);
+		expect(await prisma.auditLog.count({ where: { patientId, event: 'report.generate' } })).toBe(1);
 
 		const report = await latestReport(users.reyes.id);
 		const other = await graphql(users.cruz.cookie, EXPORT, report);
 		expect(other.body.errors?.[0]?.message).toBe('Report not found.');
 		const anonymous = await graphql([], EXPORT, report);
 		expect(anonymous.body.errors).toBeDefined();
-		expect(await prisma.auditLog.count({ where: { patientId, action: 'report.export' } })).toBe(0);
+		expect(await prisma.auditLog.count({ where: { patientId, event: 'report.export' } })).toBe(0);
 
 		if (!hasChrome()) {
 			console.warn('No Chrome or Chromium on this machine: the PDF itself is not printed.');
@@ -260,26 +267,32 @@ describe('charts and reports (e2e)', () => {
 		expect(pdf.mimeType).toBe('application/pdf');
 		expect(pdf.filename).toMatch(/^patient-summary-santos-\d{4}-\d{2}-\d{2}\.pdf$/);
 		expect(Buffer.from(pdf.data, 'base64').subarray(0, 5).toString()).toBe('%PDF-');
-		const exported = await prisma.auditLog.findMany({ where: { patientId, action: 'report.export' } });
+		const exported = await prisma.auditLog.findMany({ where: { patientId, event: 'report.export' } });
 		expect(exported).toMatchObject([
-			{ userId: users.reyes.id, resource: 'report', resourceId: report.toolCallId, reason: 'PDF download' },
+			{
+				userId: users.reyes.id,
+				action: 'EXPORT',
+				entityType: 'Report',
+				entityId: report.toolCallId,
+				reason: 'PDF download',
+			},
 		]);
 	}, 60_000);
 
-	it("counts encounters across the user's facility (the facility panel report's data), and refuses a facility they don't work at", async () => {
+	it("counts the visits at the user's clinic (the panel report's data), and refuses a clinic they don't work at", async () => {
 		const insights = app.get(InsightsService, { strict: false });
 		const output = await insights.facilityPanel(users.reyes.id, 'encounters_by_week');
-		expect(output).toMatchObject({
-			metric: 'encounters_by_week',
-			facility: { id: facilityId, name: 'Health Center' },
-		});
+		expect(output).toMatchObject({ metric: 'encounters_by_week', facility: { id: facilityId } });
 		const total = output.chart.rows.reduce((sum, row) => sum + Number(row.encounters), 0);
-		expect(total).toBe(3);
+		// The scene's open visit and the three check-ups.
+		expect(total).toBe(4);
 		expect(
-			await prisma.auditLog.count({ where: { userId: users.reyes.id, orgId: facilityId, action: 'panel.view' } }),
+			await prisma.auditLog.count({
+				where: { userId: users.reyes.id, clinicId: facilityId, event: 'panel.view' },
+			}),
 		).toBe(1);
-		await expect(insights.facilityPanel(users.cruz.id, 'encounters_by_week', facilityId)).rejects.toThrow(
-			/only see the panel of a facility you work at/,
+		await expect(insights.facilityPanel(users.reyes.id, 'encounters_by_week', otherClinicId)).rejects.toThrow(
+			/only see the panel of a clinic you work at/,
 		);
 	});
 
@@ -299,11 +312,11 @@ describe('charts and reports (e2e)', () => {
 			patientId,
 			subject: expect.stringMatching(/ · visit /),
 		});
-		expect(panel).toMatchObject({ type: 'facility_panel', patientId: null, subject: 'Health Center' });
+		expect(panel).toMatchObject({ type: 'facility_panel', patientId: null, facility: { id: facilityId } });
 		expect(JSON.stringify(panel)).not.toContain('Maria');
 		expect(
 			await prisma.auditLog.count({
-				where: { userId: users.reyes.id, action: 'report.generate', orgId: facilityId },
+				where: { userId: users.reyes.id, event: 'report.generate', clinicId: facilityId },
 			}),
 		).toBe(2);
 	});
@@ -341,9 +354,9 @@ describe('charts and reports (e2e)', () => {
 				},
 			},
 		]);
-		const { chatMessage } = await prisma.messagePart.findFirstOrThrow({
+		const { message: chatMessage } = await prisma.messagePart.findFirstOrThrow({
 			where: { toolCallId: reportId },
-			select: { chatMessage: { select: { chatId: true } } },
+			select: { message: { select: { chatId: true } } },
 		});
 		const save = (cookie: string[]) =>
 			graphql(
@@ -354,13 +367,13 @@ describe('charts and reports (e2e)', () => {
 
 		expect((await save(users.cruz.cookie)).body.errors?.[0]?.message).toBe('Report not found.');
 		const saved = (await save(users.reyes.cookie)).body.data.saveReportToChart;
-		expect(saved).toMatchObject({ patientId, title: 'Maria BP', version: 1, createdByName: 'Dr. Reyes' });
+		expect(saved).toMatchObject({ patientId, title: 'Maria BP', version: 1, createdByName: doctorName });
 		expect(Object.keys(saved.data)).toEqual([chartId]);
 		expect((await save(users.reyes.cookie)).body.errors?.[0]?.message).toBe(
 			'This version is already saved to the chart.',
 		);
 		expect(
-			await prisma.auditLog.count({ where: { action: 'document.create', resourceId: saved.id, patientId } }),
+			await prisma.auditLog.count({ where: { event: 'document.create', entityId: saved.id, patientId } }),
 		).toBe(1);
 
 		const library = (cookie: string[]) =>
@@ -388,7 +401,7 @@ describe('charts and reports (e2e)', () => {
 			graphql(cookie, 'query ($id: ID!) { clinicalDocument(id: $id) { title } }', { id: saved.id });
 		expect((await open(users.cruz.cookie)).body.data.clinicalDocument).toBeNull();
 		expect((await open(users.reyes.cookie)).body.data.clinicalDocument).toEqual({ title: 'Maria BP' });
-		expect(await prisma.auditLog.count({ where: { action: 'document.view', resourceId: saved.id } })).toBe(1);
+		expect(await prisma.auditLog.count({ where: { event: 'document.view', entityId: saved.id } })).toBe(1);
 
 		await expect(
 			prisma.clinicalDocument.update({ where: { id: saved.id }, data: { title: 'changed' } }),

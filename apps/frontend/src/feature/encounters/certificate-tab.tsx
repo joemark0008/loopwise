@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { restUntil, WORK_FITNESS } from '@loopwise/shared/medical-certificate';
+import { CERTIFICATE_TYPE_LABELS, CERTIFICATE_TYPES } from '@loopwise/shared/medical-certificate';
 import { Plus, Printer } from 'lucide-react';
 import { useState } from 'react';
 import styles from './encounter.module.css';
@@ -9,12 +9,13 @@ import {
 	toSaveCertificateInput,
 	validateCertificateForm,
 } from './encounter-form-values';
-import { fitnessLabel, formatDateTime, formatDay } from './encounter-format';
+import { certificateTypeLabel, fitnessLabel, formatDateTime, formatDay } from './encounter-format';
 import { FormField } from './form-field';
 import { useRecordMutation } from './use-record-mutation';
 import { VoidDialog } from './void-dialog';
-import type { CertificateFormValues } from './encounter-form-values';
-import type { EncounterRecordFieldsFragment, WorkFitness } from '@/graphql/generated/graphql';
+import type { CertificateType } from '@loopwise/shared/medical-certificate';
+import type { CertificateFormValues, FitnessValue } from './encounter-form-values';
+import type { EncounterRecordFieldsFragment, MedicalCertificateFieldsFragment } from '@/graphql/generated/graphql';
 import { StatusBadge } from '@/components/clinical/status-badge';
 import { Button } from '@/components/ui/button';
 import { Empty } from '@/components/ui/empty';
@@ -24,12 +25,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { encounterRecordApi } from '@/lib/encounter-record-api';
 
-type Certificate = EncounterRecordFieldsFragment['medicalCertificates'][number];
+type Certificate = MedicalCertificateFieldsFragment;
 
-/** Medical certificates from the visit: pre-filled from its diagnoses, issued (locked) as you, printed. */
+const isDraft = (certificate: Certificate) => certificate.documentStatus === 'DRAFT' && !certificate.isVoid;
+
+/** `draft`, `issued` or `voided`, for the status badge. */
+const badgeStatus = (certificate: Certificate) =>
+	certificate.isVoid ? 'voided' : certificate.documentStatus.toLowerCase();
+
+const FITNESS_OPTIONS: { value: FitnessValue | 'none'; label: string }[] = [
+	{ value: 'fit', label: 'Fit to work' },
+	{ value: 'unfit', label: 'Unfit to work' },
+	{ value: 'none', label: 'Not stated' },
+];
+
+/**
+ * Medical certificates from the visit: pre-filled from its diagnoses, numbered when first saved, issued (signed,
+ * locked) as you with your PRC license, printed with a verification code.
+ */
 export function CertificateTab({ record }: { record: EncounterRecordFieldsFragment }) {
 	const [isCreating, setIsCreating] = useState(false);
-	const hasDraft = record.medicalCertificates.some((certificate) => certificate.status === 'draft');
+	const hasDraft = record.medicalCertificates.some(isDraft);
 
 	return (
 		<section className={styles.section}>
@@ -51,7 +67,7 @@ export function CertificateTab({ record }: { record: EncounterRecordFieldsFragme
 			)}
 			{record.medicalCertificates.length === 0 && !isCreating && <Empty>No certificate for this visit.</Empty>}
 			{record.medicalCertificates.map((certificate) =>
-				certificate.status === 'draft' && record.canEdit ? (
+				isDraft(certificate) && record.canEdit ? (
 					<CertificateEditor
 						key={certificate.id}
 						record={record}
@@ -65,11 +81,11 @@ export function CertificateTab({ record }: { record: EncounterRecordFieldsFragme
 	);
 }
 
-function restText(certificate: { restFrom: string | null; restDays: number | null }) {
-	if (!certificate.restFrom || !certificate.restDays) {
+function restText(certificate: { restFrom: string | null; restTo: string | null; restDays: number | null }) {
+	if (!certificate.restFrom || !certificate.restDays || !certificate.restTo) {
 		return null;
 	}
-	return `Rest ${certificate.restDays} day${certificate.restDays === 1 ? '' : 's'}, ${formatDay(certificate.restFrom)} to ${formatDay(restUntil(certificate.restFrom, certificate.restDays))}`;
+	return `Rest ${certificate.restDays} day${certificate.restDays === 1 ? '' : 's'}, ${formatDay(certificate.restFrom)} to ${formatDay(certificate.restTo)}`;
 }
 
 function CertificateCard({ record, certificate }: { record: EncounterRecordFieldsFragment; certificate: Certificate }) {
@@ -81,14 +97,14 @@ function CertificateCard({ record, certificate }: { record: EncounterRecordField
 		<article className={styles.card} data-testid='certificate-card'>
 			<div className={styles.cardHeader}>
 				<span className={styles.cardTitle}>
-					{certificate.certificateNumber ?? 'Draft'}
+					{certificate.certNo} · {certificateTypeLabel(certificate.type)}
 					{certificate.issuedAt && (
 						<span className={styles.muted}> · issued {formatDateTime(certificate.issuedAt)}</span>
 					)}
 				</span>
 				<span className={styles.actions}>
-					<StatusBadge status={certificate.status} />
-					{certificate.status !== 'voided' && (
+					<StatusBadge status={badgeStatus(certificate)} />
+					{!certificate.isVoid && (
 						<Button asChild size='sm' variant='outline'>
 							<Link
 								to='/print/medical-certificate/$certificateId'
@@ -100,7 +116,7 @@ function CertificateCard({ record, certificate }: { record: EncounterRecordField
 							</Link>
 						</Button>
 					)}
-					{record.canEdit && certificate.status === 'issued' && (
+					{record.canEdit && !certificate.isVoid && certificate.documentStatus === 'ISSUED' && (
 						<Button size='sm' variant='ghost-muted' onClick={() => setIsVoiding(true)}>
 							Void
 						</Button>
@@ -109,8 +125,7 @@ function CertificateCard({ record, certificate }: { record: EncounterRecordField
 			</div>
 			<p>{certificate.diagnosisText}</p>
 			<p className={styles.muted}>
-				{fitnessLabel(certificate.fitness)}
-				{rest && ` · ${rest}`}
+				{[fitnessLabel(certificate.isFitToWork), rest].filter(Boolean).join(' · ')}
 				{certificate.purpose && ` · for ${certificate.purpose}`}
 			</p>
 			{certificate.voidReason && <p className={styles.muted}>Voided: {certificate.voidReason}</p>}
@@ -186,16 +201,35 @@ function CertificateEditor({
 						/>
 					)}
 				</FormField>
+				<FormField label='Type'>
+					{() => (
+						<Select value={values.type} onValueChange={(value) => set('type', value as CertificateType)}>
+							<SelectTrigger className={styles.control} aria-label='Type'>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{CERTIFICATE_TYPES.map((type) => (
+									<SelectItem key={type} value={type}>
+										{CERTIFICATE_TYPE_LABELS[type]}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					)}
+				</FormField>
 				<FormField label='Fitness'>
 					{() => (
-						<Select value={values.fitness} onValueChange={(value) => set('fitness', value as WorkFitness)}>
+						<Select
+							value={values.fitness || 'none'}
+							onValueChange={(value) => set('fitness', value === 'none' ? '' : (value as FitnessValue))}
+						>
 							<SelectTrigger className={styles.control} aria-label='Fitness'>
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								{WORK_FITNESS.map((fitness) => (
-									<SelectItem key={fitness} value={fitness}>
-										{fitnessLabel(fitness)}
+								{FITNESS_OPTIONS.map((option) => (
+									<SelectItem key={option.value} value={option.value}>
+										{option.label}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -235,14 +269,25 @@ function CertificateEditor({
 						/>
 					)}
 				</FormField>
-				<FormField label='Remarks' error={error('remarks')} wide>
+				<FormField label='Findings' error={error('findings')} wide>
 					{(id) => (
 						<Textarea
 							id={id}
 							rows={2}
-							value={values.remarks}
+							value={values.findings}
+							onChange={(event) => set('findings', event.target.value)}
+							disabled={busy}
+						/>
+					)}
+				</FormField>
+				<FormField label='Recommendation' error={error('recommendation')} wide>
+					{(id) => (
+						<Textarea
+							id={id}
+							rows={2}
+							value={values.recommendation}
 							placeholder='e.g. May return to light duty; avoid heavy lifting'
-							onChange={(event) => set('remarks', event.target.value)}
+							onChange={(event) => set('recommendation', event.target.value)}
 							disabled={busy}
 						/>
 					)}

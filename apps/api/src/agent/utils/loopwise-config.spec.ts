@@ -17,7 +17,7 @@ describe('extractRequiredEnvVars', () => {
 			fs.writeFileSync(
 				path.join(dir, 'loopwise_config.yaml'),
 				[
-					'project_name: demo',
+					'clinic_name: demo',
 					'databases:',
 					'  - name: warehouse',
 					'    type: postgres',
@@ -104,7 +104,7 @@ describe('extractConfiguredRepos', () => {
 			fs.writeFileSync(
 				path.join(dir, 'loopwise_config.yaml'),
 				[
-					'project_name: demo',
+					'clinic_name: demo',
 					'repos:',
 					'  - name: dbt-models',
 					'    url: https://github.com/loopwise/dbt-models.git',
@@ -145,7 +145,7 @@ describe('extractConfiguredRepos', () => {
 			fs.writeFileSync(
 				path.join(dir, 'loopwise_config.yaml'),
 				[
-					'project_name: demo',
+					'clinic_name: demo',
 					'repos:',
 					'  - name: dbt-models',
 					'    url: https://gitlab.com/loopwise/dbt-models.git',
@@ -175,7 +175,7 @@ describe('extractConfiguredRepos', () => {
 			fs.writeFileSync(
 				path.join(dir, 'loopwise_config.yaml'),
 				[
-					'project_name: demo',
+					'clinic_name: demo',
 					'repos:',
 					'  - name: dbt-models',
 					'    url: https://bitbucket.org/loopwise/dbt-models.git',

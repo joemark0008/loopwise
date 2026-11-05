@@ -28,33 +28,27 @@ import type {
 	AddAllergyInput,
 	AddDiagnosisInput,
 	CreateEncounterInput,
-	CreateEncounterOrdersInput,
-	CreateEncounterOrderInput,
 	EncounterFieldsFragment,
 	AllergyFieldsFragment,
 	EncounterRecordFieldsFragment,
-	MarkBillPaidInput,
 	MedicalCertificatePrintQuery,
-	MyClinicianProfileQuery,
-	OrderOptionsQuery,
-	PathwayFieldsFragment,
+	MyPractitionerQuery,
+	SaveMyPractitionerInput,
+	ClinicEncountersInput,
+	TransitionEncounterInput,
+	BarangaysQuery,
 	PatientOverviewFieldsFragment,
 	PrescriptionPrintQuery,
-	ResultEvaluationFieldsFragment,
-	ResultItemFieldsFragment,
-	ReviewResultInput,
 	RecordVitalsInput,
-	SaveEncounterBillInput,
 	SaveMedicalCertificateInput,
 	SavePrescriptionInput,
 	SearchIcd10Query,
-	UpdateClinicianProfileInput,
 	UpdateDiagnosisInput,
 	UpdateEncounterNoteInput,
 	VoidAllergyInput,
 	VoidEntryInput,
 	LinkExistingPatientInput,
-	MyFacilitiesQuery,
+	MyCareClinicsQuery,
 	PatientDraftInput,
 	PatientDuplicateFieldsFragment,
 	PatientFieldsFragment,
@@ -62,10 +56,23 @@ import type {
 	SearchPatientsInput,
 	WiseOriginInput,
 	WiseProposalOutcomeFieldsFragment,
-	LabOrderCountsQuery,
-	LabOrderFieldsFragment,
-	OrderReasonInput,
-	OrderStatus,
+	EncounterBillingFieldsFragment,
+	IssueInvoiceInput,
+	RecordPaymentInput,
+	SaveInvoiceDraftInput,
+	VoidInvoiceInput,
+	CancelDiagnosticOrderInput,
+	CreateDiagnosticOrderInput,
+	DiagnosticItemStepInput,
+	DiagnosticOrderFieldsFragment,
+	DiagnosticOrderStatus,
+	DiagnosticReportFieldsFragment,
+	DiagnosticTestFieldsFragment,
+	EnterDiagnosticResultInput,
+	LabWorklistCountsQuery,
+	LabWorklistItemFieldsFragment,
+	MarkSpecimenCollectedInput,
+	ReviewResultInput,
 } from '@/graphql/generated/graphql';
 
 interface Procedure<Input, Output> {
@@ -605,16 +612,17 @@ interface GraphQLProcedures {
 		list: Procedure<{ patientId: string }, EncounterFieldsFragment[]>;
 		overview: Procedure<{ patientId: string }, PatientOverviewFieldsFragment>;
 		create: Procedure<CreateEncounterInput, EncounterFieldsFragment>;
+		atClinic: Procedure<ClinicEncountersInput, EncounterFieldsFragment[]>;
+		transition: Procedure<TransitionEncounterInput, EncounterFieldsFragment>;
 	};
 	encounterRecord: {
 		get: Procedure<{ encounterId: string }, EncounterRecordFieldsFragment | null>;
 		allergies: Procedure<{ patientId: string }, AllergyFieldsFragment[]>;
 		searchIcd10: Procedure<{ query: string }, SearchIcd10Query['searchIcd10']>;
-		orderOptions: Procedure<void, OrderOptionsQuery>;
 		prescriptionPrint: Procedure<{ id: string }, PrescriptionPrintQuery['prescription']>;
 		certificatePrint: Procedure<{ id: string }, MedicalCertificatePrintQuery['medicalCertificate']>;
-		clinicianProfile: Procedure<void, MyClinicianProfileQuery['myClinicianProfile']>;
-		updateClinicianProfile: Procedure<UpdateClinicianProfileInput, MyClinicianProfileQuery['myClinicianProfile']>;
+		myPractitioner: Procedure<void, MyPractitionerQuery['myPractitioner']>;
+		saveMyPractitioner: Procedure<SaveMyPractitionerInput, NonNullable<MyPractitionerQuery['myPractitioner']>>;
 		updateNote: Procedure<UpdateEncounterNoteInput, { id: string; version: number }>;
 		recordVitals: Procedure<RecordVitalsInput, { id: string }>;
 		voidVitals: Procedure<VoidEntryInput, { id: string }>;
@@ -623,25 +631,23 @@ interface GraphQLProcedures {
 		voidDiagnosis: Procedure<VoidEntryInput, { id: string }>;
 		addAllergy: Procedure<AddAllergyInput, { id: string }>;
 		voidAllergy: Procedure<VoidAllergyInput, { id: string }>;
-		createOrder: Procedure<CreateEncounterOrderInput, { id: string }>;
-		createOrders: Procedure<CreateEncounterOrdersInput, { id: string; code: string; display: string | null }[]>;
 		savePrescription: Procedure<SavePrescriptionInput, { id: string }>;
 		issuePrescription: Procedure<{ id: string; overrideAllergyWarning?: boolean }, { id: string }>;
 		voidPrescription: Procedure<VoidEntryInput, { id: string }>;
 		saveCertificate: Procedure<SaveMedicalCertificateInput, { id: string }>;
 		issueCertificate: Procedure<{ id: string }, { id: string }>;
 		voidCertificate: Procedure<VoidEntryInput, { id: string }>;
-		saveBill: Procedure<SaveEncounterBillInput, { id: string }>;
-		finalizeBill: Procedure<{ id: string }, { id: string }>;
-		markBillPaid: Procedure<MarkBillPaidInput, { id: string }>;
-		voidBill: Procedure<VoidEntryInput, { id: string }>;
 	};
-	pathway: {
-		list: Procedure<void, PathwayFieldsFragment[]>;
-		evaluation: Procedure<{ resultId: string }, ResultEvaluationFieldsFragment | null>;
+	billing: {
+		get: Procedure<{ encounterId: string }, EncounterBillingFieldsFragment>;
+		saveDraft: Procedure<SaveInvoiceDraftInput, { id: string; version: number }>;
+		issue: Procedure<IssueInvoiceInput, { id: string; invoiceNo: string | null }>;
+		recordPayment: Procedure<RecordPaymentInput, { id: string; status: string; balance: number }>;
+		void: Procedure<VoidInvoiceInput, { id: string }>;
 	};
 	patient: {
-		facilities: Procedure<void, MyFacilitiesQuery['myFacilities']>;
+		clinics: Procedure<void, MyCareClinicsQuery['myCareClinics']>;
+		barangays: Procedure<{ cityMunicipalityCode: string }, BarangaysQuery['barangays']>;
 		chat: Procedure<{ patientId: string }, string | null>;
 		search: Procedure<SearchPatientsInput, PatientFieldsFragment[]>;
 		get: Procedure<{ id: string }, PatientFieldsFragment | null>;
@@ -653,17 +659,21 @@ interface GraphQLProcedures {
 		linkExisting: Procedure<LinkExistingPatientInput, PatientFieldsFragment>;
 	};
 	order: {
-		labOrders: Procedure<{ status: OrderStatus }, LabOrderFieldsFragment[]>;
-		labOrderCounts: Procedure<void, LabOrderCountsQuery['labOrderCounts']>;
-		accept: Procedure<{ orderId: string }, { id: string; status: OrderStatus }>;
-		markCollected: Procedure<{ orderId: string }, { id: string; status: OrderStatus }>;
-		reject: Procedure<OrderReasonInput, { id: string; status: OrderStatus }>;
-		cancel: Procedure<OrderReasonInput, { id: string; status: OrderStatus }>;
+		tests: Procedure<void, DiagnosticTestFieldsFragment[]>;
+		forEncounter: Procedure<{ encounterId: string }, DiagnosticOrderFieldsFragment[]>;
+		create: Procedure<CreateDiagnosticOrderInput, DiagnosticOrderFieldsFragment>;
+		cancel: Procedure<CancelDiagnosticOrderInput, { id: string; status: DiagnosticOrderStatus }>;
+		worklist: Procedure<{ statuses?: DiagnosticOrderStatus[] | null }, LabWorklistItemFieldsFragment[]>;
+		worklistCounts: Procedure<void, LabWorklistCountsQuery['labWorklistCounts']>;
+		collect: Procedure<MarkSpecimenCollectedInput, { id: string; status: DiagnosticOrderStatus }>;
+		start: Procedure<DiagnosticItemStepInput, { id: string; status: DiagnosticOrderStatus }>;
+		enterResult: Procedure<EnterDiagnosticResultInput, LabWorklistItemFieldsFragment>;
+		release: Procedure<DiagnosticItemStepInput, { id: string; status: DiagnosticOrderStatus }>;
 	};
 	result: {
-		toReview: Procedure<void, ResultItemFieldsFragment[]>;
-		forPatient: Procedure<{ patientId: string }, ResultItemFieldsFragment[]>;
-		review: Procedure<ReviewResultInput, ResultItemFieldsFragment>;
+		toReview: Procedure<void, DiagnosticReportFieldsFragment[]>;
+		forPatient: Procedure<{ patientId: string }, DiagnosticReportFieldsFragment[]>;
+		review: Procedure<ReviewResultInput, DiagnosticReportFieldsFragment>;
 	};
 	wiseProposal: {
 		outcomes: Procedure<{ chatId: string }, WiseProposalOutcomeFieldsFragment[]>;

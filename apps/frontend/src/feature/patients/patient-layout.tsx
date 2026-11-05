@@ -26,7 +26,7 @@ const WIDE = '(min-width: 75.0625rem)';
 export function PatientLayout({ patientId }: { patientId: string }) {
 	const patient = useQuery(patientApi.patient.get.queryOptions({ id: patientId }));
 	const allergies = useQuery(encounterRecordApi.encounterRecord.allergies.queryOptions({ patientId }));
-	const facilities = useQuery(patientApi.patient.facilities.queryOptions());
+	const clinics = useQuery(patientApi.patient.clinics.queryOptions());
 	const matchRoute = useMatchRoute();
 	const isEncounter = !!matchRoute({ to: '/patients/$patientId/encounters/$encounterId', params: { patientId } });
 	const [isWiseOpen, setIsWiseOpen] = useState(false);
@@ -72,7 +72,8 @@ export function PatientLayout({ patientId }: { patientId: string }) {
 		);
 	}
 
-	const facilityId = facilities.data?.[0]?.id;
+	// Allergies are kept by the staff of the patient's organization.
+	const canRecordAllergy = !!clinics.data?.some((clinic) => clinic.organizationId === patient.data?.organizationId);
 	return (
 		<div
 			className={styles.shell}
@@ -85,7 +86,7 @@ export function PatientLayout({ patientId }: { patientId: string }) {
 				<PatientBanner
 					patient={patient.data}
 					allergies={allergies.data}
-					onAddAllergy={facilityId ? () => setIsAllergyOpen(true) : undefined}
+					onAddAllergy={canRecordAllergy ? () => setIsAllergyOpen(true) : undefined}
 					actions={
 						<Button
 							variant='outline'
@@ -163,13 +164,8 @@ export function PatientLayout({ patientId }: { patientId: string }) {
 					/>
 				</aside>
 			</div>
-			{facilityId && (
-				<AllergyDialog
-					patientId={patientId}
-					facilityId={facilityId}
-					open={isAllergyOpen}
-					onOpenChange={setIsAllergyOpen}
-				/>
+			{canRecordAllergy && (
+				<AllergyDialog patientId={patientId} open={isAllergyOpen} onOpenChange={setIsAllergyOpen} />
 			)}
 		</div>
 	);
@@ -194,7 +190,7 @@ function BackLinks() {
 	);
 }
 
-/** The patient's pages: the chart (visits, details) and, as they land, results, cases and messages. */
+/** The patient's pages: the chart (visits, details) and, as they land, the other areas' tabs. */
 function PatientTabs({ patientId }: { patientId: string }) {
 	return (
 		<nav className={styles.tabs} aria-label='Patient record'>

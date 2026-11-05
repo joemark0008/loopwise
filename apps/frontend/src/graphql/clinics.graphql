@@ -1,10 +1,12 @@
 fragment ClinicSummaryFields on ClinicSummary {
 	id
 	name
-	type
+	code
+	kind
 	path
-	orgId
+	organizationId
 	userRole
+	staffRoles
 	createdAt
 	updatedAt
 }

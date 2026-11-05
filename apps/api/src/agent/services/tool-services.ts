@@ -8,9 +8,7 @@ type ReadSources = {
 	insights: AgentToolServices['insights'];
 	analytics: AgentToolServices['analytics'];
 	reports: AgentToolServices['reports'];
-	results: AgentToolServices['results'];
-	orders: AgentToolServices['orders'];
-	rules: AgentToolServices['rules'];
+	diagnostics: AgentToolServices['diagnostics'];
 	attachments: AgentToolServices['attachments'];
 };
 
@@ -20,15 +18,13 @@ type ReadSources = {
  * when this list grows without review.
  */
 export const TOOL_SERVICE_READS = {
-	patients: ['myFacilities', 'isVisible', 'getChartSummary', 'findForWise', 'getById', 'checkDuplicates'],
+	patients: ['myCareClinics', 'isVisible', 'getChartSummary', 'findForWise', 'getById', 'checkDuplicates'],
 	skills: ['getSkill', 'getSkills', 'getSkillBody'],
-	encounters: ['getNoteForWise'],
+	encounters: ['getForWise'],
 	insights: ['patientTrend', 'facilityPanel', 'buildReport'],
 	analytics: ['describe', 'run', 'metric'],
 	reports: ['toolOutputs', 'versions'],
-	results: ['toReviewForWise'],
-	orders: ['labOrdersForWise'],
-	rules: ['explainForWise'],
+	diagnostics: ['labWorklistForWise', 'resultsToReviewForWise'],
 	attachments: ['readTextForWise'],
 } as const satisfies { [K in keyof ReadSources]: readonly (keyof ReadSources[K])[] };
 

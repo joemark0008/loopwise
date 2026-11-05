@@ -1,26 +1,21 @@
-import { Field, Float, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { Field, Float, ID, Int, ObjectType } from '@nestjs/graphql';
 
 import type {
 	EncounterDiagnosis as DiagnosisRow,
-	PatientAllergy as AllergyRow,
 	Prisma,
 	VitalSigns as VitalSignsRow,
 } from '../../../generated/prisma/client.js';
-import { AllergyKind, AllergySeverity, DiagnosisCertainty } from '../../../generated/prisma/enums.js';
-import { EncounterBill } from '../../billing/models/encounter-bill.model.js';
-import { MedicalCertificate } from '../../medical-certificates/models/medical-certificate.model.js';
-import { ClinicalOrder } from '../../orders/models/order.model.js';
-import { Prescription } from '../../prescriptions/models/prescription.model.js';
+import { PatientAllergy } from '../../patients/models/patient-allergy.model.js';
+import { DiagnosisType } from '../encounters.enums.js';
 import { Encounter } from './encounter.model.js';
-
-registerEnumType(DiagnosisCertainty, { name: 'DiagnosisCertainty' });
-registerEnumType(AllergyKind, { name: 'AllergyKind' });
-registerEnumType(AllergySeverity, { name: 'AllergySeverity' });
 
 @ObjectType({ description: 'One set of vital signs. Units: mmHg, bpm, /min, °C, %, kg, cm, mg/dL.' })
 export class VitalSigns {
 	@Field(() => ID)
 	id: string;
+
+	@Field(() => ID)
+	encounterId: string;
 
 	@Field(() => Int, { nullable: true })
 	systolicMmHg: number | null;
@@ -49,7 +44,7 @@ export class VitalSigns {
 	@Field(() => Float, { nullable: true, description: 'Computed from weight and height.' })
 	bmi: number | null;
 
-	@Field(() => Int, { nullable: true })
+	@Field(() => Float, { nullable: true, description: 'Capillary blood glucose (CBG), mg/dL.' })
 	bloodGlucoseMgDl: number | null;
 
 	@Field(() => Int, { nullable: true })
@@ -58,8 +53,8 @@ export class VitalSigns {
 	@Field()
 	recordedAt: Date;
 
-	@Field(() => ID)
-	recordedById: string;
+	@Field(() => ID, { nullable: true })
+	recordedById: string | null;
 
 	@Field(() => Date, { nullable: true })
 	voidedAt: Date | null;
@@ -68,28 +63,34 @@ export class VitalSigns {
 	voidReason: string | null;
 }
 
-@ObjectType({ description: 'An ICD-10 coded diagnosis of the encounter.' })
+@ObjectType({ description: 'A diagnosis of the encounter, ICD-10 coded (PhilHealth).' })
 export class EncounterDiagnosis {
 	@Field(() => ID)
 	id: string;
 
-	@Field()
-	icd10Code: string;
+	@Field(() => ID)
+	encounterId: string;
 
-	@Field()
-	display: string;
+	@Field(() => String, { nullable: true, description: 'ICD-10 code of `icd10_codes`.' })
+	icd10Code: string | null;
 
-	@Field(() => DiagnosisCertainty)
-	certainty: DiagnosisCertainty;
+	@Field({ description: 'As printed on the Rx and certificate, normally the ICD-10 title.' })
+	description: string;
 
-	@Field()
-	isPrimary: boolean;
+	@Field(() => DiagnosisType, { description: 'One PRIMARY per encounter.' })
+	type: DiagnosisType;
+
+	@Field({ description: 'False while it is still an impression being worked up.' })
+	isFinal: boolean;
+
+	@Field(() => Int)
+	sortOrder: number;
 
 	@Field(() => String, { nullable: true })
 	notes: string | null;
 
 	@Field()
-	createdAt: Date;
+	recordedAt: Date;
 
 	@Field(() => Date, { nullable: true })
 	voidedAt: Date | null;
@@ -98,37 +99,11 @@ export class EncounterDiagnosis {
 	voidReason: string | null;
 }
 
-@ObjectType({ description: 'A known allergy of the patient.' })
-export class PatientAllergy {
-	@Field(() => ID)
-	id: string;
-
-	@Field()
-	substance: string;
-
-	@Field(() => AllergyKind)
-	kind: AllergyKind;
-
-	@Field(() => String, { nullable: true })
-	reaction: string | null;
-
-	@Field(() => AllergySeverity, { nullable: true })
-	severity: AllergySeverity | null;
-
-	@Field()
-	createdAt: Date;
-}
-
-@ObjectType({ description: 'An ICD-10 code and its WHO title.' })
-export class Icd10Code {
-	@Field()
-	code: string;
-
-	@Field()
-	title: string;
-}
-
-@ObjectType({ description: 'An encounter and everything recorded in it, read as the user (row-level security).' })
+@ObjectType({
+	description:
+		'An encounter and what was recorded in it, read as the user (row-level security). Prescriptions, certificates, ' +
+		'referrals, orders and invoices are fields their own modules add.',
+})
 export class EncounterRecord {
 	@Field(() => Encounter)
 	encounter: Encounter;
@@ -136,26 +111,34 @@ export class EncounterRecord {
 	@Field(() => [VitalSigns], { description: 'Newest first, voided included.' })
 	vitals: VitalSigns[];
 
-	@Field(() => [EncounterDiagnosis], { description: 'Primary first, voided included.' })
+	@Field(() => [EncounterDiagnosis], { description: 'Primary first, then by sort order; voided included.' })
 	diagnoses: EncounterDiagnosis[];
 
-	@Field(() => [PatientAllergy], { description: "The patient's allergies (not voided)." })
+	@Field(() => [PatientAllergy], { description: "The patient's active allergies." })
 	allergies: PatientAllergy[];
 
-	@Field(() => [ClinicalOrder])
-	orders: ClinicalOrder[];
-
-	@Field(() => [Prescription], { description: 'Newest first.' })
-	prescriptions: Prescription[];
-
-	@Field(() => [MedicalCertificate], { description: 'Newest first.' })
-	medicalCertificates: MedicalCertificate[];
-
-	@Field(() => [EncounterBill], { description: 'Newest first: at most one is not voided.' })
-	bills: EncounterBill[];
-
-	@Field({ description: 'The user works at the encounter’s facility, so may add to its record.' })
+	@Field({ description: 'The user works at the clinic of the visit, so may add to its record.' })
 	canEdit: boolean;
+}
+
+@ObjectType({
+	description: 'One visit as the chart lists it: the encounter and its diagnoses (more fields per module).',
+})
+export class PatientVisit {
+	@Field(() => Encounter)
+	encounter: Encounter;
+
+	@Field(() => [EncounterDiagnosis], { description: 'Not voided, primary first.' })
+	diagnoses: EncounterDiagnosis[];
+}
+
+@ObjectType({ description: "The patient chart's overview, read as the user (row-level security): the recent visits." })
+export class PatientOverview {
+	@Field(() => ID)
+	patientId: string;
+
+	@Field(() => [PatientVisit], { description: 'Newest first (the latest 20).' })
+	visits: PatientVisit[];
 }
 
 const decimal = (value: Prisma.Decimal | null) => (value === null ? null : value.toNumber());
@@ -163,16 +146,17 @@ const decimal = (value: Prisma.Decimal | null) => (value === null ? null : value
 export function toVitalSigns(row: VitalSignsRow): VitalSigns {
 	return {
 		id: row.id,
-		systolicMmHg: row.systolicMmHg,
-		diastolicMmHg: row.diastolicMmHg,
-		heartRateBpm: row.heartRateBpm,
+		encounterId: row.encounterId,
+		systolicMmHg: row.systolicBp,
+		diastolicMmHg: row.diastolicBp,
+		heartRateBpm: row.heartRate,
 		respiratoryRate: row.respiratoryRate,
 		temperatureC: decimal(row.temperatureC),
-		spo2Pct: row.spo2Pct,
+		spo2Pct: row.oxygenSaturation,
 		weightKg: decimal(row.weightKg),
 		heightCm: decimal(row.heightCm),
 		bmi: decimal(row.bmi),
-		bloodGlucoseMgDl: row.bloodGlucoseMgDl,
+		bloodGlucoseMgDl: decimal(row.bloodGlucose),
 		painScore: row.painScore,
 		recordedAt: row.recordedAt,
 		recordedById: row.recordedById,
@@ -184,24 +168,15 @@ export function toVitalSigns(row: VitalSignsRow): VitalSigns {
 export function toDiagnosis(row: DiagnosisRow): EncounterDiagnosis {
 	return {
 		id: row.id,
+		encounterId: row.encounterId,
 		icd10Code: row.icd10Code,
-		display: row.display,
-		certainty: row.certainty,
-		isPrimary: row.isPrimary,
+		description: row.description,
+		type: row.type,
+		isFinal: row.isFinal,
+		sortOrder: row.sortOrder,
 		notes: row.notes,
-		createdAt: row.createdAt,
+		recordedAt: row.recordedAt,
 		voidedAt: row.voidedAt,
 		voidReason: row.voidReason,
-	};
-}
-
-export function toAllergy(row: AllergyRow): PatientAllergy {
-	return {
-		id: row.id,
-		substance: row.substance,
-		kind: row.kind,
-		reaction: row.reaction,
-		severity: row.severity,
-		createdAt: row.createdAt,
 	};
 }

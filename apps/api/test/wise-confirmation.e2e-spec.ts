@@ -11,7 +11,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { LlmService } from '../src/agent/llm/llm.service.js';
 import type { ProviderModelResult } from '../src/agent/providers/providers.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
+import { addCareRelationship, createClinicScene } from './fixtures/clinic-fixtures.js';
+import { createTestApp, resetDatabase, signIn, useTestDatabase } from './test-app.js';
 
 const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
 const UPDATE_NOTE = `mutation ($input: UpdateEncounterNoteInput!) { updateEncounterNote(input: $input) { plan version } }`;
@@ -30,6 +31,7 @@ describe('Wise confirmation (e2e)', () => {
 	let patientId = '';
 	let encounterId = '';
 	let chatId = '';
+	let clinicName = '';
 	const user = { cookie: [] as string[], id: '' };
 	const other = { cookie: [] as string[], id: '' };
 	const calls = { count: 0 };
@@ -79,7 +81,7 @@ describe('Wise confirmation (e2e)', () => {
 
 	const writes = async () => ({
 		encounters: await prisma.encounter.count(),
-		actions: await prisma.auditLog.count({ where: { NOT: { action: { endsWith: '.view' } } } }),
+		actions: await prisma.auditLog.count({ where: { NOT: { action: 'VIEW' } } }),
 		outcomes: await prisma.wiseProposalOutcome.count(),
 		note: (await prisma.encounter.findUniqueOrThrow({ where: { id: encounterId } })).plan,
 	});
@@ -94,45 +96,25 @@ describe('Wise confirmation (e2e)', () => {
 			scriptedModel(calls, script),
 		);
 
-		const password = 'Sup3r-secret!';
-		const reyes = await createTestUser(app, { name: 'Dr. Reyes', email: 'reyes@example.com', password });
-		const cruz = await createTestUser(app, { name: 'Dr. Cruz', email: 'cruz@example.com', password });
-		Object.assign(user, { cookie: reyes.cookie, id: reyes.userId });
-		Object.assign(other, { cookie: cruz.cookie, id: cruz.userId });
-		clinicId = (await graphql(user.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }')).body.data
-			.createClinic.id;
-		await prisma.clinicMember.create({ data: { clinicId, userId: other.id, role: 'user' } });
-		const facility = await prisma.organization.create({
-			data: { name: 'Health Center', slug: 'hc', type: 'clinic' },
+		// Dr. Reyes and Dr. Cruz both have Maria in care at the clinic: Cruz may change her record, not Reyes's cards.
+		const scene = await createClinicScene(prisma);
+		await addCareRelationship(prisma, {
+			patientId: scene.patient.id,
+			userId: scene.otherDoctor.id,
+			organizationId: scene.organization.id,
 		});
-		await prisma.orgMember.createMany({
-			data: [
-				{ orgId: facility.id, userId: user.id, role: 'user' },
-				{ orgId: facility.id, userId: other.id, role: 'user' },
-			],
-		});
-
-		const registered = await graphql(
-			user.cookie,
-			'mutation ($input: RegisterPatientInput!) { registerPatient(input: $input) { patient { id } } }',
-			{
-				input: {
-					facilityId: facility.id,
-					givenName: 'Maria',
-					familyName: 'Santos',
-					birthDate: '1981-04-12',
-					sex: 'female',
-					consentGiven: true,
-				},
-			},
-		);
-		patientId = registered.body.data.registerPatient.patient.id;
+		clinicId = scene.clinic.id;
+		await prisma.clinic.update({ where: { id: clinicId }, data: { path: process.env.LOOPWISE_CLINICS_DIR } });
+		Object.assign(user, { cookie: await signIn(app, scene.doctor), id: scene.doctor.id });
+		Object.assign(other, { cookie: await signIn(app, scene.otherDoctor), id: scene.otherDoctor.id });
+		patientId = scene.patient.id;
 		const encounter = await graphql(
 			user.cookie,
 			'mutation ($input: CreateEncounterInput!) { createEncounter(input: $input) { id } }',
-			{ input: { patientId, facilityId: facility.id, reason: 'Fatigue' } },
+			{ input: { patientId, clinicId, reason: 'Fatigue' } },
 		);
 		encounterId = encounter.body.data.createEncounter.id;
+		clinicName = scene.clinic.name;
 	});
 
 	afterAll(async () => {
@@ -143,7 +125,7 @@ describe('Wise confirmation (e2e)', () => {
 		const before = await writes();
 		const { output } = await draft('Plan: recheck BP in 2 weeks');
 		expect(output).toMatchObject({
-			encounter: { id: encounterId, facilityName: 'Health Center' },
+			encounter: { id: encounterId, clinicName },
 			patientName: 'Maria Santos',
 			current: { reason: 'Fatigue', plan: null },
 			version: 1,
@@ -168,8 +150,14 @@ describe('Wise confirmation (e2e)', () => {
 			version: 2,
 		});
 
-		const audit = await prisma.auditLog.findFirstOrThrow({ where: { action: 'encounter.update_note' } });
-		expect(audit).toMatchObject({ userId: user.id, patientId, resourceId: encounterId });
+		const audit = await prisma.auditLog.findFirstOrThrow({ where: { event: 'encounter.update_note' } });
+		expect(audit).toMatchObject({
+			action: 'UPDATE',
+			entityType: 'Encounter',
+			userId: user.id,
+			patientId,
+			entityId: encounterId,
+		});
 		expect(audit.origin).toMatchObject({
 			via: 'wise',
 			toolName: 'propose_encounter_note',
@@ -193,7 +181,10 @@ describe('Wise confirmation (e2e)', () => {
 		const again = await graphql(user.cookie, UPDATE_NOTE, {
 			input: { encounterId, reason: 'Fatigue', plan: 'Twice', wiseOrigin: origin(card.toolCallId) },
 		});
-		expect(again.body.errors?.[0].extensions.code).toBe('CONFLICT');
+		expect(again.body.errors?.[0].extensions).toMatchObject({
+			code: 'CONFLICT',
+			errorCode: 'WISE_CARD_ALREADY_SETTLED',
+		});
 		expect(again.body.errors?.[0].message).toMatch(/already confirmed/);
 		expect((await writes()).note).toBe('Recheck BP in 2 weeks; low-salt diet.');
 	});
@@ -212,8 +203,7 @@ describe('Wise confirmation (e2e)', () => {
 				wiseOrigin: origin(card.toolCallId),
 			},
 		});
-		expect(res.body.errors?.[0].extensions.code).toBe('CONFLICT');
-		expect(res.body.errors?.[0].message).toMatch(/changed after this edit was drafted/);
+		expect(res.body.errors?.[0].extensions).toMatchObject({ code: 'CONFLICT', errorCode: 'STALE_VERSION' });
 		expect((await writes()).note).toBe('Edited by hand');
 		expect(await prisma.wiseProposalOutcome.count({ where: { toolCallId: card.toolCallId } })).toBe(0);
 	});
@@ -270,7 +260,7 @@ describe('Wise confirmation (e2e)', () => {
 			const rx = saved.body.data.savePrescription;
 			expect(rx.version).toBe(1);
 			const audit = await prisma.auditLog.findFirstOrThrow({
-				where: { action: 'prescription.save', resourceId: rx.id },
+				where: { event: 'prescription.save', entityId: rx.id },
 			});
 			expect(audit.origin).toMatchObject({
 				via: 'wise',
@@ -292,8 +282,7 @@ describe('Wise confirmation (e2e)', () => {
 					wiseOrigin: rxOrigin(second.toolCallId),
 				},
 			});
-			expect(stale.body.errors?.[0].extensions.code).toBe('CONFLICT');
-			expect(stale.body.errors?.[0].message).toMatch(/prescription was changed after this edit was drafted/);
+			expect(stale.body.errors?.[0].extensions).toMatchObject({ code: 'CONFLICT', errorCode: 'STALE_VERSION' });
 			const items = await prisma.prescriptionItem.findMany({ where: { prescriptionId: rx.id } });
 			expect(items.map((item) => item.strength)).toEqual(['7.5 mg']);
 
@@ -317,7 +306,6 @@ describe('Wise confirmation (e2e)', () => {
 			const card = await draft('BP check, 150/95');
 			const encounterOrigin = { ...origin(card.toolCallId), toolName: 'propose_encounter' };
 			const RECORD_VITALS = `mutation ($input: RecordVitalsInput!) { recordVitals(input: $input) { id } }`;
-			const facilityId = (await prisma.encounter.findUniqueOrThrow({ where: { id: encounterId } })).orgId;
 
 			// Not confirmed yet: the vitals can't claim the card.
 			const early = await graphql(user.cookie, RECORD_VITALS, {
@@ -331,7 +319,7 @@ describe('Wise confirmation (e2e)', () => {
 				{
 					input: {
 						patientId,
-						facilityId,
+						clinicId,
 						reason: 'BP check',
 						sourceChatId: chatId,
 						wiseOrigin: encounterOrigin,
@@ -349,7 +337,7 @@ describe('Wise confirmation (e2e)', () => {
 			});
 			expect(vitals.body.errors).toBeUndefined();
 			const audit = await prisma.auditLog.findFirstOrThrow({
-				where: { action: 'vitals.record', resourceId: vitals.body.data.recordVitals.id },
+				where: { event: 'vitals.record', entityId: vitals.body.data.recordVitals.id },
 			});
 			expect(audit.origin).toMatchObject({
 				via: 'wise',

@@ -1,6 +1,6 @@
 /**
  * The catalogue of Wise tools (DESIGN.md §7.3): what each one does in plain words, what kind it is, where it shows in
- * Settings → Wise tools, and whether a facility of each type has it on by default. The API offers the model only the
+ * Settings → Wise tools, and whether an organization has it on by default. The API offers the model only the
  * tools turned on for the user, refuses the others, and the settings page lists them from here.
  *
  * Confirmation is not in here on purpose: every change Wise drafts needs the clinician's Confirm, always.
@@ -26,7 +26,6 @@ export const WISE_TOOL_CATEGORIES = [
 	'billing',
 	'reports',
 	'analytics',
-	'cases',
 	'assistant',
 ] as const;
 export type WiseToolCategory = (typeof WISE_TOOL_CATEGORIES)[number];
@@ -40,13 +39,8 @@ export const WISE_TOOL_CATEGORY_LABELS: Record<WiseToolCategory, string> = {
 	billing: 'Billing',
 	reports: 'Charts and reports',
 	analytics: 'Analytics',
-	cases: 'Cases and referrals',
 	assistant: 'Assistant',
 };
-
-/** Mirrors the API's `OrganizationType`. */
-export const FACILITY_TYPES = ['clinic', 'lab', 'imaging', 'hospital', 'pharmacy', 'program'] as const;
-export type FacilityType = (typeof FACILITY_TYPES)[number];
 
 export interface WiseToolEntry {
 	name: string;
@@ -60,15 +54,19 @@ export interface WiseToolEntry {
 	locked?: boolean;
 	/** Listed as "Coming soon" with no switch; not a tool yet. */
 	comingSoon?: boolean;
-	/** The facility types that have it on until an admin changes it. */
-	defaultOn: readonly FacilityType[];
+	/** On in an organization until its admin changes it. */
+	defaultOn: boolean;
 }
 
-const ALL: readonly FacilityType[] = FACILITY_TYPES;
+/**
+ * The groups the defaults used to differ by when facilities had types. A Loopwise organization is now one or more
+ * clinics with their own in-house lab, so every group is on by default; an organization admin turns tools off.
+ */
+const ALL = true;
 /** Where clinicians see patients and write the chart. */
-const CARE: readonly FacilityType[] = ['clinic', 'hospital'];
-/** Where staff receive orders and run tests. */
-const LAB: readonly FacilityType[] = ['lab', 'imaging', 'hospital'];
+const CARE = true;
+/** Where in-house lab staff run tests and enter results. */
+const LAB = true;
 
 export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 	// Patients
@@ -175,7 +173,7 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 	{
 		name: 'propose_order',
 		label: 'Order lab tests',
-		summary: 'Drafts lab or imaging orders for a visit, sent to the lab you pick.',
+		summary: "Drafts a lab or imaging request for a visit, done by the clinic's own lab.",
 		kind: 'propose',
 		category: 'orders',
 		defaultOn: CARE,
@@ -183,7 +181,7 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 	{
 		name: 'propose_cancel_order',
 		label: 'Cancel an order',
-		summary: 'Drafts cancelling an order before collection; the lab sees your reason.',
+		summary: 'Drafts cancelling a test before its result is in; the lab sees your reason.',
 		kind: 'propose',
 		category: 'orders',
 		defaultOn: CARE,
@@ -191,15 +189,15 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 	{
 		name: 'list_lab_orders',
 		label: 'Lab worklist',
-		summary: 'Lists the orders sent to your lab or imaging center, by status.',
+		summary: "Lists the tests on the clinic's lab worklist, by step.",
 		kind: 'read',
 		category: 'orders',
 		defaultOn: LAB,
 	},
 	{
 		name: 'propose_lab_order_step',
-		label: 'Accept, collect or reject orders',
-		summary: 'Drafts the next step of an order on your worklist; rejecting needs a reason.',
+		label: 'Collect, start, release or cancel tests',
+		summary: 'Drafts the next step of a test on the lab worklist; cancelling needs a reason.',
 		kind: 'propose',
 		category: 'orders',
 		defaultOn: LAB,
@@ -208,15 +206,7 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 	{
 		name: 'list_results_to_review',
 		label: 'List results to review',
-		summary: 'Lists the results waiting for your review, critical first, with the rules-engine reading.',
-		kind: 'read',
-		category: 'results',
-		defaultOn: CARE,
-	},
-	{
-		name: 'explain_result',
-		label: 'Explain a result',
-		summary: 'Explains why a result is normal, actionable or critical, from the pathway rules.',
+		summary: 'Lists the released results waiting for your review, critical first.',
 		kind: 'read',
 		category: 'results',
 		defaultOn: CARE,
@@ -265,16 +255,16 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 	// Billing
 	{
 		name: 'propose_charges',
-		label: 'Draft charges',
-		summary: 'Drafts the bill of a visit. You finalize it yourself.',
+		label: 'Draft an invoice',
+		summary: 'Drafts the invoice of a visit, with the SC/PWD discount if shown. You issue it yourself.',
 		kind: 'propose',
 		category: 'billing',
 		defaultOn: CARE,
 	},
 	{
 		name: 'propose_bill_step',
-		label: 'Finalize, pay or void a bill',
-		summary: 'Drafts the next step of a bill: finalize (confirm twice), paid with the OR number, or void.',
+		label: 'Issue, pay or void an invoice',
+		summary: 'Drafts the next step of an invoice: issue (confirm twice), a payment with its OR number, or void.',
 		kind: 'propose',
 		category: 'billing',
 		defaultOn: CARE,
@@ -332,32 +322,11 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 	{
 		name: 'get_metric',
 		label: 'Certified metrics',
-		summary: 'Reads a certified program metric, such as time to treatment.',
+		summary: 'Reads a certified metric, such as encounters per month or billing totals.',
 		kind: 'read',
 		category: 'analytics',
 		defaultOn: ALL,
 	},
-	// Cases and referrals (Days 7–9)
-	...(
-		[
-			['propose_referral', 'Refer a patient', 'Drafts a referral to a specialist or hospital.'],
-			['propose_task', 'Create a task', 'Drafts a follow-up task for the care team.'],
-			[
-				'propose_patient_message',
-				'Message a patient',
-				'Drafts an SMS to the patient (never for a critical value).',
-			],
-			['propose_close_case', 'Close a case', 'Drafts closing a case, with evidence or your sign-off.'],
-		] as const
-	).map(([name, label, summary]): WiseToolEntry => ({
-		name,
-		label,
-		summary,
-		kind: 'propose',
-		category: 'cases',
-		comingSoon: true,
-		defaultOn: CARE,
-	})),
 	// Assistant
 	{
 		name: 'clarification',
@@ -430,17 +399,17 @@ export const LOCKED_WISE_TOOLS: readonly string[] = WISE_TOOL_CATALOG.filter((en
 	(entry) => entry.name,
 );
 
-/** Whether a facility of this type has the tool on before any admin changes it. Unknown tools are off. */
-export function isWiseToolOnByDefault(name: string, facilityType: FacilityType): boolean {
+/** Whether an organization has the tool on before its admin changes it. Unknown tools are off. */
+export function isWiseToolOnByDefault(name: string): boolean {
 	const entry = BY_NAME.get(name);
-	return !!entry && !entry.comingSoon && (entry.locked || entry.defaultOn.includes(facilityType));
+	return !!entry && !entry.comingSoon && (entry.locked || entry.defaultOn);
 }
 
 /** What Wise says, and the API answers, when a tool is turned off. */
-export function wiseToolOffMessage(name: string, facilityName?: string): string {
+export function wiseToolOffMessage(name: string, organizationName?: string): string {
 	const label = BY_NAME.get(name)?.label ?? name;
 	return (
-		`That action (${label}) is turned off in Wise settings${facilityName ? ` at ${facilityName}` : ''}. ` +
-		'A facility admin can turn it on in Settings → Wise tools.'
+		`That action (${label}) is turned off in Wise settings${organizationName ? ` at ${organizationName}` : ''}. ` +
+		'An organization admin can turn it on in Settings → Wise tools.'
 	);
 }

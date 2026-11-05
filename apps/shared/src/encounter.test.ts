@@ -6,6 +6,7 @@ describe('EncounterDraftSchema', () => {
 	it('trims the reason and drops empty notes and start time', () => {
 		expect(EncounterDraftSchema.parse({ reason: '  BP check ', notes: ' ', startedAt: '' })).toEqual({
 			reason: 'BP check',
+			type: 'CONSULTATION',
 		});
 	});
 

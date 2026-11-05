@@ -1,150 +1,84 @@
-import 'reflect-metadata';
-
 import crypto from 'node:crypto';
 
-import { Module } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { hashPassword } from 'better-auth/crypto';
 
-import { ClinicRepository } from '../src/clinics/clinic.repository.js';
-import { ClinicsModule } from '../src/clinics/clinics.module.js';
-import { ConfigModule } from '../src/config/config.module.js';
-import { ConfigService } from '../src/config/config.service.js';
-import { OrganizationRepository } from '../src/organizations/organization.repository.js';
-import { OrganizationsModule } from '../src/organizations/organizations.module.js';
-import { PrismaModule } from '../src/prisma/prisma.module.js';
-import { PrismaService } from '../src/prisma/prisma.service.js';
-import { UserRepository } from '../src/users/user.repository.js';
-import { DEMO_PASSWORD, seedClinicalDemo, STAFF } from './seed-clinical.js';
+import { loadDotenv, parseEnv } from '../src/config/env.js';
+import { PrismaClient } from '../src/generated/prisma/client.js';
+import { seedBilling } from './seed-billing.js';
+import {
+	DEMO_CLINIC_CODE,
+	DEMO_CLINIC_NAME,
+	DEMO_ORG_NAME,
+	DEMO_PASSWORD,
+	DEMO_STAFF,
+	seedClinicalDemo,
+	STAFF,
+} from './seed-clinical.js';
+import { seedDiagnostics } from './seed-diagnostics.js';
 import { seedEncounterRecords } from './seed-encounter-record.js';
-import { seedPathways, seedResultEvaluations } from './seed-pathways.js';
-import { seedBarangays, seedPanelVitals, seedTrendHistory } from './seed-trends.js';
-
-/** Port of upstream `scripts/db.seed.ts`, plus the Loopwise clinical demo (`seed-clinical.ts`). */
-const ADMIN_EMAIL = 'test@test.test';
-const ADMIN_PASSWORD = 'test1234';
-const ADMIN_NAME = 'Test';
-const ORG_NAME = 'Test Organization';
-const ORG_SLUG = 'test';
-const CLINIC_NAME = 'Test Clinic';
-
-@Module({
-	imports: [ConfigModule, PrismaModule, ClinicsModule, OrganizationsModule],
-	providers: [UserRepository],
-})
-class SeedModule {}
+import { seedReference } from './seed-reference.js';
+import { seedPanelVitals, seedTrendHistory } from './seed-trends.js';
 
 /**
- * Seeds the database with an admin user, organization and clinic, then the synthetic clinical demo (facilities,
- * staff, patients, pathways, cases). When GitHub auth is configured, the seed users get a random password (users sign
- * in via GitHub instead). Each part is skipped when it is already there.
+ * Seeds the database: the reference data (PSGC, ICD-10, RVS), then the synthetic demo — the organization Tagbilaran City
+ * Health Center with its clinic `TAG` (also the Wise workspace, at `LOOPWISE_DEFAULT_CLINIC_PATH`), one login per desk,
+ * the practitioners, patients and their visits. The demo is skipped when its organization is already there. When
+ * GitHub sign-in is configured, the demo logins get a random password (users sign in via GitHub instead).
+ *
+ * Seeding is system work: it runs on the owner's connection, which row-level security does not restrict.
  */
 async function seed() {
-	const app = await NestFactory.createApplicationContext(SeedModule, { logger: ['error', 'warn'] });
+	loadDotenv();
+	const env = parseEnv();
+	const prisma = new PrismaClient({
+		adapter: new PrismaPg({
+			connectionString: env.DATABASE_URL,
+			ssl: env.DB_SSL ? { rejectUnauthorized: false } : undefined,
+		}),
+	});
 	try {
-		const { env } = app.get(ConfigService);
-		const prisma = app.get(PrismaService);
-		const users = app.get(UserRepository);
-		const orgs = app.get(OrganizationRepository);
-		const clinics = app.get(ClinicRepository);
-
 		const clinicPath = env.LOOPWISE_DEFAULT_CLINIC_PATH ?? './';
 		const useGithubAuth = env.GITHUB_SSO && !!env.GITHUB_CLIENT_ID && !!env.GITHUB_CLIENT_SECRET;
+		const passwordHash = await hashPassword(useGithubAuth ? crypto.randomUUID() : DEMO_PASSWORD);
 
 		console.log('Seeding database...');
-
-		const existingUser = await users.getUser({ email: ADMIN_EMAIL });
-		const existingOrg = await orgs.getOrganizationBySlug(ORG_SLUG);
-		const existingClinic = await clinics.getClinicByPath(clinicPath);
-
-		const password = useGithubAuth ? crypto.randomUUID() : ADMIN_PASSWORD;
-		const hashedPassword = await hashPassword(password);
-		const demoPassword = await hashPassword(useGithubAuth ? crypto.randomUUID() : DEMO_PASSWORD);
-
-		// Seeding is system work: it runs on the owner's connection, which row-level security does not restrict.
-		const { seeded: seededDemo } = await prisma.$transaction(
+		const seeded = await prisma.$transaction(
 			async (tx) => {
-				const userId = existingUser?.id ?? crypto.randomUUID();
-				if (!existingUser) {
-					await users.createUser(
-						{ id: userId, name: ADMIN_NAME, email: ADMIN_EMAIL, emailVerified: true },
-						{
-							id: crypto.randomUUID(),
-							accountId: userId,
-							providerId: 'credential',
-							password: hashedPassword,
-						},
-						tx,
-					);
+				await seedReference(tx);
+				const demo = await seedClinicalDemo(tx, { passwordHash, clinicPath });
+				if (!demo) {
+					return false;
 				}
+				await seedEncounterRecords(tx, demo);
+				await seedTrendHistory(tx, demo);
+				await seedPanelVitals(tx, demo);
 
-				const org = existingOrg ?? (await orgs.createOrganization({ name: ORG_NAME, slug: ORG_SLUG }, tx));
-				await orgs.addOrgMemberIfMissing({ orgId: org.id, userId, role: 'admin' }, tx);
-
-				const clinic =
-					existingClinic ??
-					(await clinics.createClinic(
-						{ name: CLINIC_NAME, type: 'local', path: clinicPath, orgId: org.id },
-						tx,
-					));
-
-				if (!(await clinics.getClinicMember(clinic.id, userId, tx))) {
-					await clinics.addClinicMember({ clinicId: clinic.id, userId, role: 'admin' }, tx);
-				}
-
-				// Before the demo, whose cases follow them; replaces older versions of the definitions.
-				await seedPathways(tx);
-				const seeded = await seedClinicalDemo(tx, {
-					adminUserId: userId,
-					adminOrgId: org.id,
-					clinicId: clinic.id,
-					createUser: async ({ name, email }) => {
-						const id = crypto.randomUUID();
-						await users.createUser(
-							{ id, name, email, emailVerified: true },
-							{
-								id: crypto.randomUUID(),
-								accountId: id,
-								providerId: 'credential',
-								password: demoPassword,
-							},
-							tx,
-						);
-						return id;
-					},
-				});
-				// Separate and idempotent, so databases seeded before the encounter record get it too.
-				await seedEncounterRecords(tx);
-				await seedTrendHistory(tx);
-				await seedBarangays(tx);
-				await seedPanelVitals(tx);
-				await seedResultEvaluations(tx);
-				return { seeded };
+				// --- Other areas' demo data (one call each, added by their agents) ---
+				// They run once, on the fresh demo; build on the constants of seed-clinical.ts.
+				await seedDiagnostics(tx);
+				await seedBilling(tx);
+				return true;
 			},
-			{ timeout: 60_000 },
+			{ timeout: 120_000 },
 		);
 
 		console.log('Done.');
-		if (!existingUser && !useGithubAuth) {
-			console.log(`  Email:    ${ADMIN_EMAIL}`);
-			console.log(`  Password: ${ADMIN_PASSWORD}`);
+		if (!seeded) {
+			console.log('  Demo already present.');
+			return;
 		}
-		if (!existingClinic) {
-			console.log(`  Clinic:   ${CLINIC_NAME} (${clinicPath})`);
+		console.log(`  Organization: ${DEMO_ORG_NAME}`);
+		console.log(`  Clinic:       ${DEMO_CLINIC_NAME} (${DEMO_CLINIC_CODE}, ${clinicPath})`);
+		console.log('  Logins (synthetic demo):');
+		for (const person of STAFF) {
+			console.log(`    ${DEMO_STAFF[person.key].padEnd(34)} ${person.roles.join(', ')}`);
 		}
-		if (seededDemo) {
-			console.log('  Clinical demo (synthetic data):');
-			for (const person of STAFF) {
-				console.log(`    ${person.email.padEnd(30)} ${person.name}`);
-			}
-			if (!useGithubAuth) {
-				console.log(`    Password for all demo staff: ${DEMO_PASSWORD}`);
-			}
-		} else {
-			console.log('  Clinical demo already present.');
+		if (!useGithubAuth) {
+			console.log(`  Password for all: ${DEMO_PASSWORD}`);
 		}
 	} finally {
-		await app.close();
+		await prisma.$disconnect();
 	}
 }
 

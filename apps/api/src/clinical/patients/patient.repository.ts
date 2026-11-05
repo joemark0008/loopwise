@@ -1,231 +1,250 @@
 import { Injectable } from '@nestjs/common';
 
-import type { Prisma } from '../../generated/prisma/client.js';
-import type { CareRelationshipReason, Sex } from '../../generated/prisma/enums.js';
+import type { Clinic, Prisma } from '../../generated/prisma/client.js';
+import type { CareRelationshipReason, IdentificationType, Sex } from '../../generated/prisma/enums.js';
+import type { ClinicalTx } from '../rls/clinical-db.service.js';
 
-type Tx = Prisma.TransactionClient;
+/** The consent the registration records (RA 10173): the version of the data-privacy notice shown. */
+export const DATA_PRIVACY_CONSENT_VERSION = '2026-01';
 
-const withIdentifiers = {
-	identifiers: { orderBy: { createdAt: 'asc' } },
-} satisfies Prisma.PatientInclude;
-
-export type PatientRow = Prisma.PatientGetPayload<{ include: typeof withIdentifiers }>;
-
-/** A possible duplicate with the facilities it is registered at, read across row-level security (system work). */
-export type PatientMatchRow = Prisma.PatientGetPayload<{
-	include: { identifiers: { include: { organization: { select: { name: true } } } } };
-}>;
-
-const withFacilityNames = {
-	identifiers: { include: { organization: { select: { name: true } } } },
-} satisfies Prisma.PatientInclude;
-
-const chartSummary = {
-	identifiers: { include: { organization: { select: { name: true } } }, orderBy: { createdAt: 'asc' } },
-	encounters: {
-		orderBy: { startedAt: 'desc' },
-		take: 5,
-		select: {
-			id: true,
-			startedAt: true,
-			reason: true,
-			notes: true,
-			history: true,
-			physicalExam: true,
-			assessment: true,
-			plan: true,
-			patientInstructions: true,
-			followUpOn: true,
-		},
-	},
-	allergies: {
-		where: { voidedAt: null },
-		select: { substance: true, reaction: true },
-		orderBy: { createdAt: 'asc' },
-	},
-	diagnoses: {
-		where: { voidedAt: null },
-		select: { icd10Code: true, display: true },
-		orderBy: { createdAt: 'desc' },
-	},
-	vitalSigns: {
-		where: { voidedAt: null, systolicMmHg: { not: null } },
-		select: { recordedAt: true, systolicMmHg: true, diastolicMmHg: true, weightKg: true, bmi: true },
-		orderBy: { recordedAt: 'desc' },
+export const PATIENT_INCLUDE = {
+	identifications: { orderBy: { createdAt: 'asc' } },
+	addresses: {
+		where: { isPrimary: true },
+		include: { barangay: true, cityMunicipality: true },
 		take: 1,
 	},
-	results: {
-		select: { id: true, resultedAt: true, display: true, code: true, value: true, unit: true, flag: true },
-		orderBy: { resultedAt: 'desc' },
-		take: 5,
-	},
-	prescriptions: {
-		where: { status: 'issued', voidedAt: null },
-		select: { issuedAt: true, items: { select: { genericName: true, strength: true, frequency: true } } },
-		orderBy: { issuedAt: 'desc' },
-		take: 5,
+	consents: {
+		where: { type: 'DATA_PRIVACY', granted: true, revokedAt: null },
+		orderBy: { signedAt: 'desc' },
+		take: 1,
 	},
 } satisfies Prisma.PatientInclude;
 
-export type PatientChartRow = Prisma.PatientGetPayload<{ include: typeof chartSummary }>;
+export type PatientRow = Prisma.PatientGetPayload<{ include: typeof PATIENT_INCLUDE }>;
+
+/** A possible duplicate, read across row-level security (system work): only what the masked card shows. */
+export type PatientMatchRow = Pick<PatientRow, 'id' | 'firstName' | 'lastName' | 'birthDate'>;
+
+const MATCH_SELECT = { id: true, firstName: true, lastName: true, birthDate: true } satisfies Prisma.PatientSelect;
 
 export interface NewPatient {
-	givenName: string;
-	familyName: string;
+	organizationId: string;
+	patientNo: string;
+	firstName: string;
+	middleName: string | null;
+	lastName: string;
 	birthDate: Date;
 	sex: Sex;
-	phone: string | null;
+	mobileNo: string | null;
 	preferredLanguage: string;
-	consentAt: Date;
-}
-
-export interface NewIdentifier {
-	orgId: string;
-	system: string;
-	value: string;
-}
-
-export interface NewAuditEntry {
-	userId: string;
-	orgId?: string;
-	action: string;
-	patientId?: string;
-	reason?: string;
-	/** Set when the action came from a confirmed Wise card. */
-	origin?: Prisma.InputJsonObject;
+	philHealthId: string | null;
+	address: { addressLine: string | null; barangayCode: string | null; cityMunicipalityCode: string | null } | null;
+	consentWitnessedById: string;
 }
 
 /**
- * Patients, their identifiers and care relationships. Every method takes the transaction of
+ * Patients, their IDs, addresses, consents and care relationships. Every method takes the transaction of
  * `ClinicalDbService.asUser` (row-level security applies) or `asSystem` (registration, duplicate checks).
  */
 @Injectable()
 export class PatientRepository {
-	getById(tx: Tx, id: string): Promise<PatientRow | null> {
-		return tx.patient.findUnique({ where: { id }, include: withIdentifiers });
+	getById(tx: ClinicalTx, id: string): Promise<PatientRow | null> {
+		return tx.patient.findFirst({ where: { id, deletedAt: null }, include: PATIENT_INCLUDE });
 	}
 
-	/** The patient with their identifiers and latest encounters: what Wise is told about the patient of a chart chat. */
-	getChart(tx: Tx, id: string): Promise<PatientChartRow | null> {
-		return tx.patient.findUnique({ where: { id }, include: chartSummary });
-	}
-
-	/** Patients matching every name word (given or family name) or an identifier value, newest first. */
+	/**
+	 * Patients matching every name word (first, middle or last name), or one identifier (patient no. or an ID number),
+	 * by name.
+	 */
 	search(
-		tx: Tx,
+		tx: ClinicalTx,
 		opts: { words: string[]; identifier?: string; birthDate?: Date; take: number },
 	): Promise<PatientRow[]> {
 		const byName: Prisma.PatientWhereInput[] = opts.words.map((word) => ({
 			OR: [
-				{ givenName: { contains: word, mode: 'insensitive' } },
-				{ familyName: { contains: word, mode: 'insensitive' } },
+				{ firstName: { contains: word, mode: 'insensitive' } },
+				{ middleName: { contains: word, mode: 'insensitive' } },
+				{ lastName: { contains: word, mode: 'insensitive' } },
 			],
 		}));
-		const where: Prisma.PatientWhereInput = {
-			AND: [
-				...(opts.identifier
-					? [
-							{
-								OR: [
-									{ AND: byName },
-									{
-										identifiers: {
-											some: { value: { equals: opts.identifier, mode: 'insensitive' } },
-										},
-									},
-								],
-							} satisfies Prisma.PatientWhereInput,
-						]
-					: byName),
-				...(opts.birthDate ? [{ birthDate: opts.birthDate }] : []),
-			],
-		};
+		const byIdentifier: Prisma.PatientWhereInput[] = opts.identifier
+			? [
+					{ patientNo: { equals: opts.identifier, mode: 'insensitive' } },
+					{ identifications: { some: { idNumber: { equals: opts.identifier, mode: 'insensitive' } } } },
+				]
+			: [];
 		return tx.patient.findMany({
-			where,
-			include: withIdentifiers,
-			orderBy: [{ familyName: 'asc' }, { givenName: 'asc' }],
+			where: {
+				deletedAt: null,
+				AND: [
+					byIdentifier.length > 0 ? { OR: [{ AND: byName }, ...byIdentifier] } : { AND: byName },
+					...(opts.birthDate ? [{ birthDate: opts.birthDate }] : []),
+				],
+			},
+			include: PATIENT_INCLUDE,
+			orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
 			take: opts.take,
 		});
 	}
 
 	/** Which of `ids` the transaction's user can see. */
-	async visibleIds(tx: Tx, ids: string[]): Promise<Set<string>> {
+	async visibleIds(tx: ClinicalTx, ids: readonly string[]): Promise<Set<string>> {
 		if (ids.length === 0) {
 			return new Set();
 		}
-		const rows = await tx.patient.findMany({ where: { id: { in: ids } }, select: { id: true } });
+		const rows = await tx.patient.findMany({ where: { id: { in: [...ids] } }, select: { id: true } });
 		return new Set(rows.map((row) => row.id));
 	}
 
-	/** Patients holding the identifier, at `orgId` or (without it) at any facility. */
-	findByIdentifier(tx: Tx, opts: { system: string; value: string; orgId?: string }): Promise<PatientMatchRow[]> {
+	/** The patient's organization, as a quick existence check under the caller's row-level security. */
+	findOrganizationId(tx: ClinicalTx, id: string): Promise<{ organizationId: string } | null> {
+		return tx.patient.findFirst({ where: { id, deletedAt: null }, select: { organizationId: true } });
+	}
+
+	findByPatientNo(tx: ClinicalTx, organizationId: string, patientNo: string): Promise<PatientMatchRow[]> {
 		return tx.patient.findMany({
-			where: {
-				identifiers: {
-					some: {
-						system: opts.system,
-						value: { equals: opts.value, mode: 'insensitive' },
-						...(opts.orgId && { orgId: opts.orgId }),
-					},
-				},
-			},
-			include: withFacilityNames,
+			where: { organizationId, patientNo: { equals: patientNo, mode: 'insensitive' }, deletedAt: null },
+			select: MATCH_SELECT,
 		});
 	}
 
-	/** Patients with the same name (case-insensitive), birth date and sex. Names are stored single-spaced. */
-	findByNameBirthSex(
-		tx: Tx,
-		opts: { givenName: string; familyName: string; birthDate: Date; sex: Sex },
+	findByIdentification(
+		tx: ClinicalTx,
+		organizationId: string,
+		type: IdentificationType,
+		idNumber: string,
 	): Promise<PatientMatchRow[]> {
 		return tx.patient.findMany({
 			where: {
-				givenName: { equals: opts.givenName, mode: 'insensitive' },
-				familyName: { equals: opts.familyName, mode: 'insensitive' },
-				birthDate: opts.birthDate,
-				sex: opts.sex,
+				organizationId,
+				deletedAt: null,
+				identifications: { some: { type, idNumber: { equals: idNumber, mode: 'insensitive' } } },
 			},
-			include: withFacilityNames,
+			select: MATCH_SELECT,
 		});
 	}
 
-	create(tx: Tx, patient: NewPatient): Promise<{ id: string }> {
-		return tx.patient.create({ data: patient, select: { id: true } });
+	/** Patients of the organization with the same name (case-insensitive), birth date and sex. */
+	findByNameBirthSex(
+		tx: ClinicalTx,
+		organizationId: string,
+		opts: { firstName: string; lastName: string; birthDate: Date; sex: Sex },
+	): Promise<PatientMatchRow[]> {
+		return tx.patient.findMany({
+			where: {
+				organizationId,
+				deletedAt: null,
+				firstName: { equals: opts.firstName, mode: 'insensitive' },
+				lastName: { equals: opts.lastName, mode: 'insensitive' },
+				birthDate: opts.birthDate,
+				sex: opts.sex,
+			},
+			select: MATCH_SELECT,
+		});
 	}
 
-	/** Adds the identifiers the patient doesn't hold yet at that facility. */
-	async addIdentifiers(tx: Tx, patientId: string, identifiers: NewIdentifier[]): Promise<void> {
-		for (const identifier of identifiers) {
-			const existing = await tx.patientIdentifier.findFirst({
-				where: { patientId, orgId: identifier.orgId, system: identifier.system },
+	/** The patient with their PhilHealth ID, primary address and data-privacy consent, in one statement. */
+	create(tx: ClinicalTx, patient: NewPatient): Promise<PatientRow> {
+		return tx.patient.create({
+			data: {
+				organizationId: patient.organizationId,
+				patientNo: patient.patientNo,
+				firstName: patient.firstName,
+				middleName: patient.middleName,
+				lastName: patient.lastName,
+				birthDate: patient.birthDate,
+				sex: patient.sex,
+				mobileNo: patient.mobileNo,
+				preferredLanguage: patient.preferredLanguage,
+				identifications: patient.philHealthId
+					? { create: { type: 'PHILHEALTH_ID', idNumber: patient.philHealthId } }
+					: undefined,
+				addresses: patient.address
+					? { create: { type: 'HOME', isPrimary: true, ...patient.address } }
+					: undefined,
+				consents: {
+					create: {
+						type: 'DATA_PRIVACY',
+						version: DATA_PRIVACY_CONSENT_VERSION,
+						granted: true,
+						witnessedById: patient.consentWitnessedById,
+					},
+				},
+			},
+			include: PATIENT_INCLUDE,
+		});
+	}
+
+	/** Adds the ID unless the patient already holds it. */
+	async addIdentification(
+		tx: ClinicalTx,
+		patientId: string,
+		identification: { type: IdentificationType; idNumber: string },
+	): Promise<void> {
+		await tx.patientIdentification.createMany({ data: [{ patientId, ...identification }], skipDuplicates: true });
+	}
+
+	/** Records a data-privacy consent unless one is on file. */
+	async addConsentIfMissing(tx: ClinicalTx, patientId: string, witnessedById: string): Promise<void> {
+		const existing = await tx.patientConsent.count({
+			where: { patientId, type: 'DATA_PRIVACY', granted: true, revokedAt: null },
+		});
+		if (existing === 0) {
+			await tx.patientConsent.create({
+				data: {
+					patientId,
+					type: 'DATA_PRIVACY',
+					version: DATA_PRIVACY_CONSENT_VERSION,
+					granted: true,
+					witnessedById,
+				},
 			});
-			if (!existing) {
-				await tx.patientIdentifier.create({ data: { patientId, ...identifier } });
-			}
 		}
 	}
 
-	setConsentIfMissing(tx: Tx, patientId: string, consentAt: Date): Promise<unknown> {
-		return tx.patient.updateMany({ where: { id: patientId, consentAt: null }, data: { consentAt } });
+	/** Gives the user a care relationship with the patient unless they have an open one (system work). */
+	async addCareRelationship(
+		tx: ClinicalTx,
+		relationship: { patientId: string; userId: string; organizationId: string; reason: CareRelationshipReason },
+	): Promise<void> {
+		const open = await tx.careRelationship.count({
+			where: {
+				patientId: relationship.patientId,
+				userId: relationship.userId,
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+			},
+		});
+		if (open === 0) {
+			await tx.careRelationship.create({ data: relationship });
+		}
 	}
 
-	addCareRelationship(
-		tx: Tx,
-		relationship: { patientId: string; userId: string; orgId: string; reason: CareRelationshipReason },
-	): Promise<unknown> {
-		return tx.careRelationship.create({ data: relationship });
-	}
-
-	/** Contact details only; RLS lets the user change a patient in their care. */
+	/** Contact details only; row-level security lets the user change a patient they may see, of their organization. */
 	updateContact(
-		tx: Tx,
+		tx: ClinicalTx,
 		id: string,
-		data: { phone?: string | null; preferredLanguage?: string; barangay?: string | null },
+		data: { mobileNo?: string | null; preferredLanguage?: string },
 	): Promise<unknown> {
 		return tx.patient.update({ where: { id }, data });
 	}
 
-	writeAudit(tx: Tx, entry: NewAuditEntry): Promise<unknown> {
-		return tx.auditLog.create({ data: { ...entry, resource: 'patient', resourceId: entry.patientId } });
+	/** Sets the primary address (one row), creating it when there is none. */
+	async upsertPrimaryAddress(
+		tx: ClinicalTx,
+		patientId: string,
+		address: { addressLine?: string | null; barangayCode?: string | null; cityMunicipalityCode?: string | null },
+	): Promise<void> {
+		const current = await tx.patientAddress.findFirst({ where: { patientId, isPrimary: true } });
+		if (current) {
+			await tx.patientAddress.update({ where: { id: current.id }, data: address });
+		} else {
+			await tx.patientAddress.create({ data: { patientId, type: 'HOME', isPrimary: true, ...address } });
+		}
+	}
+
+	/** Clinics by id (names and codes are readable by everyone signed in). */
+	findClinics(tx: ClinicalTx, ids: readonly string[]): Promise<Clinic[]> {
+		return tx.clinic.findMany({ where: { id: { in: [...ids] } } });
 	}
 }

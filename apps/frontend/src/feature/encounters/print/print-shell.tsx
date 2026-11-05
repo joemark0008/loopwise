@@ -68,11 +68,13 @@ export function PatientLines({ patient, date }: { patient: PatientFieldsFragment
 		<dl className={styles.patientGrid}>
 			<dt>Name</dt>
 			<dd>{patientName(patient)}</dd>
+			<dt>Patient no.</dt>
+			<dd>{patient.patientNo}</dd>
 			<dt>Date</dt>
 			<dd>{date}</dd>
 			<dt>Age / Sex</dt>
 			<dd>
-				{ageOf(patient.birthDate)} / {patient.sex === 'female' ? 'F' : patient.sex === 'male' ? 'M' : '—'}
+				{ageOf(patient.birthDate)} / {patient.sex === 'FEMALE' ? 'F' : 'M'}
 			</dd>
 			<dt>Birth date</dt>
 			<dd>{patient.birthDate}</dd>
@@ -80,7 +82,14 @@ export function PatientLines({ patient, date }: { patient: PatientFieldsFragment
 	);
 }
 
-export function SignatureBlock({ signatory }: { signatory: SignatoryFieldsFragment }) {
+/** The prescriber's signature lines: PRC and PTR, and the S2 license on a dangerous-drug Rx (RA 9165). */
+export function SignatureBlock({
+	signatory,
+	withS2 = false,
+}: {
+	signatory: SignatoryFieldsFragment;
+	withS2?: boolean;
+}) {
 	return (
 		<footer className={styles.signature}>
 			<span className={styles.signatureLine}>
@@ -89,6 +98,9 @@ export function SignatureBlock({ signatory }: { signatory: SignatoryFieldsFragme
 			</span>
 			<span className={styles.signatureDetail}>PRC Lic. No. {signatory.licenseNumber ?? '________'}</span>
 			<span className={styles.signatureDetail}>PTR No. {signatory.ptrNumber ?? '________'}</span>
+			{withS2 && (
+				<span className={styles.signatureDetail}>S2 Lic. No. {signatory.s2LicenseNo ?? '________'}</span>
+			)}
 		</footer>
 	);
 }
@@ -96,4 +108,9 @@ export function SignatureBlock({ signatory }: { signatory: SignatoryFieldsFragme
 /** "DRAFT — not valid" before issue, "VOID" after voiding. */
 export function watermarkFor(status: 'draft' | 'issued' | 'voided') {
 	return status === 'draft' ? 'Draft — not valid' : status === 'voided' ? 'Void' : null;
+}
+
+/** The watermark of a prescription or certificate (`documentStatus` and whether it is voided). */
+export function documentWatermark(document: { documentStatus: 'DRAFT' | 'ISSUED'; voided: boolean }) {
+	return watermarkFor(document.voided ? 'voided' : document.documentStatus === 'DRAFT' ? 'draft' : 'issued');
 }

@@ -3,29 +3,22 @@ import type { ApiInputs, ApiOutputs } from '@/lib/api-types';
 import {
 	AddAllergyDocument,
 	AddDiagnosisDocument,
-	CreateEncounterOrderDocument,
-	CreateEncounterOrdersDocument,
 	EncounterRecordDocument,
-	FinalizeEncounterBillDocument,
 	IssueMedicalCertificateDocument,
 	IssuePrescriptionDocument,
-	MarkEncounterBillPaidDocument,
 	MedicalCertificatePrintDocument,
-	MyClinicianProfileDocument,
-	OrderOptionsDocument,
+	MyPractitionerDocument,
 	PatientAllergiesDocument,
 	PrescriptionPrintDocument,
 	RecordVitalsDocument,
-	SaveEncounterBillDocument,
 	SaveMedicalCertificateDocument,
+	SaveMyPractitionerDocument,
 	SavePrescriptionDocument,
 	SearchIcd10Document,
 	UpdateDiagnosisDocument,
 	UpdateEncounterNoteDocument,
-	UpdateMyClinicianProfileDocument,
 	VoidAllergyDocument,
 	VoidDiagnosisDocument,
-	VoidEncounterBillDocument,
 	VoidMedicalCertificateDocument,
 	VoidPrescriptionDocument,
 	VoidVitalsDocument,
@@ -39,8 +32,8 @@ type Key = keyof Inputs;
 const path = (name: Key) => ['encounterRecord', name] as const;
 
 /**
- * The encounter record (`apps/api/src/clinical/{encounters,orders,prescriptions,medical-certificates,clinicians}`):
- * the encounter page, its print views and the clinician profile. Writes return ids; the page refetches the record.
+ * The encounter record (`apps/api/src/clinical/{encounters,patients,prescriptions,documents,practitioners}`): the
+ * encounter page, its print views and the practitioner profile. Writes return ids; the page refetches the record.
  */
 export const encounterRecordApi = {
 	encounterRecord: {
@@ -56,9 +49,6 @@ export const encounterRecordApi = {
 			path('searchIcd10'),
 			async ({ query: text }) => (await runQuery(SearchIcd10Document, { query: text })).searchIcd10,
 		),
-		orderOptions: query<Inputs['orderOptions'], Outputs['orderOptions']>(path('orderOptions'), async () =>
-			runQuery(OrderOptionsDocument, {}),
-		),
 		prescriptionPrint: query<Inputs['prescriptionPrint'], Outputs['prescriptionPrint']>(
 			path('prescriptionPrint'),
 			async ({ id }) => (await runQuery(PrescriptionPrintDocument, { id })).prescription,
@@ -67,13 +57,13 @@ export const encounterRecordApi = {
 			path('certificatePrint'),
 			async ({ id }) => (await runQuery(MedicalCertificatePrintDocument, { id })).medicalCertificate,
 		),
-		clinicianProfile: query<Inputs['clinicianProfile'], Outputs['clinicianProfile']>(
-			path('clinicianProfile'),
-			async () => (await runQuery(MyClinicianProfileDocument, {})).myClinicianProfile,
+		myPractitioner: query<Inputs['myPractitioner'], Outputs['myPractitioner']>(
+			path('myPractitioner'),
+			async () => (await runQuery(MyPractitionerDocument, {})).myPractitioner,
 		),
-		updateClinicianProfile: mutation<Inputs['updateClinicianProfile'], Outputs['updateClinicianProfile']>(
-			path('updateClinicianProfile'),
-			async (input) => (await runMutation(UpdateMyClinicianProfileDocument, { input })).updateMyClinicianProfile,
+		saveMyPractitioner: mutation<Inputs['saveMyPractitioner'], Outputs['saveMyPractitioner']>(
+			path('saveMyPractitioner'),
+			async (input) => (await runMutation(SaveMyPractitionerDocument, { input })).saveMyPractitioner,
 		),
 		updateNote: mutation<Inputs['updateNote'], Outputs['updateNote']>(
 			path('updateNote'),
@@ -107,14 +97,6 @@ export const encounterRecordApi = {
 			path('voidAllergy'),
 			async (input) => (await runMutation(VoidAllergyDocument, { input })).voidAllergy,
 		),
-		createOrders: mutation<Inputs['createOrders'], Outputs['createOrders']>(
-			path('createOrders'),
-			async (input) => (await runMutation(CreateEncounterOrdersDocument, { input })).createEncounterOrders,
-		),
-		createOrder: mutation<Inputs['createOrder'], Outputs['createOrder']>(
-			path('createOrder'),
-			async (input) => (await runMutation(CreateEncounterOrderDocument, { input })).createEncounterOrder,
-		),
 		savePrescription: mutation<Inputs['savePrescription'], Outputs['savePrescription']>(
 			path('savePrescription'),
 			async (input) => (await runMutation(SavePrescriptionDocument, { input })).savePrescription,
@@ -138,22 +120,6 @@ export const encounterRecordApi = {
 		voidCertificate: mutation<Inputs['voidCertificate'], Outputs['voidCertificate']>(
 			path('voidCertificate'),
 			async (input) => (await runMutation(VoidMedicalCertificateDocument, { input })).voidMedicalCertificate,
-		),
-		saveBill: mutation<Inputs['saveBill'], Outputs['saveBill']>(
-			path('saveBill'),
-			async (input) => (await runMutation(SaveEncounterBillDocument, { input })).saveEncounterBill,
-		),
-		finalizeBill: mutation<Inputs['finalizeBill'], Outputs['finalizeBill']>(
-			path('finalizeBill'),
-			async ({ id }) => (await runMutation(FinalizeEncounterBillDocument, { id })).finalizeEncounterBill,
-		),
-		markBillPaid: mutation<Inputs['markBillPaid'], Outputs['markBillPaid']>(
-			path('markBillPaid'),
-			async (input) => (await runMutation(MarkEncounterBillPaidDocument, { input })).markEncounterBillPaid,
-		),
-		voidBill: mutation<Inputs['voidBill'], Outputs['voidBill']>(
-			path('voidBill'),
-			async (input) => (await runMutation(VoidEncounterBillDocument, { input })).voidEncounterBill,
 		),
 	},
 };

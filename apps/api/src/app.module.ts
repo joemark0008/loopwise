@@ -12,16 +12,14 @@ import { AuthModule } from './auth/auth.module.js';
 import { ChartsModule } from './charts/charts.module.js';
 import { ChatsModule } from './chats/chats.module.js';
 import { BillingModule } from './clinical/billing/billing.module.js';
-import { CliniciansModule } from './clinical/clinicians/clinicians.module.js';
+import { DiagnosticsModule } from './clinical/diagnostics/diagnostics.module.js';
+import { DocumentsModule } from './clinical/documents/documents.module.js';
 import { EncountersModule } from './clinical/encounters/encounters.module.js';
-import { ClinicalEventsModule } from './clinical/events/clinical-events.module.js';
 import { InsightsModule } from './clinical/insights/insights.module.js';
-import { MedicalCertificatesModule } from './clinical/medical-certificates/medical-certificates.module.js';
-import { OrdersModule } from './clinical/orders/orders.module.js';
-import { PathwaysModule } from './clinical/pathways/pathways.module.js';
 import { PatientsModule } from './clinical/patients/patients.module.js';
+import { PractitionersModule } from './clinical/practitioners/practitioners.module.js';
 import { PrescriptionsModule } from './clinical/prescriptions/prescriptions.module.js';
-import { ResultsModule } from './clinical/results/results.module.js';
+import { ReferenceModule } from './clinical/reference/reference.module.js';
 import { ClinicalDbModule } from './clinical/rls/clinical-db.module.js';
 import { WiseProposalsModule } from './clinical/wise-proposals/wise-proposals.module.js';
 import { ClinicsModule } from './clinics/clinics.module.js';
@@ -33,7 +31,6 @@ import type { LoopwiseRequest } from './common/request.js';
 import { ConfigModule } from './config/config.module.js';
 import { ConfigService } from './config/config.service.js';
 import { HealthModule } from './health/health.module.js';
-import { Hl7Module } from './hl7/hl7.module.js';
 import { JobsModule } from './jobs/jobs.module.js';
 import { MemoryModule } from './memory/memory.module.js';
 import { ModelSettingsModule } from './model-settings/model-settings.module.js';
@@ -91,14 +88,11 @@ export const SCHEMA_FILE = path.join(import.meta.dirname, '..', 'schema.gql');
 		PatientsModule,
 		InsightsModule,
 		EncountersModule,
-		CliniciansModule,
-		OrdersModule,
-		PathwaysModule,
-		ClinicalEventsModule,
-		ResultsModule,
-		Hl7Module,
+		PractitionersModule,
+		ReferenceModule,
+		DiagnosticsModule,
 		PrescriptionsModule,
-		MedicalCertificatesModule,
+		DocumentsModule,
 		WiseProposalsModule,
 		BillingModule,
 		SkillsModule,

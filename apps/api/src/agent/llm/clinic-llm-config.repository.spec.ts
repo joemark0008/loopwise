@@ -6,8 +6,8 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { ClinicLlmConfigRepository } from './clinic-llm-config.repository.js';
 
 /** Encryption at rest of the LLM API keys and credentials, against the e2e Postgres database. */
-const ORG_ID = 'plc-org';
-const CLINIC_ID = 'plc-clinic';
+const ORG_ID = '0190a0c0-0000-7000-8000-00000000c0a1';
+const CLINIC_ID = '0190a0c0-0000-7000-8000-00000000c0a2';
 const SECRET = 'a-secret-of-at-least-twenty-characters';
 
 let prisma: PrismaService;
@@ -39,9 +39,9 @@ afterAll(async () => {
 beforeEach(async () => {
 	await prisma.clinic.deleteMany({ where: { id: CLINIC_ID } });
 	await prisma.organization.deleteMany({ where: { id: ORG_ID } });
-	await prisma.organization.create({ data: { id: ORG_ID, name: 'PLC', slug: ORG_ID } });
+	await prisma.organization.create({ data: { id: ORG_ID, name: 'PLC', slug: 'plc-spec-org' } });
 	await prisma.clinic.create({
-		data: { id: CLINIC_ID, orgId: ORG_ID, name: 'PLC', type: 'local', path: '/tmp/plc' },
+		data: { id: CLINIC_ID, organizationId: ORG_ID, code: 'PLC', name: 'PLC', path: '/tmp/plc' },
 	});
 });
 

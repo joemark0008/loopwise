@@ -115,7 +115,7 @@ model Clinic {
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  /// Loopwise: the clinic's Wise workspace (the base app's project). `kind` is `local` (context files under `path`).
+  /// Loopwise: the clinic's Wise workspace. `kind` is `local` (context files under `path`).
   kind            String  @default("local")
   path            String?
   agentSettings   Json?   @map("agent_settings")

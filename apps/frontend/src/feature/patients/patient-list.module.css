@@ -257,7 +257,8 @@
 /* Tablet and narrow desktops: drop the least-needed columns before the table has to scroll sideways. */
 @media (min-width: 40.0625rem) {
 	@container (max-width: 60rem) {
-		.listTable [data-col='registered'] {
+		.listTable [data-col='registered'],
+		.listTable [data-col='barangay'] {
 			display: none;
 		}
 	}

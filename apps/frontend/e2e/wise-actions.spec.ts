@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { DOCTOR, LAB_TECH, logIn, trackErrors } from './helpers';
+import { releasedHbA1c } from './lab-flow';
 import type { Page } from '@playwright/test';
 
 /**
@@ -21,27 +22,6 @@ async function ask(page: Page, text: string) {
 	await page.keyboard.type(text);
 	await page.keyboard.press('Enter');
 	return panel;
-}
-
-/** The seed's DEV-ONLY Bohol Diagnostics key (synthetic), as the edge connector would send. */
-const DEV_LAB_KEY = 'lw_dev_bohol_diagnostics_synthetic_key_0001';
-
-/** A fresh synthetic HbA1c for Carmen Torres through the HL7 ingest, so there is always one to review. */
-async function sendCarmenHbA1c(page: Page) {
-	const id = `E2E-${Date.now().toString(36)}`;
-	const now = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
-	const message = [
-		`MSH|^~\\&|BDL-LIS|BOHOL-DIAGNOSTICS|LOOPWISE|TAGBILARAN-HC|${now}||ORU^R01^ORU_R01|${id}|P|2.5.1`,
-		'PID|1||SYN-0000-0006^^^PhilHealth^NH||Torres^Carmen||19751201|F',
-		`ORC|RE||BDL-ACC-${id}`,
-		`OBR|1||BDL-ACC-${id}|4548-4^Hemoglobin A1c^LN|||${now}|||||||||||||||${now}||CH|F`,
-		`OBX|1|NM|4548-4^Hemoglobin A1c^LN||6.3|%^%^UCUM|4.0-5.6|H|||F|||${now}`,
-	].join('\r');
-	const res = await page.request.post('/api/hl7/messages', {
-		headers: { Authorization: `Bearer ${DEV_LAB_KEY}`, 'Content-Type': 'text/plain' },
-		data: message,
-	});
-	expect(await res.text()).toContain('MSA|AA');
 }
 
 async function setFacilityTool(page: Page, label: string, on: boolean) {
@@ -70,19 +50,15 @@ test.describe('Wise actions', () => {
 		expect(errors).toEqual([]);
 	});
 
-	test('orders HbA1c at Bohol Diagnostics from chat (real LLM call)', async ({ page }) => {
+	test('orders HbA1c from chat (real LLM call)', async ({ page }) => {
 		test.setTimeout(180_000);
 		const errors = trackErrors(page);
 		await logIn(page, '/patients');
 		await openChart(page, 'Maria Santos');
-		const panel = await ask(
-			page,
-			'Order a new HbA1c at Bohol Diagnostics for her latest visit (a repeat order is fine, do not ask).',
-		);
+		const panel = await ask(page, 'Order a new HbA1c for her latest visit (a repeat order is fine, do not ask).');
 
 		const card = panel.getByTestId('propose-order').last();
 		await expect(card.getByTestId('drafted-tests')).toContainText('Hemoglobin A1c', { timeout: 120_000 });
-		await expect(card.getByLabel('Send to')).toHaveValue(/.+/);
 		await card.getByRole('button', { name: 'Order test' }).click();
 		await expect(card).toContainText('Ordered');
 		expect(errors).toEqual([]);
@@ -91,7 +67,8 @@ test.describe('Wise actions', () => {
 	test('lists a result to review and reviews it from its card (real LLM call)', async ({ page }) => {
 		test.setTimeout(240_000);
 		const errors = trackErrors(page);
-		await sendCarmenHbA1c(page);
+		await releasedHbA1c(page, 'Carmen Torres', '6.3');
+		await page.context().clearCookies();
 		await logIn(page, '/patients', DOCTOR);
 		await openChart(page, 'Carmen Torres');
 		const panel = await ask(
@@ -126,20 +103,20 @@ test.describe('Wise actions', () => {
 		expect(errors).toEqual([]);
 	});
 
-	test('the lab accepts an order from its worklist in chat (real LLM call)', async ({ page }) => {
+	test('the lab marks a requested test collected from its worklist in chat (real LLM call)', async ({ page }) => {
 		test.setTimeout(180_000);
 		const errors = trackErrors(page);
-		// Incoming orders for Bohol Diagnostics: the order flow above sends one each run.
+		// Requested tests on the clinic's lab worklist: the seed has some, and the order flow above adds one each run.
 		await logIn(page, '/orders', LAB_TECH);
 		await page.getByRole('button', { name: 'Ask Wise' }).first().click();
 		const panel = page.getByRole('region', { name: 'Ask Wise' });
 		await panel.locator('[contenteditable]').first().click();
-		await page.keyboard.type('What is on our worklist? Accept the oldest incoming order.');
+		await page.keyboard.type('What is on our lab worklist? Mark the oldest requested test collected.');
 		await page.keyboard.press('Enter');
 
 		const card = panel.getByTestId('propose-lab-order-step').last();
 		await expect(card).toBeVisible({ timeout: 120_000 });
-		await card.getByRole('button', { name: 'Accept order' }).click();
+		await card.getByRole('button', { name: 'Mark collected' }).click();
 		await expect(card).toContainText('Done');
 		expect(errors).toEqual([]);
 	});

@@ -70,7 +70,7 @@ const renderCard = (input: object = { plan: 'HbA1c, FBS; recheck BP in 2 weeks' 
 		input,
 		output: {
 			success: true,
-			encounter: { id: 'e1', startedAt: '2026-11-03T01:00:00.000Z', facilityName: 'Health Center' },
+			encounter: { id: 'e1', startedAt: '2026-11-03T01:00:00.000Z', clinicName: 'Health Center' },
 			patientName: 'Maria Santos',
 			current: CURRENT,
 			version: 4,

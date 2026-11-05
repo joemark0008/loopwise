@@ -1,8 +1,8 @@
-import { Field, ID, InputType, Int } from '@nestjs/graphql';
+import { Field, Float, ID, InputType, Int } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import {
 	IsArray,
-	IsIn,
+	IsBoolean,
 	IsInt,
 	IsNumber,
 	IsOptional,
@@ -12,7 +12,6 @@ import {
 	ValidateNested,
 } from 'class-validator';
 
-import { MedicationRoute } from '../../../generated/prisma/enums.js';
 import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
 
 /**
@@ -21,8 +20,9 @@ import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
  */
 @InputType()
 export class PrescriptionItemInput {
-	@Field()
+	@Field({ description: 'Generic name (required, RA 6675).' })
 	@IsString()
+	@MaxLength(200)
 	genericName: string;
 
 	@Field(() => String, { nullable: true })
@@ -38,44 +38,55 @@ export class PrescriptionItemInput {
 	@Field(() => String, { nullable: true })
 	@IsOptional()
 	@IsString()
-	form?: string | null;
+	dosageForm?: string | null;
 
-	@Field()
-	@IsString()
-	dose: string;
-
-	@Field(() => MedicationRoute, { nullable: true })
+	@Field(() => String, { nullable: true, description: 'Per intake, e.g. "1 tablet"; writes the sig when none.' })
 	@IsOptional()
-	@IsIn(Object.values(MedicationRoute))
-	route?: MedicationRoute | null;
-
-	@Field()
 	@IsString()
-	frequency: string;
+	dose?: string | null;
+
+	@Field(() => String, {
+		nullable: true,
+		description: 'PO (default), SL, TOP, INH, NAS, OPH, OTIC, PR, PV, IM, IV, SC.',
+	})
+	@IsOptional()
+	@IsString()
+	route?: string | null;
+
+	@Field(() => String, { nullable: true })
+	@IsOptional()
+	@IsString()
+	frequency?: string | null;
 
 	@Field(() => Int, { nullable: true })
 	@IsOptional()
 	@IsNumber()
 	durationDays?: number | null;
 
-	@Field(() => Int)
+	@Field(() => Boolean, { nullable: true, description: 'As needed (PRN).' })
+	@IsOptional()
+	@IsBoolean()
+	isPrn?: boolean | null;
+
+	@Field(() => String, { nullable: true, description: 'The directions as printed.' })
+	@IsOptional()
+	@IsString()
+	@MaxLength(1000)
+	sig?: string | null;
+
+	@Field(() => Float)
 	@IsNumber()
 	quantity: number;
 
 	@Field(() => String, { nullable: true })
 	@IsOptional()
 	@IsString()
-	quantityUnit?: string | null;
+	unit?: string | null;
 
-	@Field(() => Int, { nullable: true })
-	@IsOptional()
-	@IsNumber()
-	refills?: number | null;
-
-	@Field(() => String, { nullable: true })
+	@Field(() => String, { nullable: true, description: 'Required for dangerous drugs (RA 9165).' })
 	@IsOptional()
 	@IsString()
-	instructions?: string | null;
+	quantityInWords?: string | null;
 }
 
 @InputType()
@@ -100,9 +111,21 @@ export class SavePrescriptionInput {
 	@IsString()
 	@MaxLength(2000)
 	notes?: string | null;
+
+	@Field(() => Boolean, { nullable: true, description: 'A dangerous drug (S2 / yellow Rx, RA 9165).' })
+	@IsOptional()
+	@IsBoolean()
+	isDangerousDrug?: boolean | null;
+
+	@Field(() => String, { nullable: true, description: 'The DOH dangerous-drugs prescription form serial number.' })
+	@IsOptional()
+	@IsString()
+	s2FormSerialNo?: string | null;
+
 	@Field(() => Int, {
 		nullable: true,
-		description: "The prescription's `version` the draft was made from; refused with CONFLICT if it changed since.",
+		description:
+			"The prescription's `version` the draft was made from; refused (STALE_VERSION) if it changed since.",
 	})
 	@IsOptional()
 	@IsInt()

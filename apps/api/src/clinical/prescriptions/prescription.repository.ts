@@ -1,44 +1,65 @@
 import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../generated/prisma/client.js';
-import type { PrescriptionRow } from './models/prescription.model.js';
+import type { ClinicalTx } from '../rls/clinical-db.service.js';
+import { PRESCRIPTION_INCLUDE, type PrescriptionRow } from './models/prescription.model.js';
 
-type Tx = Prisma.TransactionClient;
-type ItemData = Omit<Prisma.PrescriptionItemCreateManyInput, 'prescriptionId'>;
+export type PrescriptionItemData = Omit<Prisma.PrescriptionItemCreateManyInput, 'prescriptionId'>;
 
-/** Prescriptions and their items. Every method takes the transaction of `ClinicalDbService.asUser`. */
+/**
+ * Prescriptions and their items, reached through their encounter (row-level security). Every method takes the
+ * transaction of `ClinicalDbService.asUser`.
+ */
 @Injectable()
 export class PrescriptionRepository {
-	findById(tx: Tx, id: string): Promise<PrescriptionRow | null> {
-		return tx.prescription.findUnique({ where: { id }, include: { items: true } });
+	findById(tx: ClinicalTx, id: string): Promise<PrescriptionRow | null> {
+		return tx.prescription.findUnique({ where: { id }, include: PRESCRIPTION_INCLUDE });
+	}
+
+	/** The prescriptions of the encounters, newest first. */
+	listByEncounters(tx: ClinicalTx, encounterIds: readonly string[]): Promise<PrescriptionRow[]> {
+		return tx.prescription.findMany({
+			where: { encounterId: { in: [...encounterIds] } },
+			include: PRESCRIPTION_INCLUDE,
+			orderBy: { createdAt: 'desc' },
+		});
 	}
 
 	create(
-		tx: Tx,
+		tx: ClinicalTx,
 		data: Omit<Prisma.PrescriptionUncheckedCreateInput, 'items'>,
-		items: ItemData[],
+		items: PrescriptionItemData[],
 	): Promise<PrescriptionRow> {
 		return tx.prescription.create({
 			data: { ...data, items: { createMany: { data: items } } },
-			include: { items: true },
+			include: PRESCRIPTION_INCLUDE,
 		});
 	}
 
-	/** Replaces a draft's notes and items (the lock trigger refuses this once it is issued). */
-	async replaceDraft(tx: Tx, id: string, notes: string | null, items: ItemData[]): Promise<PrescriptionRow> {
+	/**
+	 * Replaces a draft's fields and items. With `expectedVersion` only while the version is still that one (null when
+	 * it moved on). The lock trigger refuses this once the prescription is issued.
+	 */
+	async replaceDraft(
+		tx: ClinicalTx,
+		id: string,
+		data: Prisma.PrescriptionUncheckedUpdateManyInput,
+		items: PrescriptionItemData[],
+		expectedVersion?: number | null,
+	): Promise<PrescriptionRow | null> {
+		const { count } = await tx.prescription.updateMany({
+			where: { id, ...(expectedVersion != null && { version: expectedVersion }) },
+			data,
+		});
+		if (count === 0) {
+			return null;
+		}
 		await tx.prescriptionItem.deleteMany({ where: { prescriptionId: id } });
-		return tx.prescription.update({
-			where: { id },
-			data: { notes, items: { createMany: { data: items } } },
-			include: { items: true },
-		});
+		await tx.prescriptionItem.createMany({ data: items.map((item) => ({ ...item, prescriptionId: id })) });
+		return this.findById(tx, id);
 	}
 
-	update(tx: Tx, id: string, data: Prisma.PrescriptionUncheckedUpdateInput): Promise<PrescriptionRow> {
-		return tx.prescription.update({ where: { id }, data, include: { items: true } });
-	}
-
-	listActiveAllergies(tx: Tx, patientId: string) {
-		return tx.patientAllergy.findMany({ where: { patientId, voidedAt: null }, select: { substance: true } });
+	update(tx: ClinicalTx, id: string, data: Prisma.PrescriptionUncheckedUpdateInput): Promise<PrescriptionRow> {
+		return tx.prescription.update({ where: { id }, data, include: PRESCRIPTION_INCLUDE });
 	}
 }

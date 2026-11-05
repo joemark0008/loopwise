@@ -1,25 +1,28 @@
 import { Link } from '@tanstack/react-router';
 import { FORMULARY } from '@loopwise/shared/formulary';
-import { allergyWarnings, FREQUENCIES, MEDICATION_ROUTES } from '@loopwise/shared/prescription';
+import {
+	allergyWarnings,
+	FREQUENCIES,
+	MEDICATION_ROUTE_LABELS,
+	MEDICATION_ROUTES,
+} from '@loopwise/shared/prescription';
 import { OctagonAlert, Plus, Printer, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
 import styles from './encounter.module.css';
 import {
 	emptyPrescriptionItem,
+	itemSig,
 	prescriptionFormFrom,
 	toSavePrescriptionInput,
 	validatePrescriptionForm,
 } from './encounter-form-values';
-import { formatDateTime, medicineName, sig } from './encounter-format';
+import { formatDateTime, medicineName, quantityLabel } from './encounter-format';
 import { FormField } from './form-field';
 import { useRecordMutation } from './use-record-mutation';
 import { VoidDialog } from './void-dialog';
+import type { MedicationRoute } from '@loopwise/shared/prescription';
 import type { PrescriptionFormValues, PrescriptionItemFormValues } from './encounter-form-values';
-import type {
-	EncounterRecordFieldsFragment,
-	MedicationRoute,
-	PrescriptionFieldsFragment,
-} from '@/graphql/generated/graphql';
+import type { EncounterRecordFieldsFragment, PrescriptionFieldsFragment } from '@/graphql/generated/graphql';
 import { StatusBadge } from '@/components/clinical/status-badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,15 +32,24 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { encounterRecordApi } from '@/lib/encounter-record-api';
 
-const formularyLabel = (entry: (typeof FORMULARY)[number]) => `${entry.genericName} ${entry.strength} ${entry.form}`;
+const formularyLabel = (entry: (typeof FORMULARY)[number]) =>
+	`${entry.genericName} ${entry.strength} ${entry.dosageForm}`;
+
+const isDraft = (prescription: PrescriptionFieldsFragment) =>
+	prescription.documentStatus === 'DRAFT' && prescription.voidedAt === null;
+
+/** `draft`, `issued` or `voided`, for the status badge. */
+const badgeStatus = (prescription: PrescriptionFieldsFragment) =>
+	prescription.voidedAt ? 'voided' : prescription.documentStatus.toLowerCase();
 
 /**
- * Prescriptions of the visit. A draft is edited and saved freely; Issue signs it as you (PRC license needed) and locks
- * it: from then on it can only be printed or voided. Items matching a recorded allergy are flagged.
+ * Prescriptions of the visit. A draft (numbered when first saved) is edited freely; Issue signs it as you, with your
+ * PRC license, and locks it: from then on it can only be printed or voided. Generic names come first (RA 6675); items
+ * matching a recorded allergy are flagged; a dangerous drug needs the quantities in words and your S2 (RA 9165).
  */
 export function PrescriptionsTab({ record }: { record: EncounterRecordFieldsFragment }) {
 	const [isCreating, setIsCreating] = useState(false);
-	const hasDraft = record.prescriptions.some((prescription) => prescription.status === 'draft');
+	const hasDraft = record.prescriptions.some(isDraft);
 
 	return (
 		<section className={styles.section}>
@@ -55,7 +67,7 @@ export function PrescriptionsTab({ record }: { record: EncounterRecordFieldsFrag
 			)}
 			{record.prescriptions.length === 0 && !isCreating && <Empty>No prescription for this visit.</Empty>}
 			{record.prescriptions.map((prescription) =>
-				prescription.status === 'draft' && record.canEdit ? (
+				isDraft(prescription) && record.canEdit ? (
 					<PrescriptionEditor key={prescription.id} record={record} prescription={prescription} />
 				) : (
 					<PrescriptionCard key={prescription.id} record={record} prescription={prescription} />
@@ -79,14 +91,15 @@ function PrescriptionCard({
 		<article className={styles.card} data-testid='prescription-card'>
 			<div className={styles.cardHeader}>
 				<span className={styles.cardTitle}>
-					℞ {prescription.rxNumber ?? 'Draft'}
+					℞ {prescription.rxNo}
+					{prescription.isDangerousDrug && <span className={styles.muted}> · S2</span>}
 					{prescription.issuedAt && (
 						<span className={styles.muted}> · issued {formatDateTime(prescription.issuedAt)}</span>
 					)}
 				</span>
 				<span className={styles.actions}>
-					<StatusBadge status={prescription.status} />
-					{prescription.status !== 'voided' && (
+					<StatusBadge status={badgeStatus(prescription)} />
+					{!prescription.voidedAt && (
 						<Button asChild size='sm' variant='outline'>
 							<Link
 								to='/print/prescription/$prescriptionId'
@@ -98,7 +111,7 @@ function PrescriptionCard({
 							</Link>
 						</Button>
 					)}
-					{record.canEdit && prescription.status === 'issued' && (
+					{record.canEdit && !prescription.voidedAt && prescription.documentStatus === 'ISSUED' && (
 						<Button size='sm' variant='ghost-muted' onClick={() => setIsVoiding(true)}>
 							Void
 						</Button>
@@ -108,9 +121,7 @@ function PrescriptionCard({
 			<ol className={styles.rxLines}>
 				{prescription.items.map((item) => (
 					<li key={item.id}>
-						<strong>{medicineName(item)}</strong> — {sig(item)} · #{item.quantity}
-						{item.quantityUnit && ` ${item.quantityUnit}`}
-						{item.instructions && <span className={styles.muted}> · {item.instructions}</span>}
+						<strong>{medicineName(item)}</strong> — {item.sig} · {quantityLabel(item)}
 					</li>
 				))}
 			</ol>
@@ -172,7 +183,9 @@ function PrescriptionEditor({
 	return (
 		<form className={styles.card} onSubmit={submit} noValidate data-testid='prescription-editor'>
 			<div className={styles.cardHeader}>
-				<span className={styles.cardTitle}>℞ {prescription ? 'Draft' : 'New prescription'}</span>
+				<span className={styles.cardTitle}>
+					℞ {prescription ? `${prescription.rxNo} (draft)` : 'New prescription'}
+				</span>
 				<StatusBadge status='draft' />
 			</div>
 			<datalist id={formularyId}>
@@ -189,6 +202,7 @@ function PrescriptionEditor({
 						errors={showErrors ? errors : {}}
 						formularyId={formularyId}
 						disabled={busy}
+						isDangerousDrug={values.isDangerousDrug}
 						onChange={(next) => setItem(index, next)}
 						onRemove={
 							values.items.length > 1
@@ -199,6 +213,28 @@ function PrescriptionEditor({
 				))}
 			</div>
 			{showErrors && errors.items && <p className={styles.fieldError}>{errors.items}</p>}
+			<label className={styles.checkboxRow}>
+				<Checkbox
+					checked={values.isDangerousDrug}
+					onCheckedChange={(checked) => setValues({ ...values, isDangerousDrug: checked })}
+					disabled={busy}
+				/>
+				Dangerous drug (S2 / yellow Rx, RA 9165): write each quantity in words too
+			</label>
+			{values.isDangerousDrug && (
+				<div className={styles.fields}>
+					<FormField label='S2 form serial no. (optional)'>
+						{(id) => (
+							<Input
+								id={id}
+								value={values.s2FormSerialNo}
+								onChange={(event) => setValues({ ...values, s2FormSerialNo: event.target.value })}
+								disabled={busy}
+							/>
+						)}
+					</FormField>
+				</div>
+			)}
 			<div className={styles.actions}>
 				<Button
 					type='button'
@@ -214,7 +250,7 @@ function PrescriptionEditor({
 				<div className={styles.warning} role='alert'>
 					<OctagonAlert className={styles.warningIcon} aria-hidden />
 					<strong>Allergy warning:</strong>{' '}
-					{warnings.map((warning) => `${warning.genericName} (allergy: ${warning.substance})`).join(', ')}
+					{warnings.map((warning) => `${warning.genericName} (allergy: ${warning.allergen})`).join(', ')}
 					{values.id && (
 						<label className={styles.checkboxRow}>
 							<Checkbox checked={override} onCheckedChange={setOverride} />I have reviewed it; issue
@@ -284,9 +320,11 @@ export function ItemFields({
 	errors,
 	formularyId,
 	disabled,
+	isDangerousDrug = false,
 	onChange,
 	onRemove,
 }: {
+	isDangerousDrug?: boolean;
 	index: number;
 	item: PrescriptionItemFormValues;
 	errors: Record<string, string>;
@@ -296,7 +334,8 @@ export function ItemFields({
 	onRemove?: () => void;
 }) {
 	const error = (field: keyof PrescriptionItemFormValues) => errors[`items.${index}.${field}`];
-	const text = (field: keyof PrescriptionItemFormValues, label: string, placeholder?: string, wide?: boolean) => (
+	type TextField = Exclude<keyof PrescriptionItemFormValues, 'isPrn' | 'route'>;
+	const text = (field: TextField, label: string, placeholder?: string, wide?: boolean) => (
 		<FormField label={label} error={error(field)} wide={wide}>
 			{(id) => (
 				<Input
@@ -328,7 +367,7 @@ export function ItemFields({
 												...item,
 												genericName: entry.genericName,
 												strength: entry.strength,
-												form: entry.form,
+												dosageForm: entry.dosageForm,
 											}
 										: { ...item, genericName: event.target.value },
 								);
@@ -339,7 +378,7 @@ export function ItemFields({
 				</FormField>
 				{text('brandName', 'Brand (optional)')}
 				{text('strength', 'Strength', '5 mg')}
-				{text('form', 'Form', 'tablet')}
+				{text('dosageForm', 'Form', 'tablet')}
 				{text('dose', 'Dose', '1 tablet')}
 				<FormField label='Frequency' error={error('frequency')}>
 					{(id) => (
@@ -372,7 +411,7 @@ export function ItemFields({
 							<SelectContent>
 								{MEDICATION_ROUTES.map((route) => (
 									<SelectItem key={route} value={route}>
-										{route}
+										{route} — {MEDICATION_ROUTE_LABELS[route]}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -380,10 +419,18 @@ export function ItemFields({
 					)}
 				</FormField>
 				{text('durationDays', 'Days')}
+				<label className={styles.checkboxRow}>
+					<Checkbox
+						checked={item.isPrn}
+						onCheckedChange={(checked) => onChange({ ...item, isPrn: checked })}
+						disabled={disabled}
+					/>
+					As needed (PRN)
+				</label>
 				{text('quantity', 'Quantity', '30')}
-				{text('quantityUnit', 'Unit', 'tablets')}
-				{text('refills', 'Refills')}
-				{text('instructions', 'Instructions (sig)', 'Take after breakfast', true)}
+				{text('unit', 'Unit', 'tablets')}
+				{isDangerousDrug && text('quantityInWords', 'Quantity in words', 'thirty (30)')}
+				{text('sig', 'Sig (as printed)', itemSig({ ...item, sig: '' }) || '1 tablet by mouth once a day', true)}
 			</div>
 			{onRemove && (
 				<div className={styles.actions}>

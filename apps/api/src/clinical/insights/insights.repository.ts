@@ -1,165 +1,227 @@
 import { Injectable } from '@nestjs/common';
 
-import type { Prisma } from '../../generated/prisma/client.js';
+import type { DiagnosticOrderStatus, Prisma } from '../../generated/prisma/client.js';
+import type { ClinicalTx } from '../rls/clinical-db.service.js';
 
-type Tx = Prisma.TransactionClient;
-
-const header = {
-	identifiers: { include: { organization: { select: { name: true } } }, orderBy: { createdAt: 'asc' } },
-	allergies: { where: { voidedAt: null }, orderBy: { createdAt: 'asc' } },
+const HEADER = {
+	identifications: { orderBy: { createdAt: 'asc' } },
+	allergies: { where: { voidedAt: null, isActive: true }, orderBy: { notedAt: 'asc' } },
+	consents: {
+		where: { type: 'DATA_PRIVACY', granted: true, revokedAt: null },
+		orderBy: { signedAt: 'desc' },
+		take: 1,
+	},
 } satisfies Prisma.PatientInclude;
 
-export type PatientHeaderRow = Prisma.PatientGetPayload<{ include: typeof header }>;
+export type PatientHeaderRow = Prisma.PatientGetPayload<{ include: typeof HEADER }>;
 
-const encounterSummary = {
-	diagnoses: { where: { voidedAt: null }, orderBy: [{ isPrimary: 'desc' }, { rank: 'asc' }] },
+const DIAGNOSIS_ORDER = [
+	{ type: 'asc' },
+	{ sortOrder: 'asc' },
+] satisfies Prisma.EncounterDiagnosisOrderByWithRelationInput[];
+
+const ENCOUNTER_SUMMARY = {
+	diagnosis: { where: { voidedAt: null }, orderBy: DIAGNOSIS_ORDER },
 } satisfies Prisma.EncounterInclude;
 
-export type EncounterSummaryRow = Prisma.EncounterGetPayload<{ include: typeof encounterSummary }>;
+export type EncounterSummaryRow = Prisma.EncounterGetPayload<{ include: typeof ENCOUNTER_SUMMARY }>;
 
-const issuedPrescription = {
-	items: { orderBy: { position: 'asc' } },
-} satisfies Prisma.PrescriptionInclude;
+const PRESCRIPTION = { items: { orderBy: { sortOrder: 'asc' } } } satisfies Prisma.PrescriptionInclude;
 
-export type PrescriptionRow = Prisma.PrescriptionGetPayload<{ include: typeof issuedPrescription }>;
+export type PrescriptionRow = Prisma.PrescriptionGetPayload<{ include: typeof PRESCRIPTION }>;
 
-const encounterRecord = {
-	patient: { include: header },
-	organization: { select: { name: true } },
-	doctor: { select: { name: true } },
-	vitalSigns: { where: { voidedAt: null }, orderBy: { recordedAt: 'asc' } },
-	diagnoses: { where: { voidedAt: null }, orderBy: [{ isPrimary: 'desc' }, { rank: 'asc' }] },
-	orders: { include: { results: { orderBy: { resultedAt: 'asc' } } }, orderBy: { createdAt: 'asc' } },
-	prescriptions: { where: { status: { not: 'voided' } }, include: issuedPrescription, orderBy: { createdAt: 'asc' } },
-	certificates: { where: { status: { not: 'voided' } }, orderBy: { createdAt: 'asc' } },
+const ENCOUNTER_RECORD = {
+	patient: { include: HEADER },
+	clinic: { select: { name: true, organizationId: true } },
+	practitioner: true,
+	vitals: { where: { voidedAt: null }, orderBy: { recordedAt: 'asc' } },
+	diagnosis: { where: { voidedAt: null }, orderBy: DIAGNOSIS_ORDER },
+	diagnosticOrders: {
+		where: { status: { not: 'CANCELLED' } },
+		include: {
+			items: {
+				include: { test: { select: { name: true } }, result: { include: { values: true } } },
+			},
+		},
+		orderBy: { createdAt: 'asc' },
+	},
+	prescriptions: { where: { voidedAt: null }, include: PRESCRIPTION, orderBy: { createdAt: 'asc' } },
+	medicalCertificates: { where: { isVoid: false }, orderBy: { createdAt: 'asc' } },
 } satisfies Prisma.EncounterInclude;
 
-export type EncounterRecordRow = Prisma.EncounterGetPayload<{ include: typeof encounterRecord }>;
+export type EncounterRecordRow = Prisma.EncounterGetPayload<{ include: typeof ENCOUNTER_RECORD }>;
 
-/** Orders still waiting on the lab or imaging: sent, accepted or collected, not resulted. */
-const OPEN_ORDER_STATUSES = ['sent', 'accepted', 'collected'] as const;
-
-export interface InsightsAuditEntry {
-	userId: string;
-	orgId?: string | null;
-	patientId?: string | null;
-	/** `<resource>.<verb>`: `patient.view`, `report.generate`, `report.export`. */
-	action: string;
-	resource: string;
-	resourceId?: string | null;
-	reason?: string | null;
+/** One released lab value, with the LOINC code of its parameter (or single-parameter test). */
+export interface LabValueRow {
+	resultId: string;
+	code: string | null;
+	name: string;
+	value: string;
+	valueNumeric: number | null;
+	unit: string | null;
+	referenceRange: string | null;
+	flag: string | null;
+	resultedAt: Date;
 }
+
+/** Orders still waiting on the lab: requested, paid, collected or in progress. */
+const OPEN_ORDER_STATUSES: DiagnosticOrderStatus[] = ['REQUESTED', 'PAID', 'SPECIMEN_COLLECTED', 'IN_PROGRESS'];
+
+const LAB_VALUE_SELECT = {
+	name: true,
+	value: true,
+	numericValue: true,
+	unit: true,
+	referenceRange: true,
+	flag: true,
+	parameter: { select: { lisCode: true } },
+	result: {
+		select: {
+			id: true,
+			resultedAt: true,
+			releasedAt: true,
+			orderItem: { select: { test: { select: { lisCode: true } } } },
+		},
+	},
+} satisfies Prisma.DiagnosticResultValueSelect;
 
 /**
  * Reads of the Wise charts and summary reports (DESIGN.md §7.2). Every method takes the transaction of
- * `ClinicalDbService.asUser`, so row-level security decides what a chart or report can show.
+ * `ClinicalDbService.asUser`, so row-level security decides what a chart or report can show. Encounter children are
+ * reached through the encounter (`encounter: { patientId }`).
  */
 @Injectable()
 export class InsightsRepository {
-	patientHeader(tx: Tx, patientId: string): Promise<PatientHeaderRow | null> {
-		return tx.patient.findUnique({ where: { id: patientId }, include: header });
+	patientHeader(tx: ClinicalTx, patientId: string): Promise<PatientHeaderRow | null> {
+		return tx.patient.findFirst({ where: { id: patientId, deletedAt: null }, include: HEADER });
 	}
 
-	vitals(tx: Tx, patientId: string, since: Date) {
+	/** The patient's vitals not voided, oldest first (since `since`). */
+	vitals(tx: ClinicalTx, patientId: string, since: Date) {
 		return tx.vitalSigns.findMany({
-			where: { patientId, voidedAt: null, recordedAt: { gte: since } },
+			where: { voidedAt: null, recordedAt: { gte: since }, encounter: { patientId } },
 			orderBy: { recordedAt: 'asc' },
 		});
 	}
 
-	/** The latest non-voided vitals rows, newest first. */
-	latestVitals(tx: Tx, patientId: string, take: number) {
+	/** The latest vitals rows not voided, newest first. */
+	latestVitals(tx: ClinicalTx, patientId: string, take: number) {
 		return tx.vitalSigns.findMany({
-			where: { patientId, voidedAt: null },
+			where: { voidedAt: null, encounter: { patientId } },
 			orderBy: { recordedAt: 'desc' },
 			take,
 		});
 	}
 
-	results(tx: Tx, patientId: string, opts: { codes?: string[]; since?: Date; take?: number }) {
-		return tx.result.findMany({
+	/**
+	 * Released lab values of the patient: of the given LOINC codes (the parameter's `lis_code`, or the test's for a
+	 * single-value test) since `since` oldest first, or the latest `take` of any test newest first.
+	 */
+	async labValues(
+		tx: ClinicalTx,
+		patientId: string,
+		opts: { codes?: readonly string[]; since?: Date; take?: number },
+	): Promise<LabValueRow[]> {
+		const codes = opts.codes ? [...opts.codes] : undefined;
+		const rows = await tx.diagnosticResultValue.findMany({
 			where: {
-				patientId,
-				...(opts.codes && { code: { in: opts.codes } }),
-				...(opts.since && { resultedAt: { gte: opts.since } }),
+				result: {
+					releasedAt: { not: null },
+					...(opts.since && { resultedAt: { gte: opts.since } }),
+					orderItem: { order: { encounter: { patientId } } },
+				},
+				...(codes && {
+					OR: [
+						{ parameter: { lisCode: { in: codes } } },
+						{ parameterId: null, result: { orderItem: { test: { lisCode: { in: codes } } } } },
+					],
+				}),
 			},
-			orderBy: { resultedAt: opts.take ? 'desc' : 'asc' },
+			select: LAB_VALUE_SELECT,
+			orderBy: { result: { resultedAt: opts.take ? 'desc' : 'asc' } },
 			...(opts.take && { take: opts.take }),
 		});
+		return rows.map((row) => ({
+			resultId: row.result.id,
+			code: row.parameter?.lisCode ?? row.result.orderItem.test.lisCode,
+			name: row.name,
+			value: row.value,
+			valueNumeric: row.numericValue === null ? null : Number(row.numericValue),
+			unit: row.unit,
+			referenceRange: row.referenceRange,
+			flag: row.flag,
+			resultedAt: row.result.resultedAt ?? row.result.releasedAt!,
+		}));
 	}
 
-	diagnoses(tx: Tx, patientId: string) {
+	diagnoses(tx: ClinicalTx, patientId: string) {
 		return tx.encounterDiagnosis.findMany({
-			where: { patientId, voidedAt: null },
+			where: { voidedAt: null, encounter: { patientId, status: { not: 'CANCELLED' } } },
 			include: { encounter: { select: { startedAt: true } } },
 		});
 	}
 
-	issuedPrescriptions(tx: Tx, patientId: string, since: Date): Promise<PrescriptionRow[]> {
+	issuedPrescriptions(tx: ClinicalTx, patientId: string, since: Date): Promise<PrescriptionRow[]> {
 		return tx.prescription.findMany({
-			where: { patientId, status: 'issued', voidedAt: null, issuedAt: { gte: since } },
-			include: issuedPrescription,
+			where: {
+				documentStatus: 'ISSUED',
+				voidedAt: null,
+				issuedAt: { gte: since },
+				encounter: { patientId },
+			},
+			include: PRESCRIPTION,
 			orderBy: { issuedAt: 'desc' },
 		});
 	}
 
-	encounters(tx: Tx, patientId: string, take: number): Promise<EncounterSummaryRow[]> {
+	encounters(tx: ClinicalTx, patientId: string, take: number): Promise<EncounterSummaryRow[]> {
 		return tx.encounter.findMany({
-			where: { patientId },
-			include: encounterSummary,
+			where: { patientId, status: { not: 'CANCELLED' } },
+			include: ENCOUNTER_SUMMARY,
 			orderBy: { startedAt: 'desc' },
 			take,
 		});
 	}
 
-	encounterRecord(tx: Tx, encounterId: string): Promise<EncounterRecordRow | null> {
-		return tx.encounter.findUnique({ where: { id: encounterId }, include: encounterRecord });
+	encounterRecord(tx: ClinicalTx, encounterId: string): Promise<EncounterRecordRow | null> {
+		return tx.encounter.findUnique({ where: { id: encounterId }, include: ENCOUNTER_RECORD });
 	}
 
-	/** The facility's encounters since `since` that the user may see. */
-	facilityEncounters(tx: Tx, orgId: string, since: Date) {
+	/** The clinic's visits since `since` that the user may see. */
+	clinicEncounters(tx: ClinicalTx, clinicId: string, since: Date) {
 		return tx.encounter.findMany({
-			where: { orgId, startedAt: { gte: since } },
+			where: { clinicId, status: { not: 'CANCELLED' }, startedAt: { gte: since } },
 			select: { startedAt: true, patientId: true },
 		});
 	}
 
-	facilityDiagnoses(tx: Tx, orgId: string, since: Date) {
+	clinicDiagnoses(tx: ClinicalTx, clinicId: string, since: Date) {
 		return tx.encounterDiagnosis.findMany({
-			where: { orgId, voidedAt: null, encounter: { startedAt: { gte: since } } },
+			where: { voidedAt: null, encounter: { clinicId, startedAt: { gte: since } } },
 			select: { icd10Code: true },
 		});
 	}
 
-	openOrders(tx: Tx, orgId: string) {
-		return tx.clinicalOrder.findMany({
-			where: { orderingOrgId: orgId, status: { in: [...OPEN_ORDER_STATUSES] } },
-			select: { sentAt: true, createdAt: true },
+	openOrders(tx: ClinicalTx, clinicId: string) {
+		return tx.diagnosticOrder.findMany({
+			where: { status: { in: OPEN_ORDER_STATUSES }, encounter: { clinicId } },
+			select: { createdAt: true },
 		});
 	}
 
-	resultsAwaitingReview(tx: Tx, orgId: string) {
-		return tx.result.findMany({
-			where: { reviewedAt: null, order: { orderingOrgId: orgId } },
-			select: { flag: true },
-		});
-	}
-
-	async userName(tx: Tx, userId: string): Promise<string> {
-		return (await tx.user.findUnique({ where: { id: userId }, select: { name: true } }))?.name ?? 'Unknown user';
-	}
-
-	writeAudit(tx: Tx, entry: InsightsAuditEntry) {
-		return tx.auditLog.create({
-			data: {
-				userId: entry.userId,
-				orgId: entry.orgId ?? null,
-				patientId: entry.patientId ?? null,
-				action: entry.action,
-				resource: entry.resource,
-				resourceId: entry.resourceId ?? null,
-				reason: entry.reason ?? null,
+	/** Released results of the clinic's visits no doctor has reviewed yet, with their value flags. */
+	resultsAwaitingReview(tx: ClinicalTx, clinicId: string) {
+		return tx.diagnosticResult.findMany({
+			where: {
+				releasedAt: { not: null },
+				reviewedAt: null,
+				orderItem: { order: { encounter: { clinicId } } },
 			},
+			select: { values: { select: { flag: true } } },
 		});
+	}
+
+	async userName(tx: ClinicalTx, userId: string): Promise<string> {
+		return (await tx.user.findUnique({ where: { id: userId }, select: { name: true } }))?.name ?? 'Unknown user';
 	}
 }

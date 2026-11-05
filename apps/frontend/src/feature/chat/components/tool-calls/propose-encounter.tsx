@@ -50,17 +50,17 @@ function EncounterCard({
 }) {
 	const queryClient = useQueryClient();
 	const { queueOrSendMessage, chatId } = useAgentContext();
-	const [initial] = useState<EncounterFormValues>(() => fromDraft(draft, output.facilities));
+	const [initial] = useState<EncounterFormValues>(() => fromDraft(draft, output.clinics));
 	const [values, setValues] = useState<EncounterFormValues>(initial);
 	const [isEditing, setIsEditing] = useState(false);
 	const [showErrors, setShowErrors] = useState(false);
 	const vitals = parseVitals(draft.vitals);
 	const diagnoses = (draft.diagnoses ?? []).filter(
-		(diagnosis) => diagnosis.icd10Code.trim() && diagnosis.display.trim(),
+		(diagnosis) => diagnosis.icd10Code.trim() && diagnosis.description.trim(),
 	);
 	const create = useMutation(encounterApi.encounter.create.mutationOptions());
 	const errors = validateEncounterForm(values);
-	const facility = output.facilities.find((candidate) => candidate.id === values.facilityId)?.name;
+	const clinic = output.clinics.find((candidate) => candidate.id === values.clinicId)?.name;
 
 	const confirm = ({ origin }: ProposalConfirm) => {
 		setShowErrors(true);
@@ -103,7 +103,7 @@ function EncounterCard({
 				<EncounterFields
 					values={values}
 					errors={showErrors ? errors : {}}
-					facilities={output.facilities}
+					clinics={output.clinics}
 					onChange={setValues}
 					disabled={create.isPending}
 				/>
@@ -119,12 +119,12 @@ function EncounterCard({
 					{vitals.error && <p className={styles.encounterCardError}>Vitals left out: {vitals.error}</p>}
 					{diagnoses.length > 0 && (
 						<p className={styles.encounterCardNotes} data-testid='drafted-diagnoses'>
-							{diagnoses.map((diagnosis) => `${diagnosis.icd10Code} ${diagnosis.display}`).join('; ')}
+							{diagnoses.map((diagnosis) => `${diagnosis.icd10Code} ${diagnosis.description}`).join('; ')}
 						</p>
 					)}
 					<p className={styles.encounterCardMeta}>
 						{values.startedAt && new Date(values.startedAt).toLocaleString()}
-						{facility && ` · ${facility}`}
+						{clinic && ` · ${clinic}`}
 					</p>
 					{showErrors && Object.values(errors)[0] && (
 						<p className={styles.encounterCardError}>{Object.values(errors)[0]}</p>
@@ -135,12 +135,10 @@ function EncounterCard({
 	);
 }
 
-function fromDraft(
-	draft: proposeEncounter.Input,
-	facilities: proposeEncounter.Output['facilities'],
-): EncounterFormValues {
+function fromDraft(draft: proposeEncounter.Input, clinics: proposeEncounter.Output['clinics']): EncounterFormValues {
 	return {
-		...emptyEncounterForm(facilities.length === 1 ? facilities[0].id : ''),
+		...emptyEncounterForm(clinics[0]?.id ?? ''),
+		type: draft.type ?? 'CONSULTATION',
 		reason: draft.reason ?? '',
 		notes: draft.notes ?? '',
 		startedAt: draftStartToLocalInput(draft.startedAt),
@@ -171,7 +169,7 @@ function parseVitals(vitals: proposeEncounter.Input['vitals']): DraftedVitals {
 	};
 }
 
-/** After the encounter is saved: its vitals and diagnoses (first = primary, provisional). Returns what failed. */
+/** After the encounter is saved: its vitals and diagnoses (first = primary, not final). Returns what failed. */
 async function recordDraftedRecord(
 	encounterId: string,
 	vitals: DraftedVitals,
@@ -190,8 +188,9 @@ async function recordDraftedRecord(
 			.mutate({
 				encounterId,
 				icd10Code: diagnosis.icd10Code,
-				display: diagnosis.display,
-				isPrimary: index === 0,
+				description: diagnosis.description,
+				type: index === 0 ? 'PRIMARY' : 'SECONDARY',
+				isFinal: false,
 				wiseOrigin,
 			})
 			.catch((error: Error) => {

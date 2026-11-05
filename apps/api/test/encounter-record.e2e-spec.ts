@@ -1,445 +1,314 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
+import { createClinicalTestApp, graphql, resetDatabase, signIn, useTestDatabase } from './clinical-test-app.js';
+import {
+	type ClinicScene,
+	createClinicScene,
+	createUser,
+	type FixtureUser,
+	grantClinicRoles,
+} from './fixtures/clinic-fixtures.js';
 
+const ENCOUNTER_FIELDS =
+	'id encounterNo patientId clinicId type status practitionerId reason history physicalExam assessment plan patientInstructions followUpOn disposition endedAt version clinic { name } practitioner { id displayName }';
+const CREATE = `mutation ($input: CreateEncounterInput!) { createEncounter(input: $input) { ${ENCOUNTER_FIELDS} } }`;
+const TRANSITION = `mutation ($input: TransitionEncounterInput!) { transitionEncounter(input: $input) { ${ENCOUNTER_FIELDS} } }`;
 const RECORD = `query ($id: ID!) {
 	encounterRecord(encounterId: $id) {
 		canEdit
-		encounter { id reason history assessment plan followUpOn }
-		vitals { id systolicMmHg diastolicMmHg weightKg heightCm bmi voidedAt voidReason }
-		diagnoses { id icd10Code display isPrimary certainty voidedAt }
-		allergies { substance }
-		orders { code display status targetFacility { name } results { value } }
-		prescriptions { id status rxNumber items { genericName quantity } }
-		medicalCertificates { id status certificateNumber }
-		bills { id status total }
+		encounter { ${ENCOUNTER_FIELDS} }
+		vitals { id systolicMmHg diastolicMmHg weightKg heightCm bmi bloodGlucoseMgDl voidedAt voidReason }
+		diagnoses { id icd10Code description type isFinal sortOrder voidedAt }
+		allergies { allergen }
 	}
 }`;
+const NOTE = `mutation ($input: UpdateEncounterNoteInput!) { updateEncounterNote(input: $input) { ${ENCOUNTER_FIELDS} } }`;
+const VITALS = `mutation ($input: RecordVitalsInput!) { recordVitals(input: $input) { id systolicMmHg bmi bloodGlucoseMgDl } }`;
+const VOID_VITALS = `mutation ($input: VoidEntryInput!) { voidVitals(input: $input) { id voidedAt voidReason } }`;
+const ADD_DIAGNOSIS = `mutation ($input: AddDiagnosisInput!) { addDiagnosis(input: $input) { id icd10Code description type isFinal sortOrder } }`;
+const UPDATE_DIAGNOSIS = `mutation ($input: UpdateDiagnosisInput!) { updateDiagnosis(input: $input) { id type isFinal } }`;
+const VOID_DIAGNOSIS = `mutation ($input: VoidEntryInput!) { voidDiagnosis(input: $input) { id voidedAt } }`;
+const OVERVIEW = `query ($id: ID!) { patientOverview(patientId: $id) { patientId visits { encounter { id encounterNo } diagnoses { icd10Code type } } } }`;
+const QUEUE = `query ($input: ClinicEncountersInput!) { clinicEncounters(input: $input) { id status } }`;
+const SAVE_PRACTITIONER = `mutation ($input: SaveMyPractitionerInput!) { saveMyPractitioner(input: $input) { id displayName prcLicenseNo ptrNo clinics { clinicName } } }`;
 
 /**
- * The encounter record through GraphQL (DESIGN.md §5): the note, vitals (BMI computed), ICD-10 diagnoses, allergies,
- * orders, prescriptions and medical certificates; row-level security on every read, the facility check on every
- * write, audit rows, and locked issued documents.
+ * Encounters and their record through GraphQL (DESIGN.md §5): a visit opened at one of the user's clinics with its
+ * number and status machine, the SOAP note with optimistic locking, vitals and ICD-10 diagnoses (one primary), each
+ * change audited; row-level security on every read.
  */
-describe('encounter record (e2e)', () => {
+describe('encounters and their record (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
-	let encounterId = '';
-	let patientId = '';
-	const users = {
-		reyes: { cookie: [] as string[], id: '' },
-		lim: { cookie: [] as string[], id: '' },
-		cruz: { cookie: [] as string[], id: '' },
+	let scene: ClinicScene;
+	let frontDesk: FixtureUser;
+	const cookies: Record<'doctor' | 'otherDoctor' | 'frontDesk', string[]> = {
+		doctor: [],
+		otherDoctor: [],
+		frontDesk: [],
 	};
-	const facilities = { healthCenter: '', otherClinic: '', hospital: '', lab: '' };
+	let visitId = '';
 
-	const graphql = (cookie: string[], query: string, variables: Record<string, unknown> = {}) =>
-		request(app.getHttpServer()).post('/graphql').set('Cookie', cookie).send({ query, variables });
-
+	const call = (cookie: string[], query: string, variables: Record<string, unknown> = {}) =>
+		graphql(app, cookie, query, variables);
 	const ok = async (cookie: string[], query: string, variables: Record<string, unknown> = {}) => {
-		const res = await graphql(cookie, query, variables);
+		const res = await call(cookie, query, variables);
 		expect(res.body.errors).toBeUndefined();
 		return res.body.data;
 	};
-
-	const errorOf = async (cookie: string[], query: string, variables: Record<string, unknown> = {}) => {
-		const res = await graphql(cookie, query, variables);
-		expect(res.body.errors).toBeDefined();
-		return res.body.errors[0].message as string;
-	};
-
-	const record = async (cookie = users.reyes.cookie) =>
-		(await ok(cookie, RECORD, { id: encounterId })).encounterRecord;
-
-	const audits = (action: string) => prisma.auditLog.count({ where: { action, patientId } });
+	const errorCode = async (cookie: string[], query: string, variables: Record<string, unknown> = {}) =>
+		(await call(cookie, query, variables)).body.errors?.[0]?.extensions?.errorCode;
 
 	beforeAll(async () => {
 		await resetDatabase(useTestDatabase());
-		app = await createTestApp();
+		app = await createClinicalTestApp();
 		prisma = app.get(PrismaService);
-
-		const password = 'Sup3r-secret!';
-		for (const key of ['reyes', 'lim', 'cruz'] as const) {
-			const user = await createTestUser(app, { name: `Dr. ${key}`, email: `${key}@example.com`, password });
-			users[key] = { cookie: user.cookie, id: user.userId };
-		}
-		const workspace = await prisma.organization.findFirstOrThrow();
-		await prisma.clinic.create({ data: { name: 'Loopwise', type: 'local', path: '/tmp/x', orgId: workspace.id } });
-		const org = (name: string, slug: string, type: 'clinic' | 'hospital' | 'lab') =>
-			prisma.organization.create({ data: { name, slug, type, address: `${name} Street, Tagbilaran` } });
-		facilities.healthCenter = (await org('Health Center', 'hc', 'clinic')).id;
-		facilities.otherClinic = (await org('Other Clinic', 'oc', 'clinic')).id;
-		facilities.hospital = (await org('Regional Hospital', 'rh', 'hospital')).id;
-		facilities.lab = (await org('Bohol Lab', 'lab', 'lab')).id;
-		await prisma.orgMember.createMany({
-			data: [
-				{ orgId: facilities.healthCenter, userId: users.reyes.id, role: 'user' },
-				{ orgId: facilities.otherClinic, userId: users.lim.id, role: 'user' },
-				{ orgId: facilities.hospital, userId: users.cruz.id, role: 'user' },
-			],
-		});
-
-		// Maria is in the care of Dr. Reyes (health center) and, through a referral, Dr. Cruz (hospital).
-		const maria = await prisma.patient.create({
-			data: {
-				givenName: 'Maria',
-				familyName: 'Santos',
-				birthDate: new Date('1981-04-12'),
-				sex: 'female',
-				careRelationships: {
-					create: [
-						{ userId: users.reyes.id, orgId: facilities.healthCenter, reason: 'encounter' },
-						{ userId: users.cruz.id, orgId: facilities.hospital, reason: 'referral' },
-					],
-				},
-			},
-		});
-		patientId = maria.id;
-		const created = await ok(
-			users.reyes.cookie,
-			'mutation ($input: CreateEncounterInput!) { createEncounter(input: $input) { id } }',
-			{ input: { patientId, facilityId: facilities.healthCenter, reason: 'Fatigue' } },
-		);
-		encounterId = created.createEncounter.id;
+		scene = await createClinicScene(prisma);
+		frontDesk = await createUser(prisma, { firstName: 'Fe', lastName: 'Desk' });
+		await grantClinicRoles(prisma, scene.clinic.id, frontDesk.id, ['RECEPTIONIST']);
+		cookies.doctor = await signIn(app, scene.doctor);
+		cookies.otherDoctor = await signIn(app, scene.otherDoctor);
+		cookies.frontDesk = await signIn(app, frontDesk);
 	});
 
 	afterAll(async () => {
 		await app?.close();
 	});
 
-	it('reads the empty record, audits the view, and hides it from a doctor without a care relationship', async () => {
-		const empty = await record();
-		expect(empty).toMatchObject({ canEdit: true, vitals: [], diagnoses: [], prescriptions: [] });
-		expect(await audits('encounter.view')).toBe(1);
-		expect((await ok(users.lim.cookie, RECORD, { id: encounterId })).encounterRecord).toBeNull();
-		// Dr. Cruz sees the patient (referral) but works elsewhere, so reads but can't add to the visit.
-		expect((await record(users.cruz.cookie)).canEdit).toBe(false);
+	it('checks a patient in at the front desk: numbered, OPEN, no doctor, audited', async () => {
+		const { createEncounter } = await ok(cookies.doctor, CREATE, {
+			input: {
+				patientId: scene.patient.id,
+				clinicId: scene.clinic.id,
+				reason: 'Fatigue, BP check',
+				status: 'OPEN',
+				type: 'FOLLOW_UP',
+			},
+		});
+		expect(createEncounter).toMatchObject({
+			encounterNo: expect.stringMatching(new RegExp(`^${scene.clinic.code}-ENC-\\d{4}-000001$`)),
+			status: 'OPEN',
+			type: 'FOLLOW_UP',
+			reason: 'Fatigue, BP check',
+			practitioner: { id: scene.doctorPractitioner.id },
+			clinic: { name: scene.clinic.name },
+		});
+		visitId = createEncounter.id;
+		const audit = await prisma.auditLog.findFirstOrThrow({
+			where: { event: 'encounter.create', entityId: visitId },
+		});
+		expect(audit).toMatchObject({ action: 'CREATE', patientId: scene.patient.id, clinicId: scene.clinic.id });
 	});
 
-	it('updates the SOAP note and plan', async () => {
-		const { updateEncounterNote } = await ok(
-			users.reyes.cookie,
-			`mutation ($input: UpdateEncounterNoteInput!) { updateEncounterNote(input: $input) { reason assessment followUpOn } }`,
-			{
-				input: {
-					encounterId,
-					reason: 'Fatigue, frequent urination',
-					history: '2 weeks of fatigue',
-					assessment: 'Hypertension; rule out diabetes',
-					plan: 'HbA1c, FBS; amlodipine',
-					followUpOn: '2026-11-20',
-				},
-			},
-		);
-		expect(updateEncounterNote).toEqual({
-			reason: 'Fatigue, frequent urination',
-			assessment: 'Hypertension; rule out diabetes',
-			followUpOn: '2026-11-20',
+	it('lets the front desk see the patient once they have a visit at the clinic, and the queue', async () => {
+		const { clinicEncounters } = await ok(cookies.frontDesk, QUEUE, {
+			input: { clinicId: scene.clinic.id, statuses: ['OPEN'] },
 		});
-		expect(await audits('encounter.update_note')).toBe(1);
+		expect(clinicEncounters.map((row: { id: string }) => row.id)).toContain(visitId);
+	});
+
+	it('opens a visit without a doctor at the front desk, which a doctor takes by starting it', async () => {
+		const { createEncounter } = await ok(cookies.frontDesk, CREATE, {
+			input: { patientId: scene.patient.id, clinicId: scene.clinic.id, reason: 'Cough' },
+		});
+		expect(createEncounter).toMatchObject({ status: 'OPEN', practitionerId: null });
+		// The colleague has no care relationship yet; starting the visit gives them the patient.
+		expect(
+			(await call(cookies.otherDoctor, RECORD, { id: createEncounter.id })).body.data.encounterRecord,
+		).toBeNull();
+		const taken = await call(cookies.frontDesk, TRANSITION, {
+			input: { encounterId: createEncounter.id, status: 'IN_PROGRESS' },
+		});
+		expect(taken.body.data.transitionEncounter).toMatchObject({ status: 'IN_PROGRESS', practitionerId: null });
+		const cancelled = await ok(cookies.frontDesk, TRANSITION, {
+			input: { encounterId: createEncounter.id, status: 'CANCELLED', reason: 'Left before being seen' },
+		});
+		expect(cancelled.transitionEncounter.endedAt).not.toBeNull();
+		expect(
+			await errorCode(cookies.doctor, VITALS, {
+				input: { encounterId: createEncounter.id, systolicMmHg: 120, diastolicMmHg: 80 },
+			}),
+		).toBe('ENCOUNTER_CANCELLED');
+		expect(
+			await errorCode(cookies.frontDesk, TRANSITION, {
+				input: { encounterId: createEncounter.id, status: 'OPEN' },
+			}),
+		).toBe('INVALID_STATUS_TRANSITION');
+	});
+
+	it('refuses a clinic the user does not work at and a status a visit cannot start with', async () => {
+		expect(
+			await errorCode(cookies.doctor, CREATE, {
+				input: { patientId: scene.patient.id, clinicId: '0195f000-0000-7000-8000-000000000999', reason: 'x' },
+			}),
+		).toBe('CLINIC_NOT_AVAILABLE');
+		const completed = await call(cookies.doctor, CREATE, {
+			input: { patientId: scene.patient.id, clinicId: scene.clinic.id, reason: 'x', status: 'COMPLETED' },
+		});
+		expect(completed.body.errors?.[0]?.extensions?.code).toBe('BAD_REQUEST');
+	});
+
+	it('reads the record, audits the view, and hides it from a doctor without a care relationship', async () => {
+		const { encounterRecord } = await ok(cookies.doctor, RECORD, { id: visitId });
+		expect(encounterRecord).toMatchObject({ canEdit: true, vitals: [], diagnoses: [], allergies: [] });
+		expect(await prisma.auditLog.count({ where: { event: 'encounter.view', entityId: visitId } })).toBe(1);
+		expect((await call(cookies.otherDoctor, RECORD, { id: visitId })).body.data.encounterRecord).toBeNull();
+	});
+
+	it('moves the visit along its status machine and refuses a stale or invalid move', async () => {
+		const { transitionEncounter } = await ok(cookies.doctor, TRANSITION, {
+			input: { encounterId: visitId, status: 'IN_PROGRESS' },
+		});
+		expect(transitionEncounter.status).toBe('IN_PROGRESS');
+		expect(
+			await errorCode(cookies.doctor, TRANSITION, {
+				input: {
+					encounterId: visitId,
+					status: 'FOR_BILLING',
+					expectedVersion: transitionEncounter.version - 1,
+				},
+			}),
+		).toBe('STALE_VERSION');
+		expect(await errorCode(cookies.doctor, TRANSITION, { input: { encounterId: visitId, status: 'OPEN' } })).toBe(
+			'INVALID_STATUS_TRANSITION',
+		);
+		const audit = await prisma.auditLog.findFirstOrThrow({
+			where: { event: 'encounter.in_progress', entityId: visitId },
+		});
+		expect(audit.changes).toEqual({ before: { status: 'OPEN' }, after: { status: 'IN_PROGRESS' } });
+	});
+
+	it('updates the SOAP note against its version, the exam stored as a JSON string', async () => {
+		const { encounterRecord } = await ok(cookies.doctor, RECORD, { id: visitId });
+		const note = {
+			encounterId: visitId,
+			reason: 'Fatigue for 2 weeks',
+			history: 'Tired in the afternoons.',
+			physicalExam: 'BP 140/90, no edema.',
+			assessment: 'Hypertension, stage 1',
+			plan: 'Amlodipine 5 mg once a day',
+			patientInstructions: 'Less salt.',
+			followUpOn: '2026-12-01',
+			disposition: 'FOR_FOLLOW_UP',
+			expectedVersion: encounterRecord.encounter.version,
+		};
+		const { updateEncounterNote } = await ok(cookies.doctor, NOTE, { input: note });
+		expect(updateEncounterNote).toMatchObject({
+			reason: 'Fatigue for 2 weeks',
+			physicalExam: 'BP 140/90, no edema.',
+			followUpOn: '2026-12-01',
+			disposition: 'FOR_FOLLOW_UP',
+			version: note.expectedVersion + 1,
+		});
+		const row = await prisma.encounter.findUniqueOrThrow({ where: { id: visitId } });
+		expect(row.physicalExam).toBe('BP 140/90, no edema.');
+		expect(row.chiefComplaint).toBe('Fatigue for 2 weeks');
+
+		expect(await errorCode(cookies.doctor, NOTE, { input: note })).toBe('STALE_VERSION');
+		const audit = await prisma.auditLog.findFirstOrThrow({ where: { event: 'encounter.update_note' } });
+		expect(audit.changes).toMatchObject({ after: { assessment: 'Hypertension, stage 1' } });
 	});
 
 	it('records vitals with the BMI computed, rejects implausible values, and voids an entry', async () => {
-		const RECORD_VITALS = `mutation ($input: RecordVitalsInput!) { recordVitals(input: $input) { id bmi } }`;
-		const { recordVitals } = await ok(users.reyes.cookie, RECORD_VITALS, {
-			input: { encounterId, systolicMmHg: 140, diastolicMmHg: 90, weightKg: 72, heightCm: 155 },
-		});
-		expect(recordVitals.bmi).toBe(30);
-		expect(
-			await errorOf(users.reyes.cookie, RECORD_VITALS, {
-				input: { encounterId, systolicMmHg: 90, diastolicMmHg: 120 },
-			}),
-		).toMatch(/below systolic/);
-		expect(await errorOf(users.cruz.cookie, RECORD_VITALS, { input: { encounterId, heartRateBpm: 80 } })).toMatch(
-			/Only staff at the facility/,
-		);
-		expect(await errorOf(users.lim.cookie, RECORD_VITALS, { input: { encounterId, heartRateBpm: 80 } })).toMatch(
-			/not found/,
-		);
-
-		const wrong = await ok(users.reyes.cookie, RECORD_VITALS, { input: { encounterId, heartRateBpm: 200 } });
-		await ok(users.reyes.cookie, `mutation ($input: VoidEntryInput!) { voidVitals(input: $input) { voidedAt } }`, {
-			input: { id: wrong.recordVitals.id, reason: 'Wrong patient' },
-		});
-		const { vitals } = await record();
-		expect(vitals).toHaveLength(2);
-		expect(vitals.find((row: { voidReason: string | null }) => row.voidReason === 'Wrong patient')).toBeTruthy();
-		expect(await audits('vitals.record')).toBe(2);
-		expect(await audits('vitals.void')).toBe(1);
-	});
-
-	it('codes diagnoses in ICD-10 with one primary', async () => {
-		const ADD = `mutation ($input: AddDiagnosisInput!) { addDiagnosis(input: $input) { id icd10Code isPrimary } }`;
-		const first = (
-			await ok(users.reyes.cookie, ADD, {
-				input: { encounterId, icd10Code: 'i10', display: 'Essential (primary) hypertension' },
-			})
-		).addDiagnosis;
-		expect(first).toMatchObject({ icd10Code: 'I10', isPrimary: true });
-		const second = (
-			await ok(users.reyes.cookie, ADD, {
-				input: { encounterId, icd10Code: 'R53', display: 'Malaise and fatigue' },
-			})
-		).addDiagnosis;
-		expect(second.isPrimary).toBe(false);
-		expect(
-			await errorOf(users.reyes.cookie, ADD, { input: { encounterId, icd10Code: 'flu', display: 'Flu' } }),
-		).toMatch(/ICD-10/);
-
-		await ok(
-			users.reyes.cookie,
-			`mutation ($input: UpdateDiagnosisInput!) { updateDiagnosis(input: $input) { isPrimary } }`,
-			{ input: { id: second.id, isPrimary: true } },
-		);
-		const { diagnoses } = await record();
-		expect(
-			diagnoses.map((row: { icd10Code: string; isPrimary: boolean }) => [row.icd10Code, row.isPrimary]),
-		).toEqual([
-			['R53', true],
-			['I10', false],
-		]);
-		const { searchIcd10 } = await ok(users.reyes.cookie, '{ searchIcd10(query: "hypertension") { code } }');
-		expect(searchIcd10.map((row: { code: string }) => row.code)).toContain('I10');
-	});
-
-	it('orders a test from the encounter and sends it to the lab', async () => {
-		const { createEncounterOrder } = await ok(
-			users.reyes.cookie,
-			`mutation ($input: CreateEncounterOrderInput!) { createEncounterOrder(input: $input) { status display targetFacility { name } } }`,
-			{ input: { encounterId, code: '4548-4', targetOrgId: facilities.lab } },
-		);
-		expect(createEncounterOrder).toEqual({
-			status: 'sent',
-			display: 'Hemoglobin A1c',
-			targetFacility: { name: 'Bohol Lab' },
-		});
-		expect((await record()).orders).toHaveLength(1);
-		expect(await audits('order.create')).toBe(1);
-	});
-
-	describe('prescriptions', () => {
-		const SAVE = `mutation ($input: SavePrescriptionInput!) { savePrescription(input: $input) { id status items { genericName } } }`;
-		const ISSUE = `mutation ($id: ID!, $override: Boolean) { issuePrescription(id: $id, overrideAllergyWarning: $override) { status rxNumber } }`;
-		const amlodipine = {
-			genericName: 'Amlodipine',
-			strength: '5 mg',
-			dose: '1 tablet',
-			frequency: 'once a day',
-			quantity: 30,
-		};
-		let rxId = '';
-
-		it('saves and replaces a draft', async () => {
-			rxId = (await ok(users.reyes.cookie, SAVE, { input: { encounterId, items: [amlodipine] } }))
-				.savePrescription.id;
-			const replaced = await ok(users.reyes.cookie, SAVE, {
-				input: {
-					id: rxId,
-					encounterId,
-					items: [amlodipine, { ...amlodipine, genericName: 'Losartan', strength: '50 mg' }],
-				},
-			});
-			expect(replaced.savePrescription.items.map((item: { genericName: string }) => item.genericName)).toEqual([
-				'Amlodipine',
-				'Losartan',
-			]);
-			expect(await errorOf(users.reyes.cookie, SAVE, { input: { encounterId, items: [] } })).toMatch(
-				/at least one/,
-			);
-		});
-
-		it('needs a PRC license to issue, then locks the prescription', async () => {
-			expect(await errorOf(users.reyes.cookie, ISSUE, { id: rxId })).toMatch(/PRC license/);
-			await ok(
-				users.reyes.cookie,
-				'mutation { updateMyClinicianProfile(input: { credentials: "MD", prcLicenseNumber: "0000001", ptrNumber: "PTR-1" }) { prcLicenseNumber } }',
-			);
-			const { issuePrescription } = await ok(users.reyes.cookie, ISSUE, { id: rxId });
-			expect(issuePrescription.status).toBe('issued');
-			expect(issuePrescription.rxNumber).toMatch(/^RX-\d{8}-[0-9A-F]{6}$/);
-			expect(
-				await errorOf(users.reyes.cookie, SAVE, { input: { id: rxId, encounterId, items: [amlodipine] } }),
-			).toMatch(/issued/);
-			expect(await audits('prescription.issue')).toBe(1);
-
-			const { prescription } = await ok(
-				users.reyes.cookie,
-				'query ($id: ID!) { prescription(id: $id) { signatory { name licenseNumber ptrNumber facilityName facilityAddress } } }',
-				{ id: rxId },
-			);
-			expect(prescription.signatory).toEqual({
-				name: 'Dr. reyes, MD',
-				licenseNumber: '0000001',
-				ptrNumber: 'PTR-1',
-				facilityName: 'Health Center',
-				facilityAddress: 'Health Center Street, Tagbilaran',
-			});
-			expect(await audits('prescription.view')).toBe(1);
-		});
-
-		it('warns about an allergy before issuing, unless overridden', async () => {
-			await ok(
-				users.reyes.cookie,
-				'mutation ($input: AddAllergyInput!) { addAllergy(input: $input) { substance } }',
-				{
-					input: {
-						patientId,
-						facilityId: facilities.healthCenter,
-						substance: 'Penicillin',
-						reaction: 'Rash',
-					},
-				},
-			);
-			const allergiesQuery = 'query ($id: ID!) { patientAllergies(patientId: $id) { substance reaction } }';
-			expect((await ok(users.reyes.cookie, allergiesQuery, { id: patientId })).patientAllergies).toEqual([
-				{ substance: 'Penicillin', reaction: 'Rash' },
-			]);
-			expect((await ok(users.lim.cookie, allergiesQuery, { id: patientId })).patientAllergies).toEqual([]);
-			const draft = await ok(users.reyes.cookie, SAVE, {
-				input: { encounterId, items: [{ ...amlodipine, genericName: 'Amoxicillin', strength: '500 mg' }] },
-			});
-			const id = draft.savePrescription.id;
-			expect(await errorOf(users.reyes.cookie, ISSUE, { id })).toMatch(
-				/Allergy warning: Amoxicillin \(allergy: Penicillin\)/,
-			);
-			expect((await ok(users.reyes.cookie, ISSUE, { id, override: true })).issuePrescription.status).toBe(
-				'issued',
-			);
-			const issued = await prisma.auditLog.findFirstOrThrow({
-				where: { action: 'prescription.issue', resourceId: id },
-			});
-			expect(issued.reason).toMatch(/overridden/);
-		});
-
-		it('voids an issued prescription with a reason', async () => {
-			const VOID = 'mutation ($input: VoidEntryInput!) { voidPrescription(input: $input) { status } }';
-			expect(
-				(await ok(users.reyes.cookie, VOID, { input: { id: rxId, reason: 'Dose changed' } })).voidPrescription
-					.status,
-			).toBe('voided');
-			expect(await errorOf(users.reyes.cookie, VOID, { input: { id: rxId, reason: 'Again' } })).toMatch(
-				/already voided/,
-			);
-		});
-	});
-
-	it('issues a medical certificate with rest days, locked and audited', async () => {
-		const { saveMedicalCertificate } = await ok(
-			users.reyes.cookie,
-			'mutation ($input: SaveMedicalCertificateInput!) { saveMedicalCertificate(input: $input) { id status } }',
-			{
-				input: {
-					encounterId,
-					examinedOn: '2026-11-03',
-					diagnosisText: 'Essential hypertension',
-					fitness: 'unfit',
-					restFrom: '2026-11-03',
-					restDays: 2,
-				},
+		const { recordVitals } = await ok(cookies.doctor, VITALS, {
+			input: {
+				encounterId: visitId,
+				systolicMmHg: 140,
+				diastolicMmHg: 90,
+				weightKg: 72,
+				heightCm: 155,
+				bloodGlucoseMgDl: 131,
 			},
+		});
+		expect(recordVitals).toMatchObject({ systolicMmHg: 140, bmi: 30, bloodGlucoseMgDl: 131 });
+		expect(await errorCode(cookies.doctor, VITALS, { input: { encounterId: visitId, temperatureC: 52 } })).toBe(
+			'INVALID_INPUT',
 		);
-		const { issueMedicalCertificate } = await ok(
-			users.reyes.cookie,
-			'mutation ($id: ID!) { issueMedicalCertificate(id: $id) { status certificateNumber } }',
-			{ id: saveMedicalCertificate.id },
-		);
-		expect(issueMedicalCertificate.certificateNumber).toMatch(/^MC-/);
-		expect(await audits('medical_certificate.issue')).toBe(1);
-		await expect(
-			prisma.medicalCertificate.update({ where: { id: saveMedicalCertificate.id }, data: { restDays: 5 } }),
-		).rejects.toThrow(/can only be voided/);
-		expect((await record()).medicalCertificates).toHaveLength(1);
+		const { voidVitals } = await ok(cookies.doctor, VOID_VITALS, {
+			input: { id: recordVitals.id, reason: 'Wrong patient' },
+		});
+		expect(voidVitals.voidReason).toBe('Wrong patient');
+		expect(
+			await errorCode(cookies.doctor, VOID_VITALS, { input: { id: recordVitals.id, reason: 'Again please' } }),
+		).toBe('ALREADY_VOIDED');
+		expect(
+			await errorCode(cookies.otherDoctor, VOID_VITALS, { input: { id: recordVitals.id, reason: 'Not mine' } }),
+		).toBe('ENTITY_NOT_FOUND');
+		const events = await prisma.auditLog.findMany({
+			where: { entityType: 'VitalSigns' },
+			orderBy: { createdAt: 'asc' },
+			select: { action: true, event: true },
+		});
+		expect(events).toEqual([
+			{ action: 'CREATE', event: 'vitals.record' },
+			{ action: 'VOID', event: 'vitals.void' },
+		]);
 	});
-	describe('billing', () => {
-		const SAVE = `mutation ($input: SaveEncounterBillInput!) {
-			saveEncounterBill(input: $input) { id status subtotal discountAmount philhealthCoverage total charges { amount } }
-		}`;
-		const consultation = { kind: 'consultation', description: 'Consultation', quantity: 1, unitPrice: 300 };
-		const hba1c = {
-			kind: 'laboratory',
-			description: 'Hemoglobin A1c',
-			code: '4548-4',
-			quantity: 1,
-			unitPrice: 350,
-		};
-		let billId = '';
 
-		it('computes the totals itself, with the senior discount and PhilHealth', async () => {
-			const { saveEncounterBill } = await ok(users.reyes.cookie, SAVE, {
-				input: {
-					encounterId,
-					charges: [consultation, hba1c],
-					discountKind: 'senior_citizen',
-					philhealthCoverage: 100,
-				},
-			});
-			expect(saveEncounterBill).toMatchObject({
-				status: 'draft',
-				subtotal: 650,
-				discountAmount: 130,
-				philhealthCoverage: 100,
-				total: 420,
-				charges: [{ amount: 300 }, { amount: 350 }],
-			});
-			billId = saveEncounterBill.id;
-			// Saving again replaces the draft: still one bill.
-			const again = await ok(users.reyes.cookie, SAVE, { input: { encounterId, charges: [consultation] } });
-			expect(again.saveEncounterBill).toMatchObject({ id: billId, total: 300 });
-			expect(await errorOf(users.cruz.cookie, SAVE, { input: { encounterId, charges: [consultation] } })).toMatch(
-				/Only staff at the facility/,
-			);
-		});
+	it('codes diagnoses in ICD-10 against icd10_codes, with one primary', async () => {
+		const first = (
+			await ok(cookies.doctor, ADD_DIAGNOSIS, {
+				input: { encounterId: visitId, icd10Code: 'i10', description: 'Essential (primary) hypertension' },
+			})
+		).addDiagnosis;
+		expect(first).toMatchObject({ icd10Code: 'I10', type: 'PRIMARY', isFinal: true, sortOrder: 0 });
+		const second = (
+			await ok(cookies.doctor, ADD_DIAGNOSIS, {
+				input: { encounterId: visitId, icd10Code: 'E11.9', description: 'Type 2 diabetes', isFinal: false },
+			})
+		).addDiagnosis;
+		expect(second).toMatchObject({ type: 'SECONDARY', isFinal: false, sortOrder: 1 });
+		expect(
+			await errorCode(cookies.doctor, ADD_DIAGNOSIS, {
+				input: { encounterId: visitId, icd10Code: 'Z99.99', description: 'x' },
+			}),
+		).toBe('UNKNOWN_ICD10_CODE');
 
-		it('finalizes (locked), takes payment with an OR number, and is replaced once voided', async () => {
-			await ok(users.reyes.cookie, 'mutation ($id: ID!) { finalizeEncounterBill(id: $id) { status } }', {
-				id: billId,
-			});
-			expect(await errorOf(users.reyes.cookie, SAVE, { input: { encounterId, charges: [hba1c] } })).toMatch(
-				/finalized; void it/,
-			);
-			const PAY =
-				'mutation ($input: MarkBillPaidInput!) { markEncounterBillPaid(input: $input) { status orNumber } }';
-			expect(
-				(await ok(users.reyes.cookie, PAY, { input: { id: billId, orNumber: 'OR-0001' } }))
-					.markEncounterBillPaid,
-			).toEqual({
-				status: 'paid',
-				orNumber: 'OR-0001',
-			});
-			await ok(
-				users.reyes.cookie,
-				'mutation ($input: VoidEntryInput!) { voidEncounterBill(input: $input) { status } }',
-				{
-					input: { id: billId, reason: 'Wrong charges' },
-				},
-			);
-			const fresh = await ok(users.reyes.cookie, SAVE, { input: { encounterId, charges: [hba1c] } });
-			expect(fresh.saveEncounterBill.id).not.toBe(billId);
-			for (const action of ['bill.save', 'bill.finalize', 'bill.pay', 'bill.void']) {
-				expect(await audits(action)).toBeGreaterThan(0);
-			}
-		});
+		await ok(cookies.doctor, UPDATE_DIAGNOSIS, { input: { id: second.id, type: 'PRIMARY', isFinal: true } });
+		const { encounterRecord } = await ok(cookies.doctor, RECORD, { id: visitId });
+		expect(
+			encounterRecord.diagnoses.map((row: { icd10Code: string; type: string }) => [row.icd10Code, row.type]),
+		).toEqual([
+			['E11.9', 'PRIMARY'],
+			['I10', 'SECONDARY'],
+		]);
+
+		await ok(cookies.doctor, VOID_DIAGNOSIS, { input: { id: second.id, reason: 'Not diabetic: FBS normal' } });
+		const third = (
+			await ok(cookies.doctor, ADD_DIAGNOSIS, {
+				input: { encounterId: visitId, icd10Code: 'R53', description: 'Malaise and fatigue', type: 'PRIMARY' },
+			})
+		).addDiagnosis;
+		expect(third.type).toBe('PRIMARY');
 	});
 
 	it("gives the chart an overview of the patient's visits, and nothing for a patient not in your care", async () => {
-		const OVERVIEW = `query ($id: ID!) {
-			patientOverview(patientId: $id) {
-				visits { encounter { id } diagnoses { icd10Code } prescriptions { status } orders { code } billStatus }
-			}
-		}`;
-		const { patientOverview } = await ok(users.reyes.cookie, OVERVIEW, { id: patientId });
-		expect(patientOverview.visits).toHaveLength(1);
-		const [visit] = patientOverview.visits;
-		expect(visit.encounter.id).toBe(encounterId);
-		expect(visit.diagnoses.length).toBeGreaterThan(0);
-		expect(visit.billStatus).toBe('draft');
-		expect(visit.prescriptions.every((rx: { status: string }) => rx.status !== 'voided')).toBe(true);
-		expect(await audits('patient.overview')).toBe(1);
+		const { patientOverview } = await ok(cookies.doctor, OVERVIEW, { id: scene.patient.id });
+		expect(patientOverview.visits.map((visit: { encounter: { id: string } }) => visit.encounter.id)).toContain(
+			visitId,
+		);
+		const visit = patientOverview.visits.find((row: { encounter: { id: string } }) => row.encounter.id === visitId);
+		expect(visit.diagnoses.map((row: { icd10Code: string }) => row.icd10Code)).toEqual(['R53', 'I10']);
+		const hidden = await ok(cookies.otherDoctor, OVERVIEW, { id: scene.patient.id });
+		expect(hidden.patientOverview.visits).toEqual([]);
+	});
 
-		const hidden = (await ok(users.lim.cookie, OVERVIEW, { id: patientId })).patientOverview;
-		expect(hidden).toEqual({ visits: [] });
+	it('keeps a practitioner profile per PRC license number', async () => {
+		const { saveMyPractitioner } = await ok(cookies.doctor, SAVE_PRACTITIONER, {
+			input: { prcLicenseNo: '0123456', title: 'Dr.', postNominals: 'MD', ptrNo: 'PTR-2026-77' },
+		});
+		expect(saveMyPractitioner).toMatchObject({
+			id: scene.doctorPractitioner.id,
+			prcLicenseNo: '0123456',
+			ptrNo: 'PTR-2026-77',
+		});
+		expect(saveMyPractitioner.displayName).toMatch(/^Dr\. .+, MD$/);
+		expect(await errorCode(cookies.otherDoctor, SAVE_PRACTITIONER, { input: { prcLicenseNo: '0123456' } })).toBe(
+			'PRC_LICENSE_TAKEN',
+		);
+		const created = await ok(cookies.otherDoctor, SAVE_PRACTITIONER, { input: { prcLicenseNo: '0654321' } });
+		expect(created.saveMyPractitioner.clinics).toEqual([{ clinicName: scene.clinic.name }]);
 	});
 });

@@ -1,25 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { formatPesos } from '@loopwise/shared/encounter-bill';
 import { allergyWarnings } from '@loopwise/shared/prescription';
-import { FileText, Pill, ReceiptText } from 'lucide-react';
+import { FileText, Pill } from 'lucide-react';
 import { memo, useState } from 'react';
 import { diffFields } from './proposal-card/diff-fields';
 import { ProposalCard } from './proposal-card/proposal-card';
 import styles from './propose-encounter-record.module.css';
 import type { ProposalConfirm, ProposalTarget } from './proposal-card/proposal-card';
-import type {
-	encounterProposal,
-	proposeCharges,
-	proposeMedicalCertificate,
-	proposePrescription,
-} from '@loopwise/shared/tools';
+import type { encounterProposal, proposeMedicalCertificate, proposePrescription } from '@loopwise/shared/tools';
 import type { ToolCallComponentProps } from '.';
-import type {
-	BillFormValues,
-	CertificateFormValues,
-	PrescriptionFormValues,
-} from '@/feature/encounters/encounter-form-values';
+import type { CertificateFormValues, PrescriptionFormValues } from '@/feature/encounters/encounter-form-values';
 import type { EncounterRecordFieldsFragment } from '@/graphql/generated/graphql';
 import type { ReactNode } from 'react';
 import { ErrorMessage } from '@/components/ui/error-message';
@@ -28,18 +18,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useAgentContext } from '@/contexts/agent.provider';
 import {
-	billFormFrom,
-	billFormTotals,
 	emptyPrescriptionItem,
+	itemSig,
 	newCertificateForm,
-	toSaveBillInput,
 	toSaveCertificateInput,
 	toSavePrescriptionInput,
-	validateBillForm,
 	validateCertificateForm,
 	validatePrescriptionForm,
 } from '@/feature/encounters/encounter-form-values';
-import { fitnessLabel, formatDay, medicineName, sig } from '@/feature/encounters/encounter-format';
+import { fitnessLabel, formatDay, medicineName, quantityLabel } from '@/feature/encounters/encounter-format';
 import { FormField } from '@/feature/encounters/form-field';
 import { ItemFields } from '@/feature/encounters/prescriptions-tab';
 import { useRecordMutation } from '@/feature/encounters/use-record-mutation';
@@ -131,17 +118,15 @@ const replacing = (label: string, record: EncounterRecordFieldsFragment): Propos
 
 const RX_LABELS = { medicines: 'Medicines', notes: 'Notes' };
 
+/** A prescription as lines of text, for the before → after of an update card (a draft on the visit, or the form). */
 const rxSummary = (prescription: {
 	notes?: string | null;
 	items: {
 		genericName: string;
 		brandName?: string | null;
 		strength?: string | null;
-		form?: string | null;
-		dose: string;
-		frequency: string;
-		route: string;
-		durationDays?: number | string | null;
+		dosageForm?: string | null;
+		sig: string;
 		quantity?: number | string | null;
 	}[];
 }) => ({
@@ -152,14 +137,9 @@ const rxSummary = (prescription: {
 					genericName: item.genericName,
 					brandName: item.brandName || null,
 					strength: item.strength || null,
-					form: item.form || null,
+					dosageForm: item.dosageForm || null,
 				}),
-				sig({
-					dose: item.dose,
-					frequency: item.frequency,
-					route: item.route as Parameters<typeof sig>[0]['route'],
-					durationDays: Number(item.durationDays) || null,
-				}),
+				item.sig,
 				item.quantity ? `#${item.quantity}` : '',
 			]
 				.filter(Boolean)
@@ -169,28 +149,39 @@ const rxSummary = (prescription: {
 	notes: prescription.notes ?? '',
 });
 
-const CERTIFICATE_LABELS = { diagnosis: 'Diagnosis', fitness: 'Fitness', remarks: 'Remarks', purpose: 'Purpose' };
+/** The form's items with the sig the API will store. */
+const withSigs = (values: PrescriptionFormValues) => ({
+	notes: values.notes,
+	items: values.items.map((item) => ({ ...item, sig: itemSig(item) })),
+});
+
+const CERTIFICATE_LABELS = {
+	diagnosis: 'Diagnosis',
+	fitness: 'Fitness',
+	recommendation: 'Recommendation',
+	purpose: 'Purpose',
+};
 
 const certificateSummary = (certificate: {
-	diagnosisText: string;
-	fitness: string;
+	diagnosisText: string | null;
+	isFitToWork: boolean | null;
 	restDays?: number | string | null;
 	restFrom?: string | null;
-	remarks?: string | null;
+	recommendation?: string | null;
 	purpose?: string | null;
 }) => ({
-	diagnosis: certificate.diagnosisText,
+	diagnosis: certificate.diagnosisText ?? '',
 	fitness: [
-		fitnessLabel(certificate.fitness as Parameters<typeof fitnessLabel>[0]),
+		fitnessLabel(certificate.isFitToWork),
 		certificate.restDays && `rest ${certificate.restDays} day(s) from ${formatDay(certificate.restFrom ?? '')}`,
 	]
 		.filter(Boolean)
 		.join(', '),
-	remarks: certificate.remarks ?? '',
+	recommendation: certificate.recommendation ?? '',
 	purpose: certificate.purpose ?? '',
 });
 
-const BILL_LABELS = { charges: 'Charges', discount: 'Discount', philhealth: 'PhilHealth', total: 'Patient pays' };
+const isFitToWorkOf = (values: CertificateFormValues) => (values.fitness === '' ? null : values.fitness === 'fit');
 
 // ---- propose_prescription ---------------------------------------------------------------------------------------
 
@@ -208,19 +199,23 @@ function prescriptionFormFromDraft(draft: proposePrescription.Input): Prescripti
 	return {
 		id: null,
 		notes: text(draft.notes),
+		isDangerousDrug: draft.isDangerousDrug ?? false,
+		s2FormSerialNo: '',
 		items: draft.items.map((item) => ({
 			...emptyPrescriptionItem(),
 			genericName: item.genericName,
 			brandName: text(item.brandName),
 			strength: text(item.strength),
-			form: text(item.form),
+			dosageForm: text(item.dosageForm),
 			dose: item.dose,
-			route: item.route ?? 'oral',
-			frequency: item.frequency,
+			route: item.route ?? 'PO',
+			frequency: text(item.frequency),
 			durationDays: number(item.durationDays),
+			isPrn: item.isPrn ?? false,
+			sig: text(item.sig),
 			quantity: number(item.quantity),
-			quantityUnit: text(item.quantityUnit),
-			instructions: text(item.instructions),
+			unit: text(item.unit),
+			quantityInWords: text(item.quantityInWords),
 		})),
 	};
 }
@@ -235,7 +230,9 @@ function PrescriptionCard({
 	record: EncounterRecordFieldsFragment;
 }) {
 	const { queueOrSendMessage } = useAgentContext();
-	const existingDraft = record.prescriptions.find((prescription) => prescription.status === 'draft');
+	const existingDraft = record.prescriptions.find(
+		(prescription) => prescription.documentStatus === 'DRAFT' && prescription.voidedAt === null,
+	);
 	const [initial] = useState<PrescriptionFormValues>(() => {
 		const drafted = prescriptionFormFromDraft(draft);
 		// Replacing a draft keeps its notes unless Wise wrote new ones (a blank means "leave it", never "clear it").
@@ -273,7 +270,7 @@ function PrescriptionCard({
 				? {
 						mode: 'update' as const,
 						target: replacing('Draft prescription', record),
-						changes: diffFields(rxSummary(existingDraft), rxSummary(values), RX_LABELS),
+						changes: diffFields(rxSummary(existingDraft), rxSummary(withSigs(values)), RX_LABELS),
 					}
 				: { mode: 'create' as const })}
 			toolCallId={toolCallId}
@@ -291,7 +288,7 @@ function PrescriptionCard({
 				warnings.length > 0 && (
 					<p className={styles.recordCardWarning} role='alert'>
 						Allergy warning:{' '}
-						{warnings.map((warning) => `${warning.genericName} (allergy: ${warning.substance})`).join(', ')}
+						{warnings.map((warning) => `${warning.genericName} (allergy: ${warning.allergen})`).join(', ')}
 					</p>
 				)
 			}
@@ -310,6 +307,7 @@ function PrescriptionCard({
 								errors={errors}
 								formularyId={`${toolCallId}-formulary`}
 								disabled={save.isPending}
+								isDangerousDrug={values.isDangerousDrug}
 								onChange={(next) =>
 									setValues({
 										...values,
@@ -324,8 +322,9 @@ function PrescriptionCard({
 						{values.items.map((item, index) => (
 							<li key={index}>
 								<strong>{medicineName({ ...item, brandName: item.brandName || null })}</strong> —{' '}
-								{sig({ ...item, durationDays: Number(item.durationDays) || null })}
-								{item.quantity && ` · #${item.quantity}`}
+								{itemSig(item)}
+								{item.quantity &&
+									` · ${quantityLabel({ quantity: Number(item.quantity), unit: item.unit || null, quantityInWords: item.quantityInWords || null })}`}
 							</li>
 						))}
 					</ol>
@@ -358,17 +357,21 @@ function CertificateCard({
 	record: EncounterRecordFieldsFragment;
 }) {
 	const { queueOrSendMessage } = useAgentContext();
-	const existingDraft = record.medicalCertificates.find((certificate) => certificate.status === 'draft');
+	const existingDraft = record.medicalCertificates.find(
+		(certificate) => certificate.documentStatus === 'DRAFT' && !certificate.isVoid,
+	);
 	const [initial] = useState<CertificateFormValues>(() => {
 		const base = newCertificateForm(record);
 		return {
 			...base,
 			id: existingDraft?.id ?? null,
+			type: draft.type ?? base.type,
 			diagnosisText: draft.diagnosisText?.trim() || base.diagnosisText,
-			fitness: draft.fitness ?? base.fitness,
+			fitness: draft.isFitToWork === undefined ? base.fitness : draft.isFitToWork ? 'fit' : 'unfit',
 			restDays: draft.restDays ? String(draft.restDays) : '',
 			restFrom: draft.restFrom ?? base.restFrom,
-			remarks: draft.remarks ?? '',
+			findings: draft.findings ?? '',
+			recommendation: draft.recommendation ?? '',
 			purpose: draft.purpose ?? '',
 		};
 	});
@@ -400,7 +403,7 @@ function CertificateCard({
 						target: replacing('Draft medical certificate', record),
 						changes: diffFields(
 							certificateSummary(existingDraft),
-							certificateSummary(values),
+							certificateSummary({ ...values, isFitToWork: isFitToWorkOf(values) }),
 							CERTIFICATE_LABELS,
 						),
 					}
@@ -442,12 +445,12 @@ function CertificateCard({
 								/>
 							)}
 						</FormField>
-						<FormField label='Remarks'>
+						<FormField label='Recommendation'>
 							{(id) => (
 								<Input
 									id={id}
-									value={values.remarks}
-									onChange={(event) => set('remarks', event.target.value)}
+									value={values.recommendation}
+									onChange={(event) => set('recommendation', event.target.value)}
 								/>
 							)}
 						</FormField>
@@ -467,156 +470,17 @@ function CertificateCard({
 						<Section
 							label='Fitness'
 							text={[
-								fitnessLabel(values.fitness),
+								fitnessLabel(isFitToWorkOf(values)),
 								values.restDays && `rest ${values.restDays} day(s) from ${formatDay(values.restFrom)}`,
 							]
 								.filter(Boolean)
 								.join(', ')}
 						/>
-						<Section label='Remarks' text={values.remarks} />
+						<Section label='Recommendation' text={values.recommendation} />
 						<Section label='Purpose' text={values.purpose} />
 					</>
 				)}
 				{firstError(errors) && <p className={styles.recordCardError}>{firstError(errors)}</p>}
-			</div>
-		</ProposalCard>
-	);
-}
-
-// ---- propose_charges --------------------------------------------------------------------------------------------
-
-export const ProposeChargesToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_charges'>) => (
-	<ProposalFrame<proposeCharges.Input> toolPart={toolPart}>
-		{(input, _output, record) => <ChargesCard toolCallId={toolPart.toolCallId} draft={input} record={record} />}
-	</ProposalFrame>
-));
-
-function billFormFromDraft(draft: proposeCharges.Input, record: EncounterRecordFieldsFragment): BillFormValues {
-	const base = billFormFrom(record);
-	return {
-		charges:
-			draft.charges && draft.charges.length > 0
-				? draft.charges.map((charge) => {
-						const fee = base.charges.find((candidate) => candidate.description === charge.description);
-						return {
-							kind: charge.kind,
-							description: charge.description,
-							code: fee?.code ?? '',
-							quantity: String(charge.quantity ?? 1),
-							unitPrice:
-								charge.unitPrice !== undefined ? String(charge.unitPrice) : (fee?.unitPrice ?? ''),
-						};
-					})
-				: base.charges,
-		discountKind: draft.discountKind ?? base.discountKind,
-		philhealthPackageCode: draft.philhealthPackageCode ?? base.philhealthPackageCode,
-		philhealthCoverage:
-			draft.philhealthCoverage !== undefined ? String(draft.philhealthCoverage) : base.philhealthCoverage,
-	};
-}
-
-function ChargesCard({
-	toolCallId,
-	draft,
-	record,
-}: {
-	toolCallId: string;
-	draft: proposeCharges.Input;
-	record: EncounterRecordFieldsFragment;
-}) {
-	const { queueOrSendMessage } = useAgentContext();
-	const [values] = useState<BillFormValues>(() => billFormFromDraft(draft, record));
-	const save = useRecordMutation(encounterRecordApi.encounterRecord.saveBill);
-	const errors = validateBillForm(values);
-	const totals = billFormTotals(values);
-	const locked = record.bills.find((bill) => bill.status === 'finalized' || bill.status === 'paid');
-	const existingDraft = record.bills.find((bill) => bill.status === 'draft');
-
-	const confirm = ({ origin }: ProposalConfirm) =>
-		save
-			.mutateAsync({
-				...toSaveBillInput(record.encounter.id, values),
-				expectedVersion: existingDraft?.version ?? null,
-				wiseOrigin: { ...origin, edited: false },
-			})
-			.then(() => void queueOrSendMessage({ text: `I saved the bill draft: ${formatPesos(totals.total)}.` }));
-
-	return (
-		<ProposalCard
-			{...(existingDraft
-				? {
-						mode: 'update' as const,
-						target: replacing('Draft bill', record),
-						changes: diffFields(
-							{
-								charges: existingDraft.charges
-									.map(
-										(charge) =>
-											`${charge.description} ×${charge.quantity} · ${formatPesos(charge.amount)}`,
-									)
-									.join('\n'),
-								discount: existingDraft.discountKind
-									? `${existingDraft.discountKind} ${formatPesos(existingDraft.discountAmount)}`
-									: '',
-								philhealth: existingDraft.philhealthCoverage
-									? formatPesos(existingDraft.philhealthCoverage)
-									: '',
-								total: formatPesos(existingDraft.total),
-							},
-							{
-								charges: values.charges
-									.map(
-										(charge, index) =>
-											`${charge.description} ×${charge.quantity} · ${formatPesos(totals.amounts[index])}`,
-									)
-									.join('\n'),
-								discount: values.discountKind
-									? `${values.discountKind} ${formatPesos(totals.discountAmount)}`
-									: '',
-								philhealth: totals.philhealthCoverage ? formatPesos(totals.philhealthCoverage) : '',
-								total: formatPesos(totals.total),
-							},
-							BILL_LABELS,
-						),
-					}
-				: { mode: 'create' as const })}
-			toolCallId={toolCallId}
-			toolName='propose_charges'
-			icon={ReceiptText}
-			title='Bill'
-			testId='propose-charges'
-			confirmLabel='Save draft bill'
-			isConfirmDisabled={Boolean(locked) || Boolean(firstError(errors))}
-			onConfirm={confirm}
-			isPending={save.isPending}
-			error={save.error?.message}
-			resolvedLabels={RESOLVED_LABELS}
-			isConfirmedAnswer={(answer) => SAVED_ANSWER.test(answer)}
-		>
-			<div className={styles.recordCardBody}>
-				<EncounterLine record={record} tab='billing' />
-				<ul className={styles.recordCardList}>
-					{values.charges.map((charge, index) => (
-						<li key={index}>
-							{charge.description} ×{charge.quantity} ·{' '}
-							{charge.unitPrice ? formatPesos(totals.amounts[index]) : 'no price'}
-						</li>
-					))}
-				</ul>
-				<p>
-					Patient pays <strong>{formatPesos(totals.total)}</strong>
-					<span className={styles.recordCardMeta}>
-						{' '}
-						(subtotal {formatPesos(totals.subtotal)}
-						{totals.discountAmount > 0 && `, discount ${formatPesos(totals.discountAmount)}`}
-						{totals.philhealthCoverage > 0 && `, PhilHealth ${formatPesos(totals.philhealthCoverage)}`})
-					</span>
-				</p>
-				{locked && (
-					<p className={styles.recordCardError}>The bill is already {locked.status}; void it first.</p>
-				)}
-				{!locked && firstError(errors) && <p className={styles.recordCardError}>{firstError(errors)}</p>}
-				<p className={styles.recordCardMeta}>Adjust the charges on the Billing tab before finalizing.</p>
 			</div>
 		</ProposalCard>
 	);

@@ -10,14 +10,14 @@ import { mutation, query, runMutation, runQuery } from '@/lib/apollo-procedures'
 export type WiseToolSettings = WiseToolSettingsQuery['wiseToolSettings'];
 export type WiseToolRow = WiseToolSettings['tools'][number];
 
-/** Settings → Wise tools (`apps/api/src/wise-tools`): which tools Wise may use, per facility and for yourself. */
+/** Settings → Wise tools (`apps/api/src/wise-tools`): which tools Wise may use, per organization and for yourself. */
 export const wiseToolsApi = {
-	settings: query<{ facilityId: string | null }, WiseToolSettings>(
+	settings: query<{ organizationId: string | null }, WiseToolSettings>(
 		['wiseTools', 'settings'],
-		async ({ facilityId }) => (await runQuery(WiseToolSettingsDocument, { facilityId })).wiseToolSettings,
+		async ({ organizationId }) => (await runQuery(WiseToolSettingsDocument, { organizationId })).wiseToolSettings,
 	),
-	setFacility: mutation<{ facilityId: string; toolName: string; enabled: boolean }, boolean>(
-		['wiseTools', 'setFacility'],
+	setOrganization: mutation<{ organizationId: string; toolName: string; enabled: boolean }, boolean>(
+		['wiseTools', 'setOrganization'],
 		async (variables) => (await runMutation(SetWiseToolEnabledDocument, variables)).setWiseToolEnabled,
 	),
 	setMine: mutation<{ toolName: string; enabled: boolean }, boolean>(

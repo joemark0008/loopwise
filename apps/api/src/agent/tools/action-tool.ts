@@ -1,10 +1,5 @@
-import { LAB_TESTS } from '@loopwise/shared/lab-tests';
-import {
-	type ActionOutput,
-	ActionOutputSchema,
-	resolveLabTest,
-	type WiseActionDefinition,
-} from '@loopwise/shared/wise-actions';
+import { findLabTest, LAB_TESTS } from '@loopwise/shared/lab-tests';
+import { type ActionOutput, ActionOutputSchema, type WiseActionDefinition } from '@loopwise/shared/wise-actions';
 
 import type { ToolContext } from '../types/tools.js';
 import { createTool } from '../utils/tools.js';
@@ -47,7 +42,7 @@ function subjectIdOf(action: WiseActionDefinition, input: Record<string, unknown
 	const key = {
 		encounter: 'encounterId',
 		result: 'resultId',
-		order: 'orderId',
+		order: 'itemId',
 		report: 'reportId',
 		patient: null,
 	}[action.subject];
@@ -61,7 +56,7 @@ function subjectIdOf(action: WiseActionDefinition, input: Record<string, unknown
 				encounter:
 					'Name the encounter: use the id from the patient record, or propose_encounter for a new visit.',
 				result: 'Name the result: use the id from list_results_to_review.',
-				order: 'Name the order: use the id from list_lab_orders.',
+				order: 'Name the test: use the item id from list_lab_orders.',
 				report: 'Name the report: use the id the report tool returned.',
 				patient: '',
 			}[action.subject],
@@ -70,16 +65,18 @@ function subjectIdOf(action: WiseActionDefinition, input: Record<string, unknown
 	return id;
 }
 
-/** The orderable tests the clinician named; an unknown name goes back to the model with the list. */
+/** The standard tests the clinician named; an unknown name goes back to the model with the list. */
 function resolveTests(names: unknown) {
 	const list = Array.isArray(names) ? names.map(String) : [];
-	const unknown = list.filter((name) => !resolveLabTest(name));
+	const unknown = list.filter((name) => !findLabTest(name));
 	if (list.length === 0 || unknown.length > 0) {
 		throw new Error(
 			`Not an orderable test: ${unknown.join(', ') || '(none)'}. The tests that can be ordered are: ` +
 				`${LAB_TESTS.map((test) => test.display).join(', ')}. Ask the clinician if unsure.`,
 		);
 	}
-	const tests = list.map((name) => resolveLabTest(name)!);
-	return tests.filter((test, index) => tests.findIndex((other) => other.code === test.code) === index);
+	const tests = list.map((name) => findLabTest(name)!);
+	return tests
+		.filter((test, index) => tests.findIndex((other) => other.code === test.code) === index)
+		.map(({ code, display, category }) => ({ code, display, category }));
 }

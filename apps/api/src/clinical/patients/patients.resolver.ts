@@ -1,8 +1,6 @@
-import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 
 import type { AuthUser } from '../../auth/auth.service.js';
-import { Loaders } from '../../common/dataloader/loaders.decorator.js';
-import type { RequestLoaders } from '../../common/dataloader/request-loaders.js';
 import { CurrentUser } from '../../common/decorators/current.decorator.js';
 import {
 	LinkExistingPatientInput,
@@ -11,32 +9,33 @@ import {
 	SearchPatientsInput,
 	UpdatePatientInput,
 } from './dto/patient.input.js';
-import {
-	Facility,
-	Patient,
-	PatientDuplicate,
-	PatientIdentifier,
-	RegisterPatientPayload,
-} from './models/patient.model.js';
-import { FacilityLoader } from './patient.loader.js';
+import { AddAllergyInput, VoidAllergyInput } from './dto/patient-allergy.input.js';
+import { ClinicRef } from './models/clinic-ref.model.js';
+import { Patient, PatientDuplicate, RegisterPatientPayload } from './models/patient.model.js';
+import { PatientAllergy } from './models/patient-allergy.model.js';
 import { PatientService } from './patient.service.js';
+import { PatientAllergyService } from './patient-allergy.service.js';
+import { PatientRegistrationService } from './patient-registration.service.js';
 
-/** Patient registration and lookup. Access is row-level security plus the facility checks in `PatientService`. */
+/** Patient registration, lookup and contact details. Access is row-level security plus the clinic checks. */
 @Resolver(() => Patient)
 export class PatientsResolver {
-	constructor(private readonly patients: PatientService) {}
+	constructor(
+		private readonly patients: PatientService,
+		private readonly registration: PatientRegistrationService,
+	) {}
 
-	@Query(() => [Facility], { description: 'The facilities the signed-in user works at.' })
-	myFacilities(@CurrentUser() user: AuthUser): Promise<Facility[]> {
-		return this.patients.myFacilities(user.id);
+	@Query(() => [ClinicRef], { description: 'The clinics where you register patients and record visits.' })
+	myCareClinics(@CurrentUser() user: AuthUser): Promise<ClinicRef[]> {
+		return this.patients.myCareClinics(user.id);
 	}
 
-	@Query(() => [Patient], { description: 'Patients the user may see, by name words, identifier or birth date.' })
+	@Query(() => [Patient], { description: 'Patients you may see, by name words, patient no. / ID or birth date.' })
 	searchPatients(@CurrentUser() user: AuthUser, @Args('input') input: SearchPatientsInput): Promise<Patient[]> {
 		return this.patients.search(user.id, input);
 	}
 
-	@Query(() => Patient, { nullable: true, description: 'Null when the user may not see the patient.' })
+	@Query(() => Patient, { nullable: true, description: 'Null when you may not see the patient.' })
 	patient(@CurrentUser() user: AuthUser, @Args('id', { type: () => ID }) id: string): Promise<Patient | null> {
 		return this.patients.getById(user.id, id);
 	}
@@ -49,42 +48,58 @@ export class PatientsResolver {
 		return this.patients.chatIdFor(user.id, patientId);
 	}
 
-	@Query(() => [PatientDuplicate], { description: 'Existing patients a registration would duplicate.' })
+	@Query(() => [PatientDuplicate], { description: "The organization's patients a registration would duplicate." })
 	checkPatientDuplicates(
 		@CurrentUser() user: AuthUser,
 		@Args('input') input: PatientDraftInput,
 	): Promise<PatientDuplicate[]> {
-		return this.patients.checkDuplicates(user.id, input);
+		return this.registration.checkDuplicates(user.id, input);
 	}
 
 	@Mutation(() => RegisterPatientPayload, {
-		description: 'Registers a patient at the facility, unless duplicates stop it (then `patient` is null).',
+		description: 'Registers a patient at the clinic, unless duplicates stop it (then `patient` is null).',
 	})
 	registerPatient(
 		@CurrentUser() user: AuthUser,
 		@Args('input') input: RegisterPatientInput,
 	): Promise<RegisterPatientPayload> {
-		return this.patients.register(user.id, input);
+		return this.registration.register(user.id, input);
 	}
 
-	@Mutation(() => Patient, { description: "Changes a patient's contact details (phone, language, barangay)." })
-	updatePatient(@CurrentUser() user: AuthUser, @Args('input') input: UpdatePatientInput): Promise<Patient> {
-		return this.patients.updateContact(user.id, input);
-	}
-
-	@Mutation(() => Patient, { description: 'Uses a matched existing patient at this facility instead of a new one.' })
+	@Mutation(() => Patient, { description: 'Uses a matched existing patient instead of registering a new one.' })
 	linkExistingPatient(
 		@CurrentUser() user: AuthUser,
 		@Args('input') input: LinkExistingPatientInput,
 	): Promise<Patient> {
-		return this.patients.linkExisting(user.id, input);
+		return this.registration.linkExisting(user.id, input);
+	}
+
+	@Mutation(() => Patient, { description: "Changes a patient's contact details (mobile, language, address)." })
+	updatePatient(@CurrentUser() user: AuthUser, @Args('input') input: UpdatePatientInput): Promise<Patient> {
+		return this.patients.updateContact(user.id, input);
 	}
 }
 
-@Resolver(() => PatientIdentifier)
-export class PatientIdentifierResolver {
-	@ResolveField(() => Facility, { nullable: true })
-	facility(@Parent() identifier: PatientIdentifier, @Loaders() loaders: RequestLoaders): Promise<Facility | null> {
-		return loaders.get(FacilityLoader).load(identifier.orgId);
+/** A patient's allergies. */
+@Resolver(() => PatientAllergy)
+export class PatientAllergiesResolver {
+	constructor(private readonly allergies: PatientAllergyService) {}
+
+	@Query(() => [PatientAllergy], { description: "The patient's active allergies (empty if not in your care)." })
+	patientAllergies(
+		@CurrentUser() user: AuthUser,
+		@Args('patientId', { type: () => ID }) patientId: string,
+	): Promise<PatientAllergy[]> {
+		return this.allergies.list(user.id, patientId);
+	}
+
+	@Mutation(() => PatientAllergy)
+	addAllergy(@CurrentUser() user: AuthUser, @Args('input') input: AddAllergyInput): Promise<PatientAllergy> {
+		return this.allergies.add(user.id, input);
+	}
+
+	@Mutation(() => PatientAllergy)
+	voidAllergy(@CurrentUser() user: AuthUser, @Args('input') input: VoidAllergyInput): Promise<PatientAllergy> {
+		return this.allergies.void(user.id, input);
 	}
 }

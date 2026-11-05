@@ -7,9 +7,10 @@ const maria = {
 	id: 'p1',
 	givenName: 'Maria',
 	familyName: 'Santos',
+	patientNo: 'TAG-PT-2026-000001',
 	birthDate: '1972-03-14',
-	sex: 'female' as const,
-	identifiers: [{ system: 'MRN', value: 'TAG-0001', orgId: 'hc' }],
+	sex: 'FEMALE' as const,
+	identifications: [{ id: 'i1', type: 'PHILHEALTH_ID', idNumber: 'SYN-0000-0001', label: 'PhilHealth' }],
 };
 
 const run = (input: { query?: string; birthDate?: string }, found = { patients: [maria], truncated: false }) => {
@@ -28,9 +29,10 @@ describe('find_patient tool', () => {
 				{
 					id: 'p1',
 					name: 'Maria Santos',
+					patientNo: 'TAG-PT-2026-000001',
 					birthDate: '1972-03-14',
-					sex: 'female',
-					identifiers: [{ system: 'MRN', value: 'TAG-0001' }],
+					sex: 'FEMALE',
+					identifications: [{ label: 'PhilHealth', idNumber: 'SYN-0000-0001' }],
 				},
 			],
 			truncated: false,

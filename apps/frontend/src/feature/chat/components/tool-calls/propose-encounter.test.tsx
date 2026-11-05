@@ -64,7 +64,7 @@ const renderCard = (input: object = { reason: 'Fatigue, BP check', notes: 'BP 15
 		toolCallId: 'call_1',
 		state: 'output-available',
 		input,
-		output: { success: true, patientId: 'p1', facilities: [{ id: 'hc', name: 'Health Center' }] },
+		output: { success: true, patientId: 'p1', clinics: [{ id: 'c1', name: 'Health Center' }] },
 	} as unknown as ToolCallComponentProps<'propose_encounter'>['toolPart'];
 	return render(
 		<MantineProvider>
@@ -99,7 +99,8 @@ describe('ProposeEncounterToolCall', () => {
 			expect(mocks.create).toHaveBeenCalledWith(
 				expect.objectContaining({
 					patientId: 'p1',
-					facilityId: 'hc',
+					clinicId: 'c1',
+					type: 'CONSULTATION',
 					reason: 'Fatigue, BP check',
 					notes: 'BP 150/95.',
 					sourceChatId: 'chat-1',
@@ -122,7 +123,7 @@ describe('ProposeEncounterToolCall', () => {
 	it('saves what the clinician edited', async () => {
 		renderCard();
 		fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
-		fireEvent.change(screen.getByLabelText('Reason for visit'), { target: { value: 'Follow-up' } });
+		fireEvent.change(screen.getByLabelText('Chief complaint'), { target: { value: 'Follow-up' } });
 		fireEvent.click(saveButton());
 		await waitFor(() =>
 			expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ reason: 'Follow-up' })),
@@ -136,13 +137,13 @@ describe('ProposeEncounterToolCall', () => {
 		expect(mocks.create).not.toHaveBeenCalled();
 	});
 
-	it('records the drafted vitals and diagnoses after the encounter, first diagnosis primary', async () => {
+	it('records the drafted vitals and diagnoses after the encounter, first diagnosis primary, not final', async () => {
 		renderCard({
 			reason: 'BP check',
 			vitals: { systolicMmHg: 140, diastolicMmHg: 90, weightKg: 72, heightCm: 155 },
 			diagnoses: [
-				{ icd10Code: 'I10', display: 'Essential (primary) hypertension' },
-				{ icd10Code: 'R53', display: 'Malaise and fatigue' },
+				{ icd10Code: 'I10', description: 'Essential (primary) hypertension' },
+				{ icd10Code: 'R53', description: 'Malaise and fatigue' },
 			],
 		});
 		expect(screen.getByTestId('drafted-vitals').textContent).toBe('BP 140/90 · Wt 72 kg · Ht 155 cm · BMI 30.0');
@@ -160,13 +161,15 @@ describe('ProposeEncounterToolCall', () => {
 			1,
 			expect.objectContaining({
 				icd10Code: 'I10',
-				isPrimary: true,
+				description: 'Essential (primary) hypertension',
+				type: 'PRIMARY',
+				isFinal: false,
 				wiseOrigin: expect.objectContaining({ toolCallId: 'call_1' }),
 			}),
 		);
 		expect(mocks.addDiagnosis).toHaveBeenNthCalledWith(
 			2,
-			expect.objectContaining({ icd10Code: 'R53', isPrimary: false }),
+			expect.objectContaining({ icd10Code: 'R53', type: 'SECONDARY', isFinal: false }),
 		);
 	});
 

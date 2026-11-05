@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import type { AgentToolServices } from '../../agent/types/tools.js';
 import { ChatsCoreModule } from '../../chats/chats-core.module.js';
+import { AuditModule } from '../audit/audit.module.js';
 import { ClinicalDbModule } from '../rls/clinical-db.module.js';
 import { WiseProposalsModule } from '../wise-proposals/wise-proposals.module.js';
 import { ReportsRepository } from './reports.repository.js';
@@ -15,7 +16,7 @@ void readerMatches;
 
 /** Wise reports in a side panel (DESIGN.md §7.2): versions from the chat, PDF export. */
 @Module({
-	imports: [ClinicalDbModule, ChatsCoreModule, WiseProposalsModule],
+	imports: [ClinicalDbModule, AuditModule, ChatsCoreModule, WiseProposalsModule],
 	providers: [
 		ReportsResolver,
 		ReportsService,

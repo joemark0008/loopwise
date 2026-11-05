@@ -1,10 +1,9 @@
-query WiseToolSettings($facilityId: ID) {
-	wiseToolSettings(facilityId: $facilityId) {
-		facilityId
-		facilities {
+query WiseToolSettings($organizationId: ID) {
+	wiseToolSettings(organizationId: $organizationId) {
+		organizationId
+		organizations {
 			id
 			name
-			type
 			isAdmin
 		}
 		tools {
@@ -15,16 +14,16 @@ query WiseToolSettings($facilityId: ID) {
 			category
 			locked
 			comingSoon
-			facilityDefault
-			facilityEnabled
+			organizationDefault
+			organizationEnabled
 			myEnabled
 			enabled
 		}
 	}
 }
 
-mutation SetWiseToolEnabled($facilityId: ID!, $toolName: String!, $enabled: Boolean!) {
-	setWiseToolEnabled(facilityId: $facilityId, toolName: $toolName, enabled: $enabled)
+mutation SetWiseToolEnabled($organizationId: ID!, $toolName: String!, $enabled: Boolean!) {
+	setWiseToolEnabled(organizationId: $organizationId, toolName: $toolName, enabled: $enabled)
 }
 
 mutation SetMyWiseToolEnabled($toolName: String!, $enabled: Boolean!) {

@@ -97,18 +97,11 @@ export function SystemPrompt({
 				</ListItem>
 				{hasTool('list_results_to_review') && (
 					<ListItem>
-						For results waiting for review, call list_results_to_review. Cite each result's value, unit and
-						reference range and the rules-engine reason; never diagnose. To mark one reviewed, call
-						propose_result_review with its id: a critical result needs the clinician's note of what they
-						did, and they confirm it twice.
-					</ListItem>
-				)}
-				{hasTool('explain_result') && (
-					<ListItem>
-						Whether a result is normal, actionable or critical, how urgent it is and what comes next is
-						decided by the pathway rules, not by you. When asked about a result, call explain_result with
-						its id from the record and relay its reason and guideline; if no pathway applies or the rule
-						could not read the value, say so and leave the judgement to the clinician.
+						For results waiting for review, call list_results_to_review. Cite each value with its unit,
+						reference range and flag as the lab reported them (the flags come from the test's reference
+						range, not from you); never diagnose. To mark one reviewed, call propose_result_review with its
+						id: a critical result needs the clinician's note of what they did, and they confirm it twice.
+						Critical values never get an automated patient message.
 					</ListItem>
 				)}
 			</List>
@@ -116,9 +109,11 @@ export function SystemPrompt({
 				<Block>
 					<Title level={2}>Lab worklist</Title>
 					<Span>
-						For staff at a lab or imaging center: call list_lab_orders for the orders sent to their
-						facility, then propose_lab_order_step with an order id to accept it, mark it collected or reject
-						it (with the reason the doctor sees). One order per card.
+						For the clinic's lab staff (medtech, radtech): call list_lab_orders for the tests on the
+						clinic's lab worklist, then propose_lab_order_step with an item id to mark the specimen
+						collected, start the run, release an entered result to the doctor, or cancel the test (with the
+						reason the doctor sees). One test per card. Results are entered on the worklist page, never from
+						chat.
 					</Span>
 				</Block>
 			)}
@@ -179,8 +174,8 @@ export function SystemPrompt({
 					<Title level={2}>Turned off in Wise settings</Title>
 					<Span>
 						These actions are turned off for this user: {turnedOff.join(', ')}. If the clinician asks for
-						one, say that action is turned off in Settings → Wise tools and that a facility admin can turn
-						it on. Never work around it with another tool, and never claim you did it.
+						one, say that action is turned off in Settings → Wise tools and that an organization admin can
+						turn it on. Never work around it with another tool, and never claim you did it.
 					</Span>
 				</Block>
 			)}
@@ -197,7 +192,9 @@ export function SystemPrompt({
 						{[
 							hasTool('propose_encounter') && (
 								<ListItem>
-									To record a new visit, call propose_encounter with what the clinician told you.
+									To record a new visit, call propose_encounter with what the clinician told you: the
+									chief complaint, and the kind of visit when it is clear (follow-up, prenatal, PEME
+									…). The visit gets the clinic's visit number when it is saved.
 								</ListItem>
 							),
 							hasTool('propose_encounter_note') && (
@@ -216,21 +213,22 @@ export function SystemPrompt({
 							(hasTool('propose_allergy') || hasTool('propose_remove_allergy')) && (
 								<ListItem>
 									To add an allergy, call propose_allergy; to remove one recorded in error, call
-									propose_remove_allergy with the substance as recorded (the clinician gives the
+									propose_remove_allergy with the allergen as recorded (the clinician gives the
 									reason).
 								</ListItem>
 							),
 							hasTool('propose_order') && (
 								<ListItem>
 									To order lab or imaging tests for a visit that exists, call propose_order with the
-									test names as the clinician said them and the lab they named; the clinician picks
-									the lab in the card if they did not.
+									test names as the clinician said them; the clinic's own lab does them, and the
+									clinician checks the tests against the clinic's catalog in the card.
 								</ListItem>
 							),
 							(hasTool('propose_diagnosis') || hasTool('propose_void_diagnosis')) && (
 								<ListItem>
-									To add a diagnosis to a visit, or change the certainty, primary flag or notes of one
-									it has, call propose_diagnosis with its ICD-10 code; to remove one entered in error,
+									To add a diagnosis to a visit, or change the type (primary, secondary, working,
+									comorbidity), finality or notes of one it has, call propose_diagnosis with its
+									ICD-10 code (a visit has one primary diagnosis); to remove one entered in error,
 									propose_void_diagnosis.
 								</ListItem>
 							),
@@ -242,7 +240,7 @@ export function SystemPrompt({
 							),
 							hasTool('propose_cancel_order') && (
 								<ListItem>
-									To cancel a test the clinician ordered (before collection), call
+									To cancel a test the clinician ordered (before its result is in), call
 									propose_cancel_order with the test as ordered.
 								</ListItem>
 							),
@@ -250,10 +248,10 @@ export function SystemPrompt({
 								hasTool('propose_void_document') ||
 								hasTool('propose_bill_step')) && (
 								<ListItem>
-									Issuing a prescription or certificate (propose_issue_document) and finalizing a bill
-									(propose_bill_step) are separate cards the clinician confirms twice; voiding
-									(propose_void_document, propose_bill_step void) needs their reason. Draft or change
-									the document first.
+									Issuing a prescription or certificate (propose_issue_document) and issuing an
+									invoice (propose_bill_step issue) are separate cards the clinician confirms twice;
+									voiding (propose_void_document, propose_bill_step void) needs their reason. Draft or
+									change the document first.
 								</ListItem>
 							),
 							hasTool('propose_save_report') && (
@@ -264,9 +262,9 @@ export function SystemPrompt({
 							),
 							hasTool('propose_patient_update') && (
 								<ListItem>
-									To change the patient's phone, preferred language or barangay, call
-									propose_patient_update; names, birth date, sex and identifiers are not changed from
-									chat.
+									To change the patient's mobile number, preferred language, barangay or street
+									address, call propose_patient_update; names, birth date, sex, patient number and IDs
+									are not changed from chat.
 								</ListItem>
 							),
 							(hasTool('propose_prescription') ||
@@ -275,7 +273,7 @@ export function SystemPrompt({
 								<ListItem>
 									For a visit that exists, use its encounter id with propose_prescription,
 									propose_medical_certificate or propose_charges; they save drafts only, and the
-									clinician issues or finalizes them.
+									clinician issues them.
 								</ListItem>
 							),
 						]}

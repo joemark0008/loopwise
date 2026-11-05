@@ -1,130 +1,163 @@
 import { VoidReasonSchema } from '@loopwise/shared/encounter-record';
-import { allergyWarnings, PrescriptionDraftSchema } from '@loopwise/shared/prescription';
+import { allergyWarnings, type PrescriptionDraft, PrescriptionDraftSchema } from '@loopwise/shared/prescription';
 import { Injectable } from '@nestjs/common';
 
-import { HandlerError } from '../../common/errors/handler-error.js';
-import { OrganizationRepository } from '../../organizations/organization.repository.js';
-import { ClinicalAuditRepository } from '../audit/clinical-audit.repository.js';
-import { ClinicianRepository } from '../clinicians/clinician.repository.js';
+import { EntityNotFoundError, StaleVersionError } from '../../common/errors/domain-error.js';
+import { AuditService } from '../audit/audit.service.js';
+import { auditChanges, auditSnapshot } from '../audit/audit-changes.js';
+import { DocumentSequenceService } from '../clinics/document-sequences/document-sequence.service.js';
+import {
+	assertEditableDraft,
+	assertVoidable,
+	issueDocument,
+	newVerificationCode,
+} from '../documents/document-lifecycle.js';
+import { DocumentEncounterMismatchError } from '../documents/documents.errors.js';
 import type { VoidEntryInput } from '../encounters/dto/encounter-record.input.js';
-import { EncounterRepository } from '../encounters/encounter.repository.js';
-import { assertSavedFromVersion, encounterForWrite, parseOrThrow } from '../encounters/encounter-access.js';
-import { ClinicalDbService } from '../rls/clinical-db.service.js';
+import { type EncounterContext, EncounterService } from '../encounters/encounter.service.js';
+import { EncounterCardService } from '../encounters/encounter-card.service.js';
+import { parseInput } from '../patients/parse-input.js';
+import { PatientAllergyService } from '../patients/patient-allergy.service.js';
+import { parseSignatory, signatoryJson } from '../practitioners/models/document-signatory.model.js';
+import { PractitionerService } from '../practitioners/practitioner.service.js';
+import { ClinicalDbService, type ClinicalTx } from '../rls/clinical-db.service.js';
 import type { WiseOriginInput } from '../wise-proposals/dto/wise-origin.input.js';
 import { assertCardPatient, WiseProposalService } from '../wise-proposals/wise-proposal.service.js';
 import type { SavePrescriptionInput } from './dto/prescription.input.js';
 import { type Prescription, type PrescriptionRow, toPrescription } from './models/prescription.model.js';
-import { PrescriptionRepository } from './prescription.repository.js';
+import { type PrescriptionItemData, PrescriptionRepository } from './prescription.repository.js';
+import { AllergyWarningError, InvalidPrescriptionDraftError, S2LicenseRequiredError } from './prescriptions.errors.js';
 
-/** `RX-20261103-4F2A9C`: the issue date and the start of the id. */
-export function documentNumber(prefix: string, id: string, at: Date): string {
-	return `${prefix}-${at.toISOString().slice(0, 10).replaceAll('-', '')}-${id.slice(0, 6).toUpperCase()}`;
-}
+const LABEL = 'prescription';
 
 /**
- * Prescriptions (DESIGN.md §5). A draft is saved and replaced freely; issuing snapshots the prescriber (PRC license
- * required) and the facility letterhead, and from then on the row is locked by a trigger: it can only be voided.
- * Everything runs as the user; only staff at the encounter's facility write. Every view and change is audited.
+ * Prescriptions (DESIGN.md §5). A draft gets its Rx number (DocumentSequence `RX`) and verification code when it is
+ * created, and is replaced freely. Issuing signs it as the issuing practitioner: the signatory (name, PRC / PTR / S2,
+ * clinic letterhead) is frozen and a trigger locks the row; it can then only be voided (status CANCELLED) or
+ * dispensed. Generic names are required (RA 6675) and checked against the patient's allergies; a dangerous drug
+ * needs the prescriber's S2 license and quantities in words (RA 9165). Everything runs as the user, by staff of the
+ * visit's clinic, and every view and change is audited.
  */
 @Injectable()
 export class PrescriptionService {
 	constructor(
 		private readonly db: ClinicalDbService,
 		private readonly prescriptions: PrescriptionRepository,
-		private readonly encounters: EncounterRepository,
-		private readonly clinicians: ClinicianRepository,
-		private readonly organizations: OrganizationRepository,
-		private readonly audit: ClinicalAuditRepository,
+		private readonly encounters: EncounterService,
+		private readonly cards: EncounterCardService,
+		private readonly practitioners: PractitionerService,
+		private readonly allergies: PatientAllergyService,
+		private readonly sequences: DocumentSequenceService,
+		private readonly audit: AuditService,
 		private readonly wiseProposals: WiseProposalService,
 	) {}
 
-	/** For the print view: with the signatory (issue-time snapshot, or today's values for a draft). */
-	get(userId: string, id: string): Promise<Prescription | null> {
+	/** For the print view, with the signatory (the issue-time snapshot, or today's for a draft); audited as PRINT. */
+	getForPrint(userId: string, id: string): Promise<Prescription | null> {
 		return this.db.asUser(userId, async (tx) => {
 			const row = await this.prescriptions.findById(tx, id);
 			if (!row) {
 				return null;
 			}
+			const encounter = await this.encounters.findReadable(tx, row.encounterId);
 			const signatory =
-				row.status === 'draft'
-					? await this.clinicians.getSignatory(tx, row.prescriberId, row.orgId)
-					: {
-							name: row.prescriberName ?? '',
-							credentials: null,
-							licenseNumber: row.prescriberLicense,
-							ptrNumber: row.prescriberPtr,
-							facilityName: row.facilityName ?? '',
-							facilityAddress: row.facilityAddress,
-							facilityPhone: null,
-						};
-			await this.audit.write(tx, {
+				row.documentStatus === 'ISSUED'
+					? parseSignatory(row.signatory)
+					: await this.practitioners.signatory(tx, row.practitionerId, row.encounter.clinicId);
+			await this.audit.record(tx, {
+				action: 'PRINT',
+				event: 'prescription.print',
+				entityType: 'Prescription',
+				entityId: row.id,
 				userId,
-				orgId: row.orgId,
-				patientId: row.patientId,
-				action: 'prescription.view',
-				resource: 'prescription',
-				resourceId: row.id,
+				patientId: row.encounter.patientId,
+				organizationId: encounter?.organizationId,
+				clinicId: row.encounter.clinicId,
 			});
 			return toPrescription(row, signatory);
 		});
 	}
 
+	/** The prescriptions of the encounters (newest first), on the user's transaction. */
+	async listForEncounters(tx: ClinicalTx, encounterIds: readonly string[]): Promise<Prescription[]> {
+		return (await this.prescriptions.listByEncounters(tx, encounterIds)).map((row) => toPrescription(row));
+	}
+
+	/**
+	 * Creates a draft (Rx number and verification code assigned now), or replaces the draft `id` (refused once issued,
+	 * or with STALE_VERSION when it changed since `expectedVersion`). The user signs as its practitioner. With
+	 * `wiseOrigin` (a `propose_prescription` card) verified and settled in the same transaction.
+	 */
 	async save(userId: string, input: SavePrescriptionInput): Promise<Prescription> {
-		const draft = parseOrThrow(PrescriptionDraftSchema, {
-			notes: input.notes,
-			items: input.items.map((item) => ({ ...item, route: item.route ?? undefined })),
-		});
-		const items = draft.items.map((item, position) => ({
-			...item,
-			position,
-			brandName: item.brandName ?? null,
-			strength: item.strength ?? null,
-			form: item.form ?? null,
-			durationDays: item.durationDays ?? null,
-			quantityUnit: item.quantityUnit ?? null,
-			instructions: item.instructions ?? null,
-		}));
-		const facilityIds = await this.facilityIds(userId);
-		const card = input.wiseOrigin
-			? await this.wiseProposals.verify(userId, input.wiseOrigin, { toolNames: ['propose_prescription'] })
-			: undefined;
+		const draft = parseDraft(input);
+		const items = toItemData(draft);
 		return this.db.asUser(userId, async (tx) => {
-			const encounter = await encounterForWrite(tx, this.encounters, facilityIds, input.encounterId);
-			assertCardPatient(card, encounter.patientId);
+			const encounter = await this.encounters.requireWritable(tx, userId, input.encounterId);
+			const card = await this.verifyDraftCard(userId, input.wiseOrigin, encounter);
+			const practitioner = await this.practitioners.requireForUser(tx, userId, LABEL);
+			const fields = {
+				practitionerId: practitioner.id,
+				notes: draft.notes ?? null,
+				isDangerousDrug: draft.isDangerousDrug,
+				s2FormSerialNo: draft.s2FormSerialNo ?? null,
+			};
+			let before: PrescriptionRow | null = null;
 			let row: PrescriptionRow;
 			if (input.id) {
-				const current = await this.prescriptions.findById(tx, input.id);
-				if (!current || current.encounterId !== encounter.id) {
-					throw new HandlerError('NOT_FOUND', 'Prescription not found.');
+				before = await this.prescriptions.findById(tx, input.id);
+				if (!before) {
+					throw new EntityNotFoundError('Prescription', input.id);
 				}
-				if (current.status !== 'draft') {
-					throw new HandlerError('CONFLICT', 'This prescription is issued; void it and write a new one.');
+				if (before.encounterId !== encounter.id) {
+					throw new DocumentEncounterMismatchError();
 				}
-				row = await this.prescriptions.replaceDraft(tx, current.id, draft.notes ?? null, items);
-				assertSavedFromVersion(row, input.expectedVersion, 'prescription');
+				assertEditableDraft(state(before), LABEL, before.rxNo);
+				const replaced = await this.prescriptions.replaceDraft(
+					tx,
+					before.id,
+					fields,
+					items,
+					input.expectedVersion,
+				);
+				if (!replaced) {
+					throw new StaleVersionError(
+						'Prescription',
+						input.expectedVersion ?? before.version,
+						before.version,
+					);
+				}
+				row = replaced;
 			} else {
 				row = await this.prescriptions.create(
 					tx,
 					{
+						...fields,
+						rxNo: await this.sequences.next(
+							tx,
+							{ id: encounter.clinicId, code: encounter.clinicCode },
+							'RX',
+						),
+						verificationCode: newVerificationCode(),
 						encounterId: encounter.id,
-						patientId: encounter.patientId,
-						orgId: encounter.orgId,
-						prescriberId: userId,
-						notes: draft.notes ?? null,
 					},
 					items,
 				);
 			}
 			if (card) {
-				await this.wiseProposals.settle(tx, userId, card, { resource: 'prescription', resourceId: row.id });
+				await this.wiseProposals.settle(tx, userId, card, { entityType: 'Prescription', entityId: row.id });
 			}
-			await this.audit.write(tx, {
+			await this.audit.record(tx, {
+				action: before ? 'UPDATE' : 'CREATE',
+				event: 'prescription.save',
+				entityType: 'Prescription',
+				entityId: row.id,
 				userId,
-				orgId: row.orgId,
-				patientId: row.patientId,
-				action: 'prescription.save',
-				resource: 'prescription',
-				resourceId: row.id,
+				patientId: encounter.patientId,
+				organizationId: encounter.organizationId,
+				clinicId: encounter.clinicId,
+				changes: before
+					? auditChanges({ ...snapshot(before) }, { ...snapshot(row) })
+					: { after: auditSnapshot(snapshot(row)) },
 				origin: card?.origin,
 			});
 			return toPrescription(row);
@@ -132,8 +165,9 @@ export class PrescriptionService {
 	}
 
 	/**
-	 * Issues a draft as the signed-in clinician. Refused while an item matches a recorded allergy, unless the
-	 * clinician overrides the warning (the override is in the audit row).
+	 * Issues the draft as the signed-in practitioner: refused while an item matches a recorded allergy unless
+	 * `overrideAllergyWarning` (recorded in the audit row), and for a dangerous drug without the prescriber's S2
+	 * license. Freezes the signatory; locked from then on.
 	 */
 	async issue(
 		userId: string,
@@ -141,109 +175,147 @@ export class PrescriptionService {
 		overrideAllergyWarning: boolean,
 		wiseOrigin?: WiseOriginInput | null,
 	): Promise<Prescription> {
-		const facilityIds = await this.facilityIds(userId);
 		return this.db.asUser(userId, async (tx) => {
 			const current = await this.prescriptions.findById(tx, id);
 			if (!current) {
-				throw new HandlerError('NOT_FOUND', 'Prescription not found.');
+				throw new EntityNotFoundError('Prescription', id);
 			}
-			await encounterForWrite(tx, this.encounters, facilityIds, current.encounterId);
-			const card = await this.wiseProposals.verifyAction(userId, wiseOrigin, 'issuePrescription', current.orgId);
-			assertCardPatient(card, current.patientId);
-			if (current.status !== 'draft') {
-				throw new HandlerError('CONFLICT', `This prescription is already ${current.status}.`);
-			}
-			const warnings = allergyWarnings(
-				current.items,
-				await this.prescriptions.listActiveAllergies(tx, current.patientId),
-			);
+			const encounter = await this.encounters.requireWritable(tx, userId, current.encounterId);
+			const { origin, card } = await this.cards.verify(userId, wiseOrigin, encounter, 'issuePrescription');
+			const change = issueDocument(state(current), LABEL, current.rxNo);
+			const warnings = allergyWarnings(current.items, await this.allergies.listActiveOn(tx, encounter.patientId));
 			if (warnings.length > 0 && !overrideAllergyWarning) {
-				const list = warnings
-					.map((warning) => `${warning.genericName} (allergy: ${warning.substance})`)
-					.join(', ');
-				throw new HandlerError(
-					'CONFLICT',
-					`Allergy warning: ${list}. Review the items or override the warning.`,
-				);
+				throw new AllergyWarningError(warnings);
 			}
-			const signatory = await this.clinicians.getSignatory(tx, userId, current.orgId);
-			if (!signatory.licenseNumber) {
-				throw new HandlerError(
-					'BAD_REQUEST',
-					'Add your PRC license number (Settings → Account → Clinician profile) before issuing.',
-				);
+			const practitioner = await this.practitioners.requireForUser(tx, userId, LABEL);
+			if (current.isDangerousDrug && !practitioner.s2LicenseNo) {
+				throw new S2LicenseRequiredError();
 			}
-			const issuedAt = new Date();
+			const signatory = await this.practitioners.signatory(tx, practitioner.id, encounter.clinicId);
 			const row = await this.prescriptions.update(tx, id, {
-				status: 'issued',
-				issuedAt,
-				rxNumber: documentNumber('RX', id, issuedAt),
-				prescriberId: userId,
-				prescriberName: [signatory.name, signatory.credentials].filter(Boolean).join(', '),
-				prescriberLicense: signatory.licenseNumber,
-				prescriberPtr: signatory.ptrNumber,
-				facilityName: signatory.facilityName,
-				facilityAddress: signatory.facilityAddress,
+				...change,
+				practitionerId: practitioner.id,
+				signatory: signatoryJson(signatory),
 			});
-			await this.audit.write(tx, {
+			await this.wiseProposals.settleAction(tx, userId, card, { entityType: 'Prescription', entityId: row.id });
+			await this.audit.record(tx, {
+				action: 'SIGN',
+				event: 'prescription.issue',
+				entityType: 'Prescription',
+				entityId: row.id,
 				userId,
-				orgId: row.orgId,
-				patientId: row.patientId,
-				action: 'prescription.issue',
-				resource: 'prescription',
-				resourceId: row.id,
-				origin: card?.origin,
+				patientId: encounter.patientId,
+				organizationId: encounter.organizationId,
+				clinicId: encounter.clinicId,
+				changes: { before: { documentStatus: 'DRAFT' }, after: { documentStatus: 'ISSUED', rxNo: row.rxNo } },
 				reason:
 					warnings.length > 0
-						? `Allergy warning overridden: ${warnings.map((w) => w.genericName).join(', ')}`
+						? `Allergy warning overridden: ${warnings.map((warning) => warning.genericName).join(', ')}`
 						: null,
+				origin,
 			});
-			await this.wiseProposals.settleAction(tx, userId, card, { resource: 'prescription', resourceId: row.id });
-			return toPrescription(row);
+			return toPrescription(row, signatory);
 		});
 	}
 
+	/** Voids the prescription (draft or issued) with the reason: status CANCELLED; it stays in the record. */
 	async void(userId: string, input: VoidEntryInput): Promise<Prescription> {
-		const voidReason = parseOrThrow(VoidReasonSchema, input.reason);
-		const facilityIds = await this.facilityIds(userId);
+		const voidReason = parseInput(VoidReasonSchema, input.reason);
 		return this.db.asUser(userId, async (tx) => {
 			const current = await this.prescriptions.findById(tx, input.id);
 			if (!current) {
-				throw new HandlerError('NOT_FOUND', 'Prescription not found.');
+				throw new EntityNotFoundError('Prescription', input.id);
 			}
-			await encounterForWrite(tx, this.encounters, facilityIds, current.encounterId);
-			const card = await this.wiseProposals.verifyAction(
-				userId,
-				input.wiseOrigin,
-				'voidPrescription',
-				current.orgId,
-			);
-			assertCardPatient(card, current.patientId);
-			if (current.status === 'voided') {
-				throw new HandlerError('CONFLICT', 'This prescription is already voided.');
-			}
+			const encounter = await this.encounters.requireWritable(tx, userId, current.encounterId);
+			const { origin, card } = await this.cards.verify(userId, input.wiseOrigin, encounter, 'voidPrescription');
+			assertVoidable(state(current), LABEL, current.rxNo);
 			const row = await this.prescriptions.update(tx, input.id, {
-				status: 'voided',
+				status: 'CANCELLED',
 				voidedAt: new Date(),
 				voidedById: userId,
 				voidReason,
 			});
-			await this.audit.write(tx, {
+			await this.wiseProposals.settleAction(tx, userId, card, { entityType: 'Prescription', entityId: row.id });
+			await this.audit.record(tx, {
+				action: 'VOID',
+				event: 'prescription.void',
+				entityType: 'Prescription',
+				entityId: row.id,
 				userId,
-				orgId: row.orgId,
-				patientId: row.patientId,
-				action: 'prescription.void',
-				resource: 'prescription',
-				resourceId: row.id,
+				patientId: encounter.patientId,
+				organizationId: encounter.organizationId,
+				clinicId: encounter.clinicId,
+				changes: auditChanges(
+					{ status: current.status, voidedAt: current.voidedAt },
+					{ status: row.status, voidedAt: row.voidedAt },
+				),
 				reason: voidReason,
-				origin: card?.origin,
+				origin,
 			});
-			await this.wiseProposals.settleAction(tx, userId, card, { resource: 'prescription', resourceId: row.id });
 			return toPrescription(row);
 		});
 	}
 
-	private async facilityIds(userId: string): Promise<string[]> {
-		return (await this.organizations.getUserFacilities(userId)).map((facility) => facility.id);
+	/** A `propose_prescription` card, checked against the visit's organization and patient. */
+	private async verifyDraftCard(
+		userId: string,
+		wiseOrigin: WiseOriginInput | null | undefined,
+		encounter: EncounterContext,
+	) {
+		if (!wiseOrigin) {
+			return undefined;
+		}
+		const card = await this.wiseProposals.verify(userId, wiseOrigin, {
+			toolNames: ['propose_prescription'],
+			organizationId: encounter.organizationId,
+		});
+		assertCardPatient(card, encounter.patientId);
+		return card;
 	}
+}
+
+function parseDraft(input: SavePrescriptionInput): PrescriptionDraft {
+	const withoutNulls = <T extends object>(value: T) =>
+		Object.fromEntries(Object.entries(value).map(([key, field]) => [key, field ?? undefined]));
+	return parseInput(
+		PrescriptionDraftSchema,
+		{
+			notes: input.notes ?? undefined,
+			isDangerousDrug: input.isDangerousDrug ?? undefined,
+			s2FormSerialNo: input.s2FormSerialNo ?? undefined,
+			items: input.items.map((item) => withoutNulls(item)),
+		},
+		(message) => new InvalidPrescriptionDraftError(message),
+	);
+}
+
+function toItemData(draft: PrescriptionDraft): PrescriptionItemData[] {
+	return draft.items.map((item, sortOrder) => ({
+		sortOrder,
+		genericName: item.genericName,
+		brandName: item.brandName ?? null,
+		strength: item.strength ?? null,
+		dosageForm: item.dosageForm ?? null,
+		quantity: item.quantity,
+		quantityInWords: item.quantityInWords ?? null,
+		unit: item.unit ?? null,
+		sig: item.sig,
+		route: item.route ?? 'PO',
+		frequency: item.frequency ?? null,
+		durationDays: item.durationDays ?? null,
+		isPrn: item.isPrn,
+	}));
+}
+
+const state = (row: PrescriptionRow) => ({ documentStatus: row.documentStatus, voided: row.voidedAt !== null });
+
+function snapshot(row: PrescriptionRow) {
+	return {
+		rxNo: row.rxNo,
+		notes: row.notes,
+		isDangerousDrug: row.isDangerousDrug,
+		items: row.items.map(
+			(item) => `${item.genericName} ${item.strength ?? ''} — ${item.sig} #${item.quantity.toString()}`,
+		),
+	};
 }

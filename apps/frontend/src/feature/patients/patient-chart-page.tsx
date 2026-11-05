@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { CalendarPlus, Stethoscope } from 'lucide-react';
 import { useState } from 'react';
+import { ENCOUNTER_TYPE_LABELS } from '@loopwise/shared/encounter';
 import { NewEncounterDialog } from './new-encounter-dialog';
 import { languageLabel } from './patient-format';
 import styles from './patient-overview.module.css';
@@ -9,11 +10,11 @@ import chartStyles from './patient-chart.module.css';
 import type { PatientFieldsFragment, PatientOverviewFieldsFragment } from '@/graphql/generated/graphql';
 import { EmptyState } from '@/components/clinical/empty-state';
 import { PageSection } from '@/components/clinical/page-header';
-import { StatusBadge, statusLabel } from '@/components/clinical/status-badge';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/feature/encounters/encounter-format';
+import { EncounterStatusBadge } from '@/feature/encounters/encounter-status-badge';
 import { encounterApi } from '@/lib/encounter-api';
 import { patientApi } from '@/lib/patient-api';
 
@@ -25,7 +26,7 @@ type Overview = PatientOverviewFieldsFragment;
  */
 export function PatientChartPage({ patientId }: { patientId: string }) {
 	const patient = useQuery(patientApi.patient.get.queryOptions({ id: patientId }));
-	const facilities = useQuery(patientApi.patient.facilities.queryOptions());
+	const clinics = useQuery(patientApi.patient.clinics.queryOptions());
 	const overview = useQuery(encounterApi.encounter.overview.queryOptions({ patientId }));
 	const [isNewEncounterOpen, setIsNewEncounterOpen] = useState(false);
 
@@ -59,7 +60,7 @@ export function PatientChartPage({ patientId }: { patientId: string }) {
 			<PatientDetails patient={patient.data} />
 			<NewEncounterDialog
 				patientId={patientId}
-				facilities={facilities.data ?? []}
+				clinics={clinics.data ?? []}
 				open={isNewEncounterOpen}
 				onOpenChange={setIsNewEncounterOpen}
 			/>
@@ -67,7 +68,7 @@ export function PatientChartPage({ patientId }: { patientId: string }) {
 	);
 }
 
-/** A visit row names at most this many diagnoses, medicines or tests per line; the record has them all. */
+/** A visit row names at most this many diagnoses per line; the record has them all. */
 const LINE_ITEMS = 3;
 const more = (items: unknown[]) => (items.length > LINE_ITEMS ? ` +${items.length - LINE_ITEMS} more` : '');
 const unique = <T,>(items: T[], key: (item: T) => string) =>
@@ -83,15 +84,8 @@ function VisitList({ patientId, visits }: { patientId: string; visits: Overview[
 	}
 	return (
 		<ul className={styles.visits} data-testid='encounter-list'>
-			{visits.map(({ encounter, diagnoses, prescriptions, orders, billStatus }) => {
-				const codes = unique(diagnoses, (diagnosis) => diagnosis.icd10Code);
-				const medicines = unique(
-					prescriptions.flatMap((prescription) => prescription.items),
-					(item) => item.genericName,
-				).map((item) => item.genericName);
-				const tests = unique(orders, (order) => order.code).map(
-					(order) => `${order.display ?? order.code} (${statusLabel(order.status).toLowerCase()})`,
-				);
+			{visits.map(({ encounter, diagnoses }) => {
+				const codes = unique(diagnoses, (diagnosis) => diagnosis.icd10Code ?? diagnosis.description);
 				return (
 					<li key={encounter.id}>
 						<Link
@@ -103,38 +97,32 @@ function VisitList({ patientId, visits }: { patientId: string; visits: Overview[
 							<span>
 								<span className={styles.visitReason}>{encounter.reason ?? 'Visit'}</span>
 								<span className={styles.visitLines}>
+									<span>
+										<span className={styles.code}>{encounter.encounterNo}</span> ·{' '}
+										{ENCOUNTER_TYPE_LABELS[encounter.type]}
+									</span>
 									{encounter.notes && <span className={styles.visitNotes}>{encounter.notes}</span>}
 									{codes.length > 0 && (
 										<span>
 											{codes.slice(0, LINE_ITEMS).map((diagnosis, index) => (
 												<span key={diagnosis.id}>
 													{index > 0 && ' · '}
-													<span className={styles.code}>{diagnosis.icd10Code}</span>{' '}
-													{diagnosis.display}
+													{diagnosis.icd10Code && (
+														<span className={styles.code}>{diagnosis.icd10Code}</span>
+													)}{' '}
+													{diagnosis.description}
 												</span>
 											))}
 											{more(codes)}
 										</span>
 									)}
-									{medicines.length > 0 && (
-										<span>
-											Rx {medicines.slice(0, LINE_ITEMS).join(', ')}
-											{more(medicines)}
-										</span>
-									)}
-									{tests.length > 0 && (
-										<span>
-											Ordered {tests.slice(0, LINE_ITEMS).join(', ')}
-											{more(tests)}
-										</span>
-									)}
 									<span>
-										{encounter.facility?.name}
-										{encounter.doctor && ` · ${encounter.doctor.name}`}
+										{encounter.clinic?.name}
+										{encounter.practitioner && ` · ${encounter.practitioner.displayName}`}
 									</span>
 								</span>
 							</span>
-							{billStatus ? <StatusBadge status={billStatus} /> : <span />}
+							<EncounterStatusBadge status={encounter.status} />
 						</Link>
 					</li>
 				);
@@ -149,21 +137,20 @@ function PatientDetails({ patient }: { patient: PatientFieldsFragment }) {
 			<summary>Patient details</summary>
 			<div className={styles.detailsBody}>
 				<dl className={chartStyles.chartDetails}>
+					<dt>Patient no.</dt>
+					<dd>{patient.patientNo}</dd>
 					<dt>Mobile number</dt>
 					<dd>{patient.phone ?? '—'}</dd>
+					<dt>Address</dt>
+					<dd>{addressOf(patient) || '—'}</dd>
 					<dt>Preferred language</dt>
 					<dd>{languageLabel(patient.preferredLanguage)}</dd>
-					<dt>Consent</dt>
-					<dd>{patient.consentAt ? `Recorded ${formatDate(patient.consentAt)}` : 'Not recorded'}</dd>
-					{patient.identifiers.map((identifier) => (
-						<div key={`${identifier.system}-${identifier.value}`} className={chartStyles.chartDetailRow}>
-							<dt>{identifier.system}</dt>
-							<dd>
-								{identifier.value}
-								{identifier.facility && (
-									<span className={chartStyles.chartMuted}> · {identifier.facility.name}</span>
-								)}
-							</dd>
+					<dt>Data privacy consent</dt>
+					<dd>{patient.consentAt ? `Signed ${formatDate(patient.consentAt)}` : 'Not on file'}</dd>
+					{patient.identifications.map((identification) => (
+						<div key={identification.id} className={chartStyles.chartDetailRow}>
+							<dt>{identification.label}</dt>
+							<dd>{identification.idNumber}</dd>
 						</div>
 					))}
 				</dl>
@@ -171,3 +158,9 @@ function PatientDetails({ patient }: { patient: PatientFieldsFragment }) {
 		</details>
 	);
 }
+
+/** `Purok 3, Cogon, Tagbilaran City` */
+const addressOf = (patient: PatientFieldsFragment) =>
+	[patient.address?.addressLine, patient.address?.barangayName, patient.address?.cityMunicipalityName]
+		.filter(Boolean)
+		.join(', ');

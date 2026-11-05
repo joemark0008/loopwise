@@ -8,7 +8,6 @@ import type {
 	displayChart,
 	displayMap,
 	executeSql,
-	explainResult,
 	findPatient,
 	getMetric,
 	listLabOrders,
@@ -83,7 +82,8 @@ export interface AgentToolServices {
 	 * structurally so the frontend, which imports these types, never reaches the Nest models.
 	 */
 	patients: {
-		myFacilities(userId: string): Promise<proposePatientRegistration.Facility[]>;
+		/** The clinics where the user registers patients and records visits. */
+		myCareClinics(userId: string): Promise<Array<proposePatientRegistration.Clinic & { organizationId: string }>>;
 		isVisible(userId: string, patientId: string): Promise<boolean>;
 		getChartSummary(userId: string, patientId: string): Promise<string | null>;
 		/** `find_patient`: the search as the user, audited. */
@@ -91,13 +91,13 @@ export interface AgentToolServices {
 			userId: string,
 			input: { query?: string; birthDate?: string },
 			limit: number,
-		): Promise<{ patients: Array<Omit<findPatient.Match, 'name'> & PatientName>; truncated: boolean }>;
+		): Promise<{ patients: WisePatient[]; truncated: boolean }>;
 		/** `open_page`: the patient as the user (null when they may not see them), audited with `reason`. */
 		getById(userId: string, patientId: string, reason?: string): Promise<PatientName | null>;
 		checkDuplicates(
 			userId: string,
 			draft: Omit<proposePatientRegistration.Input, 'sex' | 'birthDate' | 'preferredLanguage'> & {
-				facilityId: string;
+				clinicId: string;
 				sex: NonNullable<proposePatientRegistration.Input['sex']>;
 				birthDate: string;
 				preferredLanguage?: string;
@@ -116,11 +116,11 @@ export interface AgentToolServices {
 			measure: chartPatientTrend.PatientMeasure,
 			months?: number,
 		): Promise<chartPatientTrend.Output | null>;
-		/** Counts across one of the user's facilities (their only one when `facilityId` is omitted). */
+		/** Counts across one of the user's clinics (their only one when `clinicId` is omitted). */
 		facilityPanel(
 			userId: string,
 			metric: chartFacilityPanel.PanelMetric,
-			facilityId?: string,
+			clinicId?: string,
 			months?: number,
 		): Promise<chartFacilityPanel.Output>;
 		buildReport(
@@ -129,6 +129,7 @@ export interface AgentToolServices {
 				type: createReport.ReportType;
 				patientId?: string;
 				encounterId?: string;
+				/** For facility_panel: one of the user's clinics (the tool's `facilityId`). */
 				facilityId?: string;
 				months?: number;
 				charts?: chartPatientTrend.PatientMeasure[];
@@ -172,27 +173,25 @@ export interface AgentToolServices {
 	attachments: {
 		readTextForWise(userId: string, clinicId: string, relativePath: string): Promise<string>;
 	};
-	/** `ResultsService` read for `list_results_to_review`; reviewing is the user's `reviewResult`. */
-	results: {
-		toReviewForWise(
+	/**
+	 * `DiagnosticsWiseReader` reads, as the user and audited: the clinic's lab worklist (`list_lab_orders`, lab staff
+	 * only) and the released results to review (`list_results_to_review`). Moving a test or reviewing a result is the
+	 * user's own mutation, from the card.
+	 */
+	diagnostics: {
+		labWorklistForWise(
+			userId: string,
+			clinicId: string,
+			opts: { statuses: readonly listLabOrders.LabWorklistStatus[]; limit: number },
+		): Promise<Omit<listLabOrders.Output, '_version'>>;
+		resultsToReviewForWise(
 			userId: string,
 			opts: { patientId?: string; urgency?: listResultsToReview.Input['urgency']; limit: number },
 		): Promise<Omit<listResultsToReview.Output, '_version'>>;
 	};
-	/** `OrderService` read for `list_lab_orders`; moving an order is the user's own mutation. */
-	orders: {
-		labOrdersForWise(
-			userId: string,
-			opts: { statuses: readonly ('sent' | 'accepted' | 'collected')[]; limit: number },
-		): Promise<Omit<listLabOrders.Output, '_version'>>;
-	};
-	/** `RulesService` read for `explain_result`: a result and its deterministic evaluation, as the user, audited. */
-	rules: {
-		explainForWise(userId: string, resultId: string): Promise<Omit<explainResult.Output, '_version'>>;
-	};
-	/** `EncounterRecordService` read for `propose_encounter_note`; saving is the user's `updateEncounterNote`. */
+	/** `EncounterNoteService` read for `propose_encounter_note`; saving is the user's `updateEncounterNote`. */
 	encounters: {
-		getNoteForWise(
+		getForWise(
 			userId: string,
 			patientId: string,
 			encounterId?: string,
@@ -203,6 +202,15 @@ export interface AgentToolServices {
 interface PatientName {
 	givenName: string;
 	familyName: string;
+}
+
+/** A patient as `find_patient` returns them. */
+interface WisePatient extends PatientName {
+	id: string;
+	patientNo: string;
+	birthDate: string;
+	sex: findPatient.Match['sex'];
+	identifications: Array<{ label: string; idNumber: string }>;
 }
 
 export interface ToolContext {

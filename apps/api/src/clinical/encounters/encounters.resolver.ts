@@ -4,14 +4,15 @@ import type { AuthUser } from '../../auth/auth.service.js';
 import { Loaders } from '../../common/dataloader/loaders.decorator.js';
 import type { RequestLoaders } from '../../common/dataloader/request-loaders.js';
 import { CurrentUser } from '../../common/decorators/current.decorator.js';
-import { UserLoader } from '../../users/user.loader.js';
-import { Facility } from '../patients/models/patient.model.js';
-import { FacilityLoader } from '../patients/patient.loader.js';
-import { CreateEncounterInput } from './dto/encounter.input.js';
+import { ClinicRef } from '../patients/models/clinic-ref.model.js';
+import { ClinicRefLoader } from '../patients/patient.loader.js';
+import { Practitioner } from '../practitioners/models/practitioner.model.js';
+import { PractitionerLoader } from '../practitioners/practitioner.loader.js';
+import { ClinicEncountersInput, CreateEncounterInput, TransitionEncounterInput } from './dto/encounter.input.js';
 import { EncounterService } from './encounter.service.js';
-import { Encounter, EncounterDoctor } from './models/encounter.model.js';
+import { Encounter } from './models/encounter.model.js';
 
-/** A patient's encounters. Access is row-level security plus the facility check in `EncounterService`. */
+/** A patient's visits and a clinic's queue. Access is row-level security plus the clinic checks. */
 @Resolver(() => Encounter)
 export class EncountersResolver {
 	constructor(private readonly service: EncounterService) {}
@@ -24,19 +25,33 @@ export class EncountersResolver {
 		return this.service.list(user.id, patientId);
 	}
 
-	@Mutation(() => Encounter)
+	@Query(() => [Encounter], { description: 'The visits at one of your clinics, oldest first (the queue).' })
+	clinicEncounters(@CurrentUser() user: AuthUser, @Args('input') input: ClinicEncountersInput): Promise<Encounter[]> {
+		return this.service.listAtClinic(user.id, input);
+	}
+
+	@Mutation(() => Encounter, { description: 'Opens a visit at one of your clinics.' })
 	createEncounter(@CurrentUser() user: AuthUser, @Args('input') input: CreateEncounterInput): Promise<Encounter> {
 		return this.service.create(user.id, input);
 	}
 
-	@ResolveField(() => Facility, { nullable: true })
-	facility(@Parent() encounter: Encounter, @Loaders() loaders: RequestLoaders): Promise<Facility | null> {
-		return loaders.get(FacilityLoader).load(encounter.orgId);
+	@Mutation(() => Encounter, { description: 'Moves a visit to its next status (EncounterStatus).' })
+	transitionEncounter(
+		@CurrentUser() user: AuthUser,
+		@Args('input') input: TransitionEncounterInput,
+	): Promise<Encounter> {
+		return this.service.transition(user.id, input);
 	}
 
-	@ResolveField(() => EncounterDoctor, { nullable: true })
-	async doctor(@Parent() encounter: Encounter, @Loaders() loaders: RequestLoaders): Promise<EncounterDoctor | null> {
-		const user = await loaders.get(UserLoader).load(encounter.doctorId);
-		return user && { id: user.id, name: user.name };
+	@ResolveField(() => ClinicRef, { nullable: true })
+	clinic(@Parent() encounter: Encounter, @Loaders() loaders: RequestLoaders): Promise<ClinicRef | null> {
+		return loaders.get(ClinicRefLoader).load(encounter.clinicId);
+	}
+
+	@ResolveField(() => Practitioner, { nullable: true, description: 'The doctor of the visit.' })
+	practitioner(@Parent() encounter: Encounter, @Loaders() loaders: RequestLoaders): Promise<Practitioner | null> {
+		return encounter.practitionerId
+			? loaders.get(PractitionerLoader).load(encounter.practitionerId)
+			: Promise.resolve(null);
 	}
 }

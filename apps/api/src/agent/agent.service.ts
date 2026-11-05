@@ -11,15 +11,14 @@ import type { StorageScope } from '../attachments/storage/index.js';
 import { statUserFile } from '../attachments/storage/user-files.js';
 import { ChatRepository } from '../chats/chat.repository.js';
 import { ANALYTICS_READER } from '../clinical/analytics/analytics-reader.token.js';
+import { DIAGNOSTICS_READER } from '../clinical/diagnostics/diagnostics-reader.token.js';
 import { ENCOUNTER_NOTE_READER } from '../clinical/encounters/encounter-note-reader.token.js';
 import { INSIGHTS_READER } from '../clinical/insights/insights-reader.token.js';
-import { ORDERS_READER } from '../clinical/orders/orders-reader.token.js';
-import { RULES_READER } from '../clinical/pathways/rules-reader.token.js';
 import { PATIENT_READER } from '../clinical/patients/patient-reader.token.js';
 import { REPORTS_READER } from '../clinical/reports/reports-reader.token.js';
-import { RESULTS_READER } from '../clinical/results/results-reader.token.js';
 import { ClinicRepository } from '../clinics/clinic.repository.js';
 import { HandlerError } from '../common/errors/handler-error.js';
+import { AccessService } from '../common/guards/access.service.js';
 import { ConfigService } from '../config/config.service.js';
 import type { Clinic } from '../generated/prisma/client.js';
 import { MemoryService } from '../memory/memory.service.js';
@@ -79,6 +78,7 @@ export class AgentService {
 	constructor(
 		private readonly chats: ChatRepository,
 		private readonly clinics: ClinicRepository,
+		private readonly access: AccessService,
 		private readonly llm: LlmService,
 		private readonly llmConfigs: ClinicLlmConfigRepository,
 		private readonly compaction: CompactionService,
@@ -92,10 +92,8 @@ export class AgentService {
 		@Inject(ANALYTICS_READER) private readonly analytics: AgentToolServices['analytics'],
 		@Inject(REPORTS_READER) private readonly reports: AgentToolServices['reports'],
 		@Inject(ENCOUNTER_NOTE_READER) private readonly encounterNotes: AgentToolServices['encounters'],
-		@Inject(RESULTS_READER) private readonly results: AgentToolServices['results'],
-		@Inject(ORDERS_READER) private readonly orders: AgentToolServices['orders'],
+		@Inject(DIAGNOSTICS_READER) private readonly diagnostics: AgentToolServices['diagnostics'],
 		private readonly toolSettings: WiseToolSettingsService,
-		@Inject(RULES_READER) private readonly rules: AgentToolServices['rules'],
 		private readonly attachments: AttachmentsService,
 	) {}
 
@@ -109,7 +107,7 @@ export class AgentService {
 		if (body.mode !== 'default') {
 			throw new HandlerError('FORBIDDEN', `Invalid ${body.mode} conversation`);
 		}
-		const userRole = await this.clinics.getUserRoleInClinic(clinicId, userId);
+		const userRole = await this.access.getUserRoleInClinic(clinicId, userId);
 		if (!userRole || userRole === 'viewer') {
 			throw new HandlerError('FORBIDDEN', 'Viewers cannot send messages');
 		}
@@ -333,9 +331,7 @@ export class AgentService {
 					insights: this.insights,
 					analytics: this.analytics,
 					reports: this.reports,
-					results: this.results,
-					orders: this.orders,
-					rules: this.rules,
+					diagnostics: this.diagnostics,
 					attachments: this.attachments,
 				}),
 			},

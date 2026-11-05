@@ -1,6 +1,6 @@
 import z from 'zod/v3';
 
-import { WORK_FITNESS } from '../medical-certificate';
+import { CERTIFICATE_TYPES } from '../medical-certificate';
 import { EncounterIdSchema, RULES } from './encounter-proposal';
 
 export { type Output, OutputSchema } from './encounter-proposal';
@@ -20,10 +20,12 @@ export const InputSchema = z.object({
 		.string()
 		.optional()
 		.describe('Only if the clinician worded it; else the visit diagnoses are used.'),
-	fitness: z.enum(WORK_FITNESS).optional(),
+	type: z.enum(CERTIFICATE_TYPES).optional().describe('Default MEDICAL_CERTIFICATE.'),
+	isFitToWork: z.boolean().optional().describe('Fit (true) or unfit (false) to work or school, if they said.'),
 	restDays: z.number().int().optional(),
 	restFrom: z.string().optional().describe('First day of rest, YYYY-MM-DD; the visit day when left out.'),
-	remarks: z.string().optional(),
+	findings: z.string().optional(),
+	recommendation: z.string().optional().describe('e.g. "Light duty for one week".'),
 	purpose: z.string().optional().describe('e.g. "work", "school".'),
 });
 

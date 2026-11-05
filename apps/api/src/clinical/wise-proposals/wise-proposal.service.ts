@@ -1,15 +1,26 @@
 import { type WiseActionMutation, wiseActionToolsFor } from '@loopwise/shared/wise-actions';
 import { Injectable } from '@nestjs/common';
 
-import { HandlerError } from '../../common/errors/handler-error.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { WiseToolSettingsService } from '../../wise-tools/wise-tool-settings.service.js';
-import { ClinicalDbService } from '../rls/clinical-db.service.js';
+import type { AuditEntityType } from '../audit/audit.types.js';
+import { ClinicalDbService, type ClinicalTx } from '../rls/clinical-db.service.js';
 import type { WiseOriginInput } from './dto/wise-origin.input.js';
 import { toWiseProposalOutcome, type WiseProposalOutcome } from './models/wise-proposal-outcome.model.js';
 import { WiseProposalRepository } from './wise-proposal.repository.js';
+import {
+	WiseCardAlreadySettledError,
+	WiseCardInvalidError,
+	WiseCardOtherPatientError,
+} from './wise-proposals.errors.js';
 
-type Tx = Prisma.TransactionClient;
+type Tx = ClinicalTx;
+
+/** The record a card was confirmed into (`wise_proposal_outcomes.entity_type` / `entity_id`): a Prisma model name. */
+export interface WiseCardEntity {
+	entityType: AuditEntityType;
+	entityId: string;
+}
 
 /** What the audit row records about a confirmed Wise card (`audit_log.origin`). */
 export type WiseOrigin = {
@@ -30,7 +41,7 @@ export interface VerifiedWiseCard {
 /** Refuses a card from the chart chat of another patient than the one the change is about. */
 export function assertCardPatient(card: VerifiedWiseCard | undefined, patientId: string): void {
 	if (card?.chatPatientId && card.chatPatientId !== patientId) {
-		throw new HandlerError('BAD_REQUEST', 'This Wise card is about another patient.');
+		throw new WiseCardOtherPatientError();
 	}
 }
 
@@ -50,34 +61,34 @@ export class WiseProposalService {
 	/**
 	 * Checks a confirm against the stored chat. `toolNames` are the cards that may confirm this mutation; the caller
 	 * checks the patient with `assertCardPatient` once it knows it. The tool must still be on in Wise settings (§7.3),
-	 * at `facilityId` when the caller knows the facility of the record: a card drafted before an admin turned the tool
-	 * off can't be confirmed after.
+	 * in `organizationId` when the caller knows the organization of the record: a card drafted before an admin turned
+	 * the tool off can't be confirmed after.
 	 */
 	async verify(
 		userId: string,
 		input: WiseOriginInput,
-		opts: { toolNames: readonly string[]; facilityId?: string },
+		opts: { toolNames: readonly string[]; organizationId?: string },
 	): Promise<VerifiedWiseCard> {
 		if (!opts.toolNames.includes(input.toolName)) {
-			throw new HandlerError('BAD_REQUEST', `A ${input.toolName} card can't confirm this change.`);
+			throw new WiseCardInvalidError(`A ${input.toolName} card can't confirm this change.`);
 		}
-		await this.toolSettings.assertEnabled(userId, input.toolName, opts.facilityId);
+		await this.toolSettings.assertEnabled(userId, input.toolName, opts.organizationId);
 		return this.verifyCall(userId, input);
 	}
 
 	/** The tool call is in the user's own chat, by this tool, and not settled yet. */
 	private async verifyCall(userId: string, input: WiseOriginInput): Promise<VerifiedWiseCard> {
 		const call = await this.proposals.findToolCall(input.toolCallId);
-		const chat = call?.chatMessage.chat;
-		if (!call || !chat || call.chatMessage.chatId !== input.chatId || chat.userId !== userId) {
-			throw new HandlerError('BAD_REQUEST', "This Wise card isn't in your chat.");
+		const chat = call?.message.chat;
+		if (!call || !chat || call.message.chatId !== input.chatId || chat.userId !== userId) {
+			throw new WiseCardInvalidError("This Wise card isn't in your chat.");
 		}
 		if (call.toolName !== input.toolName) {
-			throw new HandlerError('BAD_REQUEST', `This card was drafted by ${call.toolName}, not ${input.toolName}.`);
+			throw new WiseCardInvalidError(`This card was drafted by ${call.toolName}, not ${input.toolName}.`);
 		}
 		const settled = await this.proposals.findOutcome(input.toolCallId);
 		if (settled) {
-			throw alreadySettled(settled.status);
+			throw new WiseCardAlreadySettledError(settled.status);
 		}
 		return {
 			origin: {
@@ -94,15 +105,15 @@ export class WiseProposalService {
 
 	/**
 	 * The origin of a write that completes a card confirmed earlier (the vitals and diagnoses of a confirmed
-	 * `propose_encounter`): the card must be confirmed into `resourceId`. It isn't settled again.
+	 * `propose_encounter`): the card must be confirmed into `entityId`. It isn't settled again.
 	 */
 	async verifyFollowUp(
 		userId: string,
 		input: WiseOriginInput,
-		opts: { toolNames: readonly string[]; resourceId: string },
+		opts: { toolNames: readonly string[]; entityId: string },
 	): Promise<WiseOrigin> {
 		if (!opts.toolNames.includes(input.toolName)) {
-			throw new HandlerError('BAD_REQUEST', `A ${input.toolName} card can't confirm this change.`);
+			throw new WiseCardInvalidError(`A ${input.toolName} card can't confirm this change.`);
 		}
 		const outcome = await this.proposals.findOutcome(input.toolCallId);
 		if (
@@ -111,9 +122,9 @@ export class WiseProposalService {
 			outcome.chatId !== input.chatId ||
 			outcome.toolName !== input.toolName ||
 			outcome.status !== 'confirmed' ||
-			outcome.resourceId !== opts.resourceId
+			outcome.entityId !== opts.entityId
 		) {
-			throw new HandlerError('BAD_REQUEST', "This Wise card wasn't confirmed into this record.");
+			throw new WiseCardInvalidError("This Wise card wasn't confirmed into this record.");
 		}
 		return {
 			via: 'wise',
@@ -127,17 +138,17 @@ export class WiseProposalService {
 
 	/**
 	 * The Wise action card behind `mutation` (DESIGN.md §7.3), or undefined without one: verified from the tools the
-	 * action registry names for it, at the record's facility. Callers run it once they have read the record (it may run
-	 * inside their transaction) and `settleAction` after the change.
+	 * action registry names for it, in the record's organization. Callers run it once they have read the record (it may
+	 * run inside their transaction) and `settleAction` after the change.
 	 */
 	async verifyAction(
 		userId: string,
 		origin: WiseOriginInput | null | undefined,
 		mutation: WiseActionMutation,
-		facilityId: string | undefined,
+		organizationId: string | undefined,
 	): Promise<VerifiedWiseCard | undefined> {
 		return origin
-			? this.verify(userId, origin, { toolNames: wiseActionToolsFor(mutation), facilityId })
+			? this.verify(userId, origin, { toolNames: wiseActionToolsFor(mutation), organizationId })
 			: undefined;
 	}
 
@@ -146,16 +157,16 @@ export class WiseProposalService {
 		tx: Tx,
 		userId: string,
 		card: VerifiedWiseCard | undefined,
-		resource: { resource: string; resourceId: string },
+		entity: WiseCardEntity,
 	): Promise<void> {
 		if (card) {
-			await this.settle(tx, userId, card, resource);
+			await this.settle(tx, userId, card, entity);
 		}
 	}
 
 	/** Records the card as confirmed in the caller's transaction; a card settled meanwhile rolls the change back. */
-	async settle(tx: Tx, userId: string, card: VerifiedWiseCard, resource: { resource: string; resourceId: string }) {
-		await this.insert(tx, userId, card.origin, 'confirmed', resource);
+	async settle(tx: Tx, userId: string, card: VerifiedWiseCard, entity: WiseCardEntity): Promise<void> {
+		await this.insert(tx, userId, card.origin, 'confirmed', entity);
 	}
 
 	/** Cancel on a card: settles it, so it can't be confirmed later, from this tab or another. */
@@ -176,7 +187,7 @@ export class WiseProposalService {
 		userId: string,
 		origin: WiseOrigin,
 		status: 'confirmed' | 'cancelled',
-		resource?: { resource: string; resourceId: string },
+		entity?: WiseCardEntity,
 	) {
 		try {
 			return await this.proposals.insertOutcome(tx, {
@@ -186,23 +197,16 @@ export class WiseProposalService {
 				toolCallId: origin.toolCallId,
 				toolName: origin.toolName,
 				status,
-				resource: resource?.resource ?? null,
-				resourceId: resource?.resourceId ?? null,
+				entityType: entity?.entityType ?? null,
+				entityId: entity?.entityId ?? null,
 				edited: origin.edited,
 			});
 		} catch (error) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-				throw alreadySettled((await this.proposals.findOutcome(origin.toolCallId))?.status ?? 'confirmed');
+				const settled = await this.proposals.findOutcome(origin.toolCallId);
+				throw new WiseCardAlreadySettledError(settled?.status ?? 'confirmed');
 			}
 			throw error;
 		}
 	}
 }
-
-const alreadySettled = (status: string) =>
-	new HandlerError(
-		'CONFLICT',
-		status === 'cancelled'
-			? 'This Wise card was cancelled, so it can no longer be confirmed. Ask Wise for a new draft.'
-			: 'This Wise card was already confirmed; nothing was saved twice.',
-	);

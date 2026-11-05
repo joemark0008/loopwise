@@ -1,31 +1,16 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { DIAGNOSIS_CERTAINTIES } from '@loopwise/shared/encounter-record';
-import { formatPesos } from '@loopwise/shared/encounter-bill';
-import { resolveLabTest } from '@loopwise/shared/wise-actions';
-import {
-	BookmarkPlus,
-	ClipboardList,
-	FileCheck2,
-	Phone,
-	ReceiptText,
-	Stethoscope,
-	TestTubes,
-	XCircle,
-} from 'lucide-react';
+import { DIAGNOSIS_TYPE_LABELS, DIAGNOSIS_TYPES } from '@loopwise/shared/encounter-record';
+import { BookmarkPlus, FileCheck2, Phone, Stethoscope, XCircle } from 'lucide-react';
 import { memo, useState } from 'react';
 import { ActionCard, ActionFrame, EncounterGate, isEdited, VisitLink } from './propose-action';
 import styles from './propose-action.module.css';
 import type { ProposalConfirm } from './proposal-card/proposal-card';
 import type { ToolPart } from './propose-action';
-import type { listLabOrders, report } from '@loopwise/shared/tools';
+import type { report } from '@loopwise/shared/tools';
 import type {
 	ActionOutput,
-	ProposeBillStepInput,
-	ProposeCancelOrderInput,
 	ProposeDiagnosisInput,
 	ProposeIssueDocumentInput,
-	ProposeLabOrderStepInput,
 	ProposePatientUpdateInput,
 	ProposeSaveReportInput,
 	ProposeVoidDiagnosisInput,
@@ -33,7 +18,7 @@ import type {
 	ProposeVoidVitalsInput,
 } from '@loopwise/shared/wise-actions';
 import type { ToolCallComponentProps } from '.';
-import type { EncounterRecordFieldsFragment } from '@/graphql/generated/graphql';
+import type { EncounterRecordFieldsFragment, WisePatientContactQuery } from '@/graphql/generated/graphql';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,7 +27,6 @@ import { formatDateTime, medicineName } from '@/feature/encounters/encounter-for
 import { FormField } from '@/feature/encounters/form-field';
 import { useRecordMutation } from '@/feature/encounters/use-record-mutation';
 import { encounterRecordApi } from '@/lib/encounter-record-api';
-import { ordersApi } from '@/lib/orders-api';
 import { wiseActionsApi } from '@/lib/wise-actions-api';
 
 /*
@@ -53,7 +37,7 @@ import { wiseActionsApi } from '@/lib/wise-actions-api';
 
 const origin = (confirm: ProposalConfirm, edited = false) => ({ ...confirm.origin, edited });
 
-const sameCode = (a: string, b: string) => a.trim().toUpperCase() === b.trim().toUpperCase();
+const sameCode = (a: string | null, b: string) => (a ?? '').trim().toUpperCase() === b.trim().toUpperCase();
 
 /** The record's item the card is about, or a message saying it isn't there. */
 function Missing({ message }: { message: string }) {
@@ -82,11 +66,12 @@ function DiagnosisCard({
 }) {
 	const { queueOrSendMessage } = useAgentContext();
 	const existing = record.diagnoses.find((row) => !row.voidedAt && sameCode(row.icd10Code, input.icd10Code));
+	const hasPrimary = record.diagnoses.some((row) => !row.voidedAt && row.type === 'PRIMARY');
 	const [initial] = useState(() => ({
 		icd10Code: input.icd10Code,
-		display: input.display,
-		certainty: input.certainty ?? existing?.certainty ?? 'provisional',
-		isPrimary: input.isPrimary ?? existing?.isPrimary ?? false,
+		description: input.description,
+		type: input.type ?? existing?.type ?? (hasPrimary ? 'SECONDARY' : 'PRIMARY'),
+		isFinal: input.isFinal ?? existing?.isFinal ?? true,
 		notes: input.notes ?? existing?.notes ?? '',
 	}));
 	const [values, setValues] = useState(initial);
@@ -99,24 +84,24 @@ function DiagnosisCard({
 		const saved = existing
 			? update.mutateAsync({
 					id: existing.id,
-					certainty: values.certainty,
-					isPrimary: values.isPrimary,
+					type: values.type,
+					isFinal: values.isFinal,
 					notes: values.notes.trim() || null,
 					wiseOrigin,
 				})
 			: add.mutateAsync({
 					encounterId: record.encounter.id,
 					icd10Code: values.icd10Code,
-					display: values.display,
-					certainty: values.certainty,
-					isPrimary: values.isPrimary,
+					description: values.description,
+					type: values.type,
+					isFinal: values.isFinal,
 					notes: values.notes.trim() || null,
 					wiseOrigin,
 				});
 		return saved.then(
 			() =>
 				void queueOrSendMessage({
-					text: `I ${existing ? 'updated' : 'added'} the diagnosis: ${values.icd10Code} ${values.display}.`,
+					text: `I ${existing ? 'updated' : 'added'} the diagnosis: ${values.icd10Code} ${values.description}.`,
 				}),
 		);
 	};
@@ -135,43 +120,43 @@ function DiagnosisCard({
 		>
 			<VisitLink record={record} tab='diagnoses' />
 			<p className={styles.summary} data-testid='drafted-diagnosis'>
-				<strong>{values.icd10Code}</strong> {values.display}
+				<strong>{values.icd10Code}</strong> {values.description}
 			</p>
 			{existing && (
 				<p className={styles.meta}>
-					On the visit: {existing.certainty}
-					{existing.isPrimary && ', primary'}
+					On the visit: {DIAGNOSIS_TYPE_LABELS[existing.type].toLowerCase()}
+					{!existing.isFinal && ', not final'}
 					{existing.notes && ` · ${existing.notes}`}
 				</p>
 			)}
 			<div className={styles.grid}>
-				<FormField label='Certainty'>
+				<FormField label='Type'>
 					{(id) => (
 						<select
 							id={id}
 							className={styles.select}
-							value={values.certainty}
+							value={values.type}
 							disabled={pending}
 							onChange={(event) =>
-								setValues({ ...values, certainty: event.target.value as typeof values.certainty })
+								setValues({ ...values, type: event.target.value as typeof values.type })
 							}
 						>
-							{DIAGNOSIS_CERTAINTIES.map((certainty) => (
-								<option key={certainty} value={certainty}>
-									{certainty}
+							{DIAGNOSIS_TYPES.map((type) => (
+								<option key={type} value={type}>
+									{DIAGNOSIS_TYPE_LABELS[type]}
 								</option>
 							))}
 						</select>
 					)}
 				</FormField>
-				<FormField label='Primary'>
+				<FormField label='Final'>
 					{(id) => (
 						<input
 							id={id}
 							type='checkbox'
-							checked={values.isPrimary}
+							checked={values.isFinal}
 							disabled={pending}
-							onChange={(event) => setValues({ ...values, isPrimary: event.target.checked })}
+							onChange={(event) => setValues({ ...values, isFinal: event.target.checked })}
 						/>
 					)}
 				</FormField>
@@ -203,7 +188,7 @@ export const ProposeVoidDiagnosisToolCall = memo(({ toolPart }: ToolCallComponen
 						<VoidCard
 							toolPart={toolPart}
 							title='Remove diagnosis'
-							label={`${diagnosis.icd10Code} ${diagnosis.display}`}
+							label={`${diagnosis.icd10Code ?? ''} ${diagnosis.description}`.trim()}
 							detail='stays in the record, struck through'
 							note={input.reason}
 							run={(confirmed, reason) =>
@@ -298,44 +283,6 @@ function VoidVitalsCard({
 	);
 }
 
-/** `propose_cancel_order`: the ordering doctor withdraws a test of the visit before collection. */
-export const ProposeCancelOrderToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_cancel_order'>) => (
-	<ActionFrame<ProposeCancelOrderInput> toolPart={toolPart}>
-		{(input, output) => (
-			<EncounterGate output={output}>
-				{(record) => {
-					const code = resolveLabTest(input.test)?.code;
-					const order = record.orders.find(
-						(row) =>
-							(row.code === code || row.display?.toLowerCase() === input.test.trim().toLowerCase()) &&
-							(row.status === 'sent' || row.status === 'accepted'),
-					);
-					return order ? (
-						<VoidCard
-							toolPart={toolPart}
-							title='Cancel order'
-							confirmLabel='Cancel order'
-							label={`${order.display ?? order.code} · ${order.status}`}
-							detail={`to ${order.targetFacility?.name ?? 'the lab'}; the lab sees your reason`}
-							note={input.reason}
-							run={(confirmed, reason) =>
-								ordersApi.order.cancel.mutate({
-									orderId: order.id,
-									reason,
-									wiseOrigin: origin(confirmed),
-								})
-							}
-							answer={`I cancelled the order: ${order.display ?? order.code}.`}
-						/>
-					) : (
-						<Missing message={`This visit has no ${input.test} order that can still be cancelled.`} />
-					);
-				}}
-			</EncounterGate>
-		)}
-	</ActionFrame>
-));
-
 /** A destructive card: names the record, takes the reason, confirms twice, then runs `run`. */
 function VoidCard({
 	toolPart,
@@ -397,128 +344,18 @@ function VoidCard({
 	);
 }
 
-const STEP_LABELS = { accept: 'Accept order', collect: 'Mark collected', reject: 'Reject order' } as const;
-
-/** `propose_lab_order_step`: the receiving facility accepts, collects or rejects one order on its worklist. */
-export const ProposeLabOrderStepToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_lab_order_step'>) => (
-	<ActionFrame<ProposeLabOrderStepInput> toolPart={toolPart}>
-		{(input, output) => <LabStepCard toolPart={toolPart} input={input} output={output} />}
-	</ActionFrame>
-));
-
-function LabStepCard({
-	toolPart,
-	input,
-	output,
-}: {
-	toolPart: ToolPart;
-	input: ProposeLabOrderStepInput;
-	output: ActionOutput;
-}) {
-	const queryClient = useQueryClient();
-	const { queueOrSendMessage } = useAgentContext();
-	const sent = useQuery(ordersApi.order.labOrders.queryOptions({ status: 'sent' }));
-	const accepted = useQuery(ordersApi.order.labOrders.queryOptions({ status: 'accepted' }));
-	const [error, setError] = useState<string>();
-	const [pending, setPending] = useState(false);
-	if (sent.isPending || accepted.isPending) {
-		return <Skeleton className={styles.skeleton} />;
-	}
-	const order = [...(sent.data ?? []), ...(accepted.data ?? [])].find((row) => row.id === output.subjectId);
-	if (!order) {
-		return <Missing message="That order isn't on your worklist, or it has moved on already." />;
-	}
-	const label = `${order.display ?? order.code} · ${order.priority.toUpperCase()} · ${order.patient.givenName} ${order.patient.familyName}`;
-	const confirm = (confirmed: ProposalConfirm) => {
-		setPending(true);
-		setError(undefined);
-		const wiseOrigin = origin(confirmed);
-		const step =
-			input.step === 'accept'
-				? wiseActionsApi.acceptOrder.mutate({ orderId: order.id, wiseOrigin })
-				: input.step === 'collect'
-					? wiseActionsApi.markOrderCollected.mutate({ orderId: order.id, wiseOrigin })
-					: ordersApi.order.reject.mutate({ orderId: order.id, reason: confirmed.reason ?? '', wiseOrigin });
-		return step
-			.then(() => {
-				void queryClient.invalidateQueries(ordersApi.order.labOrders.pathFilter());
-				void queueOrSendMessage({
-					text: `I did it: ${STEP_LABELS[input.step]} for ${order.display ?? order.code}.`,
-				});
-			})
-			.catch((caught: Error) => {
-				setError(caught.message);
-				throw caught;
-			})
-			.finally(() => setPending(false));
-	};
-	return (
-		<ActionCard
-			toolPart={toolPart}
-			icon={TestTubes}
-			title={STEP_LABELS[input.step]}
-			confirmLabel={STEP_LABELS[input.step]}
-			resolved='Done'
-			answer='I did it'
-			mode={input.step === 'reject' ? 'destructive' : 'create'}
-			target={{ label, detail: `from ${order.orderingDoctorName}, ${order.orderingFacilityName}` }}
-			onConfirm={confirm}
-			isPending={pending}
-			error={error}
-		>
-			{input.step !== 'reject' && (
-				<p className={styles.summary} data-testid='lab-order'>
-					{label}
-				</p>
-			)}
-			{input.reason && <p className={styles.meta}>Wise noted: {input.reason}</p>}
-		</ActionCard>
-	);
-}
-
-/** `list_lab_orders`: the worklist Wise read, STAT first. */
-export const ListLabOrdersToolCall = memo(({ toolPart }: ToolCallComponentProps<'list_lab_orders'>) => {
-	if (toolPart.state === 'input-streaming' || toolPart.state === 'input-available') {
-		return <Skeleton className={styles.skeleton} />;
-	}
-	if (toolPart.state === 'output-error') {
-		return <ErrorMessage message={toolPart.errorText} />;
-	}
-	const output = toolPart.output as listLabOrders.Output | undefined;
-	if (!output) {
-		return null;
-	}
-	return (
-		<div className={styles.resultsCard} data-testid='lab-orders'>
-			<p className={styles.resultsTitle}>
-				<ClipboardList aria-hidden /> Worklist ({output.orders.length}
-				{output.truncated && '+'})
-				<Link to='/orders' className={styles.link}>
-					Open the worklist
-				</Link>
-			</p>
-			{output.orders.length === 0 ? (
-				<p className={styles.meta}>No orders waiting.</p>
-			) : (
-				<ul className={styles.list}>
-					{output.orders.map((order) => (
-						<li key={order.id}>
-							<strong>{order.test}</strong> · {order.priority.toUpperCase()} · {order.status} ·{' '}
-							{order.patient.name} · {order.orderingDoctor}
-						</li>
-					))}
-				</ul>
-			)}
-		</div>
-	);
-});
-
 const DOCUMENT_LABELS = { prescription: 'prescription', medical_certificate: 'medical certificate' } as const;
 
 /** The visit's prescription or certificate a document card is about: the newest one not voided. */
-function currentDocument(record: EncounterRecordFieldsFragment, kind: ProposeIssueDocumentInput['document']) {
-	const rows = kind === 'prescription' ? record.prescriptions : record.medicalCertificates;
-	return [...rows].filter((row) => row.status !== 'voided').sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+function currentDocument(
+	record: EncounterRecordFieldsFragment,
+	kind: ProposeIssueDocumentInput['document'],
+): { id: string; documentStatus: string; createdAt: string } | undefined {
+	const rows =
+		kind === 'prescription'
+			? record.prescriptions.filter((row) => !row.voidedAt)
+			: record.medicalCertificates.filter((row) => !row.isVoid);
+	return [...rows].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
 }
 
 /** `propose_issue_document`: signs the visit's draft prescription or certificate; a strong confirm. */
@@ -547,7 +384,7 @@ function IssueDocumentCard({
 	const [pending, setPending] = useState(false);
 	const label = DOCUMENT_LABELS[input.document];
 	const document = currentDocument(record, input.document);
-	if (!document || document.status !== 'draft') {
+	if (!document || document.documentStatus !== 'DRAFT') {
 		return <Missing message={`This visit has no draft ${label} to issue.`} />;
 	}
 	const prescription =
@@ -611,7 +448,7 @@ export const ProposeVoidDocumentToolCall = memo(({ toolPart }: ToolCallComponent
 						<VoidCard
 							toolPart={toolPart}
 							title={`Void ${label}`}
-							label={`${label} · ${document.status}`}
+							label={`${label} · ${document.documentStatus.toLowerCase()}`}
 							detail='stays in the record, marked void'
 							note={input.reason}
 							run={(confirmed, reason) =>
@@ -637,117 +474,6 @@ export const ProposeVoidDocumentToolCall = memo(({ toolPart }: ToolCallComponent
 		)}
 	</ActionFrame>
 ));
-
-/** `propose_bill_step`: finalize (strong), pay (OR number) or void (reason) the visit's bill. */
-export const ProposeBillStepToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_bill_step'>) => (
-	<ActionFrame<ProposeBillStepInput> toolPart={toolPart}>
-		{(input, output) => (
-			<EncounterGate output={output}>
-				{(record) => <BillStepCard toolPart={toolPart} input={input} record={record} />}
-			</EncounterGate>
-		)}
-	</ActionFrame>
-));
-
-function BillStepCard({
-	toolPart,
-	input,
-	record,
-}: {
-	toolPart: ToolPart;
-	input: ProposeBillStepInput;
-	record: EncounterRecordFieldsFragment;
-}) {
-	const queryClient = useQueryClient();
-	const { queueOrSendMessage } = useAgentContext();
-	const [orNumber, setOrNumber] = useState(input.orNumber ?? '');
-	const [error, setError] = useState<string>();
-	const [pending, setPending] = useState(false);
-	const bill = record.bills.find((row) => row.status !== 'voided');
-	if (!bill) {
-		return <Missing message='This visit has no bill. Draft the charges first.' />;
-	}
-	const label = `Bill ${formatPesos(bill.total)} · ${bill.status}`;
-	if (input.step === 'void') {
-		return (
-			<VoidCard
-				toolPart={toolPart}
-				title='Void bill'
-				label={label}
-				detail='stays in the record, marked void'
-				note={input.reason}
-				run={(confirmed, reason) =>
-					encounterRecordApi.encounterRecord.voidBill.mutate({
-						id: bill.id,
-						reason,
-						wiseOrigin: origin(confirmed),
-					})
-				}
-				answer='I voided the bill.'
-			/>
-		);
-	}
-	const finalize = input.step === 'finalize';
-	const confirm = (confirmed: ProposalConfirm) => {
-		setPending(true);
-		setError(undefined);
-		const step = finalize
-			? wiseActionsApi.finalizeBill.mutate({ id: bill.id, wiseOrigin: origin(confirmed) })
-			: encounterRecordApi.encounterRecord.markBillPaid.mutate({
-					id: bill.id,
-					orNumber: orNumber.trim(),
-					wiseOrigin: origin(confirmed, orNumber !== (input.orNumber ?? '')),
-				});
-		return step
-			.then(() => {
-				void queryClient.invalidateQueries(encounterRecordApi.encounterRecord.get.pathFilter());
-				void queueOrSendMessage({
-					text: finalize ? 'I finalized the bill.' : `I marked the bill paid (OR ${orNumber.trim()}).`,
-				});
-			})
-			.catch((caught: Error) => {
-				setError(caught.message);
-				throw caught;
-			})
-			.finally(() => setPending(false));
-	};
-	return (
-		<ActionCard
-			toolPart={toolPart}
-			icon={ReceiptText}
-			title={finalize ? 'Finalize bill' : 'Mark bill paid'}
-			confirmLabel={finalize ? 'Finalize bill' : 'Mark paid'}
-			resolved={finalize ? 'Finalized' : 'Paid'}
-			answer={finalize ? 'I finalized the bill' : 'I marked the bill paid'}
-			confirmStrength={finalize ? 'strong' : 'standard'}
-			onConfirm={confirm}
-			isPending={pending}
-			isConfirmDisabled={!finalize && !orNumber.trim()}
-			error={error}
-		>
-			<VisitLink record={record} tab='billing' />
-			<p className={styles.summary} data-testid='bill-step'>
-				{label} · {bill.charges.length} charge{bill.charges.length === 1 ? '' : 's'}
-			</p>
-			{finalize ? (
-				<p className={styles.meta}>
-					Locked once finalized; it can then only be paid or voided. You confirm twice.
-				</p>
-			) : (
-				<FormField label='Official receipt (OR) number'>
-					{(id) => (
-						<Input
-							id={id}
-							value={orNumber}
-							disabled={pending}
-							onChange={(event) => setOrNumber(event.target.value)}
-						/>
-					)}
-				</FormField>
-			)}
-		</ActionCard>
-	);
-}
 
 type ReportVersion = { toolCallId: string; output: report.Output };
 
@@ -844,10 +570,18 @@ function SaveReportCard({
 }
 
 const CONTACT_FIELDS = [
-	['phone', 'Phone'],
+	['phone', 'Mobile'],
 	['preferredLanguage', 'Preferred language'],
 	['barangay', 'Barangay'],
+	['addressLine', 'Street address'],
 ] as const;
+
+type ContactField = (typeof CONTACT_FIELDS)[number][0];
+
+/** The patient's current value of a contact field, as the card compares it. */
+function contactValue(patient: NonNullable<WisePatientContactQuery['patient']>, field: ContactField): string {
+	return (field === 'addressLine' ? patient.address?.addressLine : patient[field]) ?? '';
+}
 
 /** `propose_patient_update`: the patient's contact details, before → after. */
 export const ProposePatientUpdateToolCall = memo(({ toolPart }: ToolCallComponentProps<'propose_patient_update'>) => (
@@ -884,7 +618,7 @@ function PatientUpdateCard({
 	}
 	const current = patient.data;
 	const changed = CONTACT_FIELDS.filter(
-		([field]) => field in values && (values[field] ?? '') !== (current[field] ?? ''),
+		([field]) => field in values && (values[field] ?? '') !== contactValue(current, field),
 	);
 	const confirm = (confirmed: ProposalConfirm) => {
 		setPending(true);
@@ -921,7 +655,7 @@ function PatientUpdateCard({
 			error={error}
 		>
 			<p className={styles.meta}>
-				{current.givenName} {current.familyName} · names, birth date and identifiers are not changed here
+				{current.givenName} {current.familyName} · names, birth date and IDs are not changed here
 			</p>
 			<div className={styles.grid}>
 				{CONTACT_FIELDS.filter(([field]) => field in values).map(([field, label]) => (
@@ -935,7 +669,7 @@ function PatientUpdateCard({
 									onChange={(event) => setValues({ ...values, [field]: event.target.value })}
 								/>
 								<span className={styles.meta} data-testid={`contact-before-${field}`}>
-									Before: {current[field] || '—'}
+									Before: {contactValue(current, field) || '—'}
 								</span>
 							</>
 						)}

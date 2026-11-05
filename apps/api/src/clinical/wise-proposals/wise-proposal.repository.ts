@@ -19,7 +19,7 @@ export class WiseProposalRepository {
 			select: {
 				toolName: true,
 				messageId: true,
-				chatMessage: { select: { chatId: true, chat: { select: { userId: true, patientId: true } } } },
+				message: { select: { chatId: true, chat: { select: { userId: true, patientId: true } } } },
 			},
 		});
 	}
@@ -29,7 +29,7 @@ export class WiseProposalRepository {
 	}
 
 	listOutcomes(userId: string, chatId: string): Promise<WiseProposalOutcome[]> {
-		return this.prisma.wiseProposalOutcome.findMany({ where: { userId, chatId }, orderBy: { at: 'asc' } });
+		return this.prisma.wiseProposalOutcome.findMany({ where: { userId, chatId }, orderBy: { createdAt: 'asc' } });
 	}
 
 	insertOutcome(tx: Tx, outcome: Prisma.WiseProposalOutcomeUncheckedCreateInput): Promise<WiseProposalOutcome> {

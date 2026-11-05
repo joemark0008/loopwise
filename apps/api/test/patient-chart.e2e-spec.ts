@@ -11,16 +11,19 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { LlmService } from '../src/agent/llm/llm.service.js';
 import type { ProviderModelResult } from '../src/agent/providers/providers.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
+import { createClinic, createClinicScene, createOrganization, createUser } from './fixtures/clinic-fixtures.js';
+import { createTestApp, resetDatabase, signIn, useTestDatabase } from './test-app.js';
 
 const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
-const ENCOUNTER_FIELDS = 'id reason notes sourceChatId facility { name } doctor { name }';
+const ENCOUNTER_FIELDS =
+	'id encounterNo type status reason notes sourceChatId clinic { name } practitioner { displayName }';
 const CREATE_ENCOUNTER = `mutation ($input: CreateEncounterInput!) { createEncounter(input: $input) { ${ENCOUNTER_FIELDS} } }`;
 const ENCOUNTERS = `query ($patientId: ID!) { encounters(patientId: $patientId) { ${ENCOUNTER_FIELDS} } }`;
 
 /**
  * The patient chart (DESIGN.md §7): encounters under row-level security, and one Wise chat per clinician per patient
- * that knows the patient. The LLM is a scripted mock: it drafts an encounter with `propose_encounter`, then answers.
+ * that knows the patient. Dr. Reyes has Maria in care at the clinic; Dr. Cruz works at a clinic of another
+ * organization. The LLM is a scripted mock: it drafts an encounter with `propose_encounter`, then answers.
  */
 describe('patient chart (e2e)', () => {
 	let app: NestExpressApplication;
@@ -37,7 +40,8 @@ describe('patient chart (e2e)', () => {
 		reyes: { cookie: [] as string[], id: '' },
 		cruz: { cookie: [] as string[], id: '' },
 	};
-	const facilities = { healthCenter: '', hospital: '' };
+	const clinics = { healthCenter: '', hospital: '' };
+	const names = { clinic: '', doctor: '' };
 
 	const graphql = (cookie: string[], query: string, variables: Record<string, unknown> = {}) =>
 		request(app.getHttpServer())
@@ -69,48 +73,24 @@ describe('patient chart (e2e)', () => {
 			scriptedModel(prompts, () => toolCall),
 		);
 
-		const password = 'Sup3r-secret!';
-		const reyes = await createTestUser(app, { name: 'Dr. Reyes', email: 'reyes@example.com', password });
-		const cruz = await createTestUser(app, { name: 'Dr. Cruz', email: 'cruz@example.com', password });
-		users.reyes = { cookie: reyes.cookie, id: reyes.userId };
-		users.cruz = { cookie: cruz.cookie, id: cruz.userId };
+		const scene = await createClinicScene(prisma);
+		clinicId = scene.clinic.id;
+		await prisma.clinic.update({ where: { id: clinicId }, data: { path: process.env.LOOPWISE_CLINICS_DIR } });
+		clinics.healthCenter = scene.clinic.id;
+		names.clinic = scene.clinic.name;
+		names.doctor = `Dr. ${scene.doctor.name}`;
+		patientId = scene.patient.id;
+		users.reyes = { cookie: await signIn(app, scene.doctor), id: scene.doctor.id };
 
-		const clinic = await graphql(users.reyes.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }');
-		clinicId = clinic.body.data.createClinic.id;
-		await prisma.clinicMember.createMany({
-			data: [{ clinicId, userId: users.cruz.id, role: 'user' }],
-			skipDuplicates: true,
-		});
-
-		facilities.healthCenter = (
-			await prisma.organization.create({ data: { name: 'Health Center', slug: 'hc', type: 'clinic' } })
+		const cruz = await createUser(prisma, { firstName: 'Carlo', lastName: 'Cruz' });
+		const hospital = await createOrganization(prisma);
+		clinics.hospital = (
+			await createClinic(prisma, {
+				organizationId: hospital.id,
+				staff: [{ userId: cruz.id, roles: ['DOCTOR'] }],
+			})
 		).id;
-		facilities.hospital = (
-			await prisma.organization.create({ data: { name: 'Regional Hospital', slug: 'rh', type: 'hospital' } })
-		).id;
-		await prisma.orgMember.createMany({
-			data: [
-				{ orgId: facilities.healthCenter, userId: users.reyes.id, role: 'user' },
-				{ orgId: facilities.hospital, userId: users.cruz.id, role: 'user' },
-			],
-		});
-
-		const registered = await graphql(
-			users.reyes.cookie,
-			'mutation ($input: RegisterPatientInput!) { registerPatient(input: $input) { patient { id } } }',
-			{
-				input: {
-					facilityId: facilities.healthCenter,
-					givenName: 'Maria',
-					familyName: 'Santos',
-					birthDate: '1981-04-12',
-					sex: 'female',
-					mrn: 'THC-0001',
-					consentGiven: true,
-				},
-			},
-		);
-		patientId = registered.body.data.registerPatient.patient.id;
+		users.cruz = { cookie: await signIn(app, cruz), id: cruz.id };
 	});
 
 	afterAll(async () => {
@@ -119,34 +99,46 @@ describe('patient chart (e2e)', () => {
 
 	it('records an encounter for a patient in your care, with an audit row', async () => {
 		const res = await graphql(users.reyes.cookie, CREATE_ENCOUNTER, {
-			input: { patientId, facilityId: facilities.healthCenter, reason: ' Fatigue ', notes: 'BP 140/90.' },
+			input: { patientId, clinicId: clinics.healthCenter, reason: ' Fatigue ', notes: 'BP 140/90.' },
 		});
 		expect(res.body.errors).toBeUndefined();
 		expect(res.body.data.createEncounter).toMatchObject({
 			reason: 'Fatigue',
 			notes: 'BP 140/90.',
 			sourceChatId: null,
-			facility: { name: 'Health Center' },
-			doctor: { name: 'Dr. Reyes' },
+			type: 'CONSULTATION',
+			status: 'IN_PROGRESS',
+			encounterNo: expect.stringMatching(/-ENC-\d{4}-000001$/),
+			clinic: { name: names.clinic },
+			practitioner: { displayName: names.doctor },
 		});
-		expect(await prisma.auditLog.count({ where: { patientId, action: 'encounter.create' } })).toBe(1);
+		expect(await prisma.auditLog.count({ where: { patientId, event: 'encounter.create', action: 'CREATE' } })).toBe(
+			1,
+		);
+		expect(await prisma.careRelationship.count({ where: { patientId, userId: users.reyes.id } })).toBeGreaterThan(
+			0,
+		);
 
+		// The scene's open visit and this one.
 		const list = await graphql(users.reyes.cookie, ENCOUNTERS, { patientId });
-		expect(list.body.data.encounters).toHaveLength(1);
+		expect(list.body.data.encounters).toHaveLength(2);
 	});
 
-	it('hides the encounters from a doctor at another facility, and refuses theirs', async () => {
+	it('hides the encounters from a doctor of another organization, and refuses theirs', async () => {
 		const list = await graphql(users.cruz.cookie, ENCOUNTERS, { patientId });
 		expect(list.body.data.encounters).toEqual([]);
 
 		const atOwnFacility = await graphql(users.cruz.cookie, CREATE_ENCOUNTER, {
-			input: { patientId, facilityId: facilities.hospital, reason: 'Check' },
+			input: { patientId, clinicId: clinics.hospital, reason: 'Check' },
 		});
 		expect(atOwnFacility.body.errors?.[0].extensions.code).toBe('NOT_FOUND');
 		const atTheirs = await graphql(users.cruz.cookie, CREATE_ENCOUNTER, {
-			input: { patientId, facilityId: facilities.healthCenter, reason: 'Check' },
+			input: { patientId, clinicId: clinics.healthCenter, reason: 'Check' },
 		});
-		expect(atTheirs.body.errors?.[0].extensions.code).toBe('FORBIDDEN');
+		expect(atTheirs.body.errors?.[0].extensions).toMatchObject({
+			code: 'FORBIDDEN',
+			errorCode: 'CLINIC_NOT_AVAILABLE',
+		});
 	});
 
 	it('refuses a chart chat about a patient the user cannot see', async () => {
@@ -169,7 +161,7 @@ describe('patient chart (e2e)', () => {
 		const output = events.find((event) => event.type === 'tool-output-available');
 		expect(output?.output).toMatchObject({
 			patientId,
-			facilities: [{ id: facilities.healthCenter, name: 'Health Center' }],
+			clinics: [{ id: clinics.healthCenter, name: names.clinic }],
 		});
 
 		expect(await prisma.chat.findUnique({ where: { id: chatId } })).toMatchObject({
@@ -197,7 +189,7 @@ describe('patient chart (e2e)', () => {
 		const linked = await graphql(users.reyes.cookie, CREATE_ENCOUNTER, {
 			input: {
 				patientId,
-				facilityId: facilities.healthCenter,
+				clinicId: clinics.healthCenter,
 				reason: 'Fatigue follow-up',
 				sourceChatId: chatId,
 			},
@@ -209,11 +201,11 @@ describe('patient chart (e2e)', () => {
 			'mutation ($input: RegisterPatientInput!) { registerPatient(input: $input) { patient { id } } }',
 			{
 				input: {
-					facilityId: facilities.healthCenter,
+					clinicId: clinics.healthCenter,
 					givenName: 'Jose',
 					familyName: 'Ramos',
 					birthDate: '1966-09-03',
-					sex: 'male',
+					sex: 'MALE',
 					consentGiven: true,
 				},
 			},
@@ -221,7 +213,7 @@ describe('patient chart (e2e)', () => {
 		const wrong = await graphql(users.reyes.cookie, CREATE_ENCOUNTER, {
 			input: {
 				patientId: other.body.data.registerPatient.patient.id,
-				facilityId: facilities.healthCenter,
+				clinicId: clinics.healthCenter,
 				reason: 'Check',
 				sourceChatId: chatId,
 			},
@@ -233,7 +225,7 @@ describe('patient chart (e2e)', () => {
 		const jose = await graphql(users.reyes.cookie, '{ searchPatients(input: { query: "Ramos" }) { id } }');
 		const josePatientId = jose.body.data.searchPatients[0].id;
 		const created = await graphql(users.reyes.cookie, CREATE_ENCOUNTER, {
-			input: { patientId: josePatientId, facilityId: facilities.healthCenter, reason: 'Sore throat' },
+			input: { patientId: josePatientId, clinicId: clinics.healthCenter, reason: 'Sore throat' },
 		});
 		const encounterId = created.body.data.createEncounter.id;
 		toolCall = {
@@ -256,7 +248,7 @@ describe('patient chart (e2e)', () => {
 			patientId: josePatientId,
 		});
 		expect(res.status).toBe(200);
-		expect(prompts[0]).toContain(`[encounter ${encounterId}]: Sore throat`);
+		expect(prompts[0]).toMatch(new RegExp(`\\[encounter ${encounterId}\\] .*: Sore throat`));
 		expect(prompts[0]).toContain('- Allergies: none recorded');
 		const output = parseSse(res.body as string).find((event) => event.type === 'tool-output-available');
 		expect(output?.output).toMatchObject({ success: true, patientId: josePatientId, encounterId });

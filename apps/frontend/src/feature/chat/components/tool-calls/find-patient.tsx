@@ -47,7 +47,8 @@ export function PatientMatches({ query, output }: { query: string; output: findP
 									{[
 										ageLabel(patient.birthDate, patient.sex),
 										`born ${formatDay(patient.birthDate)}`,
-										...patient.identifiers.map(({ system, value }) => `${system} ${value}`),
+										patient.patientNo,
+										...patient.identifications.map(({ label, idNumber }) => `${label} ${idNumber}`),
 									]
 										.filter(Boolean)
 										.join(' · ')}

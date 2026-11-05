@@ -70,7 +70,7 @@ export const NoteSchema = z.object({
 export const OutputSchema = z.object({
 	_version: z.literal('1').optional(),
 	success: z.literal(true),
-	encounter: z.object({ id: z.string(), startedAt: z.string(), facilityName: z.string() }),
+	encounter: z.object({ id: z.string(), startedAt: z.string(), clinicName: z.string() }),
 	patientName: z.string(),
 	/** The note when Wise drafted the change: the "before" of the card. */
 	current: NoteSchema,

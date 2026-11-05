@@ -1,10 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { ENCOUNTER_TYPE_LABELS } from '@loopwise/shared/encounter';
 import { ArrowLeft } from 'lucide-react';
 import { BillingTab } from './billing-tab';
 import { CertificateTab } from './certificate-tab';
 import styles from './encounter.module.css';
 import { formatDateTime, vitalChips } from './encounter-format';
+import { EncounterStatusActions } from './encounter-status-actions';
+import { EncounterStatusBadge } from './encounter-status-badge';
 import { NoteTab } from './note-tab';
 import { OrdersTab } from './orders-tab';
 import { PrescriptionsTab } from './prescriptions-tab';
@@ -21,8 +24,9 @@ const TAB_ID = 'encounter';
 
 /**
  * One visit's record (DESIGN.md §5): the note and diagnoses, vitals, orders and results, prescriptions and medical
- * certificates and the bill, as tabs (`?tab=`), under the patient banner and beside the patient's Wise chat. Every
- * read is audited by the API; only staff at the visit's facility can add to it.
+ * certificates and the bill, as tabs (`?tab=`), under the patient banner and beside the patient's Wise chat. The
+ * header moves the visit along its status. Every read is audited by the API; only staff at the visit's clinic can add
+ * to it.
  */
 export function EncounterPage({
 	patientId,
@@ -58,14 +62,11 @@ export function EncounterPage({
 	const tabs = [
 		{ id: 'note' as const, label: 'Note & diagnosis', count: activeCount(data.diagnoses) },
 		{ id: 'vitals' as const, label: 'Vitals', count: activeCount(data.vitals) },
-		{ id: 'orders' as const, label: 'Orders & results', count: data.orders.length },
-		{ id: 'prescriptions' as const, label: 'Prescriptions', count: data.prescriptions.length },
-		{ id: 'certificate' as const, label: 'Medical certificate', count: data.medicalCertificates.length },
-		{
-			id: 'billing' as const,
-			label: 'Billing',
-			count: data.bills.filter((bill) => bill.status !== 'voided').length,
-		},
+		// The other areas' tabs count their own records once their fields are on the record again.
+		{ id: 'orders' as const, label: 'Orders & results' },
+		{ id: 'prescriptions' as const, label: 'Prescriptions' },
+		{ id: 'certificate' as const, label: 'Medical certificate' },
+		{ id: 'billing' as const, label: 'Billing' },
 	];
 
 	return (
@@ -79,10 +80,18 @@ export function EncounterPage({
 					{data.encounter.reason ?? 'Visit'}
 				</h2>
 				<p className={styles.encounterSubtitle}>
-					{formatDateTime(data.encounter.startedAt)}
-					{data.encounter.facility && ` · ${data.encounter.facility.name}`}
-					{data.encounter.doctor && ` · ${data.encounter.doctor.name}`}
+					<EncounterStatusBadge status={data.encounter.status} /> {data.encounter.encounterNo} ·{' '}
+					{ENCOUNTER_TYPE_LABELS[data.encounter.type]} · {formatDateTime(data.encounter.startedAt)}
+					{data.encounter.clinic && ` · ${data.encounter.clinic.name}`}
+					{data.encounter.practitioner && ` · ${data.encounter.practitioner.displayName}`}
 				</p>
+				{data.canEdit && (
+					<EncounterStatusActions
+						encounterId={data.encounter.id}
+						status={data.encounter.status}
+						version={data.encounter.version}
+					/>
+				)}
 				{latestVitals && (
 					<div className={styles.chipRow} data-testid='latest-vitals'>
 						<span className={styles.chipLabel}>Latest vitals</span>
@@ -95,8 +104,9 @@ export function EncounterPage({
 				)}
 				{!data.canEdit && (
 					<p className={styles.muted}>
-						Read only: only staff at {data.encounter.facility?.name ?? 'the visit’s facility'} can add to
-						this record.
+						{data.encounter.status === 'CANCELLED'
+							? 'Read only: this visit was cancelled.'
+							: `Read only: only staff at ${data.encounter.clinic?.name ?? 'the visit’s clinic'} can add to this record.`}
 					</p>
 				)}
 			</header>

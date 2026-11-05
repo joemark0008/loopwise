@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -14,10 +14,10 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
 import { patientApi } from '@/lib/patient-api';
 
-/** Registers a patient at the clinician's facility (DESIGN.md §5): fields, consent, then duplicate checks. */
+/** Registers a patient at one of the user's clinics (DESIGN.md §5): fields, consent, then duplicate checks. */
 export function RegisterPatientPage() {
 	const navigate = useNavigate();
-	const facilities = useQuery(patientApi.patient.facilities.queryOptions());
+	const clinics = useQuery(patientApi.patient.clinics.queryOptions());
 	const [values, setValues] = useState<PatientFormValues>(emptyPatientForm());
 	const [consentGiven, setConsentGiven] = useState(false);
 	const [showErrors, setShowErrors] = useState(false);
@@ -25,12 +25,16 @@ export function RegisterPatientPage() {
 		onDone: (patient) => void navigate({ to: '/patients/$patientId', params: { patientId: patient.id } }),
 	});
 
-	const onlyFacility = facilities.data?.length === 1 ? facilities.data[0].id : undefined;
+	const onlyClinic = clinics.data?.length === 1 ? clinics.data[0].id : undefined;
 	useEffect(() => {
-		if (onlyFacility) {
-			setValues((current) => (current.facilityId ? current : { ...current, facilityId: onlyFacility }));
+		if (onlyClinic) {
+			setValues((current) => (current.clinicId ? current : { ...current, clinicId: onlyClinic }));
 		}
-	}, [onlyFacility]);
+	}, [onlyClinic]);
+	const cityMunicipalityCode = clinics.data?.find((clinic) => clinic.id === values.clinicId)?.cityMunicipalityCode;
+	const barangays = useQuery(
+		patientApi.patient.barangays.queryOptions(cityMunicipalityCode ? { cityMunicipalityCode } : skipToken),
+	);
 
 	const errors = validatePatientForm(values);
 	const consentError = !consentGiven ? 'The patient must agree to be registered.' : undefined;
@@ -59,17 +63,17 @@ export function RegisterPatientPage() {
 				<div>
 					<h1 className={styles.patientsTitle}>Register a patient</h1>
 					<p className={styles.patientsSubtitle}>
-						{facilities.data?.length === 1
-							? `At ${facilities.data[0].name}. You become part of the patient's care team.`
+						{clinics.data?.length === 1
+							? `At ${clinics.data[0].name}. You become part of the patient's care team.`
 							: "You become part of the patient's care team."}
 					</p>
 				</div>
 			</header>
 
-			{facilities.isPending ? (
+			{clinics.isPending ? (
 				<Skeleton className={styles.patientsSkeleton} />
-			) : facilities.data?.length === 0 ? (
-				<ErrorMessage message='You are not a member of any facility, so you cannot register patients.' />
+			) : clinics.data?.length === 0 ? (
+				<ErrorMessage message='You do not work at any clinic, so you cannot register patients.' />
 			) : (
 				<form className={styles.patientsForm} onSubmit={onSubmit} noValidate>
 					<p className={styles.patientsRequiredNote}>
@@ -91,7 +95,8 @@ export function RegisterPatientPage() {
 					<PatientFields
 						values={values}
 						errors={showErrors ? errors : {}}
-						facilities={facilities.data ?? []}
+						clinics={clinics.data ?? []}
+						barangays={cityMunicipalityCode ? (barangays.data ?? []) : []}
 						onChange={(next) => {
 							setValues(next);
 							registration.clearDuplicates();
@@ -106,8 +111,8 @@ export function RegisterPatientPage() {
 						/>
 						<span>
 							<strong>Consent</strong>
-							<span aria-hidden> *</span>: the patient agrees to be registered and to have their results
-							followed up by their care team.
+							<span aria-hidden> *</span>: the patient agrees to the data privacy notice (RA 10173): to be
+							registered and to have their records kept and followed up by their care team.
 						</span>
 					</label>
 					{showErrors && consentError && (

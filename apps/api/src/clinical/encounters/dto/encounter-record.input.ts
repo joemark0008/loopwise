@@ -12,11 +12,11 @@ import {
 	ValidateNested,
 } from 'class-validator';
 
-import { AllergyKind, AllergySeverity, DiagnosisCertainty } from '../../../generated/prisma/enums.js';
 import { WiseOriginInput } from '../../wise-proposals/dto/wise-origin.input.js';
+import { DiagnosisType, Disposition } from '../encounters.enums.js';
 
 /*
- * Inputs of the encounter record. The DTOs only check shapes; `EncounterRecordService` parses the fields with the
+ * Inputs of the encounter record. The DTOs only check shapes; the record services parse the fields with the
  * shared rules (`@loopwise/shared/encounter-record`, `@loopwise/shared/vitals`), the same the forms and Wise cards use.
  */
 
@@ -60,6 +60,11 @@ export class UpdateEncounterNoteInput {
 	@IsOptional()
 	@IsString()
 	followUpOn?: string | null;
+
+	@Field(() => Disposition, { nullable: true, description: 'How the visit ended.' })
+	@IsOptional()
+	@IsIn(Object.values(Disposition))
+	disposition?: Disposition | null;
 
 	@Field(() => String, { nullable: true })
 	@IsOptional()
@@ -162,28 +167,29 @@ export class AddDiagnosisInput {
 	@Type(() => WiseOriginInput)
 	wiseOrigin?: WiseOriginInput | null;
 
-	@Field({ description: 'ICD-10 (WHO 2010), e.g. `I10` or `E11.9`.' })
+	@Field({ description: 'ICD-10 code of `icd10_codes`, e.g. `I10` or `E11.9`.' })
 	@IsString()
 	@MaxLength(10)
 	icd10Code: string;
 
-	@Field({ description: 'The diagnosis as written, normally the ICD-10 title.' })
+	@Field({ description: 'The diagnosis as printed, normally the ICD-10 title.' })
 	@IsString()
 	@MaxLength(300)
-	display: string;
+	description: string;
 
-	@Field(() => DiagnosisCertainty, { nullable: true })
-	@IsOptional()
-	@IsIn(Object.values(DiagnosisCertainty))
-	certainty?: DiagnosisCertainty | null;
-
-	@Field(() => Boolean, {
+	@Field(() => DiagnosisType, {
 		nullable: true,
-		description: 'Makes it the primary diagnosis (the previous one stops being).',
+		description:
+			'Default: PRIMARY for the first diagnosis, else SECONDARY. A new PRIMARY demotes the previous one.',
 	})
 	@IsOptional()
+	@IsIn(Object.values(DiagnosisType))
+	type?: DiagnosisType | null;
+
+	@Field(() => Boolean, { nullable: true, description: 'Default true; false for a provisional diagnosis.' })
+	@IsOptional()
 	@IsBoolean()
-	isPrimary?: boolean | null;
+	isFinal?: boolean | null;
 
 	@Field(() => String, { nullable: true })
 	@IsOptional()
@@ -197,15 +203,15 @@ export class UpdateDiagnosisInput {
 	@IsUUID()
 	id: string;
 
-	@Field(() => DiagnosisCertainty, { nullable: true })
+	@Field(() => DiagnosisType, { nullable: true, description: 'A new PRIMARY demotes the previous one.' })
 	@IsOptional()
-	@IsIn(Object.values(DiagnosisCertainty))
-	certainty?: DiagnosisCertainty | null;
+	@IsIn(Object.values(DiagnosisType))
+	type?: DiagnosisType | null;
 
 	@Field(() => Boolean, { nullable: true })
 	@IsOptional()
 	@IsBoolean()
-	isPrimary?: boolean | null;
+	isFinal?: boolean | null;
 
 	@Field(() => String, { nullable: true })
 	@IsOptional()
@@ -229,6 +235,7 @@ export class VoidEntryInput {
 	@IsString()
 	@MaxLength(300)
 	reason: string;
+
 	@Field(() => WiseOriginInput, {
 		nullable: true,
 		description: 'Set by a Wise card (`propose_void_*`, `propose_bill_step`): verified and settled with the void.',
@@ -238,42 +245,3 @@ export class VoidEntryInput {
 	@Type(() => WiseOriginInput)
 	wiseOrigin?: WiseOriginInput | null;
 }
-
-@InputType()
-export class AddAllergyInput {
-	@Field(() => ID)
-	@IsUUID()
-	patientId: string;
-
-	@Field(() => ID, { description: 'The facility recording it (`myFacilities`).' })
-	@IsUUID()
-	facilityId: string;
-
-	@Field()
-	@IsString()
-	@MaxLength(120)
-	substance: string;
-
-	@Field(() => AllergyKind, { nullable: true })
-	@IsOptional()
-	@IsIn(Object.values(AllergyKind))
-	kind?: AllergyKind | null;
-
-	@Field(() => String, { nullable: true })
-	@IsOptional()
-	@IsString()
-	reaction?: string | null;
-
-	@Field(() => AllergySeverity, { nullable: true })
-	@IsOptional()
-	@IsIn(Object.values(AllergySeverity))
-	severity?: AllergySeverity | null;
-	@Field(() => WiseOriginInput, { nullable: true, description: 'Set by a Wise card (`propose_allergy`).' })
-	@IsOptional()
-	@ValidateNested()
-	@Type(() => WiseOriginInput)
-	wiseOrigin?: WiseOriginInput | null;
-}
-
-@InputType({ description: 'Voids an allergy recorded in error; it stays in the record, struck through.' })
-export class VoidAllergyInput extends VoidEntryInput {}

@@ -5,10 +5,11 @@ import z from 'zod/v3';
  * proposal card, so they never disagree on what a valid patient is.
  */
 export const PATIENT_NAME_MAX_LENGTH = 100;
-export const MRN_MAX_LENGTH = 40;
+export const PATIENT_NO_MAX_LENGTH = 40;
 export const EARLIEST_BIRTH_DATE = '1900-01-01';
 
-export const PATIENT_SEXES = ['female', 'male', 'other', 'unknown'] as const;
+/** The `sex` enum of the schema (PhilHealth PMRF: male or female). */
+export const PATIENT_SEXES = ['FEMALE', 'MALE'] as const;
 export type PatientSex = (typeof PATIENT_SEXES)[number];
 
 export const PATIENT_LANGUAGES = [
@@ -18,7 +19,35 @@ export const PATIENT_LANGUAGES = [
 ] as const;
 export type PatientLanguage = (typeof PATIENT_LANGUAGES)[number]['value'];
 
-export const IDENTIFIER_SYSTEMS = { mrn: 'MRN', philHealth: 'PhilHealth' } as const;
+/** The `identification_type` values the registration form asks for (the full list is in the schema). */
+export const PATIENT_IDENTIFICATION_TYPES = {
+	philHealth: 'PHILHEALTH_ID',
+	seniorCitizen: 'SENIOR_CITIZEN_OSCA',
+	pwd: 'PWD',
+	philSys: 'PHILSYS_NATIONAL_ID',
+} as const;
+
+/** How an identification is named on screen. */
+export const IDENTIFICATION_LABELS: Record<string, string> = {
+	PHILHEALTH_ID: 'PhilHealth',
+	PHILSYS_NATIONAL_ID: 'PhilSys',
+	SENIOR_CITIZEN_OSCA: 'Senior citizen (OSCA)',
+	PWD: 'PWD',
+	SOLO_PARENT: 'Solo parent',
+	SSS: 'SSS',
+	GSIS: 'GSIS',
+	UMID: 'UMID',
+	TIN: 'TIN',
+	DRIVERS_LICENSE: "Driver's license",
+	PASSPORT: 'Passport',
+	POSTAL_ID: 'Postal ID',
+	VOTERS_ID: "Voter's ID",
+	PRC_ID: 'PRC ID',
+	STUDENT_ID: 'Student ID',
+	COMPANY_ID: 'Company ID',
+	BARANGAY_ID: 'Barangay ID',
+	OTHER: 'Other ID',
+};
 
 /** A PhilHealth Identification Number (`NN-NNNNNNNNN-N`), or the synthetic `SYN-NNNN-NNNN` of the demo data. */
 export const PHILHEALTH_PATTERN = /^(\d{2}-\d{9}-\d|SYN-\d{4}-\d{4})$/;
@@ -65,9 +94,16 @@ export const BirthDateSchema = z
 
 export const PatientDraftSchema = z.object({
 	givenName: name('given name').describe('Given (first) name, e.g. Maria.'),
+	middleName: optionalText(
+		z
+			.string()
+			.trim()
+			.max(PATIENT_NAME_MAX_LENGTH, `Keep the middle name under ${PATIENT_NAME_MAX_LENGTH} characters.`)
+			.transform((value) => value.replace(/\s+/g, ' ')),
+	).describe("Middle name (the mother's maiden family name), e.g. Reyes."),
 	familyName: name('family name').describe('Family (last) name, e.g. Santos.'),
 	birthDate: BirthDateSchema.describe('Birth date as YYYY-MM-DD.'),
-	sex: z.enum(PATIENT_SEXES, { errorMap: () => ({ message: 'Choose the sex.' }) }),
+	sex: z.enum(PATIENT_SEXES, { errorMap: () => ({ message: 'Choose the sex.' }) }).describe('FEMALE or MALE.'),
 	phone: optionalText(
 		z
 			.string()
@@ -84,12 +120,19 @@ export const PatientDraftSchema = z.object({
 	preferredLanguage: z
 		.enum(PATIENT_LANGUAGES.map((language) => language.value) as [PatientLanguage, ...PatientLanguage[]])
 		.default('en'),
-	mrn: optionalText(
-		z.string().trim().max(MRN_MAX_LENGTH, `Keep the MRN under ${MRN_MAX_LENGTH} characters.`),
-	).describe("The facility's medical record number, e.g. THC-0042."),
+	patientNo: optionalText(
+		z
+			.string()
+			.trim()
+			.max(PATIENT_NO_MAX_LENGTH, `Keep the patient number under ${PATIENT_NO_MAX_LENGTH} characters.`),
+	).describe("The clinic's existing chart number, if the patient has a paper chart; assigned otherwise."),
 	philHealthId: optionalText(
 		z.string().trim().toUpperCase().regex(PHILHEALTH_PATTERN, 'Use the PhilHealth number format NN-NNNNNNNNN-N.'),
 	).describe('PhilHealth Identification Number, NN-NNNNNNNNN-N.'),
+	barangayCode: optionalText(z.string().trim().max(20)).describe('PSGC code of the barangay of residence.'),
+	addressLine: optionalText(z.string().trim().max(300, 'Keep the address under 300 characters.')).describe(
+		'House no., street, purok / sitio.',
+	),
 });
 
 export type PatientDraft = z.output<typeof PatientDraftSchema>;

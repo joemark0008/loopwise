@@ -18,7 +18,7 @@ export default createTool<proposeEncounterNote.Input, proposeEncounterNote.Outpu
 				"This chat isn't about a patient. Ask the user to open the patient's chart (Patients) and ask Wise there.",
 			);
 		}
-		const draftBase = await context.services.encounters.getNoteForWise(
+		const draftBase = await context.services.encounters.getForWise(
 			context.userId,
 			context.patientId,
 			encounterId?.trim() || undefined,

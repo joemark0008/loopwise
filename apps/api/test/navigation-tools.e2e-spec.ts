@@ -11,7 +11,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { LlmService } from '../src/agent/llm/llm.service.js';
 import type { ProviderModelResult } from '../src/agent/providers/providers.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
+import { createClinicScene } from './fixtures/clinic-fixtures.js';
+import { createTestApp, resetDatabase, signIn, useTestDatabase } from './test-app.js';
 
 const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
 
@@ -22,7 +23,7 @@ interface ScriptedCall {
 
 /**
  * Wise's navigation tools (DESIGN.md §7.2): `find_patient` searches as the user and `open_page` only opens a chart the
- * user may see, so a doctor at another facility can neither find nor open the patient. The LLM is scripted: each
+ * user may see, so a doctor of the same clinic without a care relationship can neither find nor open the patient. The LLM is scripted: each
  * question runs the queued tool calls, one step each, then answers.
  */
 describe('navigation tools (e2e)', () => {
@@ -30,18 +31,12 @@ describe('navigation tools (e2e)', () => {
 	let prisma: PrismaService;
 	let clinicId = '';
 	let patientId = '';
+	let patient = { patientNo: '', birthDate: '' };
 	const script: ScriptedCall[][] = [];
 	const users = {
 		reyes: { cookie: [] as string[], id: '' },
 		cruz: { cookie: [] as string[], id: '' },
 	};
-
-	const graphql = (cookie: string[], query: string, variables: Record<string, unknown> = {}) =>
-		request(app.getHttpServer())
-			.post('/graphql')
-			.set('Cookie', cookie)
-			.set(clinicId ? { 'x-loopwise-clinic-id': clinicId } : {})
-			.send({ query, variables });
 
 	/** Asks Wise, running `steps` (one tool call per step), and returns the SSE events. */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- SSE events of every type
@@ -72,48 +67,13 @@ describe('navigation tools (e2e)', () => {
 			scriptedModel(script),
 		);
 
-		const password = 'Sup3r-secret!';
-		const reyes = await createTestUser(app, { name: 'Dr. Reyes', email: 'reyes@example.com', password });
-		const cruz = await createTestUser(app, { name: 'Dr. Cruz', email: 'cruz@example.com', password });
-		users.reyes = { cookie: reyes.cookie, id: reyes.userId };
-		users.cruz = { cookie: cruz.cookie, id: cruz.userId };
-
-		const clinic = await graphql(users.reyes.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }');
-		clinicId = clinic.body.data.createClinic.id;
-		await prisma.clinicMember.createMany({
-			data: [{ clinicId, userId: users.cruz.id, role: 'user' }],
-			skipDuplicates: true,
-		});
-
-		const healthCenter = await prisma.organization.create({
-			data: { name: 'Health Center', slug: 'hc', type: 'clinic' },
-		});
-		const hospital = await prisma.organization.create({
-			data: { name: 'Regional Hospital', slug: 'rh', type: 'hospital' },
-		});
-		await prisma.orgMember.createMany({
-			data: [
-				{ orgId: healthCenter.id, userId: users.reyes.id, role: 'user' },
-				{ orgId: hospital.id, userId: users.cruz.id, role: 'user' },
-			],
-		});
-
-		const registered = await graphql(
-			users.reyes.cookie,
-			'mutation ($input: RegisterPatientInput!) { registerPatient(input: $input) { patient { id } } }',
-			{
-				input: {
-					facilityId: healthCenter.id,
-					givenName: 'Maria',
-					familyName: 'Santos',
-					birthDate: '1981-04-12',
-					sex: 'female',
-					mrn: 'THC-0001',
-					consentGiven: true,
-				},
-			},
-		);
-		patientId = registered.body.data.registerPatient.patient.id;
+		const scene = await createClinicScene(prisma);
+		clinicId = scene.clinic.id;
+		await prisma.clinic.update({ where: { id: clinicId }, data: { path: process.env.LOOPWISE_CLINICS_DIR } });
+		patientId = scene.patient.id;
+		patient = { patientNo: scene.patient.patientNo, birthDate: '1980-06-15' };
+		users.reyes = { cookie: await signIn(app, scene.doctor), id: scene.doctor.id };
+		users.cruz = { cookie: await signIn(app, scene.otherDoctor), id: scene.otherDoctor.id };
 	});
 
 	afterAll(async () => {
@@ -136,9 +96,10 @@ describe('navigation tools (e2e)', () => {
 					{
 						id: patientId,
 						name: 'Maria Santos',
-						birthDate: '1981-04-12',
-						sex: 'female',
-						identifiers: [{ system: 'MRN', value: 'THC-0001' }],
+						patientNo: patient.patientNo,
+						birthDate: patient.birthDate,
+						sex: 'FEMALE',
+						identifications: [],
 					},
 				],
 				truncated: false,
@@ -152,13 +113,14 @@ describe('navigation tools (e2e)', () => {
 			},
 		]);
 		const audit = await prisma.auditLog.findMany({
-			where: { userId: users.reyes.id, patientId, action: 'patient.view' },
-			select: { reason: true },
+			where: { userId: users.reyes.id, patientId, event: 'patient.view' },
+			select: { reason: true, action: true },
 		});
+		expect(audit.every((row) => row.action === 'VIEW')).toBe(true);
 		expect(audit.map((row) => row.reason).sort()).toEqual(['Wise find_patient', 'Wise open_page']);
 	});
 
-	it('neither finds nor opens the patient for a doctor at another facility', async () => {
+	it('neither finds nor opens the patient for a doctor without a care relationship', async () => {
 		const events = await ask(users.cruz.cookie, [
 			{ toolName: 'find_patient', input: { query: 'Maria Santos' } },
 			{

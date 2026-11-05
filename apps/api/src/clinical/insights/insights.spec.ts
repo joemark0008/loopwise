@@ -14,40 +14,40 @@ const TODAY = at('2026-11-03');
 const vitals = (day: string, values: Record<string, number | null>) =>
 	({
 		recordedAt: at(day),
-		systolicMmHg: null,
-		diastolicMmHg: null,
-		heartRateBpm: null,
+		systolicBp: null,
+		diastolicBp: null,
+		heartRate: null,
 		respiratoryRate: null,
 		temperatureC: null,
-		spo2Pct: null,
+		oxygenSaturation: null,
 		weightKg: null,
 		heightCm: null,
 		bmi: null,
-		bloodGlucoseMgDl: null,
+		bloodGlucose: null,
 		painScore: null,
 		...values,
 	}) as unknown as PatientSummaryData['trendVitals'][number];
 
-const result = (day: string, code: string, value: number) =>
-	({
-		resultedAt: at(day),
-		code,
-		display: code === '4548-4' ? 'Hemoglobin A1c' : 'Fasting glucose',
-		value: String(value),
-		valueNumeric: value,
-		unit: code === '4548-4' ? '%' : 'mg/dL',
-		refRange: null,
-		flag: 'high',
-	}) as unknown as PatientSummaryData['trendResults'][number];
+const result = (day: string, code: string, value: number): PatientSummaryData['trendResults'][number] => ({
+	resultId: `r-${day}-${code}`,
+	resultedAt: at(day),
+	code,
+	name: code === '4548-4' ? 'Hemoglobin A1c' : 'Fasting glucose',
+	value: String(value),
+	valueNumeric: value,
+	unit: code === '4548-4' ? '%' : 'mg/dL',
+	referenceRange: null,
+	flag: 'HIGH',
+});
 
 describe('trend charts', () => {
 	it('draws blood pressure with the 140/90 thresholds, skipping readings without BP', () => {
 		const chart = buildTrendChart(
 			'blood_pressure',
 			[
-				vitals('2026-07-24', { systolicMmHg: 138, diastolicMmHg: 88 }),
-				vitals('2026-08-01', { heartRateBpm: 80 }),
-				vitals('2026-10-22', { systolicMmHg: 140, diastolicMmHg: 90 }),
+				vitals('2026-07-24', { systolicBp: 138, diastolicBp: 88 }),
+				vitals('2026-08-01', { heartRate: 80 }),
+				vitals('2026-10-22', { systolicBp: 140, diastolicBp: 90 }),
 			],
 			[],
 		);
@@ -89,37 +89,38 @@ describe('trend charts', () => {
 describe('patient summary sections', () => {
 	const data: PatientSummaryData = {
 		patient: {
-			givenName: 'Maria',
-			familyName: 'Santos',
+			firstName: 'Maria',
+			lastName: 'Santos',
+			patientNo: 'TAG-PT-2026-000001',
 			birthDate: new Date('1981-04-12T00:00:00Z'),
-			sex: 'female',
-			consentAt: null,
-			identifiers: [{ system: 'MRN', value: 'THC-0001', organization: { name: 'Health Center' } }],
+			sex: 'FEMALE',
+			consents: [],
+			identifications: [{ type: 'PHILHEALTH_ID', idNumber: 'SYN-0000-0001' }],
 			allergies: [],
 		} as unknown as PatientSummaryData['patient'],
 		diagnoses: [
 			{
 				icd10Code: 'R03.0',
-				display: 'Elevated BP reading',
-				isPrimary: true,
+				description: 'Elevated BP reading',
+				type: 'PRIMARY',
 				encounter: { startedAt: at('2026-01-25') },
 			},
 			{
 				icd10Code: 'R03.0',
-				display: 'Elevated BP reading',
-				isPrimary: true,
+				description: 'Elevated BP reading',
+				type: 'PRIMARY',
 				encounter: { startedAt: at('2026-07-24') },
 			},
 			{
 				icd10Code: 'R53',
-				display: 'Malaise and fatigue',
-				isPrimary: false,
+				description: 'Malaise and fatigue',
+				type: 'SECONDARY',
 				encounter: { startedAt: at('2026-10-22') },
 			},
 			{
 				icd10Code: 'I10',
-				display: 'Essential hypertension',
-				isPrimary: true,
+				description: 'Essential hypertension',
+				type: 'PRIMARY',
 				encounter: { startedAt: at('2026-10-22') },
 			},
 		] as unknown as PatientSummaryData['diagnoses'],
@@ -130,9 +131,7 @@ describe('patient summary sections', () => {
 					{
 						genericName: 'Amlodipine',
 						strength: '5 mg',
-						dose: '1 tablet',
-						route: 'oral',
-						frequency: 'once a day',
+						sig: '1 tablet once a day',
 						durationDays: 30,
 					},
 				],
@@ -143,21 +142,19 @@ describe('patient summary sections', () => {
 					{
 						genericName: 'Amlodipine',
 						strength: '5 mg',
-						dose: '1 tablet',
-						route: 'oral',
-						frequency: 'once a day',
+						sig: '1 tablet once a day',
 						durationDays: 30,
 					},
 				],
 			},
 		] as unknown as PatientSummaryData['prescriptions'],
 		latestVitals: [
-			vitals('2026-10-22', { systolicMmHg: 138, diastolicMmHg: 88 }),
-			vitals('2026-10-21', { systolicMmHg: 140, diastolicMmHg: 90, weightKg: 72 }),
+			vitals('2026-10-22', { systolicBp: 138, diastolicBp: 88 }),
+			vitals('2026-10-21', { systolicBp: 140, diastolicBp: 90, weightKg: 72 }),
 		],
 		recentResults: [result('2026-10-24', '4548-4', 7.2)],
 		encounters: [],
-		trendVitals: [vitals('2026-10-22', { systolicMmHg: 138, diastolicMmHg: 88 })],
+		trendVitals: [vitals('2026-10-22', { systolicBp: 138, diastolicBp: 88 })],
 		trendResults: [],
 		charts: ['blood_pressure'],
 	};
@@ -176,7 +173,7 @@ describe('patient summary sections', () => {
 
 	it('lists each medicine once, from its latest prescription', () => {
 		expect(section('Current medicines (issued in the last 180 days)')).toMatchObject({
-			rows: [['Amlodipine 5 mg', '1 tablet, oral, once a day', '30 days', '2026-10-22']],
+			rows: [['Amlodipine 5 mg', '1 tablet once a day', '30 days', '2026-10-22']],
 		});
 	});
 
@@ -231,12 +228,8 @@ describe('facility panel charts', () => {
 	const data = {
 		encounters: [{ startedAt: at('2026-10-07') }, { startedAt: at('2026-10-08') }, { startedAt: at('2026-10-29') }],
 		diagnoses: [{ icd10Code: 'I10' }, { icd10Code: 'E11.9' }, { icd10Code: 'i10' }, { icd10Code: '???' }],
-		openOrders: [
-			{ sentAt: at('2026-11-02'), createdAt: at('2026-11-02') },
-			{ sentAt: null, createdAt: at('2026-10-30') },
-			{ sentAt: at('2026-10-01'), createdAt: at('2026-10-01') },
-		],
-		awaitingReview: [{ flag: 'high' }, { flag: 'critical_high' }, { flag: 'high' }],
+		openOrders: [{ createdAt: at('2026-11-02') }, { createdAt: at('2026-10-30') }, { createdAt: at('2026-10-01') }],
+		awaitingReview: [{ flag: 'HIGH' }, { flag: 'CRITICAL_HIGH' }, { flag: 'HIGH' }],
 	};
 
 	it('counts encounters per Monday-started week, keeping empty weeks', () => {
@@ -258,7 +251,7 @@ describe('facility panel charts', () => {
 		]);
 	});
 
-	it('ages open orders from when they were sent (or created), in fixed buckets', () => {
+	it('ages open orders from when they were created, in fixed buckets', () => {
 		expect(buildPanelChart('open_orders_by_age', data, since, TODAY).rows).toEqual([
 			{ age: '0–2 days', orders: 1 },
 			{ age: '3–7 days', orders: 1 },
@@ -278,63 +271,81 @@ describe('facility panel charts', () => {
 describe('encounter summary sections', () => {
 	const encounter = {
 		patientId: 'p1',
+		encounterNo: 'TAG-ENC-2026-000001',
+		type: 'CONSULTATION',
+		status: 'COMPLETED',
 		startedAt: at('2026-10-22'),
-		followUpOn: null,
-		reason: 'Fatigue',
-		history: '2 weeks of fatigue',
+		followUpDate: null,
+		disposition: null,
+		chiefComplaint: 'Fatigue',
+		historyOfPresentIllness: '2 weeks of fatigue',
 		physicalExam: '  ',
 		assessment: 'Stage 1 hypertension',
 		plan: null,
 		patientInstructions: null,
 		notes: null,
-		organization: { name: 'Health Center' },
-		doctor: { name: 'Dr. Reyes' },
-		patient: {
-			givenName: 'Maria',
-			familyName: 'Santos',
-			birthDate: new Date('1981-04-12T00:00:00Z'),
-			sex: 'female',
-			identifiers: [{ system: 'MRN', value: 'THC-0001' }],
-			allergies: [{ substance: 'Penicillin' }],
+		clinic: { name: 'Health Center', organizationId: 'o1' },
+		practitioner: {
+			title: 'Dra.',
+			firstName: 'Ana',
+			middleName: null,
+			lastName: 'Reyes',
+			suffix: null,
+			postNominals: 'MD',
 		},
-		vitalSigns: [vitals('2026-10-22', { systolicMmHg: 140, diastolicMmHg: 90, spo2Pct: 98 })],
-		diagnoses: [{ icd10Code: 'I10', display: 'Essential hypertension', certainty: 'provisional', isPrimary: true }],
-		orders: [
+		patient: {
+			firstName: 'Maria',
+			lastName: 'Santos',
+			patientNo: 'TAG-PT-2026-000001',
+			birthDate: new Date('1981-04-12T00:00:00Z'),
+			sex: 'FEMALE',
+			allergies: [{ allergen: 'Penicillin' }],
+		},
+		vitals: [vitals('2026-10-22', { systolicBp: 140, diastolicBp: 90, oxygenSaturation: 98 })],
+		diagnosis: [{ icd10Code: 'I10', description: 'Essential hypertension', type: 'PRIMARY', isFinal: false }],
+		diagnosticOrders: [
 			{
-				code: '4548-4',
-				display: 'Hemoglobin A1c',
-				status: 'reviewed',
-				results: [result('2026-10-24', '4548-4', 7.2)],
+				items: [
+					{
+						status: 'RELEASED',
+						test: { name: 'Hemoglobin A1c' },
+						result: {
+							resultedAt: at('2026-10-24'),
+							values: [{ name: 'HbA1c', value: '7.2', unit: '%', flag: 'HIGH' }],
+						},
+					},
+					{ status: 'REQUESTED', test: { name: 'Lipid panel' }, result: null },
+				],
 			},
-			{ code: '57698-3', display: 'Lipid panel', status: 'sent', results: [] },
 		],
 		prescriptions: [],
-		certificates: [],
+		medicalCertificates: [],
 	} as unknown as Parameters<typeof buildEncounterSummarySections>[0];
 	const sections = buildEncounterSummarySections(encounter, TODAY);
 
 	it('keeps only the note fields that were written, in SOAP order', () => {
 		expect(sections.filter((section) => section.kind === 'text').map((section) => section.title)).toEqual([
-			'History',
+			'History of present illness',
 			'Assessment',
 		]);
 	});
 
-	it('lists each order with its results, and orders still waiting', () => {
+	it('lists each ordered test with its values, and tests still waiting', () => {
 		expect(sections.find((section) => section.title === 'Orders and results')).toMatchObject({
 			rows: [
-				['Hemoglobin A1c', 'reviewed', '7.2 %', 'high', '2026-10-24'],
-				['Lipid panel', 'sent', '—', '—', '—'],
+				['Hemoglobin A1c', 'RELEASED', '7.2 %', 'HIGH', '2026-10-24'],
+				['Lipid panel', 'REQUESTED', '—', '—', '—'],
 			],
 		});
 	});
 
-	it('names the visit, the facility, the clinician and the allergies', () => {
+	it('names the visit, the clinic, the doctor and the allergies', () => {
 		expect(sections[0]).toMatchObject({
 			facts: expect.arrayContaining([
-				{ label: 'MRN', value: 'THC-0001' },
-				{ label: 'Facility', value: 'Health Center' },
-				{ label: 'Clinician', value: 'Dr. Reyes' },
+				{ label: 'Patient no.', value: 'TAG-PT-2026-000001' },
+				{ label: 'Visit no.', value: 'TAG-ENC-2026-000001' },
+				{ label: 'Clinic', value: 'Health Center' },
+				{ label: 'Doctor', value: 'Dra. Ana Reyes, MD' },
 				{ label: 'Allergies', value: 'Penicillin' },
 			]),
 		});

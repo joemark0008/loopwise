@@ -97,7 +97,7 @@ function NoteCard({
 				detail: [
 					output.patientName,
 					new Date(output.encounter.startedAt).toLocaleDateString(),
-					output.encounter.facilityName,
+					output.encounter.clinicName,
 				].join(' · '),
 			}}
 			changes={changes}

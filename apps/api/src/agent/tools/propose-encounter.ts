@@ -17,15 +17,15 @@ export default createTool<proposeEncounter.Input, proposeEncounter.Output>({
 				"This chat isn't about a patient. Ask the user to open the patient's chart (Patients) and ask Wise there.",
 			);
 		}
-		const facilities = await context.services.patients.myFacilities(context.userId);
-		if (facilities.length === 0) {
-			throw new Error('The user does not work at a facility, so they cannot record encounters.');
+		const clinics = await context.services.patients.myCareClinics(context.userId);
+		if (clinics.length === 0) {
+			throw new Error('The user does not work at a clinic, so they cannot record encounters.');
 		}
 		return {
 			_version: '1' as const,
 			success: true as const,
 			patientId: context.patientId,
-			facilities: facilities.map(({ id, name }) => ({ id, name })),
+			clinics: clinics.map(({ id, name }) => ({ id, name })),
 		};
 	},
 

@@ -10,28 +10,26 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { LlmService } from '../src/agent/llm/llm.service.js';
 import type { ProviderModelResult } from '../src/agent/providers/providers.js';
+import { Prisma } from '../src/generated/prisma/client.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
+import { createClinicScene } from './fixtures/clinic-fixtures.js';
+import { createTestApp, resetDatabase, signIn, useTestDatabase } from './test-app.js';
 
 const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
 const RECORD_VITALS = `mutation ($input: RecordVitalsInput!) { recordVitals(input: $input) { id systolicMmHg } }`;
-const ADD_ALLERGY = `mutation ($input: AddAllergyInput!) { addAllergy(input: $input) { id substance } }`;
+const ADD_ALLERGY = `mutation ($input: AddAllergyInput!) { addAllergy(input: $input) { id allergen } }`;
 const VOID_ALLERGY = `mutation ($input: VoidAllergyInput!) { voidAllergy(input: $input) { id } }`;
-const CREATE_ORDERS = `mutation ($input: CreateEncounterOrdersInput!) { createEncounterOrders(input: $input) { id code status } }`;
-const REVIEW = `mutation ($input: ReviewResultInput!) { reviewResult(input: $input) { id reviewedAt } }`;
 
 /**
  * Wise actions (DESIGN.md §7.3) end to end, with a scripted model: each tool drafts a card and writes nothing; the
  * card's Confirm goes through the real mutation as the user, settles the card once, and the audit row records the
- * Wise origin. Another clinician can't confirm the card, a critical result needs a note, and an order card creates
- * all its tests in one transaction, queued for HL7 when the lab uses the connector.
+ * Wise origin. Another clinician can't confirm the card. The other record cards are in
+ * `wise-actions-records.e2e-spec.ts`; the diagnostics cards (orders, lab steps, result review) in the diagnostics specs.
  */
 describe('Wise actions (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
 	let clinicId = '';
-	let facilityId = '';
-	let labId = '';
 	let patientId = '';
 	let encounterId = '';
 	let chatId = '';
@@ -71,8 +69,11 @@ describe('Wise actions (e2e)', () => {
 		};
 	};
 
-	const wiseAudit = (action: string) =>
-		prisma.auditLog.findFirstOrThrow({ where: { action, origin: { not: undefined } }, orderBy: { at: 'desc' } });
+	const wiseAudit = (event: string) =>
+		prisma.auditLog.findFirstOrThrow({
+			where: { event, origin: { not: Prisma.DbNull } },
+			orderBy: { createdAt: 'desc' },
+		});
 
 	beforeAll(async () => {
 		const databaseUrl = useTestDatabase();
@@ -84,52 +85,14 @@ describe('Wise actions (e2e)', () => {
 			scriptedModel(script),
 		);
 
-		const password = 'Sup3r-secret!';
-		const reyes = await createTestUser(app, { name: 'Dr. Reyes', email: 'reyes@example.com', password });
-		const cruz = await createTestUser(app, { name: 'Dr. Cruz', email: 'cruz@example.com', password });
-		Object.assign(doctor, { cookie: reyes.cookie, id: reyes.userId });
-		Object.assign(other, { cookie: cruz.cookie, id: cruz.userId });
-		clinicId = (await graphql(doctor.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }')).body
-			.data.createClinic.id;
-		await prisma.clinicMember.create({ data: { clinicId, userId: other.id, role: 'user' } });
-		const [clinic, elsewhere, lab] = await Promise.all([
-			prisma.organization.create({ data: { name: 'Health Center', slug: 'hc', type: 'clinic' } }),
-			prisma.organization.create({ data: { name: 'Other Clinic', slug: 'other', type: 'clinic' } }),
-			prisma.organization.create({
-				data: { name: 'Bohol Diagnostics', slug: 'lab', type: 'lab', usesHl7Connector: true },
-			}),
-		]);
-		facilityId = clinic.id;
-		labId = lab.id;
-		await prisma.orgMember.createMany({
-			data: [
-				{ orgId: facilityId, userId: doctor.id, role: 'user' },
-				{ orgId: elsewhere.id, userId: other.id, role: 'user' },
-			],
-		});
-		patientId = (
-			await graphql(
-				doctor.cookie,
-				'mutation ($input: RegisterPatientInput!) { registerPatient(input: $input) { patient { id } } }',
-				{
-					input: {
-						facilityId,
-						givenName: 'Maria',
-						familyName: 'Santos',
-						birthDate: '1981-04-12',
-						sex: 'female',
-						consentGiven: true,
-					},
-				},
-			)
-		).body.data.registerPatient.patient.id;
-		encounterId = (
-			await graphql(
-				doctor.cookie,
-				'mutation ($input: CreateEncounterInput!) { createEncounter(input: $input) { id } }',
-				{ input: { patientId, facilityId, reason: 'BP check' } },
-			)
-		).body.data.createEncounter.id;
+		// Dr. Reyes has Maria in care, with an open visit; Dr. Cruz works at the clinic but has no care relationship.
+		const scene = await createClinicScene(prisma);
+		clinicId = scene.clinic.id;
+		await prisma.clinic.update({ where: { id: clinicId }, data: { path: process.env.LOOPWISE_CLINICS_DIR } });
+		Object.assign(doctor, { cookie: await signIn(app, scene.doctor), id: scene.doctor.id });
+		Object.assign(other, { cookie: await signIn(app, scene.otherDoctor), id: scene.otherDoctor.id });
+		patientId = scene.patient.id;
+		encounterId = scene.encounter.id;
 	});
 
 	afterAll(async () => {
@@ -151,7 +114,7 @@ describe('Wise actions (e2e)', () => {
 			await prisma.wiseProposalOutcome.findUnique({ where: { toolCallId: card.origin.toolCallId } }),
 		).toMatchObject({
 			status: 'confirmed',
-			resource: 'vital_signs',
+			entityType: 'VitalSigns',
 		});
 
 		const again = await graphql(doctor.cookie, RECORD_VITALS, { input });
@@ -164,20 +127,21 @@ describe('Wise actions (e2e)', () => {
 		const stolen = await graphql(other.cookie, RECORD_VITALS, {
 			input: { encounterId, heartRateBpm: 80, wiseOrigin: card.origin },
 		});
-		expect(stolen.body.errors?.[0].message).toMatch(/isn't in your chat/);
+		// The visit is hidden from them (row-level security) before the card is even looked at.
+		expect(stolen.body.errors?.[0].extensions.errorCode).toBe('ENTITY_NOT_FOUND');
 		const direct = await graphql(other.cookie, RECORD_VITALS, { input: { encounterId, heartRateBpm: 80 } });
 		expect(direct.body.errors).toBeDefined();
 	});
 
 	it('adds and removes an allergy from cards; the removal needs a reason', async () => {
-		const add = await draft('propose_allergy', { substance: 'Penicillin', reaction: 'Rash' });
+		const add = await draft('propose_allergy', { allergen: 'Penicillin', reaction: 'Rash' });
 		const added = await graphql(doctor.cookie, ADD_ALLERGY, {
-			input: { patientId, facilityId, substance: 'Penicillin', reaction: 'Rash', wiseOrigin: add.origin },
+			input: { patientId, allergen: 'Penicillin', reaction: 'Rash', wiseOrigin: add.origin },
 		});
 		expect(added.body.errors).toBeUndefined();
 		expect((await wiseAudit('allergy.add')).origin).toMatchObject({ toolName: 'propose_allergy' });
 
-		const remove = await draft('propose_remove_allergy', { substance: 'Penicillin' });
+		const remove = await draft('propose_remove_allergy', { allergen: 'Penicillin' });
 		const id = added.body.data.addAllergy.id;
 		const noReason = await graphql(doctor.cookie, VOID_ALLERGY, {
 			input: { id, reason: '', wiseOrigin: remove.origin },
@@ -189,78 +153,6 @@ describe('Wise actions (e2e)', () => {
 		expect(removed.body.errors).toBeUndefined();
 		expect((await prisma.patientAllergy.findUniqueOrThrow({ where: { id } })).voidedAt).not.toBeNull();
 		expect((await wiseAudit('allergy.void')).origin).toMatchObject({ toolName: 'propose_remove_allergy' });
-	});
-
-	it('orders several tests from one card in one transaction, queued for HL7', async () => {
-		const card = await draft('propose_order', { encounterId, tests: ['HbA1c', 'FBS'], targetFacility: 'Bohol' });
-		expect(card.output.tests.map((test: { code: string }) => test.code)).toEqual(['4548-4', '1558-6']);
-
-		const refused = await graphql(doctor.cookie, CREATE_ORDERS, {
-			input: { encounterId, codes: ['4548-4', 'nope'], targetOrgId: labId, wiseOrigin: card.origin },
-		});
-		expect(refused.body.errors?.[0].message).toMatch(/Pick tests/);
-		expect(await prisma.clinicalOrder.count()).toBe(0);
-
-		const res = await graphql(doctor.cookie, CREATE_ORDERS, {
-			input: { encounterId, codes: ['4548-4', '1558-6'], targetOrgId: labId, wiseOrigin: card.origin },
-		});
-		expect(res.body.errors).toBeUndefined();
-		expect(res.body.data.createEncounterOrders).toHaveLength(2);
-		expect(await prisma.hl7Outbox.count()).toBe(2);
-		const audits = await prisma.auditLog.findMany({ where: { action: 'order.create' } });
-		expect(audits.map((audit) => (audit.origin as { toolName: string }).toolName)).toEqual([
-			'propose_order',
-			'propose_order',
-		]);
-		expect(await prisma.wiseProposalOutcome.count({ where: { toolCallId: card.origin.toolCallId } })).toBe(1);
-	});
-
-	it('lists the results to review, and a critical one needs a note to be reviewed from its card', async () => {
-		const order = await prisma.clinicalOrder.findFirstOrThrow({ where: { code: '4548-4' } });
-		await prisma.clinicalOrder.update({ where: { id: order.id }, data: { status: 'resulted' } });
-		const result = await prisma.result.create({
-			data: {
-				orderId: order.id,
-				patientId,
-				sourceOrgId: labId,
-				code: '4548-4',
-				display: 'Hemoglobin A1c',
-				value: '12.4',
-				unit: '%',
-				refRange: '4.0-5.6',
-				flag: 'critical_high',
-				resultedAt: new Date(),
-			},
-		});
-
-		const list = await draft('list_results_to_review', {});
-		expect(list.output.results).toEqual([
-			expect.objectContaining({
-				id: result.id,
-				test: 'Hemoglobin A1c',
-				value: '12.4',
-				urgency: 'critical',
-				lab: 'Bohol Diagnostics',
-				evaluation: null,
-			}),
-		]);
-		expect(
-			await prisma.auditLog.count({ where: { action: 'result.list', reason: 'Wise list_results_to_review' } }),
-		).toBe(1);
-
-		const card = await draft('propose_result_review', { resultId: result.id });
-		expect(card.output).toMatchObject({ subjectId: result.id });
-		const noNote = await graphql(doctor.cookie, REVIEW, {
-			input: { resultId: result.id, wiseOrigin: card.origin },
-		});
-		expect(noNote.body.errors?.[0].message).toMatch(/critical result needs your note/);
-
-		const res = await graphql(doctor.cookie, REVIEW, {
-			input: { resultId: result.id, note: 'Called the patient; seen today.', wiseOrigin: card.origin },
-		});
-		expect(res.body.errors).toBeUndefined();
-		expect(res.body.data.reviewResult.reviewedAt).not.toBeNull();
-		expect((await wiseAudit('result.review')).origin).toMatchObject({ toolName: 'propose_result_review' });
 	});
 });
 

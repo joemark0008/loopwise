@@ -3,9 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ToolContext } from '../types/tools.js';
 import proposePatientRegistration from './propose-patient-registration.js';
 
-const run = async (input: Record<string, unknown>, facilities = [{ id: 'hc', name: 'Health Center', slug: 'hc' }]) => {
+const run = async (
+	input: Record<string, unknown>,
+	clinics = [{ id: 'c1', name: 'Health Center', code: 'TAG', organizationId: 'o1', cityMunicipalityCode: null }],
+) => {
 	const patients = {
-		myFacilities: vi.fn().mockResolvedValue(facilities),
+		myCareClinics: vi.fn().mockResolvedValue(clinics),
 		checkDuplicates: vi.fn().mockResolvedValue([{ patientId: 'p1' }]),
 	};
 	const context = { userId: 'u', services: { patients } } as unknown as ToolContext;
@@ -18,18 +21,18 @@ const run = async (input: Record<string, unknown>, facilities = [{ id: 'hc', nam
 };
 
 describe('propose_patient_registration tool', () => {
-	it('checks duplicates at the first facility once the draft is complete, and writes nothing', async () => {
+	it("checks duplicates in the first clinic's organization once the draft is complete, and writes nothing", async () => {
 		const { output, patients } = await run({
 			givenName: 'Juan',
 			familyName: 'Dela Cruz',
 			birthDate: '1980-05-02',
-			sex: 'male',
+			sex: 'MALE',
 		});
-		expect(patients.checkDuplicates).toHaveBeenCalledWith('u', expect.objectContaining({ facilityId: 'hc' }));
+		expect(patients.checkDuplicates).toHaveBeenCalledWith('u', expect.objectContaining({ clinicId: 'c1' }));
 		expect(output).toEqual({
 			_version: '1',
 			success: true,
-			facilities: [{ id: 'hc', name: 'Health Center' }],
+			clinics: [{ id: 'c1', name: 'Health Center' }],
 			duplicates: [{ patientId: 'p1' }],
 		});
 	});
@@ -40,8 +43,8 @@ describe('propose_patient_registration tool', () => {
 		expect(output).toMatchObject({ duplicates: [] });
 	});
 
-	it('fails for a user without a facility', async () => {
-		await expect(run({ givenName: 'Juan', familyName: 'Cruz' }, [])).rejects.toThrow(/facility/);
+	it('fails for a user without a clinic', async () => {
+		await expect(run({ givenName: 'Juan', familyName: 'Cruz' }, [])).rejects.toThrow(/clinic/);
 	});
 
 	it('tells the model to stop and wait, and about an existing registration', () => {
@@ -49,7 +52,7 @@ describe('propose_patient_registration tool', () => {
 			proposePatientRegistration.toModelOutput?.({
 				toolCallId: 't',
 				input: {} as never,
-				output: { success: true, facilities: [], duplicates } as never,
+				output: { success: true, clinics: [], duplicates } as never,
 			});
 		expect(modelOutput([])).toEqual({ type: 'text', value: expect.stringMatching(/Stop and wait/) });
 		expect(modelOutput([{ match: 'EXACT_IDENTIFIER' }])).toEqual({

@@ -1,10 +1,9 @@
 import { useDebouncedValue } from '@mantine/hooks';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { IDENTIFIER_SYSTEMS } from '@loopwise/shared/patient-registration';
 import { CircleCheck, Search, SearchX, UserPlus, Users, X } from 'lucide-react';
 import { useState } from 'react';
-import { ageLabel, identifierValues, languageLabel, patientInitials, patientName } from './patient-format';
+import { ageLabel, identificationNumbers, languageLabel, patientInitials, patientName } from './patient-format';
 import styles from './patient-list.module.css';
 import type { PatientFieldsFragment } from '@/graphql/generated/graphql';
 import pageStyles from '@/components/clinical/page.module.css';
@@ -50,7 +49,7 @@ export function PatientListPage() {
 						value={search}
 						onChange={(event) => setSearch(event.target.value)}
 						onKeyDown={(event) => event.key === 'Escape' && setSearch('')}
-						placeholder='Search by name, MRN or PhilHealth number'
+						placeholder='Search by name, patient no. or PhilHealth number'
 						aria-label='Search patients'
 					/>
 					{search && (
@@ -123,6 +122,9 @@ export function PatientListPage() {
 								<th scope='col' data-col='phone'>
 									Phone
 								</th>
+								<th scope='col' data-col='barangay'>
+									Barangay
+								</th>
 								<th scope='col' data-col='language'>
 									Language
 								</th>
@@ -148,8 +150,7 @@ export function PatientListPage() {
 
 /** One patient. The name link stretches over the row, so the whole row opens the chart with one tab stop. */
 function PatientRow({ patient }: { patient: PatientFieldsFragment }) {
-	const mrns = identifierValues(patient, IDENTIFIER_SYSTEMS.mrn);
-	const philHealth = identifierValues(patient, IDENTIFIER_SYSTEMS.philHealth);
+	const philHealth = identificationNumbers(patient, 'PHILHEALTH_ID');
 	return (
 		<tr className={styles.listRow}>
 			<td data-label='Patient' className={styles.listPatientCell}>
@@ -161,7 +162,7 @@ function PatientRow({ patient }: { patient: PatientFieldsFragment }) {
 						<Link to='/patients/$patientId' params={{ patientId: patient.id }} className={styles.listName}>
 							{patientName(patient)}
 						</Link>
-						<span className={styles.listMrn}>{mrns.length > 0 ? `MRN ${mrns.join(', ')}` : 'No MRN'}</span>
+						<span className={styles.listMrn}>{patient.patientNo}</span>
 					</div>
 				</div>
 			</td>
@@ -180,6 +181,9 @@ function PatientRow({ patient }: { patient: PatientFieldsFragment }) {
 			</td>
 			<td data-label='Phone' data-col='phone' className={styles.listNowrap}>
 				{patient.phone ?? <span className={styles.listNone}>None</span>}
+			</td>
+			<td data-label='Barangay' data-col='barangay'>
+				{patient.barangay ?? <span className={styles.listNone}>Not recorded</span>}
 			</td>
 			<td data-label='Language' data-col='language'>
 				{languageLabel(patient.preferredLanguage)}

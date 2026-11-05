@@ -3,34 +3,39 @@ import { describe, expect, it } from 'vitest';
 import { emptyPatientForm, toPatientDraftInput, validatePatientForm } from './patient-form-values';
 
 const filled = {
-	...emptyPatientForm('hc'),
+	...emptyPatientForm('clinic-1'),
 	givenName: 'Maria',
 	familyName: 'Santos',
 	birthDate: '1981-03-04',
-	sex: 'female' as const,
+	sex: 'FEMALE' as const,
 };
 
 describe('patient form values', () => {
-	it('uses the API rules, plus a required facility', () => {
+	it('uses the API rules, plus a required clinic', () => {
 		expect(validatePatientForm(filled)).toEqual({});
-		expect(validatePatientForm({ ...filled, facilityId: '', phone: '123', sex: '' })).toEqual({
-			facilityId: 'Choose the facility.',
+		expect(validatePatientForm({ ...filled, clinicId: '', phone: '123', sex: '' })).toEqual({
+			clinicId: 'Choose the clinic.',
 			sex: 'Choose the sex.',
 			phone: expect.stringMatching(/Philippine mobile/),
 		});
 	});
 
 	it('sends blank optional fields as null', () => {
-		expect(toPatientDraftInput({ ...filled, mrn: '  ', phone: '0917 123 4567' })).toEqual({
-			facilityId: 'hc',
+		expect(
+			toPatientDraftInput({ ...filled, patientNo: '  ', phone: '0917 123 4567', barangayCode: '071242001' }),
+		).toEqual({
+			clinicId: 'clinic-1',
 			givenName: 'Maria',
+			middleName: null,
 			familyName: 'Santos',
 			birthDate: '1981-03-04',
-			sex: 'female',
+			sex: 'FEMALE',
 			phone: '0917 123 4567',
 			preferredLanguage: 'en',
-			mrn: null,
+			patientNo: null,
 			philHealthId: null,
+			barangayCode: '071242001',
+			addressLine: null,
 		});
 	});
 });

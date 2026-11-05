@@ -10,8 +10,9 @@ const TOP_CHAPTERS = 10;
 /** The rows each panel metric is counted from, as `InsightsRepository` reads them. */
 export interface PanelData {
 	encounters: { startedAt: Date }[];
-	diagnoses: { icd10Code: string }[];
-	openOrders: { sentAt: Date | null; createdAt: Date }[];
+	diagnoses: { icd10Code: string | null }[];
+	openOrders: { createdAt: Date }[];
+	/** The worst flag of each result awaiting review (`ResultFlag`), null when none is flagged. */
 	awaitingReview: { flag: string | null }[];
 }
 
@@ -22,7 +23,8 @@ const AGE_BUCKETS = [
 	{ label: 'Over 14 days', maxDays: Infinity },
 ] as const;
 
-const FLAG_ORDER = ['critical_high', 'critical_low', 'high', 'low', 'abnormal', 'normal', 'none'];
+/** `ResultFlag`, worst first. */
+export const FLAG_ORDER = ['CRITICAL_HIGH', 'CRITICAL_LOW', 'HIGH', 'LOW', 'ABNORMAL', 'NORMAL', 'none'];
 
 const day = (date: Date) => date.toISOString().slice(0, 10);
 
@@ -72,7 +74,7 @@ export function buildPanelChart(metric: PanelMetric, data: PanelData, since: Dat
 		case 'diagnoses_by_icd10_chapter': {
 			const counts = new Map<string, number>();
 			for (const { icd10Code } of data.diagnoses) {
-				const chapter = icd10Chapter(icd10Code) ?? 'Other codes';
+				const chapter = (icd10Code && icd10Chapter(icd10Code)) ?? 'Other codes';
 				counts.set(chapter, (counts.get(chapter) ?? 0) + 1);
 			}
 			const rows = [...counts.entries()]
@@ -85,7 +87,7 @@ export function buildPanelChart(metric: PanelMetric, data: PanelData, since: Dat
 		case 'open_orders_by_age': {
 			const counts = AGE_BUCKETS.map(() => 0);
 			for (const order of data.openOrders) {
-				const ageDays = Math.floor((today.getTime() - (order.sentAt ?? order.createdAt).getTime()) / DAY);
+				const ageDays = Math.floor((today.getTime() - order.createdAt.getTime()) / DAY);
 				counts[AGE_BUCKETS.findIndex((bucket) => ageDays <= bucket.maxDays)]++;
 			}
 			const rows = AGE_BUCKETS.map((bucket, index) => ({ age: bucket.label, orders: counts[index] }));
@@ -98,7 +100,7 @@ export function buildPanelChart(metric: PanelMetric, data: PanelData, since: Dat
 			}
 			const rows = [...counts.entries()]
 				.sort(([a], [b]) => FLAG_ORDER.indexOf(a) - FLAG_ORDER.indexOf(b))
-				.map(([flag, results]) => ({ flag: flag.replace('_', ' '), results }));
+				.map(([flag, results]) => ({ flag: flag.replace('_', ' ').toLowerCase(), results }));
 			return bar(title, 'flag', 'results', 'Results', rows);
 		}
 	}

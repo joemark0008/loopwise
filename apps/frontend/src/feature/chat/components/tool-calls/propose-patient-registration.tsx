@@ -45,7 +45,7 @@ function RegistrationCard({
 	output: proposePatientRegistration.Output;
 }) {
 	const { queueOrSendMessage, chatId } = useAgentContext();
-	const [values, setValues] = useState<PatientFormValues>(() => fromDraft(draft, output.facilities));
+	const [values, setValues] = useState<PatientFormValues>(() => fromDraft(draft, output.clinics));
 	const [isEditing, setIsEditing] = useState(false);
 	const [isEdited, setIsEdited] = useState(false);
 	const [consentGiven, setConsentGiven] = useState(false);
@@ -53,11 +53,10 @@ function RegistrationCard({
 	const registration = usePatientRegistration({
 		onDone: (patient, outcome) => {
 			const name = `${patient.givenName} ${patient.familyName}`;
-			const mrn = patient.identifiers.find((identifier) => identifier.system === 'MRN')?.value;
 			void queueOrSendMessage({
 				text:
 					outcome === 'registered'
-						? `I registered ${name}${mrn ? ` (MRN ${mrn})` : ''}.`
+						? `I registered ${name} (patient no. ${patient.patientNo}).`
 						: `I used the existing record of ${name} instead of registering them again.`,
 			});
 		},
@@ -127,7 +126,7 @@ function RegistrationCard({
 				<PatientFields
 					values={values}
 					errors={showErrors ? errors : {}}
-					facilities={output.facilities}
+					clinics={output.clinics}
 					disabled={registration.isPending}
 					onChange={(next) => {
 						setValues(next);
@@ -136,7 +135,7 @@ function RegistrationCard({
 					}}
 				/>
 			) : (
-				<Summary values={values} errors={showErrors ? errors : {}} facilities={output.facilities} />
+				<Summary values={values} errors={showErrors ? errors : {}} clinics={output.clinics} />
 			)}
 		</ProposalCard>
 	);
@@ -145,22 +144,23 @@ function RegistrationCard({
 function Summary({
 	values,
 	errors,
-	facilities,
+	clinics,
 }: {
 	values: PatientFormValues;
 	errors: ReturnType<typeof validatePatientForm>;
-	facilities: proposePatientRegistration.Facility[];
+	clinics: proposePatientRegistration.Clinic[];
 }) {
-	const facility = facilities.find((candidate) => candidate.id === values.facilityId)?.name;
+	const clinic = clinics.find((candidate) => candidate.id === values.clinicId)?.name;
+	const name = [values.givenName, values.middleName, values.familyName].filter((part) => part.trim()).join(' ');
 	const rows: [string, string, string | undefined][] = [
-		['Name', `${values.givenName} ${values.familyName}`.trim(), errors.givenName ?? errors.familyName],
+		['Name', name, errors.givenName ?? errors.middleName ?? errors.familyName],
 		['Birth date', values.birthDate, errors.birthDate],
-		['Sex', values.sex && values.sex.charAt(0).toUpperCase() + values.sex.slice(1), errors.sex],
-		['MRN', values.mrn, errors.mrn],
+		['Sex', values.sex && values.sex.charAt(0) + values.sex.slice(1).toLowerCase(), errors.sex],
+		['Patient no.', values.patientNo || 'Assigned by the clinic', errors.patientNo],
 		['PhilHealth', values.philHealthId, errors.philHealthId],
 		['Mobile', values.phone, errors.phone],
 		['Language', languageLabel(values.preferredLanguage), undefined],
-		['Facility', facility ?? '', errors.facilityId],
+		['Clinic', clinic ?? '', errors.clinicId],
 	];
 	return (
 		<dl className={styles.registrationSummary}>
@@ -179,18 +179,19 @@ function Summary({
 
 function fromDraft(
 	draft: proposePatientRegistration.Input,
-	facilities: proposePatientRegistration.Facility[],
+	clinics: proposePatientRegistration.Clinic[],
 ): PatientFormValues {
-	const empty = emptyPatientForm(facilities.length === 1 ? facilities[0].id : '');
+	const empty = emptyPatientForm(clinics[0]?.id ?? '');
 	return {
 		...empty,
 		givenName: draft.givenName ?? '',
+		middleName: draft.middleName ?? '',
 		familyName: draft.familyName ?? '',
 		birthDate: draft.birthDate ?? '',
 		sex: draft.sex ?? '',
 		phone: draft.phone ?? '',
 		preferredLanguage: (draft.preferredLanguage as PatientFormValues['preferredLanguage']) ?? 'en',
-		mrn: draft.mrn ?? '',
+		patientNo: draft.patientNo ?? '',
 		philHealthId: draft.philHealthId ?? '',
 	};
 }

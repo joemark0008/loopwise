@@ -37,10 +37,7 @@ export function DuplicateAlert({
 							<span className={styles.duplicateAlertName}>
 								{duplicate.displayName}, born {duplicate.birthYear}
 							</span>
-							<span className={styles.duplicateAlertMeta}>
-								Same {duplicate.matchedOn}
-								{duplicate.facilityNames.length > 0 && ` · ${duplicate.facilityNames.join(', ')}`}
-							</span>
+							<span className={styles.duplicateAlertMeta}>Same {duplicate.matchedOn}</span>
 						</div>
 						{duplicate.visible ? (
 							<Button variant='outline' size='sm' asChild>

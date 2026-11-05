@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { DIAGNOSIS_CERTAINTIES } from '@loopwise/shared/encounter-record';
+import { DIAGNOSIS_TYPE_LABELS, DIAGNOSIS_TYPES } from '@loopwise/shared/encounter-record';
 import { ICD10_CODE_PATTERN, normalizeIcd10Code } from '@loopwise/shared/icd10';
 import { useState } from 'react';
 import styles from './encounter.module.css';
 import { FormField } from './form-field';
 import { useRecordMutation } from './use-record-mutation';
 import { VoidDialog } from './void-dialog';
-import type { DiagnosisCertainty, EncounterRecordFieldsFragment } from '@/graphql/generated/graphql';
+import type { DiagnosisType, EncounterRecordFieldsFragment } from '@/graphql/generated/graphql';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Empty } from '@/components/ui/empty';
@@ -18,7 +18,10 @@ import { encounterRecordApi } from '@/lib/encounter-record-api';
 
 type Diagnosis = EncounterRecordFieldsFragment['diagnoses'][number];
 
-/** The visit's ICD-10 diagnoses: one primary, provisional or confirmed; wrong ones are voided. */
+/**
+ * The visit's ICD-10 diagnoses (codes of the list PhilHealth uses): one primary, the others secondary, working
+ * impressions or comorbidities, each final or provisional; wrong ones are voided.
+ */
 export function DiagnosesSection({ record }: { record: EncounterRecordFieldsFragment }) {
 	const [voiding, setVoiding] = useState<Diagnosis | null>(null);
 	const update = useRecordMutation(encounterRecordApi.encounterRecord.updateDiagnosis);
@@ -41,37 +44,39 @@ export function DiagnosesSection({ record }: { record: EncounterRecordFieldsFrag
 							className={styles.listRow}
 							data-voided={diagnosis.voidedAt ? true : undefined}
 						>
-							<span className={styles.code}>{diagnosis.icd10Code}</span>
+							<span className={styles.code}>{diagnosis.icd10Code ?? '—'}</span>
 							<span className={styles.listMain}>
-								{diagnosis.display}
+								{diagnosis.description}
 								{diagnosis.voidReason && (
 									<span className={styles.muted}> · voided: {diagnosis.voidReason}</span>
 								)}
 							</span>
-							{diagnosis.isPrimary && !diagnosis.voidedAt && <Badge variant='default'>Primary</Badge>}
-							<Badge variant='outline'>
-								{diagnosis.certainty === 'provisional' ? 'Provisional' : 'Confirmed'}
+							<Badge
+								variant={diagnosis.type === 'PRIMARY' && !diagnosis.voidedAt ? 'default' : 'outline'}
+							>
+								{DIAGNOSIS_TYPE_LABELS[diagnosis.type]}
 							</Badge>
+							{!diagnosis.isFinal && <Badge variant='outline'>Provisional</Badge>}
 							{record.canEdit && !diagnosis.voidedAt && (
 								<span className={styles.actions}>
-									{!diagnosis.isPrimary && (
+									{diagnosis.type !== 'PRIMARY' && (
 										<Button
 											size='sm'
 											variant='ghost'
 											disabled={update.isPending}
-											onClick={() => update.mutate({ id: diagnosis.id, isPrimary: true })}
+											onClick={() => update.mutate({ id: diagnosis.id, type: 'PRIMARY' })}
 										>
 											Make primary
 										</Button>
 									)}
-									{diagnosis.certainty === 'provisional' && (
+									{!diagnosis.isFinal && (
 										<Button
 											size='sm'
 											variant='ghost'
 											disabled={update.isPending}
-											onClick={() => update.mutate({ id: diagnosis.id, certainty: 'confirmed' })}
+											onClick={() => update.mutate({ id: diagnosis.id, isFinal: true })}
 										>
-											Confirm
+											Mark final
 										</Button>
 									)}
 									<Button size='sm' variant='ghost-muted' onClick={() => setVoiding(diagnosis)}>
@@ -90,7 +95,9 @@ export function DiagnosesSection({ record }: { record: EncounterRecordFieldsFrag
 				onOpenChange={(open) => !open && setVoiding(null)}
 				title='Void diagnosis'
 				description={
-					voiding ? `${voiding.icd10Code} ${voiding.display} stays in the record, struck through.` : ''
+					voiding
+						? `${voiding.icd10Code ?? ''} ${voiding.description} stays in the record, struck through.`.trim()
+						: ''
 				}
 				isPending={voidDiagnosis.isPending}
 				error={voidDiagnosis.error?.message}
@@ -105,7 +112,9 @@ export function DiagnosesSection({ record }: { record: EncounterRecordFieldsFrag
 function AddDiagnosisForm({ encounterId }: { encounterId: string }) {
 	const [search, setSearch] = useState('');
 	const [picked, setPicked] = useState<{ code: string; title: string } | null>(null);
-	const [certainty, setCertainty] = useState<DiagnosisCertainty>('provisional');
+	/** `AUTO`: primary for the first diagnosis, else secondary (the API decides). */
+	const [type, setType] = useState<DiagnosisType | 'AUTO'>('AUTO');
+	const [isFinal, setIsFinal] = useState(true);
 	const query = useDebouncedValue(search, 200);
 	const suggestions = useQuery({
 		...encounterRecordApi.encounterRecord.searchIcd10.queryOptions({ query }),
@@ -123,7 +132,8 @@ function AddDiagnosisForm({ encounterId }: { encounterId: string }) {
 	const reset = () => {
 		setSearch('');
 		setPicked(null);
-		setCertainty('provisional');
+		setType('AUTO');
+		setIsFinal(true);
 	};
 
 	return (
@@ -133,7 +143,13 @@ function AddDiagnosisForm({ encounterId }: { encounterId: string }) {
 				event.preventDefault();
 				if (chosen) {
 					add.mutate(
-						{ encounterId, icd10Code: chosen.code, display: chosen.title, certainty },
+						{
+							encounterId,
+							icd10Code: chosen.code,
+							description: chosen.title,
+							type: type === 'AUTO' ? null : type,
+							isFinal,
+						},
 						{ onSuccess: reset },
 					);
 				}
@@ -154,18 +170,35 @@ function AddDiagnosisForm({ encounterId }: { encounterId: string }) {
 						/>
 					)}
 				</FormField>
+				<FormField label='Type'>
+					{() => (
+						<Select value={type} onValueChange={(value) => setType(value as DiagnosisType | 'AUTO')}>
+							<SelectTrigger className={styles.control} aria-label='Type'>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value='AUTO'>Automatic</SelectItem>
+								{DIAGNOSIS_TYPES.map((option) => (
+									<SelectItem key={option} value={option}>
+										{DIAGNOSIS_TYPE_LABELS[option]}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					)}
+				</FormField>
 				<FormField label='Certainty'>
 					{() => (
-						<Select value={certainty} onValueChange={(value) => setCertainty(value as DiagnosisCertainty)}>
+						<Select
+							value={isFinal ? 'final' : 'provisional'}
+							onValueChange={(value) => setIsFinal(value === 'final')}
+						>
 							<SelectTrigger className={styles.control} aria-label='Certainty'>
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								{DIAGNOSIS_CERTAINTIES.map((option) => (
-									<SelectItem key={option} value={option}>
-										{option === 'provisional' ? 'Provisional' : 'Confirmed'}
-									</SelectItem>
-								))}
+								<SelectItem value='final'>Final</SelectItem>
+								<SelectItem value='provisional'>Provisional</SelectItem>
 							</SelectContent>
 						</Select>
 					)}

@@ -1,7 +1,7 @@
 import z from 'zod/v3';
 
-import { ENCOUNTER_NOTES_MAX_LENGTH, ENCOUNTER_REASON_MAX_LENGTH } from '../encounter';
-import { FacilitySchema } from './propose-patient-registration';
+import { ENCOUNTER_NOTES_MAX_LENGTH, ENCOUNTER_REASON_MAX_LENGTH, ENCOUNTER_TYPES } from '../encounter';
+import { ClinicSchema } from './propose-patient-registration';
 
 export const description = [
 	"Show the clinician a draft encounter (visit) for this chat's patient, in a card they can edit, confirm or cancel.",
@@ -36,7 +36,11 @@ export const InputSchema = z.object({
 	reason: z
 		.string()
 		.max(ENCOUNTER_REASON_MAX_LENGTH)
-		.describe('Why the patient came, in a few words, e.g. "Fatigue for 2 weeks, BP check".'),
+		.describe('Chief complaint: why the patient came, in a few words, e.g. "Fatigue for 2 weeks, BP check".'),
+	type: z
+		.enum(ENCOUNTER_TYPES)
+		.optional()
+		.describe('The kind of visit, only if clear (FOLLOW_UP, PRENATAL, PEME …); default CONSULTATION.'),
 	notes: z
 		.string()
 		.max(ENCOUNTER_NOTES_MAX_LENGTH)
@@ -51,20 +55,20 @@ export const InputSchema = z.object({
 		.array(
 			z.object({
 				icd10Code: z.string().describe('ICD-10 (WHO 2010), e.g. "I10".'),
-				display: z.string().describe('The diagnosis, e.g. "Essential (primary) hypertension".'),
+				description: z.string().describe('The diagnosis, e.g. "Essential (primary) hypertension".'),
 			}),
 		)
 		.max(10)
 		.optional()
-		.describe('Diagnoses the clinician stated or agreed to, first = primary; recorded as provisional.'),
+		.describe('Diagnoses the clinician stated or agreed to, first = primary; recorded as not final (working).'),
 });
 
 export const OutputSchema = z.object({
 	_version: z.literal('1').optional(),
 	success: z.literal(true),
 	patientId: z.string(),
-	/** The facilities the clinician can record at; the card preselects the only one. */
-	facilities: z.array(FacilitySchema),
+	/** The clinics the clinician can record at; the card preselects the first. */
+	clinics: z.array(ClinicSchema),
 });
 
 export type Input = z.infer<typeof InputSchema>;

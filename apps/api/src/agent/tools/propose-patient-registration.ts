@@ -5,8 +5,8 @@ import { createTool } from '../utils/tools.js';
 
 /**
  * Offers a prefilled patient registration in a card (DESIGN.md §7.1). It writes nothing: only the clinician registers
- * the patient, with the card's Confirm button (`registerPatient`). It reads the user's facilities and, once the draft
- * is complete, the possible duplicates, so the card opens with them.
+ * the patient, with the card's Confirm button (`registerPatient`). It reads the user's clinics and, once the draft
+ * is complete, the possible duplicates in the first clinic's organization, so the card opens with them.
  */
 export default createTool<proposePatientRegistration.Input, proposePatientRegistration.Output>({
 	kind: 'propose',
@@ -14,9 +14,9 @@ export default createTool<proposePatientRegistration.Input, proposePatientRegist
 	inputSchema: proposePatientRegistration.InputSchema,
 	outputSchema: proposePatientRegistration.OutputSchema,
 	execute: async (input, context) => {
-		const facilities = await context.services.patients.myFacilities(context.userId);
-		if (facilities.length === 0) {
-			throw new Error('The user does not work at a facility, so they cannot register patients.');
+		const clinics = await context.services.patients.myCareClinics(context.userId);
+		if (clinics.length === 0) {
+			throw new Error('The user does not work at a clinic, so they cannot register patients.');
 		}
 		const isComplete = PatientDraftSchema.safeParse(input).success;
 		const duplicates = isComplete
@@ -24,13 +24,13 @@ export default createTool<proposePatientRegistration.Input, proposePatientRegist
 					...input,
 					sex: input.sex!,
 					birthDate: input.birthDate!,
-					facilityId: facilities[0].id,
+					clinicId: clinics[0].id,
 				})
 			: [];
 		return {
 			_version: '1' as const,
 			success: true as const,
-			facilities: facilities.map(({ id, name }) => ({ id, name })),
+			clinics: clinics.map(({ id, name }) => ({ id, name })),
 			duplicates,
 		};
 	},

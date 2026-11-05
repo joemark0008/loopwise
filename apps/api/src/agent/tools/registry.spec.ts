@@ -41,7 +41,6 @@ describe('agent tool registry', () => {
 			describe_analytics: 'read',
 			run_analytics_sql: 'read',
 			get_metric: 'read',
-			explain_result: 'read',
 			report: 'display',
 			propose_vitals: 'propose',
 			propose_allergy: 'propose',
@@ -95,24 +94,20 @@ describe('agent tool registry', () => {
 			insights: { ...readMocks(TOOL_SERVICE_READS.insights), exportReportPdf: write },
 			analytics: { ...readMocks(TOOL_SERVICE_READS.analytics) },
 			reports: { ...readMocks(TOOL_SERVICE_READS.reports), exportPdf: write },
-			results: { ...readMocks(TOOL_SERVICE_READS.results), review: write },
-			orders: { ...readMocks(TOOL_SERVICE_READS.orders), accept: write },
-			rules: { ...readMocks(TOOL_SERVICE_READS.rules), evaluateAndStore: write },
+			diagnostics: { ...readMocks(TOOL_SERVICE_READS.diagnostics), review: write, release: write },
 			attachments: { ...readMocks(TOOL_SERVICE_READS.attachments), upload: write },
 		} as never);
 
 		expect(
 			Object.fromEntries(Object.entries(facades).map(([name, facade]) => [name, Object.keys(facade)])),
 		).toEqual({
-			patients: ['myFacilities', 'isVisible', 'getChartSummary', 'findForWise', 'getById', 'checkDuplicates'],
+			patients: ['myCareClinics', 'isVisible', 'getChartSummary', 'findForWise', 'getById', 'checkDuplicates'],
 			skills: ['getSkill', 'getSkills', 'getSkillBody'],
-			encounters: ['getNoteForWise'],
+			encounters: ['getForWise'],
 			insights: ['patientTrend', 'facilityPanel', 'buildReport'],
 			analytics: ['describe', 'run', 'metric'],
 			reports: ['toolOutputs', 'versions'],
-			results: ['toReviewForWise'],
-			orders: ['labOrdersForWise'],
-			rules: ['explainForWise'],
+			diagnostics: ['labWorklistForWise', 'resultsToReviewForWise'],
 			attachments: ['readTextForWise'],
 		});
 		expect(Object.isFrozen(facades.patients)).toBe(true);
@@ -127,13 +122,13 @@ describe('agent tool registry', () => {
 		const services = guard(
 			{
 				patients: {
-					myFacilities: async () => [{ id: 'hc', name: 'Health Center', slug: 'hc' }],
+					myCareClinics: async () => [{ id: 'c1', name: 'Health Center', code: 'TAG', organizationId: 'o1' }],
 					checkDuplicates: async () => [],
 				},
 				skills: { getSkill: () => undefined },
 				encounters: {
-					getNoteForWise: async () => ({
-						encounter: { id: 'e1', startedAt: '2026-11-03T01:00:00.000Z', facilityName: 'Health Center' },
+					getForWise: async () => ({
+						encounter: { id: 'e1', startedAt: '2026-11-03T01:00:00.000Z', clinicName: 'Health Center' },
 						patientName: 'Maria Santos',
 						current: emptyNote,
 						version: 1,
@@ -149,7 +144,7 @@ describe('agent tool registry', () => {
 				givenName: 'Juan',
 				familyName: 'Cruz',
 				birthDate: '1980-01-01',
-				sex: 'male',
+				sex: 'MALE',
 			},
 			propose_encounter: { reason: 'BP check' },
 			propose_encounter_note: { plan: 'Recheck BP in 2 weeks.' },
@@ -160,15 +155,15 @@ describe('agent tool registry', () => {
 			propose_allergy: { substance: 'Penicillin' },
 			propose_remove_allergy: { substance: 'Penicillin' },
 			propose_result_review: { resultId: 'r1', note: 'Called the patient.' },
-			propose_order: { encounterId: 'e1', tests: ['HbA1c', 'FBS'], targetFacility: 'Bohol Diagnostics' },
+			propose_order: { encounterId: 'e1', tests: ['HbA1c', 'FBS'] },
 			propose_diagnosis: { encounterId: 'e1', icd10Code: 'E11.9', display: 'Type 2 diabetes' },
 			propose_void_diagnosis: { encounterId: 'e1', icd10Code: 'E11.9' },
 			propose_void_vitals: { encounterId: 'e1' },
 			propose_cancel_order: { encounterId: 'e1', test: 'HbA1c' },
-			propose_lab_order_step: { orderId: 'o1', step: 'accept' },
+			propose_lab_order_step: { itemId: 'i1', step: 'collect' },
 			propose_issue_document: { encounterId: 'e1', document: 'prescription' },
 			propose_void_document: { encounterId: 'e1', document: 'prescription', reason: 'Wrong patient' },
-			propose_bill_step: { encounterId: 'e1', step: 'finalize' },
+			propose_bill_step: { encounterId: 'e1', step: 'issue' },
 			propose_save_report: { reportId: 'rep1' },
 			propose_patient_update: { phone: '0917 000 0000' },
 		};

@@ -7,20 +7,26 @@ import type { PatientFormErrors, PatientFormValues } from './patient-form-values
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const SEX_LABELS: Record<PatientSex, string> = { female: 'Female', male: 'Male', other: 'Other', unknown: 'Unknown' };
+const SEX_LABELS: Record<PatientSex, string> = { FEMALE: 'Female', MALE: 'Male' };
+
+/** No barangay chosen (a Select item can't have an empty value). */
+const NO_BARANGAY = 'none';
 
 /** The patient fields of the register page and the Wise proposal card. Controlled: the parent owns the values. */
 export function PatientFields({
 	values,
 	errors,
-	facilities,
+	clinics,
+	barangays = [],
 	onChange,
 	disabled,
 }: {
 	values: PatientFormValues;
 	/** Shown only once the parent wants them (after a submit attempt). */
 	errors: PatientFormErrors;
-	facilities: { id: string; name: string }[];
+	clinics: { id: string; name: string }[];
+	/** The barangays of the chosen clinic's city (PSGC); the barangay field shows only when there are some. */
+	barangays?: { code: string; name: string }[];
 	onChange: (values: PatientFormValues) => void;
 	disabled?: boolean;
 }) {
@@ -55,22 +61,27 @@ export function PatientFields({
 			<fieldset className={styles.patientFieldset}>
 				<legend className={styles.patientLegend}>Patient</legend>
 				<div className={styles.patientFields}>
-					{facilities.length > 1 && (
-						<Field label='Facility' error={errors.facilityId} wide required>
+					{clinics.length > 1 && (
+						<Field label='Clinic' error={errors.clinicId} wide required>
 							{(id, describedBy) => (
-								<Select value={values.facilityId} onValueChange={(value) => set('facilityId', value)}>
+								<Select
+									value={values.clinicId}
+									onValueChange={(value) =>
+										onChange({ ...values, clinicId: value, barangayCode: '' })
+									}
+								>
 									<SelectTrigger
 										id={id}
 										className={styles.patientFieldControl}
-										aria-label='Facility'
+										aria-label='Clinic'
 										aria-describedby={describedBy}
 									>
-										<SelectValue placeholder='Choose the facility' />
+										<SelectValue placeholder='Choose the clinic' />
 									</SelectTrigger>
 									<SelectContent>
-										{facilities.map((facility) => (
-											<SelectItem key={facility.id} value={facility.id}>
-												{facility.name}
+										{clinics.map((clinic) => (
+											<SelectItem key={clinic.id} value={clinic.id}>
+												{clinic.name}
 											</SelectItem>
 										))}
 									</SelectContent>
@@ -79,6 +90,7 @@ export function PatientFields({
 						</Field>
 					)}
 					{text('givenName', 'Given name', { placeholder: 'Maria', autoComplete: 'off', required: true })}
+					{text('middleName', 'Middle name', { placeholder: 'Reyes', autoComplete: 'off' })}
 					{text('familyName', 'Family name', { placeholder: 'Santos', autoComplete: 'off', required: true })}
 					{text('birthDate', 'Birth date', { type: 'date', required: true })}
 					<Field label='Sex' error={errors.sex} required>
@@ -110,9 +122,9 @@ export function PatientFields({
 				</div>
 			</fieldset>
 			<fieldset className={styles.patientFieldset}>
-				<legend className={styles.patientLegend}>Identifiers and contact</legend>
+				<legend className={styles.patientLegend}>IDs, contact and address</legend>
 				<div className={styles.patientFields}>
-					{text('mrn', 'MRN', { placeholder: 'THC-0042' })}
+					{text('patientNo', 'Existing chart no.', { placeholder: 'Assigned if left blank' })}
 					{text('philHealthId', 'PhilHealth number', { placeholder: '12-345678901-2' })}
 					{text('phone', 'Mobile number', { placeholder: '0917 123 4567', type: 'tel' })}
 					<Field label='Preferred language' error={errors.preferredLanguage} required>
@@ -140,6 +152,35 @@ export function PatientFields({
 							</Select>
 						)}
 					</Field>
+					{barangays.length > 0 && (
+						<Field label='Barangay' error={errors.barangayCode}>
+							{(id, describedBy) => (
+								<Select
+									value={values.barangayCode || NO_BARANGAY}
+									onValueChange={(value) => set('barangayCode', value === NO_BARANGAY ? '' : value)}
+									disabled={disabled}
+								>
+									<SelectTrigger
+										id={id}
+										className={styles.patientFieldControl}
+										aria-label='Barangay'
+										aria-describedby={describedBy}
+									>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value={NO_BARANGAY}>Not recorded</SelectItem>
+										{barangays.map((barangay) => (
+											<SelectItem key={barangay.code} value={barangay.code}>
+												{barangay.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							)}
+						</Field>
+					)}
+					{text('addressLine', 'Street address', { placeholder: 'Purok 3, 12 CPG Avenue' })}
 				</div>
 			</fieldset>
 		</div>

@@ -30,19 +30,20 @@ export function ageLabel(birthDate: string, sex: PatientFieldsFragment['sex'], t
 	return `${days} d ${sexLetter(sex)}`;
 }
 
-export const sexLetter = (sex: PatientFieldsFragment['sex']) =>
-	({ female: 'F', male: 'M', other: 'X', unknown: '?' })[sex];
+export const sexLetter = (sex: PatientFieldsFragment['sex']) => ({ FEMALE: 'F', MALE: 'M' })[sex];
 
-export const languageLabel = (value: string) =>
-	PATIENT_LANGUAGES.find((language) => language.value === value)?.label ?? value;
+export const languageLabel = (value: string | null | undefined) =>
+	value ? (PATIENT_LANGUAGES.find((language) => language.value === value)?.label ?? value) : 'Not recorded';
 
-/** `MRN THC-0001 · PhilHealth SYN-0000-0001` */
-export const identifierSummary = (patient: Pick<PatientFieldsFragment, 'identifiers'>) =>
-	patient.identifiers.map((identifier) => `${identifier.system} ${identifier.value}`).join(' · ');
+/** `TAG-PT-2026-000001 · PhilHealth SYN-0000-0001` */
+export const identifierSummary = (patient: Pick<PatientFieldsFragment, 'patientNo' | 'identifications'>) =>
+	[patient.patientNo, ...patient.identifications.map((id) => `${id.label} ${id.idNumber}`)].join(' · ');
 
-/** The values of one identifier system (`MRN`, `PhilHealth`), in the order they were recorded. */
-export const identifierValues = (patient: Pick<PatientFieldsFragment, 'identifiers'>, system: string) =>
-	patient.identifiers.filter((identifier) => identifier.system === system).map((identifier) => identifier.value);
+/** The numbers of one ID type (`PHILHEALTH_ID`, `SENIOR_CITIZEN_OSCA` …), in the order they were recorded. */
+export const identificationNumbers = (
+	patient: Pick<PatientFieldsFragment, 'identifications'>,
+	type: PatientFieldsFragment['identifications'][number]['type'],
+) => patient.identifications.filter((id) => id.type === type).map((id) => id.idNumber);
 
 /** `MS` for Maria Santos. */
 export const patientInitials = (patient: Pick<PatientFieldsFragment, 'givenName' | 'familyName'>) =>

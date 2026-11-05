@@ -214,10 +214,10 @@ export type AgentRequest = z.infer<typeof AgentRequestSchema>;
 export const AgentRequestSchema = z
 	.object({
 		message: AgentRequestUserMessageSchema,
-		chatId: z.string().optional(),
+		chatId: z.string().uuid().optional(),
 		/** Starts the chart chat of this patient (new chats only): Wise knows the patient (DESIGN.md §7). */
 		patientId: z.string().uuid().optional(),
-		messageToEditId: z.string().optional(),
+		messageToEditId: z.string().uuid().optional(),
 		model: llmSelectedModelSchema.optional(),
 		mentions: z.array(MentionSchema).optional(),
 		timezone: z.string().optional(),

@@ -8,24 +8,25 @@ import { MockLanguageModelV3 } from 'ai/test';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { PSGC_TAGBILARAN, PSGC_TAGBILARAN_BARANGAYS } from '../prisma/seed-reference.js';
 import { LlmService } from '../src/agent/llm/llm.service.js';
 import type { ProviderModelResult } from '../src/agent/providers/providers.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { createTestApp, createTestUser, resetDatabase, useTestDatabase } from './test-app.js';
+import { createClinicScene, createUser, grantClinicRoles } from './fixtures/clinic-fixtures.js';
+import { createTestApp, resetDatabase, signIn, useTestDatabase } from './test-app.js';
 
 const MODEL = { provider: 'openai', modelId: 'gpt-4.1-mini' };
 
 /**
- * Wise actions phase 2 (DESIGN.md §7.3) end to end, with a scripted model: diagnoses, voids, cancelling an order, the
- * lab's worklist steps from a general chat, issuing and voiding a prescription, the bill's steps and contact details.
- * Each card writes nothing; its Confirm goes through the real mutation, settles once, and the audit row records Wise.
+ * Wise actions on the record (DESIGN.md §7.3) end to end, with a scripted model: diagnoses, voids, issuing and voiding
+ * a prescription, and contact details. Each card writes nothing; its Confirm goes through the real mutation, settles
+ * once, and the audit row records Wise. Orders and lab steps are in `lab-orders.e2e-spec.ts`, bills in the billing
+ * specs.
  */
-describe('Wise actions, phase 2 (e2e)', () => {
+describe('Wise record actions (e2e)', () => {
 	let app: NestExpressApplication;
 	let prisma: PrismaService;
 	let clinicId = '';
-	let facilityId = '';
-	let labId = '';
 	let patientId = '';
 	let encounterId = '';
 	const chats: Record<string, string> = {};
@@ -77,8 +78,8 @@ describe('Wise actions, phase 2 (e2e)', () => {
 		};
 	};
 
-	const wiseAudit = async (action: string) =>
-		(await prisma.auditLog.findFirstOrThrow({ where: { action }, orderBy: { at: 'desc' } })).origin as {
+	const wiseAudit = async (event: string) =>
+		(await prisma.auditLog.findFirstOrThrow({ where: { event }, orderBy: { createdAt: 'desc' } })).origin as {
 			via?: string;
 			toolName?: string;
 		} | null;
@@ -93,51 +94,19 @@ describe('Wise actions, phase 2 (e2e)', () => {
 			scriptedModel(script),
 		);
 
-		const password = 'Sup3r-secret!';
-		const reyes = await createTestUser(app, { name: 'Dr. Reyes', email: 'reyes@example.com', password });
-		const bautista = await createTestUser(app, { name: 'Lab Bautista', email: 'lab@example.com', password });
-		Object.assign(doctor, { cookie: reyes.cookie, id: reyes.userId });
-		Object.assign(tech, { cookie: bautista.cookie, id: bautista.userId });
-		clinicId = (await ok(doctor.cookie, 'mutation { createClinic(input: { name: "Clinic" }) { id } }')).createClinic
-			.id;
-		await prisma.clinicMember.create({ data: { clinicId, userId: tech.id, role: 'user' } });
-		const [clinic, lab] = await Promise.all([
-			prisma.organization.create({ data: { name: 'Health Center', slug: 'hc', type: 'clinic' } }),
-			prisma.organization.create({ data: { name: 'Bohol Diagnostics', slug: 'lab', type: 'lab' } }),
-		]);
-		facilityId = clinic.id;
-		labId = lab.id;
-		await prisma.orgMember.createMany({
-			data: [
-				{ orgId: facilityId, userId: doctor.id, role: 'user' },
-				{ orgId: labId, userId: tech.id, role: 'user' },
-			],
+		// Dr. Reyes has Maria in care at a clinic of Tagbilaran; the medtech of the clinic sees no patient yet.
+		const scene = await createClinicScene(prisma);
+		clinicId = scene.clinic.id;
+		await prisma.clinic.update({
+			where: { id: clinicId },
+			data: { path: process.env.LOOPWISE_CLINICS_DIR, cityMunicipalityCode: PSGC_TAGBILARAN.code },
 		});
-		patientId = (
-			await ok(
-				doctor.cookie,
-				'mutation ($input: RegisterPatientInput!) { registerPatient(input: $input) { patient { id } } }',
-				{
-					input: {
-						facilityId,
-						givenName: 'Maria',
-						familyName: 'Santos',
-						birthDate: '1981-04-12',
-						sex: 'female',
-						consentGiven: true,
-					},
-				},
-			)
-		).registerPatient.patient.id;
-		encounterId = (
-			await ok(
-				doctor.cookie,
-				'mutation ($input: CreateEncounterInput!) { createEncounter(input: $input) { id } }',
-				{
-					input: { patientId, facilityId, reason: 'BP check' },
-				},
-			)
-		).createEncounter.id;
+		Object.assign(doctor, { cookie: await signIn(app, scene.doctor), id: scene.doctor.id });
+		const medtech = await createUser(prisma, { firstName: 'Lab', lastName: 'Bautista' });
+		await grantClinicRoles(prisma, clinicId, medtech.id, ['MEDTECH']);
+		Object.assign(tech, { cookie: await signIn(app, medtech), id: medtech.id });
+		patientId = scene.patient.id;
+		encounterId = scene.encounter.id;
 	});
 
 	afterAll(async () => {
@@ -145,27 +114,36 @@ describe('Wise actions, phase 2 (e2e)', () => {
 	});
 
 	it('adds a diagnosis from a card, changes it from a second one, and voids it from a third', async () => {
-		const add = await draft('propose_diagnosis', { encounterId, icd10Code: 'I10', display: 'Hypertension' });
+		const add = await draft('propose_diagnosis', { encounterId, icd10Code: 'I10', description: 'Hypertension' });
 		const added = await ok(
 			doctor.cookie,
-			'mutation ($input: AddDiagnosisInput!) { addDiagnosis(input: $input) { id certainty } }',
-			{ input: { encounterId, icd10Code: 'I10', display: 'Hypertension', wiseOrigin: add.origin } },
+			'mutation ($input: AddDiagnosisInput!) { addDiagnosis(input: $input) { id type isFinal } }',
+			{
+				input: {
+					encounterId,
+					icd10Code: 'I10',
+					description: 'Hypertension',
+					isFinal: false,
+					wiseOrigin: add.origin,
+				},
+			},
 		);
+		expect(added.addDiagnosis).toMatchObject({ type: 'PRIMARY', isFinal: false });
 		expect(await wiseAudit('diagnosis.add')).toMatchObject({ via: 'wise', toolName: 'propose_diagnosis' });
 
 		const change = await draft('propose_diagnosis', {
 			encounterId,
 			icd10Code: 'I10',
-			display: 'Hypertension',
-			certainty: 'confirmed',
+			description: 'Hypertension',
+			isFinal: true,
 		});
 		const id = added.addDiagnosis.id;
 		const updated = await ok(
 			doctor.cookie,
-			'mutation ($input: UpdateDiagnosisInput!) { updateDiagnosis(input: $input) { certainty } }',
-			{ input: { id, certainty: 'confirmed', wiseOrigin: change.origin } },
+			'mutation ($input: UpdateDiagnosisInput!) { updateDiagnosis(input: $input) { isFinal } }',
+			{ input: { id, isFinal: true, wiseOrigin: change.origin } },
 		);
-		expect(updated.updateDiagnosis.certainty).toBe('confirmed');
+		expect(updated.updateDiagnosis.isFinal).toBe(true);
 		expect(await wiseAudit('diagnosis.update')).toMatchObject({ toolName: 'propose_diagnosis' });
 
 		const remove = await draft('propose_void_diagnosis', { encounterId, icd10Code: 'I10' });
@@ -200,57 +178,7 @@ describe('Wise actions, phase 2 (e2e)', () => {
 		expect(await wiseAudit('vitals.void')).toMatchObject({ toolName: 'propose_void_vitals' });
 	});
 
-	it("cancels the doctor's order from a card, and the lab accepts, collects and rejects from its own chat", async () => {
-		const orders = await ok(
-			doctor.cookie,
-			'mutation ($input: CreateEncounterOrdersInput!) { createEncounterOrders(input: $input) { id code } }',
-			{ input: { encounterId, codes: ['4548-4', '1558-6', '57698-3'], targetOrgId: labId } },
-		);
-		const [hba1c, fbs, lipids] = orders.createEncounterOrders.map((order: { id: string }) => order.id);
-
-		const cancel = await draft('propose_cancel_order', { encounterId, test: 'Lipid panel' });
-		await ok(doctor.cookie, 'mutation ($input: OrderReasonInput!) { cancelOrder(input: $input) { status } }', {
-			input: { orderId: lipids, reason: 'Done last month', wiseOrigin: cancel.origin },
-		});
-		expect(await wiseAudit('order.cancel')).toMatchObject({ toolName: 'propose_cancel_order' });
-
-		const worklist = await draft('list_lab_orders', {}, 'tech');
-		expect(worklist.output.orders.map((order: { id: string }) => order.id).sort()).toEqual([hba1c, fbs].sort());
-
-		const accept = await draft('propose_lab_order_step', { orderId: hba1c, step: 'accept' }, 'tech');
-		expect(accept.output).toMatchObject({ subjectId: hba1c });
-		expect(accept.output.patientId).toBeUndefined();
-		const ACCEPT =
-			'mutation ($orderId: ID!, $wiseOrigin: WiseOriginInput) { acceptOrder(orderId: $orderId, wiseOrigin: $wiseOrigin) { status } }';
-		expect((await ok(tech.cookie, ACCEPT, { orderId: hba1c, wiseOrigin: accept.origin })).acceptOrder.status).toBe(
-			'accepted',
-		);
-		expect(await wiseAudit('order.accept')).toMatchObject({ toolName: 'propose_lab_order_step' });
-
-		const collect = await draft('propose_lab_order_step', { orderId: hba1c, step: 'collect' }, 'tech');
-		const COLLECT =
-			'mutation ($orderId: ID!, $wiseOrigin: WiseOriginInput) { markOrderCollected(orderId: $orderId, wiseOrigin: $wiseOrigin) { status } }';
-		await ok(tech.cookie, COLLECT, { orderId: hba1c, wiseOrigin: collect.origin });
-
-		const reject = await draft('propose_lab_order_step', { orderId: fbs, step: 'reject' }, 'tech');
-		await ok(tech.cookie, 'mutation ($input: OrderReasonInput!) { rejectOrder(input: $input) { status } }', {
-			input: { orderId: fbs, reason: 'Patient not fasting', wiseOrigin: reject.origin },
-		});
-		expect(await wiseAudit('order.reject')).toMatchObject({ toolName: 'propose_lab_order_step' });
-
-		// The doctor's clinic has the lab tools off by default: they are not offered there.
-		const settings = await ok(doctor.cookie, 'query { wiseToolSettings { tools { name enabled } } }');
-		expect(
-			settings.wiseToolSettings.tools.find((tool: { name: string }) => tool.name === 'propose_lab_order_step'),
-		).toMatchObject({ enabled: false });
-	});
-
 	it('issues a prescription only after a strong card, then voids it from another', async () => {
-		await ok(
-			doctor.cookie,
-			'mutation ($input: UpdateClinicianProfileInput!) { updateMyClinicianProfile(input: $input) { prcLicenseNumber } }',
-			{ input: { credentials: 'MD', prcLicenseNumber: '0123456' } },
-		);
 		const rx = await ok(
 			doctor.cookie,
 			'mutation ($input: SavePrescriptionInput!) { savePrescription(input: $input) { id } }',
@@ -272,10 +200,10 @@ describe('Wise actions, phase 2 (e2e)', () => {
 		const id = rx.savePrescription.id;
 		const issue = await draft('propose_issue_document', { encounterId, document: 'prescription' });
 		const ISSUE =
-			'mutation ($id: ID!, $wiseOrigin: WiseOriginInput) { issuePrescription(id: $id, wiseOrigin: $wiseOrigin) { status } }';
-		expect((await ok(doctor.cookie, ISSUE, { id, wiseOrigin: issue.origin })).issuePrescription.status).toBe(
-			'issued',
-		);
+			'mutation ($id: ID!, $wiseOrigin: WiseOriginInput) { issuePrescription(id: $id, wiseOrigin: $wiseOrigin) { documentStatus } }';
+		expect(
+			(await ok(doctor.cookie, ISSUE, { id, wiseOrigin: issue.origin })).issuePrescription.documentStatus,
+		).toBe('ISSUED');
 		expect(await wiseAudit('prescription.issue')).toMatchObject({ toolName: 'propose_issue_document' });
 
 		const voided = await draft('propose_void_document', { encounterId, document: 'prescription' });
@@ -285,55 +213,33 @@ describe('Wise actions, phase 2 (e2e)', () => {
 		expect(await wiseAudit('prescription.void')).toMatchObject({ toolName: 'propose_void_document' });
 	});
 
-	it('finalizes and marks the bill paid from cards', async () => {
-		const bill = await ok(
-			doctor.cookie,
-			'mutation ($input: SaveEncounterBillInput!) { saveEncounterBill(input: $input) { id } }',
-			{
-				input: {
-					encounterId,
-					charges: [{ kind: 'consultation', description: 'Consultation', quantity: 1, unitPrice: 300 }],
-				},
-			},
-		);
-		const id = bill.saveEncounterBill.id;
-		const finalize = await draft('propose_bill_step', { encounterId, step: 'finalize' });
-		const FINALIZE =
-			'mutation ($id: ID!, $wiseOrigin: WiseOriginInput) { finalizeEncounterBill(id: $id, wiseOrigin: $wiseOrigin) { status } }';
-		await ok(doctor.cookie, FINALIZE, { id, wiseOrigin: finalize.origin });
-		expect(await wiseAudit('bill.finalize')).toMatchObject({ toolName: 'propose_bill_step' });
-
-		const pay = await draft('propose_bill_step', { encounterId, step: 'pay', orNumber: 'OR-1001' });
-		const paid = await ok(
-			doctor.cookie,
-			'mutation ($input: MarkBillPaidInput!) { markEncounterBillPaid(input: $input) { status orNumber } }',
-			{ input: { id, orNumber: 'OR-1001', wiseOrigin: pay.origin } },
-		);
-		expect(paid.markEncounterBillPaid).toEqual({ status: 'paid', orNumber: 'OR-1001' });
-		expect(await wiseAudit('bill.pay')).toMatchObject({ toolName: 'propose_bill_step' });
-	});
-
 	it("changes the patient's contact details from a card, audited with what changed", async () => {
-		const card = await draft('propose_patient_update', { phone: '0917 555 0100', barangay: 'Cogon' });
+		const barangay = PSGC_TAGBILARAN_BARANGAYS[0];
+		const card = await draft('propose_patient_update', { phone: '0917 555 0100', barangay: barangay.name });
 		const res = await ok(
 			doctor.cookie,
-			'mutation ($input: UpdatePatientInput!) { updatePatient(input: $input) { phone barangay } }',
-			{ input: { patientId, phone: '0917 555 0100', barangay: 'Cogon', wiseOrigin: card.origin } },
+			'mutation ($input: UpdatePatientInput!) { updatePatient(input: $input) { phone barangay address { barangayCode } } }',
+			{ input: { patientId, phone: '0917 555 0100', barangay: barangay.name, wiseOrigin: card.origin } },
 		);
-		expect(res.updatePatient).toEqual({ phone: '0917 555 0100', barangay: 'Cogon' });
-		const audit = await prisma.auditLog.findFirstOrThrow({ where: { action: 'patient.update' } });
-		expect(audit).toMatchObject({ patientId, reason: 'Changed phone, barangay' });
+		expect(res.updatePatient).toEqual({
+			phone: '+639175550100',
+			barangay: barangay.name,
+			address: { barangayCode: barangay.code },
+		});
+		const audit = await prisma.auditLog.findFirstOrThrow({ where: { event: 'patient.update' } });
+		expect(audit).toMatchObject({ patientId, action: 'UPDATE', entityType: 'Patient' });
+		expect(audit.changes).toMatchObject({ after: { phone: '+639175550100', barangay: barangay.name } });
 		expect(audit.origin).toMatchObject({ toolName: 'propose_patient_update' });
 
 		const other = await graphql(
 			tech.cookie,
 			'mutation ($input: UpdatePatientInput!) { updatePatient(input: $input) { phone } }',
 			{
-				input: { patientId, phone: '000' },
+				input: { patientId, phone: '0917 000 0000' },
 			},
 		);
-		// The lab sees Maria (it ran her tests), but contact details are kept by care facilities.
-		expect(other.body.errors?.[0].message).toMatch(/clinic or hospital/);
+		// The medtech has no lab order of Maria's, so row-level security hides her.
+		expect(other.body.errors?.[0].extensions).toMatchObject({ code: 'NOT_FOUND', errorCode: 'ENTITY_NOT_FOUND' });
 	});
 });
 

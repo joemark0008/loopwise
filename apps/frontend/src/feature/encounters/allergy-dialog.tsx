@@ -1,10 +1,10 @@
-import { ALLERGY_KINDS, ALLERGY_SEVERITIES } from '@loopwise/shared/encounter-record';
+import { ALLERGY_SEVERITIES, ALLERGY_TYPES } from '@loopwise/shared/encounter-record';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import styles from './encounter.module.css';
 import { FormField } from './form-field';
 import { useRecordMutation } from './use-record-mutation';
-import type { AllergyKind, AllergySeverity } from '@/graphql/generated/graphql';
+import type { AllergyType, Severity } from '@/graphql/generated/graphql';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -22,27 +22,25 @@ import { encounterRecordApi } from '@/lib/encounter-record-api';
 /** Records an allergy of the patient (not only of this visit); new prescriptions are checked against it. */
 export function AllergyDialog({
 	patientId,
-	facilityId,
 	open,
 	onOpenChange,
 }: {
 	patientId: string;
-	facilityId: string;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
-	const [substance, setSubstance] = useState('');
+	const [allergen, setAllergen] = useState('');
 	const [reaction, setReaction] = useState('');
-	const [kind, setKind] = useState<AllergyKind>('drug');
-	const [severity, setSeverity] = useState<AllergySeverity | ''>('');
+	const [type, setType] = useState<AllergyType>('DRUG');
+	const [severity, setSeverity] = useState<Severity | ''>('');
 	const add = useRecordMutation(encounterRecordApi.encounterRecord.addAllergy);
 	const queryClient = useQueryClient();
 
 	const close = (next: boolean) => {
 		if (!next) {
-			setSubstance('');
+			setAllergen('');
 			setReaction('');
-			setKind('drug');
+			setType('DRUG');
 			setSeverity('');
 			add.reset();
 		}
@@ -59,10 +57,9 @@ export function AllergyDialog({
 						add.mutate(
 							{
 								patientId,
-								facilityId,
-								substance,
+								allergen,
 								reaction: reaction || null,
-								kind,
+								type,
 								severity: severity || null,
 							},
 							{
@@ -82,26 +79,26 @@ export function AllergyDialog({
 						<DialogDescription>Prescriptions with a matching medicine get a warning.</DialogDescription>
 					</DialogHeader>
 					<div className={styles.fields}>
-						<FormField label='Substance' wide>
+						<FormField label='Allergen' wide>
 							{(id) => (
 								<Input
 									id={id}
-									value={substance}
+									value={allergen}
 									placeholder='Penicillin'
-									onChange={(event) => setSubstance(event.target.value)}
+									onChange={(event) => setAllergen(event.target.value)}
 								/>
 							)}
 						</FormField>
-						<FormField label='Kind'>
+						<FormField label='Type'>
 							{() => (
-								<Select value={kind} onValueChange={(value) => setKind(value as AllergyKind)}>
-									<SelectTrigger className={styles.control} aria-label='Kind'>
+								<Select value={type} onValueChange={(value) => setType(value as AllergyType)}>
+									<SelectTrigger className={styles.control} aria-label='Type'>
 										<SelectValue />
 									</SelectTrigger>
 									<SelectContent>
-										{ALLERGY_KINDS.map((option) => (
+										{ALLERGY_TYPES.map((option) => (
 											<SelectItem key={option} value={option}>
-												{option}
+												{sentenceCase(option)}
 											</SelectItem>
 										))}
 									</SelectContent>
@@ -110,17 +107,14 @@ export function AllergyDialog({
 						</FormField>
 						<FormField label='Severity'>
 							{() => (
-								<Select
-									value={severity}
-									onValueChange={(value) => setSeverity(value as AllergySeverity)}
-								>
+								<Select value={severity} onValueChange={(value) => setSeverity(value as Severity)}>
 									<SelectTrigger className={styles.control} aria-label='Severity'>
 										<SelectValue placeholder='Not known' />
 									</SelectTrigger>
 									<SelectContent>
 										{ALLERGY_SEVERITIES.map((option) => (
 											<SelectItem key={option} value={option}>
-												{option}
+												{sentenceCase(option)}
 											</SelectItem>
 										))}
 									</SelectContent>
@@ -143,7 +137,7 @@ export function AllergyDialog({
 						<Button type='button' variant='ghost-muted' onClick={() => close(false)}>
 							Cancel
 						</Button>
-						<Button type='submit' disabled={!substance.trim() || add.isPending}>
+						<Button type='submit' disabled={!allergen.trim() || add.isPending}>
 							Add allergy
 						</Button>
 					</DialogFooter>
@@ -152,3 +146,6 @@ export function AllergyDialog({
 		</Dialog>
 	);
 }
+
+/** `ENVIRONMENTAL` → `Environmental`. */
+const sentenceCase = (value: string) => value.charAt(0) + value.slice(1).toLowerCase();

@@ -4,7 +4,7 @@ import type { ToolContext } from '../types/tools.js';
 import proposeEncounterNote from './propose-encounter-note.js';
 
 const draftBase = {
-	encounter: { id: 'e1', startedAt: '2026-11-03T01:00:00.000Z', facilityName: 'Health Center' },
+	encounter: { id: 'e1', startedAt: '2026-11-03T01:00:00.000Z', clinicName: 'Health Center' },
 	patientName: 'Maria Santos',
 	current: {
 		reason: 'Fatigue',
@@ -19,8 +19,8 @@ const draftBase = {
 	version: 3,
 };
 
-const run = (patientId: string | undefined, input: Record<string, unknown>, getNoteForWise = vi.fn()) => {
-	const context = { userId: 'u', patientId, services: { encounters: { getNoteForWise } } } as unknown as ToolContext;
+const run = (patientId: string | undefined, input: Record<string, unknown>, getForWise = vi.fn()) => {
+	const context = { userId: 'u', patientId, services: { encounters: { getForWise } } } as unknown as ToolContext;
 	return proposeEncounterNote.execute!(input as never, {
 		experimental_context: context,
 		toolCallId: 't',
@@ -30,30 +30,28 @@ const run = (patientId: string | undefined, input: Record<string, unknown>, getN
 
 describe('propose_encounter_note tool', () => {
 	it("returns the note as it is and its version for the chat's patient, and writes nothing", async () => {
-		const getNoteForWise = vi.fn().mockResolvedValue(draftBase);
-		expect(await run('p1', { encounterId: 'e1', plan: 'Recheck BP' }, getNoteForWise)).toEqual({
+		const getForWise = vi.fn().mockResolvedValue(draftBase);
+		expect(await run('p1', { encounterId: 'e1', plan: 'Recheck BP' }, getForWise)).toEqual({
 			_version: '1',
 			success: true,
 			...draftBase,
 		});
-		expect(getNoteForWise).toHaveBeenCalledWith('u', 'p1', 'e1');
+		expect(getForWise).toHaveBeenCalledWith('u', 'p1', 'e1');
 	});
 
 	it('drafts against the latest encounter when no id is given', async () => {
-		const getNoteForWise = vi.fn().mockResolvedValue(draftBase);
-		await run('p1', { plan: 'Recheck BP' }, getNoteForWise);
-		expect(getNoteForWise).toHaveBeenCalledWith('u', 'p1', undefined);
+		const getForWise = vi.fn().mockResolvedValue(draftBase);
+		await run('p1', { plan: 'Recheck BP' }, getForWise);
+		expect(getForWise).toHaveBeenCalledWith('u', 'p1', undefined);
 	});
 
 	it("refuses outside a patient's chart chat", async () => {
 		await expect(run(undefined, { plan: 'x' })).rejects.toThrow(/open the patient's chart/);
 	});
 
-	it('passes on a refusal to read the encounter (another patient, another facility)', async () => {
-		const getNoteForWise = vi.fn().mockRejectedValue(new Error('This patient has no such encounter.'));
-		await expect(run('p1', { encounterId: 'other', plan: 'x' }, getNoteForWise)).rejects.toThrow(
-			/no such encounter/,
-		);
+	it('passes on a refusal to read the encounter (another patient, another clinic)', async () => {
+		const getForWise = vi.fn().mockRejectedValue(new Error('This patient has no such encounter.'));
+		await expect(run('p1', { encounterId: 'other', plan: 'x' }, getForWise)).rejects.toThrow(/no such encounter/);
 	});
 
 	it('tells the model nothing is saved yet', () => {
