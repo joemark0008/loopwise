@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DisplayRouteImport } from './routes/_display'
 import { Route as PrintRouteImport } from './routes/_print'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as PublicRouteImport } from './routes/_public'
@@ -16,13 +17,18 @@ import { Route as EmailVerifiedRouteImport } from './routes/email-verified'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as DisplayBoardRouteImport } from './routes/_display/board'
 import { Route as ProtectedChatLayoutRouteImport } from './routes/_protected/_chat-layout'
+import { Route as ProtectedAppointmentsRouteImport } from './routes/_protected/appointments'
 import { Route as ProtectedChatsRouteImport } from './routes/_protected/chats'
+import { Route as ProtectedMyQueueRouteImport } from './routes/_protected/my-queue'
 import { Route as ProtectedOrdersRouteImport } from './routes/_protected/orders'
 import { Route as ProtectedPatientsRouteImport } from './routes/_protected/patients'
+import { Route as ProtectedQueueRouteImport } from './routes/_protected/queue'
 import { Route as ProtectedReportsRouteImport } from './routes/_protected/reports'
 import { Route as ProtectedResultsRouteImport } from './routes/_protected/results'
 import { Route as ProtectedSettingsRouteImport } from './routes/_protected/settings'
+import { Route as ProtectedTriageRouteImport } from './routes/_protected/triage'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public/forgot-password'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as ProtectedChatLayoutIndexRouteImport } from './routes/_protected/_chat-layout.index'
@@ -57,6 +63,10 @@ import { Route as ProtectedSettingsClinicSkillsRouteImport } from './routes/_pro
 import { Route as ProtectedSettingsClinicStaffRouteImport } from './routes/_protected/settings.clinic.staff'
 import { Route as ProtectedPatientsPatientIdEncountersEncounterIdRouteImport } from './routes/_protected/patients.$patientId.encounters.$encounterId'
 
+const DisplayRoute = DisplayRouteImport.update({
+  id: '/_display',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrintRoute = PrintRouteImport.update({
   id: '/_print',
   getParentRoute: () => rootRouteImport,
@@ -89,13 +99,28 @@ const SetupRoute = SetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DisplayBoardRoute = DisplayBoardRouteImport.update({
+  id: '/board',
+  path: '/board',
+  getParentRoute: () => DisplayRoute,
+} as any)
 const ProtectedChatLayoutRoute = ProtectedChatLayoutRouteImport.update({
   id: '/_chat-layout',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedAppointmentsRoute = ProtectedAppointmentsRouteImport.update({
+  id: '/appointments',
+  path: '/appointments',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedChatsRoute = ProtectedChatsRouteImport.update({
   id: '/chats',
   path: '/chats',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedMyQueueRoute = ProtectedMyQueueRouteImport.update({
+  id: '/my-queue',
+  path: '/my-queue',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedOrdersRoute = ProtectedOrdersRouteImport.update({
@@ -106,6 +131,11 @@ const ProtectedOrdersRoute = ProtectedOrdersRouteImport.update({
 const ProtectedPatientsRoute = ProtectedPatientsRouteImport.update({
   id: '/patients',
   path: '/patients',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedQueueRoute = ProtectedQueueRouteImport.update({
+  id: '/queue',
+  path: '/queue',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedReportsRoute = ProtectedReportsRouteImport.update({
@@ -121,6 +151,11 @@ const ProtectedResultsRoute = ProtectedResultsRouteImport.update({
 const ProtectedSettingsRoute = ProtectedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedTriageRoute = ProtectedTriageRouteImport.update({
+  id: '/triage',
+  path: '/triage',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const PublicForgotPasswordRoute = PublicForgotPasswordRouteImport.update({
@@ -319,12 +354,17 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/setup': typeof SetupRoute
+  '/board': typeof DisplayBoardRoute
+  '/appointments': typeof ProtectedAppointmentsRoute
   '/chats': typeof ProtectedChatsRoute
+  '/my-queue': typeof ProtectedMyQueueRoute
   '/orders': typeof ProtectedOrdersRoute
   '/patients': typeof ProtectedPatientsRouteWithChildren
+  '/queue': typeof ProtectedQueueRoute
   '/reports': typeof ProtectedReportsRoute
   '/results': typeof ProtectedResultsRoute
   '/settings': typeof ProtectedSettingsRouteWithChildren
+  '/triage': typeof ProtectedTriageRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/$chatId': typeof ProtectedChatLayoutChatIdRoute
@@ -364,10 +404,15 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/setup': typeof SetupRoute
+  '/board': typeof DisplayBoardRoute
+  '/appointments': typeof ProtectedAppointmentsRoute
   '/chats': typeof ProtectedChatsRoute
+  '/my-queue': typeof ProtectedMyQueueRoute
   '/orders': typeof ProtectedOrdersRoute
+  '/queue': typeof ProtectedQueueRoute
   '/reports': typeof ProtectedReportsRoute
   '/results': typeof ProtectedResultsRoute
+  '/triage': typeof ProtectedTriageRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/$chatId': typeof ProtectedChatLayoutChatIdRoute
@@ -401,6 +446,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_display': typeof DisplayRouteWithChildren
   '/_print': typeof PrintRouteWithChildren
   '/_protected': typeof ProtectedRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
@@ -408,13 +454,18 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/setup': typeof SetupRoute
+  '/_display/board': typeof DisplayBoardRoute
   '/_protected/_chat-layout': typeof ProtectedChatLayoutRouteWithChildren
+  '/_protected/appointments': typeof ProtectedAppointmentsRoute
   '/_protected/chats': typeof ProtectedChatsRoute
+  '/_protected/my-queue': typeof ProtectedMyQueueRoute
   '/_protected/orders': typeof ProtectedOrdersRoute
   '/_protected/patients': typeof ProtectedPatientsRouteWithChildren
+  '/_protected/queue': typeof ProtectedQueueRoute
   '/_protected/reports': typeof ProtectedReportsRoute
   '/_protected/results': typeof ProtectedResultsRoute
   '/_protected/settings': typeof ProtectedSettingsRouteWithChildren
+  '/_protected/triage': typeof ProtectedTriageRoute
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/login': typeof PublicLoginRoute
   '/_protected/_chat-layout/$chatId': typeof ProtectedChatLayoutChatIdRoute
@@ -457,12 +508,17 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/set-password'
     | '/setup'
+    | '/board'
+    | '/appointments'
     | '/chats'
+    | '/my-queue'
     | '/orders'
     | '/patients'
+    | '/queue'
     | '/reports'
     | '/results'
     | '/settings'
+    | '/triage'
     | '/forgot-password'
     | '/login'
     | '/$chatId'
@@ -502,10 +558,15 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/set-password'
     | '/setup'
+    | '/board'
+    | '/appointments'
     | '/chats'
+    | '/my-queue'
     | '/orders'
+    | '/queue'
     | '/reports'
     | '/results'
+    | '/triage'
     | '/forgot-password'
     | '/login'
     | '/$chatId'
@@ -538,6 +599,7 @@ export interface FileRouteTypes {
     | '/patients/$patientId/encounters/$encounterId'
   id:
     | '__root__'
+    | '/_display'
     | '/_print'
     | '/_protected'
     | '/_public'
@@ -545,13 +607,18 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/set-password'
     | '/setup'
+    | '/_display/board'
     | '/_protected/_chat-layout'
+    | '/_protected/appointments'
     | '/_protected/chats'
+    | '/_protected/my-queue'
     | '/_protected/orders'
     | '/_protected/patients'
+    | '/_protected/queue'
     | '/_protected/reports'
     | '/_protected/results'
     | '/_protected/settings'
+    | '/_protected/triage'
     | '/_public/forgot-password'
     | '/_public/login'
     | '/_protected/_chat-layout/$chatId'
@@ -588,6 +655,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  DisplayRoute: typeof DisplayRouteWithChildren
   PrintRoute: typeof PrintRouteWithChildren
   ProtectedRoute: typeof ProtectedRouteWithChildren
   PublicRoute: typeof PublicRouteWithChildren
@@ -599,6 +667,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_display': {
+      id: '/_display'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof DisplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_print': {
       id: '/_print'
       path: ''
@@ -648,6 +723,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_display/board': {
+      id: '/_display/board'
+      path: '/board'
+      fullPath: '/board'
+      preLoaderRoute: typeof DisplayBoardRouteImport
+      parentRoute: typeof DisplayRoute
+    }
     '/_protected/_chat-layout': {
       id: '/_protected/_chat-layout'
       path: ''
@@ -655,11 +737,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedChatLayoutRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/appointments': {
+      id: '/_protected/appointments'
+      path: '/appointments'
+      fullPath: '/appointments'
+      preLoaderRoute: typeof ProtectedAppointmentsRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/chats': {
       id: '/_protected/chats'
       path: '/chats'
       fullPath: '/chats'
       preLoaderRoute: typeof ProtectedChatsRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/my-queue': {
+      id: '/_protected/my-queue'
+      path: '/my-queue'
+      fullPath: '/my-queue'
+      preLoaderRoute: typeof ProtectedMyQueueRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/orders': {
@@ -674,6 +770,13 @@ declare module '@tanstack/react-router' {
       path: '/patients'
       fullPath: '/patients'
       preLoaderRoute: typeof ProtectedPatientsRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/queue': {
+      id: '/_protected/queue'
+      path: '/queue'
+      fullPath: '/queue'
+      preLoaderRoute: typeof ProtectedQueueRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/reports': {
@@ -695,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof ProtectedSettingsRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/triage': {
+      id: '/_protected/triage'
+      path: '/triage'
+      fullPath: '/triage'
+      preLoaderRoute: typeof ProtectedTriageRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_public/forgot-password': {
@@ -931,6 +1041,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DisplayRouteChildren {
+  DisplayBoardRoute: typeof DisplayBoardRoute
+}
+
+const DisplayRouteChildren: DisplayRouteChildren = {
+  DisplayBoardRoute: DisplayBoardRoute,
+}
+
+const DisplayRouteWithChildren =
+  DisplayRoute._addFileChildren(DisplayRouteChildren)
+
 interface PrintRouteChildren {
   PrintPrintLabRequestEncounterIdRoute: typeof PrintPrintLabRequestEncounterIdRoute
   PrintPrintMedicalCertificateCertificateIdRoute: typeof PrintPrintMedicalCertificateCertificateIdRoute
@@ -1058,23 +1179,31 @@ const ProtectedSettingsRouteWithChildren =
 
 interface ProtectedRouteChildren {
   ProtectedChatLayoutRoute: typeof ProtectedChatLayoutRouteWithChildren
+  ProtectedAppointmentsRoute: typeof ProtectedAppointmentsRoute
   ProtectedChatsRoute: typeof ProtectedChatsRoute
+  ProtectedMyQueueRoute: typeof ProtectedMyQueueRoute
   ProtectedOrdersRoute: typeof ProtectedOrdersRoute
   ProtectedPatientsRoute: typeof ProtectedPatientsRouteWithChildren
+  ProtectedQueueRoute: typeof ProtectedQueueRoute
   ProtectedReportsRoute: typeof ProtectedReportsRoute
   ProtectedResultsRoute: typeof ProtectedResultsRoute
   ProtectedSettingsRoute: typeof ProtectedSettingsRouteWithChildren
+  ProtectedTriageRoute: typeof ProtectedTriageRoute
   ProtectedSharedChatShareIdRoute: typeof ProtectedSharedChatShareIdRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedChatLayoutRoute: ProtectedChatLayoutRouteWithChildren,
+  ProtectedAppointmentsRoute: ProtectedAppointmentsRoute,
   ProtectedChatsRoute: ProtectedChatsRoute,
+  ProtectedMyQueueRoute: ProtectedMyQueueRoute,
   ProtectedOrdersRoute: ProtectedOrdersRoute,
   ProtectedPatientsRoute: ProtectedPatientsRouteWithChildren,
+  ProtectedQueueRoute: ProtectedQueueRoute,
   ProtectedReportsRoute: ProtectedReportsRoute,
   ProtectedResultsRoute: ProtectedResultsRoute,
   ProtectedSettingsRoute: ProtectedSettingsRouteWithChildren,
+  ProtectedTriageRoute: ProtectedTriageRoute,
   ProtectedSharedChatShareIdRoute: ProtectedSharedChatShareIdRoute,
 }
 
@@ -1096,6 +1225,7 @@ const PublicRouteWithChildren =
   PublicRoute._addFileChildren(PublicRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  DisplayRoute: DisplayRouteWithChildren,
   PrintRoute: PrintRouteWithChildren,
   ProtectedRoute: ProtectedRouteWithChildren,
   PublicRoute: PublicRouteWithChildren,

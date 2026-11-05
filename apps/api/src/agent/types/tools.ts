@@ -10,7 +10,9 @@ import type {
 	executeSql,
 	findPatient,
 	getMetric,
+	listAppointments,
 	listLabOrders,
+	listQueue,
 	listResultsToReview,
 	proposeEncounterNote,
 	proposePatientRegistration,
@@ -196,6 +198,23 @@ export interface AgentToolServices {
 			patientId: string,
 			encounterId?: string,
 		): Promise<Omit<proposeEncounterNote.Output, '_version' | 'success'>>;
+	};
+	/**
+	 * `SchedulingWiseReader` reads, as the user at the chat's clinic and audited: the day's appointments
+	 * (`list_appointments`) and the queue (`list_queue`). Booking and moving appointments are the user's mutations, from
+	 * the cards.
+	 */
+	scheduling: {
+		appointmentsForWise(
+			userId: string,
+			clinicId: string | null,
+			input: listAppointments.Input & { patientId?: string | null; limit: number },
+		): Promise<Omit<listAppointments.Output, '_version'>>;
+		queueForWise(
+			userId: string,
+			clinicId: string | null,
+			input: listQueue.Input,
+		): Promise<Omit<listQueue.Output, '_version'>>;
 	};
 }
 

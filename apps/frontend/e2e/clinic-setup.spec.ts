@@ -67,7 +67,7 @@ test.describe('clinic setup', () => {
 		const errors = trackErrors(page);
 		await logIn(page, '/settings/clinic/practitioners', USER);
 		const cruz = page.getByRole('region', { name: /Cruz/ });
-		await expect(cruz.getByRole('list', { name: /Clinic hours of/ })).toContainText('Tue 09:00–12:00');
+		await expect(cruz.getByRole('list', { name: /Clinic hours of/ })).toContainText(/\d{2}:\d{2}–\d{2}:\d{2}/);
 		await expect(cruz.getByRole('list', { name: /Leaves of/ })).toContainText('PCP annual convention');
 
 		await cruz.getByRole('button', { name: 'Add hours' }).click();

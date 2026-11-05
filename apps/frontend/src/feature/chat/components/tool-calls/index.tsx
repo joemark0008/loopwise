@@ -31,6 +31,12 @@ import {
 	ProposeVoidDocumentToolCall,
 	ProposeVoidVitalsToolCall,
 } from './propose-record-actions';
+import {
+	ListAppointmentsToolCall,
+	ListQueueToolCall,
+	ProposeAppointmentToolCall,
+	ProposeRescheduleToolCall,
+} from './propose-scheduling';
 import { ProposeSkillToolCall } from './propose-skill';
 import { ReportToolCall } from './report-card';
 import { ReportChipToolCall } from './report-chip';
@@ -83,6 +89,10 @@ const toolComponents: Partial<{
 	propose_bill_step: ProposeBillStepToolCall,
 	propose_save_report: ProposeSaveReportToolCall,
 	propose_patient_update: ProposePatientUpdateToolCall,
+	list_appointments: ListAppointmentsToolCall,
+	list_queue: ListQueueToolCall,
+	propose_appointment: ProposeAppointmentToolCall,
+	propose_reschedule: ProposeRescheduleToolCall,
 };
 
 export const dynamicToolComponents = {

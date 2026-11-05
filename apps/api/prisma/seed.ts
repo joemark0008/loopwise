@@ -19,6 +19,7 @@ import {
 import { seedDiagnostics } from './seed-diagnostics.js';
 import { seedEncounterRecords } from './seed-encounter-record.js';
 import { seedReference } from './seed-reference.js';
+import { seedScheduling } from './seed-scheduling.js';
 import { seedPanelVitals, seedTrendHistory } from './seed-trends.js';
 
 /**
@@ -59,7 +60,8 @@ async function seed() {
 				// They run once, on the fresh demo; build on the constants of seed-clinical.ts.
 				await seedDiagnostics(tx);
 				await seedBilling(tx);
-				await seedClinicSetup(tx, demo);
+				await seedClinicSetup(tx, demo.practitioners);
+				await seedScheduling(tx, demo);
 				return true;
 			},
 			{ timeout: 120_000 },

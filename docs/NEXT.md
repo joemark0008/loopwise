@@ -35,7 +35,7 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
   (`clinic.update`, `organization.update`, `practitioner.*`, `practitioner_schedule.*`, `practitioner_leave.*`,
   `service_item.*`, `clinic_service_price.*`, `document_sequence.update`). No migration. Seed: clinic registrations,
   weekly hours for the three doctors, consult fees, Dr. Cruz's leave next week, credential expiries inside the 60-day
-  window, two clinic price overrides. Tests: `test/clinic-setup.e2e-spec.ts`, `test/practitioner-availability.e2e-spec.ts`,
+  window, two clinic price overrides; it runs before the scheduling seed, which then keeps these hours. `npm run db:seed:clinic-setup -w @loopwise/api` adds it to an already-seeded database (fills empty values only, idempotent, resets nothing). Tests: `test/clinic-setup.e2e-spec.ts`, `test/practitioner-availability.e2e-spec.ts`,
   `availability.spec.ts`, `credential-expiry.spec.ts`, `e2e/clinic-setup.spec.ts` (incl. axe).
 - **Encounters (§5.1):** visit number, type, status transitions, SOAP note, vitals, ICD-10 diagnoses, the chart and
   the encounter page with tabs, print views; prescriptions (RA 6675, RA 9165) and medical certificates (draft, issue,
@@ -44,6 +44,17 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
   (`/results`) and the chart's Results tab (`clinical/diagnostics/`).
 - **Cashier:** invoices with SC/PWD discounts and the VAT split, BIR invoice series, payments (incl. PhilHealth package
   as a PHILHEALTH payment), void; the encounter's Billing tab (`clinical/billing/`).
+- **Appointments and queue (§5.4, Phase 1):** `clinical/scheduling/`: slots from the doctor's schedule minus leaves
+  and bookings within `max_patients`; book / reschedule (`rescheduled_from`) / cancel with a reason / confirm /
+  no-show; check-in (booking or walk-in) opens the visit (`EncounterService.openForCheckIn`) and issues the queue
+  number in one transaction; lanes "A" and "P" (priority: SC, PWD, pregnant, with infant, emergency), called first;
+  triage → the doctor's line → the cashier, kept in step with the visit and the booking; the waiting-room board;
+  next-day reminders (pg-boss job, stub notifier). Pages: `/appointments` (day / week, per doctor), `/queue`,
+  `/triage`, `/my-queue`, `/board` (full screen, no names). Wise: `list_appointments`, `list_queue`,
+  `propose_appointment`, `propose_reschedule`. Seed: clinic hours for Dr. Reyes (daily), Dr. Cruz (MWF) and the admin
+  doctor (06:00–23:30, for same-day e2e bookings), bookings today and tomorrow, today's queue (A-001 Ramon and A-002
+  Liza at triage, P-001 Jose with Dr. Reyes). `npm run db:seed:scheduling -w @loopwise/api` adds it to a database
+  seeded before (no reset).
 - **Wise (§7):** proposal cards settled once with versions (`clinical/wise-proposals/`), Wise actions and tool settings
   per organization, navigation (`find_patient`, `open_page`), charts and summary reports (`clinical/insights/`), safe
   analytics SQL (`clinical/analytics/`), reports in a side panel saved to the chart (`clinical/reports/`), the reports
@@ -88,6 +99,9 @@ expects `BETTER_AUTH_URL=http://localhost:3000` (a worktree on another port must
 running its own frontend next to main's also needs `TANSTACK_DEVTOOLS_PORT` (main uses 42069). The
 `flows` › "a chat from the list opens" test skips on a database without chats (a fresh seed has none).
 
+`flows` › "skills › creates a skill in the form, finds it in chat, edits and deletes it" fails on main: the edit sends
+the cached `hash` / `__typename` inside `UpdateSkillInput` ("Field \"hash\" is not defined by type \"UpdateSkillInput\"").
+
 Known UI issue: the avatar's white initials fail contrast on some palette colours, picked from the user's name
 ("Test Admin" hit it; the seed keeps the admin's name "Test").
 
@@ -95,12 +109,35 @@ Known UI issue: the avatar's white initials fail contrast on some palette colour
 
 - **Clinic setup:** built (see What's built). Left: a Wise read tool ("which doctors are in today") on
   `PractitionerScheduleService`; a logo / signature upload instead of a URL; HMO rates aren't used by invoices yet.
-- **Appointments and queue** (`scheduling`): booking / reschedule / cancel / no-show, walk-in queue with the priority
-  lane (RA 9994, RA 10754), status board, triage at the nurse station; appointment → encounter on check-in
-  (`encounters.appointment_id`); reminder jobs.
+- **Appointments and queue** (`scheduling`): built (above); slots come from clinic setup's `PractitionerScheduleService`
+  (`availability/practitioner-schedule-availability.ts`). Left: the ticket follows the visit only when it
+  moves from the queue pages (a visit started or ended from the encounter page leaves the ticket where it is: an
+  encounter status event, or a call from `EncounterService.transition`, would close that); the 2-hour reminder,
+  automatic no-show marking and a waitlist (PLAN.md §4.2); a real SMS notifier; a doctor sees only the bookings of
+  patients already in their care (a new patient shows in their line at check-in).
 - **AI scribe:** dictation or recording → one structured card set (SOAP, vitals, diagnoses, Rx, orders, med cert,
   follow-up date, patient summary), each confirmed separately; recording consent per visit (`patient_consents` with
   `encounter_id`).
+
+## Before real patients: privacy hardening (RA 10173)
+
+Wise sends the patient data it reads (chart, results, scribe transcripts) to the clinic's LLM provider, an overseas
+processor of sensitive personal information. Everything is synthetic today; before any real patient:
+
+- **Minimise and mask:** send each tool only the fields its task needs, and replace direct identifiers (PhilHealth
+  PIN, ID numbers, full address, mobile, email) with placeholders before the LLM call, restoring them in the
+  confirmed card where needed.
+- **Log what was sent:** for every LLM call that carried patient data, an audit row with the patient, the fields or
+  tool outputs included, the provider and model, and the request id (not the content itself).
+- **Clinic switch and DPA record:** a per-clinic "AI processing enabled" setting that stays off until an admin records
+  the provider's data processing agreement (provider, date, zero-retention / no-training terms). Wise refuses patient
+  tools while it is off.
+- **Provider check:** only allow providers or endpoints configured as business APIs with no training and zero
+  retention; warn on anything else (consumer keys, unknown base URLs).
+- **Transparency and consent:** the privacy notice names AI processing and the overseas processor; keep the per-visit
+  recording consent for the scribe; let a patient opt out of AI drafting for their record.
+- **Paperwork (not code):** the clinic's DPO, a privacy impact assessment covering the AI processing, NPC registration
+  where the thresholds apply, and a review by counsel familiar with the Data Privacy Act and NPC guidance.
 
 ## Later
 

@@ -73,6 +73,22 @@ import type {
 	LabWorklistItemFieldsFragment,
 	MarkSpecimenCollectedInput,
 	ReviewResultInput,
+	AppointmentFieldsFragment,
+	AppointmentSlotsInput,
+	AppointmentSlotsQuery,
+	AppointmentStatus,
+	BookAppointmentInput,
+	CallNextInput,
+	CancelAppointmentInput,
+	CancelQueueTicketInput,
+	CheckInPatientInput,
+	ClinicAppointmentsInput,
+	QueueBoardQuery,
+	QueueTicketFieldsFragment,
+	QueueTicketsInput,
+	RescheduleAppointmentInput,
+	SchedulingPractitionersQuery,
+	SendQueueTicketInput,
 } from '@/graphql/generated/graphql';
 
 interface Procedure<Input, Output> {
@@ -669,6 +685,28 @@ interface GraphQLProcedures {
 		start: Procedure<DiagnosticItemStepInput, { id: string; status: DiagnosticOrderStatus }>;
 		enterResult: Procedure<EnterDiagnosticResultInput, LabWorklistItemFieldsFragment>;
 		release: Procedure<DiagnosticItemStepInput, { id: string; status: DiagnosticOrderStatus }>;
+	};
+	scheduling: {
+		practitioners: Procedure<{ clinicId: string }, SchedulingPractitionersQuery['clinicPractitioners']>;
+		appointments: Procedure<ClinicAppointmentsInput, AppointmentFieldsFragment[]>;
+		appointment: Procedure<{ appointmentId: string }, AppointmentFieldsFragment>;
+		slots: Procedure<AppointmentSlotsInput, AppointmentSlotsQuery['appointmentSlots']>;
+		book: Procedure<BookAppointmentInput, AppointmentFieldsFragment>;
+		reschedule: Procedure<RescheduleAppointmentInput, AppointmentFieldsFragment>;
+		cancel: Procedure<CancelAppointmentInput, { id: string; status: AppointmentStatus }>;
+		confirm: Procedure<{ appointmentId: string }, { id: string; status: AppointmentStatus }>;
+		noShow: Procedure<{ appointmentId: string }, { id: string; status: AppointmentStatus }>;
+		tickets: Procedure<QueueTicketsInput, QueueTicketFieldsFragment[]>;
+		board: Procedure<{ clinicId: string }, QueueBoardQuery['queueBoard']>;
+		checkIn: Procedure<CheckInPatientInput, QueueTicketFieldsFragment>;
+		callNext: Procedure<CallNextInput, QueueTicketFieldsFragment | null>;
+		call: Procedure<{ ticketId: string }, QueueTicketFieldsFragment>;
+		start: Procedure<{ ticketId: string }, QueueTicketFieldsFragment>;
+		send: Procedure<SendQueueTicketInput, QueueTicketFieldsFragment>;
+		complete: Procedure<{ ticketId: string }, QueueTicketFieldsFragment>;
+		skip: Procedure<{ ticketId: string }, QueueTicketFieldsFragment>;
+		requeue: Procedure<{ ticketId: string }, QueueTicketFieldsFragment>;
+		cancelTicket: Procedure<CancelQueueTicketInput, QueueTicketFieldsFragment>;
 	};
 	result: {
 		toReview: Procedure<void, DiagnosticReportFieldsFragment[]>;

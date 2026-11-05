@@ -29,9 +29,12 @@ comes next is in [NEXT.md](NEXT.md).
 The flow Loopwise supports end to end. Built parts are marked; the rest is planned in [PLAN.md](PLAN.md) §4 and §6.
 
 1. **Booking.** A patient books by message, phone or the portal; the receptionist confirms Wise's booking card, or
-   registers a walk-in (registration with duplicate check and consent: built). _Appointments and queue: planned._
+   registers a walk-in (registration with duplicate check and consent: built). Bookings come from the doctor's open slots
+   (`/appointments`: built, §5.4).
 2. **Check-in and triage.** The patient gets a queue number; the nurse records vitals and the chief complaint, by hand
-   or by dictation (vitals: built; queue and triage: planned).
+   or by dictation. Check-in opens the visit and gives the queue number (priority lane "P" first); the nurse calls the
+   next patient at `/triage` and sends them to the doctor's line (`/my-queue`); the waiting-room board is `/board` (built,
+   §5.4).
 3. **Consult with the AI scribe.** The doctor dictates or records the visit; Wise drafts the SOAP note, diagnoses
    (ICD-10), prescription, lab orders, medical certificate and a patient summary as separate proposal cards, each
    confirmed by the doctor (the cards: built; one-pass scribe: planned).
@@ -100,7 +103,8 @@ The patient never learns bad news from a machine.
  │                                                            │
  │  Clinic modules: patients, practitioners, encounters,      │
  │   diagnostics (lab), prescriptions, documents, billing     │
- │   (+ scheduling, queue, pharmacy, inventory, PhilHealth,   │
+ │   scheduling (appointments, queue)                         │
+ │   (+ pharmacy, inventory, PhilHealth,                      │
  │   HMO: schema ready, modules planned)                      │
  │  Wise agent (proposal cards)   GraphQL API (auth, roles)   │
  │  Postgres (RLS, audit)         pg-boss (reminders)         │
@@ -148,12 +152,13 @@ The patient never learns bad news from a machine.
 | `prescriptions`                    | prescriptions and items (RA 6675, RA 9165)                                                                                                                                                                                                                |
 | `documents`                        | `medical-certificates/`, `referrals/`                                                                                                                                                                                                                     |
 | `billing`                          | `service-items/` (the price list invoices use; the catalog and clinic prices of Settings → Services), `invoices/` (with `InvoiceTotalsService`), `payments/`                                                                                              |
+| `scheduling`                       | `appointments/` (slots, booking), `queue/` (check-in, lines, board), `availability/` (adapts `PractitionerScheduleService`), `reminders/` (pg-boss job)                                                                                                   |
 | `audit`                            | `AuditService`, the one writer of `audit_logs`                                                                                                                                                                                                            |
 | `wise-proposals`                   | settling Wise cards once (§7.1)                                                                                                                                                                                                                           |
 | `insights`, `reports`, `analytics` | Wise's charts, summary reports and SQL analytics                                                                                                                                                                                                          |
 | `rls`                              | `ClinicalDbService` (`asUser` / `asSystem`)                                                                                                                                                                                                               |
 
-Domains of the schema without a feature yet (scheduling, immunizations, PhilHealth, HMO, inventory) get their module
+Domains of the schema without a feature yet (immunizations, PhilHealth, HMO, inventory) get their module
 when the feature is built.
 
 **Layering.** Resolver (or REST controller) → service → repository → Prisma. Resolvers parse arguments (class-validator
@@ -256,6 +261,44 @@ sequence.
   day of week is 0–6; a queue number is positive; a pain score is 0–10; message parts carry the fields their type
   needs; a local Wise workspace has a path; a Wise tool setting belongs to an organization or a user, not both.
 
+### 5.4 Appointments and the queue
+
+`apps/api/src/clinical/scheduling/` (`appointments/`, `queue/`, `availability/`, `reminders/`); UI in
+`apps/frontend/src/feature/scheduling/`.
+
+- **Slots.** A doctor's bookable slots on a day are their sessions at the clinic (`practitioner_schedules`, Manila
+  time) cut into `slot_minutes`, minus leaves (`practitioner_leaves`) and active bookings, and once a session holds
+  `max_patients` bookings (walk-ins included) its free slots are FULL. Bookings are counted as system work, so a desk
+  that can't see every patient never double-books; a transaction-scoped advisory lock per doctor and day serializes
+  booking. Schedules are read behind `PRACTITIONER_AVAILABILITY` (`availabilityFor`, `isOnLeave`), today from the
+  tables (`ScheduleTableAvailability`); clinic setup's `PractitionerScheduleService` replaces it with one provider.
+- **Appointment status** (`appointment-status.ts`): SCHEDULED → CONFIRMED → ARRIVED (check-in) → IN_PROGRESS → COMPLETED;
+  SCHEDULED / CONFIRMED → CANCELLED (reason), NO_SHOW (after the booked time), RESCHEDULED (the new booking keeps
+  `rescheduled_from`); ARRIVED → CANCELLED (left before the doctor), COMPLETED.
+- **Check-in** (`CheckInService`) is one system transaction: today's booking goes ARRIVED (a walk-in gets a WALK_IN
+  booking, already ARRIVED), `EncounterService.openForCheckIn` opens the visit (OPEN, `encounter_no`, the booked doctor,
+  `appointment_id`, the type from the visit type) and gives the doctor's user a care relationship, and the queue ticket
+  is issued.
+- **Queue tickets** keep one number all day and move station to station: TRIAGE → DOCTOR (the ticket's
+  `practitioner_id`) → CASHIER (`station` holds the code; the board shows "Triage", "Dra. Reyes · Room 1", "Cashier").
+  Lanes: "A" regular, "P" priority (`priority_reason`: senior citizen RA 9994, PWD RA 7277 / RA 10754, pregnant, with an
+  infant, emergency); numbers per clinic, Manila day and lane under an advisory lock (the unique index backs it up).
+  Call order: the priority lane first, then by check-in time. Status (`queue-status.ts`): WAITING → CALLED → SERVING →
+  DONE, SERVING → WAITING at the next station (transfer), CALLED → SKIPPED → WAITING (back in line), any open status →
+  CANCELLED. A move only applies while the ticket's status is unchanged (QUEUE_TICKET_MOVED otherwise).
+- **Kept in step** (`VisitFlowService`): starting a ticket at the doctor's room moves the visit OPEN → IN_PROGRESS and
+  the booking → IN_PROGRESS; the doctor sending it to the cashier moves the visit → FOR_BILLING and the booking →
+  COMPLETED; Done at the doctor (nothing to bill) → COMPLETED; cancelling a ticket before the doctor cancels the visit and
+  the booking with the reason. The visit moves through `EncounterService.transition` first; a visit already moved from
+  the chart is left as it is.
+- **Desks** (`SchedulingAccess`): booking, check-in and cancelling: RECEPTIONIST; triage: NURSE / MIDWIFE; the doctor's
+  room: that doctor; the cashier line: CASHIER / BILLING_CLERK; clinic admins every desk. Reads: any staff of the clinic,
+  with row-level security on the patients (a doctor sees the bookings of patients in their care). The board reads numbers
+  and stations only, as system work.
+- **Reminders**: `scheduling.appointment-reminders` (pg-boss, 09:00 and 17:00 Manila) sends tomorrow's bookings through
+  the `APPOINTMENT_NOTIFIER` stub (no SMS gateway yet; an invitation only, never clinical content) and sets
+  `reminder_sent_at`, audited with the job as origin.
+
 ## 6. Follow-ups
 
 The follow-up (care-case) engine of the original screening-loop design is removed: no pathways, rules engine, cases,
@@ -323,14 +366,14 @@ How it is enforced:
 
 Built:
 
-| Kind     | Tools                                                                                                                                                                                                                   |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| read     | `find_patient`, `list_results_to_review`, `list_lab_orders`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search`                                |
-| navigate | `open_page`                                                                                                                                                                                                             |
-| display  | `report`, `clarification`, `suggest_follow_ups`                                                                                                                                                                         |
-| propose  | `propose_patient_registration`, `propose_patient_update`, `propose_encounter`, `propose_encounter_note`, `propose_prescription`, `propose_medical_certificate`, `propose_charges`, the actions of §7.3, `propose_skill` |
+| Kind     | Tools                                                                                                                                                                                                                       |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| read     | `find_patient`, `list_results_to_review`, `list_lab_orders`, `list_appointments`, `list_queue`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search` |
+| navigate | `open_page`                                                                                                                                                                                                                 |
+| display  | `report`, `clarification`, `suggest_follow_ups`                                                                                                                                                                             |
+| propose  | `propose_patient_registration`, `propose_patient_update`, `propose_encounter`, `propose_encounter_note`, `propose_prescription`, `propose_medical_certificate`, `propose_charges`, the actions of §7.3, `propose_skill`     |
 
-Planned with the clinic modules: `propose_appointment` / `propose_reschedule`, the scribe's one-pass card set,
+Planned with the clinic modules: the scribe's one-pass card set,
 `propose_dispense`, `propose_referral`, `propose_patient_message`, `get_patient_timeline`.
 
 Notes on the built tools:
@@ -398,6 +441,8 @@ its mutation, the card's body.
 | `propose_bill_step`      | `issueInvoice` / `recordPayment` / `voidInvoice`                                                           | issue strong; payment needs the method and amount; void a reason |
 | `propose_save_report`    | `saveReportToChart`                                                                                        | create                                                           |
 | `propose_patient_update` | `updatePatient`                                                                                            | contact details only; clinic or hospital staff                   |
+| `propose_appointment`    | `bookAppointment` (the front desk picks the slot in the card)                                              | create / standard; chart chat; never messages the patient        |
+| `propose_reschedule`     | `rescheduleAppointment` (subject: the appointment from `list_appointments`)                                | update / standard; the old booking is kept as RESCHEDULED        |
 
 `updatePatient` changes contact details only (mobile no., preferred language, address and barangay); names, birth
 date, sex and IDs drive the duplicate match and stay with registration. Never from chat: users, passwords, roles, LLM

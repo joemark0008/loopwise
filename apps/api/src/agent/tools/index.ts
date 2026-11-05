@@ -1,6 +1,7 @@
 import type { CustomBoundarySet } from '@loopwise/shared';
 import {
 	proposeAllergy,
+	proposeAppointment,
 	proposeBillStep,
 	proposeCancelOrder,
 	proposeDiagnosis,
@@ -9,6 +10,7 @@ import {
 	proposeOrder,
 	proposePatientUpdate,
 	proposeRemoveAllergy,
+	proposeReschedule,
 	proposeResultReview,
 	proposeSaveReport,
 	proposeVitals,
@@ -29,7 +31,9 @@ import displayChart from './display-chart.js';
 import { createDisplayMapTool } from './display-map.js';
 import findPatient from './find-patient.js';
 import getMetric from './get-metric.js';
+import listAppointments from './list-appointments.js';
 import listLabOrders from './list-lab-orders.js';
+import listQueue from './list-queue.js';
 import listResultsToReview from './list-results-to-review.js';
 import loadSkill from './load-skill.js';
 import openPage from './open-page.js';
@@ -98,6 +102,10 @@ export const tools = {
 	propose_bill_step: createActionTool(proposeBillStep),
 	propose_save_report: createActionTool(proposeSaveReport),
 	propose_patient_update: createActionTool(proposePatientUpdate),
+	list_appointments: listAppointments,
+	list_queue: listQueue,
+	propose_appointment: createActionTool(proposeAppointment),
+	propose_reschedule: createActionTool(proposeReschedule),
 };
 
 export const uiToolset = { ...tools, display_map: createDisplayMapTool() };

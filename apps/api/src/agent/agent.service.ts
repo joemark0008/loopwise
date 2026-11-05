@@ -17,6 +17,7 @@ import { ENCOUNTER_NOTE_READER } from '../clinical/encounters/encounter-note-rea
 import { INSIGHTS_READER } from '../clinical/insights/insights-reader.token.js';
 import { PATIENT_READER } from '../clinical/patients/patient-reader.token.js';
 import { REPORTS_READER } from '../clinical/reports/reports-reader.token.js';
+import { SCHEDULING_READER } from '../clinical/scheduling/scheduling-reader.token.js';
 import { HandlerError } from '../common/errors/handler-error.js';
 import { AccessService } from '../common/guards/access.service.js';
 import { ConfigService } from '../config/config.service.js';
@@ -93,6 +94,7 @@ export class AgentService {
 		@Inject(REPORTS_READER) private readonly reports: AgentToolServices['reports'],
 		@Inject(ENCOUNTER_NOTE_READER) private readonly encounterNotes: AgentToolServices['encounters'],
 		@Inject(DIAGNOSTICS_READER) private readonly diagnostics: AgentToolServices['diagnostics'],
+		@Inject(SCHEDULING_READER) private readonly scheduling: AgentToolServices['scheduling'],
 		private readonly toolSettings: WiseToolSettingsService,
 		private readonly attachments: AttachmentsService,
 	) {}
@@ -332,6 +334,7 @@ export class AgentService {
 					analytics: this.analytics,
 					reports: this.reports,
 					diagnostics: this.diagnostics,
+					scheduling: this.scheduling,
 					attachments: this.attachments,
 				}),
 			},

@@ -9,6 +9,7 @@ import { EncountersModule } from '../clinical/encounters/encounters.module.js';
 import { InsightsModule } from '../clinical/insights/insights.module.js';
 import { PatientsModule } from '../clinical/patients/patients.module.js';
 import { ReportsModule } from '../clinical/reports/reports.module.js';
+import { SchedulingModule } from '../clinical/scheduling/scheduling.module.js';
 import { MemoryModule } from '../memory/memory.module.js';
 import { SkillsModule } from '../skills/skills.module.js';
 import { WiseToolsModule } from '../wise-tools/wise-tools.module.js';
@@ -32,6 +33,7 @@ import { CompactionService } from './services/compaction.js';
 		ReportsModule,
 		DiagnosticsModule,
 		EncountersModule,
+		SchedulingModule,
 		WiseToolsModule,
 	],
 	controllers: [AgentController],
