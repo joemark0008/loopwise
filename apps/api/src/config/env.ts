@@ -99,6 +99,12 @@ const baseEnvSchema = z.object({
 		.default(10),
 
 	/**
+	 * Directory holding the OCR language data (`eng.traineddata.gz`, `fil.traineddata.gz`) for reading scanned PDFs.
+	 * Unset: the copies bundled with the `@tesseract.js-data/*` packages, so OCR works offline and in Docker.
+	 */
+	OCR_LANG_PATH: optionalNonEmptyString,
+
+	/**
 	 * Default for the MCP endpoint toggle (Settings > MCP Endpoint) while a project has no stored
 	 * settings. Once an admin saves the settings, the stored value wins and this is ignored.
 	 */
@@ -174,6 +180,9 @@ export const storageEnvSchema = baseEnvSchema.pick({
 });
 
 export type StorageEnv = z.output<typeof storageEnvSchema>;
+
+/** The OCR variables alone, parsed by the module-level OCR worker (`attachments/ocr.ts`) like the storage ones. */
+export const ocrEnvSchema = baseEnvSchema.pick({ OCR_LANG_PATH: true });
 
 export class EnvValidationError extends Error {
 	constructor(readonly issues: string[]) {
