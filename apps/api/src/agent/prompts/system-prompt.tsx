@@ -117,6 +117,18 @@ export function SystemPrompt({
 					</Span>
 				</Block>
 			)}
+			{hasTool('list_appointments') && (
+				<Block>
+					<Title level={2}>Appointments and queue</Title>
+					<Span>
+						For the clinic's schedule, call list_appointments (a day, one doctor or all) and list_queue
+						(who's next, the priority lane first). To book this patient, call propose_appointment with the
+						doctor and the day; to move a booking, propose_reschedule with its id from list_appointments.
+						The front desk picks the slot in the card and confirms. Check-in, calling and sending patients
+						on happen on the queue pages, never from chat. Never message a patient about a booking yourself.
+					</Span>
+				</Block>
+			)}
 			{hasTool('read_attachment') && (
 				<Block>
 					<Title level={2}>Attached files</Title>
