@@ -10,6 +10,9 @@ test.describe('encounter record', () => {
 	test('records vitals and a diagnosis, issues and prints a prescription, then bills the visit', async ({ page }) => {
 		const errors = trackErrors(page);
 		await logIn(page, '/settings/account');
+		// The form shows once the seeded profile has loaded; typing earlier would mix with its PRC number.
+		await expect(page.getByText(/^Printed as /)).toBeVisible();
+		await expect(page.getByLabel('PRC license number')).not.toHaveValue('');
 		await page.getByLabel('PRC license number').fill('0000099');
 		await page.getByLabel('Post-nominals').fill('MD');
 		await page.getByRole('button', { name: 'Save profile' }).click();

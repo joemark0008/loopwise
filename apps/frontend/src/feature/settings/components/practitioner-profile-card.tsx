@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { MyPractitionerQuery, SaveMyPractitionerInput } from '@/graphql/generated/graphql';
 import styles from '@/feature/encounters/encounter.module.css';
 import { FormField } from '@/feature/encounters/form-field';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Input } from '@/components/ui/input';
 import { SettingsCard } from '@/components/ui/settings-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { encounterRecordApi } from '@/lib/encounter-record-api';
 
 const FIELDS = [
@@ -38,23 +39,7 @@ const valuesFrom = (practitioner: MyPractitionerQuery['myPractitioner']): Values
  * the PRC license number; prescribing dangerous drugs also needs the S2 license.
  */
 export function PractitionerProfileCard() {
-	const queryClient = useQueryClient();
 	const profile = useQuery(encounterRecordApi.encounterRecord.myPractitioner.queryOptions());
-	const [values, setValues] = useState<Values>(() => valuesFrom(null));
-	const save = useMutation(
-		encounterRecordApi.encounterRecord.saveMyPractitioner.mutationOptions({
-			onSuccess: () =>
-				queryClient.invalidateQueries(encounterRecordApi.encounterRecord.myPractitioner.pathFilter()),
-		}),
-	);
-
-	useEffect(() => {
-		if (profile.data !== undefined) {
-			setValues(valuesFrom(profile.data));
-		}
-	}, [profile.data]);
-
-	const missingLicense = !values.prcLicenseNo.trim();
 	return (
 		<SettingsCard
 			title='Practitioner profile'
@@ -64,52 +49,78 @@ export function PractitionerProfileCard() {
 					: 'Printed on the prescriptions, certificates and referrals you sign. Writing them needs your PRC license number.'
 			}
 		>
-			<form
-				className={styles.section}
-				onSubmit={(event) => {
-					event.preventDefault();
-					if (!missingLicense) {
-						const text = (value: string) => value.trim() || null;
-						save.mutate({
-							title: text(values.title),
-							postNominals: text(values.postNominals),
-							specialty: text(values.specialty),
-							prcLicenseNo: values.prcLicenseNo.trim(),
-							prcLicenseExpiry: text(values.prcLicenseExpiry),
-							ptrNo: text(values.ptrNo),
-							ptrIssuedAt: text(values.ptrIssuedAt),
-							ptrIssuedDate: text(values.ptrIssuedDate),
-							s2LicenseNo: text(values.s2LicenseNo),
-							philhealthPan: text(values.philhealthPan),
-						});
-					}
-				}}
-			>
-				<div className={styles.fields}>
-					{FIELDS.map((field) => (
-						<FormField key={field.key} label={'required' in field ? `${field.label} *` : field.label}>
-							{(id) => (
-								<Input
-									id={id}
-									type={'type' in field ? field.type : 'text'}
-									value={values[field.key]}
-									placeholder={'placeholder' in field ? field.placeholder : undefined}
-									onChange={(event) => setValues({ ...values, [field.key]: event.target.value })}
-									disabled={profile.isPending || save.isPending}
-									aria-required={'required' in field || undefined}
-								/>
-							)}
-						</FormField>
-					))}
-				</div>
-				{(profile.error ?? save.error) && <ErrorMessage message={(profile.error ?? save.error)!.message} />}
-				<div className={styles.actions}>
-					<Button type='submit' size='sm' variant='outline' disabled={save.isPending || missingLicense}>
-						Save profile
-					</Button>
-					{save.isSuccess && <span className={styles.muted}>Saved.</span>}
-				</div>
-			</form>
+			{profile.error ? (
+				<ErrorMessage message={profile.error.message} />
+			) : profile.data === undefined ? (
+				<Skeleton />
+			) : (
+				<PractitionerProfileForm practitioner={profile.data} />
+			)}
 		</SettingsCard>
+	);
+}
+
+/**
+ * The form starts from the loaded profile and is only shown once it has loaded, so a late or background fetch never
+ * overwrites what the user is typing.
+ */
+function PractitionerProfileForm({ practitioner }: { practitioner: MyPractitionerQuery['myPractitioner'] }) {
+	const queryClient = useQueryClient();
+	const [values, setValues] = useState<Values>(() => valuesFrom(practitioner));
+	const save = useMutation(
+		encounterRecordApi.encounterRecord.saveMyPractitioner.mutationOptions({
+			onSuccess: () =>
+				queryClient.invalidateQueries(encounterRecordApi.encounterRecord.myPractitioner.pathFilter()),
+		}),
+	);
+
+	const missingLicense = !values.prcLicenseNo.trim();
+	return (
+		<form
+			className={styles.section}
+			onSubmit={(event) => {
+				event.preventDefault();
+				if (!missingLicense) {
+					const text = (value: string) => value.trim() || null;
+					save.mutate({
+						title: text(values.title),
+						postNominals: text(values.postNominals),
+						specialty: text(values.specialty),
+						prcLicenseNo: values.prcLicenseNo.trim(),
+						prcLicenseExpiry: text(values.prcLicenseExpiry),
+						ptrNo: text(values.ptrNo),
+						ptrIssuedAt: text(values.ptrIssuedAt),
+						ptrIssuedDate: text(values.ptrIssuedDate),
+						s2LicenseNo: text(values.s2LicenseNo),
+						philhealthPan: text(values.philhealthPan),
+					});
+				}
+			}}
+		>
+			<div className={styles.fields}>
+				{FIELDS.map((field) => (
+					<FormField key={field.key} label={'required' in field ? `${field.label} *` : field.label}>
+						{(id) => (
+							<Input
+								id={id}
+								type={'type' in field ? field.type : 'text'}
+								value={values[field.key]}
+								placeholder={'placeholder' in field ? field.placeholder : undefined}
+								onChange={(event) => setValues({ ...values, [field.key]: event.target.value })}
+								disabled={save.isPending}
+								aria-required={'required' in field || undefined}
+							/>
+						)}
+					</FormField>
+				))}
+			</div>
+			{save.error && <ErrorMessage message={save.error.message} />}
+			<div className={styles.actions}>
+				<Button type='submit' size='sm' variant='outline' disabled={save.isPending || missingLicense}>
+					Save profile
+				</Button>
+				{save.isSuccess && <span className={styles.muted}>Saved.</span>}
+			</div>
+		</form>
 	);
 }
