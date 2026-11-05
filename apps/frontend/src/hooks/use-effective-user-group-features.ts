@@ -2,24 +2,24 @@ import { useCallback } from 'react';
 import type { UserGroupFeature } from '@loopwise/shared';
 
 import { useIsCloud } from '@/hooks/use-loopwise-mode';
-import { getActiveProjectId } from '@/lib/active-project';
-import { getRenderableUserGroupAccess, PROJECT_MEMBER_ACCESS } from '@/lib/effective-user-group-features';
+import { getActiveClinicId } from '@/lib/active-clinic';
+import { getRenderableUserGroupAccess, CLINIC_MEMBER_ACCESS } from '@/lib/effective-user-group-features';
 import { useOptionalAgentContext } from '@/contexts/agent.provider';
-import { useCurrentProject } from '@/hooks/use-current-project';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
 
 export function useEffectiveUserGroupFeatures() {
-	const project = useCurrentProject();
+	const clinic = useCurrentClinic();
 	const isCloud = useIsCloud();
-	const activeProjectId = getActiveProjectId();
-	const hasCurrentProject = Boolean(project.data?.id) && (!activeProjectId || project.data?.id === activeProjectId);
+	const activeClinicId = getActiveClinicId();
+	const hasCurrentClinic = Boolean(clinic.data?.id) && (!activeClinicId || clinic.data?.id === activeClinicId);
 	const isOnboarding = useOptionalAgentContext()?.mode === 'onboarding';
-	const isExampleProject = isCloud && project.isSuccess && project.data === null && !isOnboarding;
-	const isLoading = project.isPending;
-	const isError = project.isError;
+	const isExampleClinic = isCloud && clinic.isSuccess && clinic.data === null && !isOnboarding;
+	const isLoading = clinic.isPending;
+	const isError = clinic.isError;
 	const access = getRenderableUserGroupAccess(
-		PROJECT_MEMBER_ACCESS,
-		hasCurrentProject && !isLoading && !isError,
-		isExampleProject,
+		CLINIC_MEMBER_ACCESS,
+		hasCurrentClinic && !isLoading && !isError,
+		isExampleClinic,
 	);
 	const { features, toolCallDensityPolicy } = access;
 	const isFeatureEnabled = useCallback((feature: UserGroupFeature) => features[feature], [features]);

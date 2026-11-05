@@ -4,20 +4,20 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { ChatPrompt } from './chat-input-prompt';
-import { setActiveProjectId } from '@/lib/active-project';
+import { setActiveClinicId } from '@/lib/active-clinic';
 
 const mocks = vi.hoisted(() => ({
-	project: null as { id: string } | null,
+	clinic: null as { id: string } | null,
 	storage: new Map<string, string>(),
 }));
 
-vi.mock('@/hooks/use-current-project', () => import('@/test/current-project-hooks.mock'));
+vi.mock('@/hooks/use-current-clinic', () => import('@/test/current-clinic-hooks.mock'));
 
 vi.mock('@tanstack/react-query', () => ({
 	useQuery: (options: { queryKey: string[] }) => {
 		switch (options.queryKey[0]) {
-			case 'project':
-				return { data: mocks.project };
+			case 'clinic':
+				return { data: mocks.clinic };
 			case 'skills':
 				return { data: [{ name: 'Old skill', description: null }], isFetching: false };
 			default:
@@ -44,14 +44,14 @@ vi.mock('prompt-mentions', () => ({
 	),
 }));
 
-/** The current project comes from apps/api through `projectApi`, which reads the mocked procedures. */
-vi.mock('@/lib/project-api', async () => {
+/** The current clinic comes from apps/api through `clinicApi`, which reads the mocked procedures. */
+vi.mock('@/lib/clinic-api', async () => {
 	const { procedures } = (await import('@/test/procedures')) as unknown as { procedures: Record<string, unknown> };
-	return { projectApi: { project: procedures.project } };
+	return { clinicApi: { clinic: procedures.clinic } };
 });
 
 vi.mock('@/test/procedures', () => ({
-	procedures: { project: { getCurrent: { queryOptions: () => ({ queryKey: ['project'] }) } } },
+	procedures: { clinic: { getCurrent: { queryOptions: () => ({ queryKey: ['clinic'] }) } } },
 }));
 
 vi.mock('@/lib/skill-api', () => ({
@@ -64,8 +64,8 @@ beforeEach(() => {
 		getItem: (key: string) => mocks.storage.get(key) ?? null,
 		setItem: (key: string, value: string) => mocks.storage.set(key, value),
 	});
-	setActiveProjectId(null);
-	mocks.project = null;
+	setActiveClinicId(null);
+	mocks.clinic = null;
 });
 
 afterEach(() => {
@@ -73,20 +73,20 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-it('hides cached project mentions when no project is active', () => {
+it('hides cached clinic mentions when no clinic is active', () => {
 	render(<ChatPrompt promptRef={{ current: null }} placeholder='' onChange={vi.fn()} />);
 
 	expect(screen.queryByTestId('mention-Old skill')).toBeNull();
 });
 
-it('shows project mentions when the active project id is corrected', () => {
-	setActiveProjectId('stale-project');
-	mocks.project = { id: 'current-project' };
+it('shows clinic mentions when the active clinic id is corrected', () => {
+	setActiveClinicId('stale-clinic');
+	mocks.clinic = { id: 'current-clinic' };
 	render(<ChatPrompt promptRef={{ current: null }} placeholder='' onChange={vi.fn()} />);
 
 	expect(screen.queryByTestId('mention-Old skill')).toBeNull();
 
-	act(() => setActiveProjectId('current-project'));
+	act(() => setActiveClinicId('current-clinic'));
 
 	expect(screen.getByTestId('mention-Old skill')).toBeDefined();
 });

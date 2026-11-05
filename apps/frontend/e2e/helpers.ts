@@ -63,22 +63,22 @@ export async function controlInventory(page: Page) {
 	});
 }
 
-/** Makes a project with a warehouse connection the active one, and returns false if the user has none. */
-export async function selectProjectWithWarehouse(page: Page): Promise<boolean> {
-	const projectId = await page.evaluate(async () => {
+/** Makes a clinic with a warehouse connection the active one, and returns false if the user has none. */
+export async function selectClinicWithWarehouse(page: Page): Promise<boolean> {
+	const clinicId = await page.evaluate(async () => {
 		const graphql = async (query: string, scope?: string) => {
 			const response = await fetch('/graphql', {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
-					...(scope && { 'x-loopwise-project-id': scope }),
+					...(scope && { 'x-loopwise-clinic-id': scope }),
 				},
 				body: JSON.stringify({ query }),
 			});
 			return (await response.json()).data;
 		};
-		const { projects } = await graphql('{ projects { id } }');
-		for (const { id } of projects as { id: string }[]) {
+		const { clinics } = await graphql('{ clinics { id } }');
+		for (const { id } of clinics as { id: string }[]) {
 			const data = await graphql('{ warehouseConnections { name } }', id);
 			if (data?.warehouseConnections?.length) {
 				return id;
@@ -86,13 +86,13 @@ export async function selectProjectWithWarehouse(page: Page): Promise<boolean> {
 		}
 		return null;
 	});
-	if (!projectId) {
+	if (!clinicId) {
 		return false;
 	}
-	// Before each page load: the app could otherwise pick its own project first.
+	// Before each page load: the app could otherwise pick its own clinic first.
 	await page.addInitScript(
-		(activeId) => localStorage.setItem('loopwise.active-project-id', JSON.stringify(activeId)),
-		projectId,
+		(activeId) => localStorage.setItem('loopwise.active-clinic-id', JSON.stringify(activeId)),
+		clinicId,
 	);
 	return true;
 }

@@ -25,7 +25,7 @@ import type { FileRouteTypes } from '@/routeTree.gen';
 
 export type AppPath = Extract<FileRouteTypes['to'], `/${string}`>;
 
-export type NavSection = 'workspace' | 'user' | 'project' | 'context' | 'observability' | 'instance';
+export type NavSection = 'workspace' | 'user' | 'clinic' | 'context' | 'observability' | 'instance';
 
 export interface NavContext {
 	canSeeAdvancedSettings: boolean;
@@ -53,7 +53,7 @@ export interface NavLink {
 	/** Path segment to breadcrumb label. */
 	tabs?: Record<string, string>;
 	leavesSettings?: boolean;
-	requiresProject?: boolean;
+	requiresClinic?: boolean;
 	visible?: (context: NavContext) => boolean;
 	/** Workspace links: the roles whose sidebar shows it (in this order). */
 	roles?: StaffRole[];
@@ -62,7 +62,7 @@ export interface NavLink {
 export const NAV_SECTIONS: { id: NavSection; label: string; isAdvanced?: boolean; isSettings?: boolean }[] = [
 	{ id: 'workspace', label: 'Workspace' },
 	{ id: 'user', label: 'User', isSettings: true },
-	{ id: 'project', label: 'Project', isSettings: true, isAdvanced: true },
+	{ id: 'clinic', label: 'Clinic', isSettings: true, isAdvanced: true },
 	{ id: 'context', label: 'Context', isSettings: true, isAdvanced: true },
 	{ id: 'observability', label: 'Observability', isSettings: true, isAdvanced: true },
 	{ id: 'instance', label: 'Instance', isSettings: true, isAdvanced: true },
@@ -70,7 +70,7 @@ export const NAV_SECTIONS: { id: NavSection; label: string; isAdvanced?: boolean
 
 const isMember = ({ isViewer }: NavContext) => !isViewer;
 const isContextManager = ({ isAdmin, isContextAdmin }: NavContext) => isAdmin || isContextAdmin;
-/** loopwise's project, model and usage settings: kept for the admin who runs the instance, hidden from clinicians. */
+/** loopwise's clinic, model and usage settings: kept for the admin who runs the instance, hidden from clinicians. */
 const isInstanceAdmin = ({ isAdmin }: NavContext) => isAdmin;
 
 const CLINICIANS: StaffRole[] = ['doctor', 'nurse', 'specialist'];
@@ -143,9 +143,9 @@ export const navLinks: NavLink[] = [
 	},
 	{
 		icon: Settings2,
-		label: 'Project Settings',
-		to: '/settings/project',
-		section: 'project',
+		label: 'Clinic Settings',
+		to: '/settings/clinic',
+		section: 'clinic',
 		exact: true,
 		shortcut: 'G P',
 		visible: isInstanceAdmin,
@@ -153,25 +153,25 @@ export const navLinks: NavLink[] = [
 	{
 		icon: Boxes,
 		label: 'Agent',
-		to: '/settings/project/agent',
-		section: 'project',
-		requiresProject: true,
+		to: '/settings/clinic/agent',
+		section: 'clinic',
+		requiresClinic: true,
 		visible: isInstanceAdmin,
 	},
 	{
 		icon: BookOpen,
 		label: 'Skills',
-		to: '/settings/project/skills',
-		section: 'project',
-		requiresProject: true,
+		to: '/settings/clinic/skills',
+		section: 'clinic',
+		requiresClinic: true,
 		visible: isInstanceAdmin,
 	},
 	{
 		icon: Palette,
 		label: 'Appearance',
 		to: '/settings/appearance',
-		section: 'project',
-		requiresProject: true,
+		section: 'clinic',
+		requiresClinic: true,
 		visible: isMember,
 	},
 	{
@@ -179,7 +179,7 @@ export const navLinks: NavLink[] = [
 		label: 'Usage & Costs',
 		to: '/settings/usage',
 		section: 'observability',
-		requiresProject: true,
+		requiresClinic: true,
 		visible: isInstanceAdmin,
 	},
 	{
@@ -208,7 +208,7 @@ export const navLinks: NavLink[] = [
 	},
 ];
 
-export function getVisibleSettingsNavGroups(context: NavContext, hasProject = true) {
+export function getVisibleSettingsNavGroups(context: NavContext, hasClinic = true) {
 	return NAV_SECTIONS.filter((section) => section.isSettings)
 		.filter((section) => !section.isAdvanced || context.canSeeAdvancedSettings)
 		.map((section) => ({
@@ -217,7 +217,7 @@ export function getVisibleSettingsNavGroups(context: NavContext, hasProject = tr
 				(link) =>
 					link.section === section.id &&
 					link.sidebar !== false &&
-					(!link.requiresProject || hasProject) &&
+					(!link.requiresClinic || hasClinic) &&
 					(link.visible?.(context) ?? true),
 			),
 		}))

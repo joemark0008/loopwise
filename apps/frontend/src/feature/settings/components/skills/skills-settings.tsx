@@ -16,13 +16,13 @@ import { skillApi } from '@/lib/skill-api';
 
 const EMPTY_DRAFT: SkillDraft = { name: '', description: '', body: '' };
 
-/** Settings → Project → Skills: the project's skills, and writing new ones without touching files. */
+/** Settings → Clinic → Skills: the clinic's skills, and writing new ones without touching files. */
 export function SkillsSettings() {
 	const { isAdmin, isContextAdmin } = usePermissions();
 	if (!isAdmin && !isContextAdmin) {
 		return (
 			<SettingsCard>
-				<Empty>Only project admins can manage skills. You can use them with / in chat.</Empty>
+				<Empty>Only clinic admins can manage skills. You can use them with / in chat.</Empty>
 			</SettingsCard>
 		);
 	}
@@ -71,7 +71,7 @@ function SkillsManager() {
 
 	return (
 		<SettingsCard
-			title='Project skills'
+			title='Clinic skills'
 			description='Each skill is a Markdown file in agent/skills/.'
 			action={
 				canCreate && (

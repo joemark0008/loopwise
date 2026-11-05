@@ -15,7 +15,7 @@ import { mutation, query, runMutation, runQuery } from '@/lib/apollo-procedures'
 type Inputs = ApiInputs['skill'];
 type Outputs = ApiOutputs['skill'];
 
-/** Project skills moved to apps/api (`lib/apollo-procedures.ts`): call sites swap upstream tRPC's `skill` for this. */
+/** Clinic skills moved to apps/api (`lib/apollo-procedures.ts`): call sites swap upstream tRPC's `skill` for this. */
 export const skillApi = {
 	skill: {
 		list: query<void, Outputs['list']>(['skill', 'list'], async () => (await runQuery(SkillsDocument, {})).skills),

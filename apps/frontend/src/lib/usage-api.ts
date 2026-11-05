@@ -26,7 +26,7 @@ import { mutation, query, runMutation, runQuery } from '@/lib/apollo-procedures'
 
 type UsagePeriodSettings = { selection: UsagePeriodSelection | null; savedPeriods: SavedUsagePeriod[] };
 
-/** Users of the project and their chat count, for the users filter (upstream's chat replay facets). */
+/** Users of the clinic and their chat count, for the users filter (upstream's chat replay facets). */
 export type UsageUserFacets = { userNames: string[]; userNameCounts: Record<string, number> };
 
 /**
@@ -58,44 +58,44 @@ export const usageApi = {
 				userNameCounts: Object.fromEntries(facets.map((facet) => [facet.userName, facet.chatCount])),
 			};
 		}),
-		getPeriodSettings: query<{ projectId: string }, UsagePeriodSettings>(
+		getPeriodSettings: query<{ clinicId: string }, UsagePeriodSettings>(
 			['usage', 'getPeriodSettings'],
-			async ({ projectId }) => {
-				const { selection, savedPeriods } = (await runQuery(UsagePeriodSettingsDocument, { projectId }))
+			async ({ clinicId }) => {
+				const { selection, savedPeriods } = (await runQuery(UsagePeriodSettingsDocument, { clinicId }))
 					.usagePeriodSettings;
 				return { selection: toSelection(selection), savedPeriods: savedPeriods.map(toSavedPeriod) };
 			},
 		),
 		updatePeriodSelection: mutation<
-			{ projectId: string; selection: UsagePeriodSelection },
+			{ clinicId: string; selection: UsagePeriodSelection },
 			UsagePeriodSelection | null
-		>(['usage', 'updatePeriodSelection'], async ({ projectId, selection }) =>
+		>(['usage', 'updatePeriodSelection'], async ({ clinicId, selection }) =>
 			toSelection(
-				(await runMutation(UpdateUsagePeriodSelectionDocument, { projectId, selection }))
+				(await runMutation(UpdateUsagePeriodSelectionDocument, { clinicId, selection }))
 					.updateUsagePeriodSelection,
 			),
 		),
-		createSavedPeriod: mutation<{ projectId: string; savedPeriod: SavedUsagePeriodInput }, SavedUsagePeriod>(
+		createSavedPeriod: mutation<{ clinicId: string; savedPeriod: SavedUsagePeriodInput }, SavedUsagePeriod>(
 			['usage', 'createSavedPeriod'],
-			async ({ projectId, savedPeriod }) =>
+			async ({ clinicId, savedPeriod }) =>
 				toSavedPeriod(
-					(await runMutation(CreateSavedUsagePeriodDocument, { projectId, savedPeriod }))
+					(await runMutation(CreateSavedUsagePeriodDocument, { clinicId, savedPeriod }))
 						.createSavedUsagePeriod,
 				),
 		),
-		updateSavedPeriod: mutation<{ projectId: string; savedPeriod: SavedUsagePeriod }, SavedUsagePeriod>(
+		updateSavedPeriod: mutation<{ clinicId: string; savedPeriod: SavedUsagePeriod }, SavedUsagePeriod>(
 			['usage', 'updateSavedPeriod'],
-			async ({ projectId, savedPeriod }) =>
+			async ({ clinicId, savedPeriod }) =>
 				toSavedPeriod(
-					(await runMutation(UpdateSavedUsagePeriodDocument, { projectId, savedPeriod }))
+					(await runMutation(UpdateSavedUsagePeriodDocument, { clinicId, savedPeriod }))
 						.updateSavedUsagePeriod,
 				),
 		),
 		deleteSavedPeriod: mutation<
-			{ projectId: string; id: string },
+			{ clinicId: string; id: string },
 			{ id: string; selection: UsagePeriodSelection | null }
-		>(['usage', 'deleteSavedPeriod'], async ({ projectId, id }) => {
-			const deleted = (await runMutation(DeleteSavedUsagePeriodDocument, { projectId, id }))
+		>(['usage', 'deleteSavedPeriod'], async ({ clinicId, id }) => {
+			const deleted = (await runMutation(DeleteSavedUsagePeriodDocument, { clinicId, id }))
 				.deleteSavedUsagePeriod;
 			return { id: deleted.id, selection: toSelection(deleted.selection) };
 		}),

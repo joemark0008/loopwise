@@ -1,0 +1,45 @@
+.clinicSettingsPageSkeleton {
+	height: 1rem;
+	width: 10rem;
+}
+.clinicSettingsPageSkeleton2 {
+	height: 0.75rem;
+	width: 24rem;
+	max-width: 100%;
+}
+.clinicSettingsPageSkeleton3 {
+	height: 0.75rem;
+	width: 18rem;
+	max-width: 100%;
+}
+.clinicSettingsPageCode {
+	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-size: 0.75rem;
+	line-height: var(--fx-leading, calc(1 / 0.75));
+}
+.detailRowDiv {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding-block: 0.25rem;
+}
+.detailRowSpan {
+	flex-shrink: 0;
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.detailRowDiv2 {
+	min-width: 0px;
+	text-align: right;
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	word-break: break-all;
+	color: var(--app-text);
+}
+.dangerZoneSpan {
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}

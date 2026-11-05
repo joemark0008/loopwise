@@ -109,7 +109,7 @@ export function LlmProviderForm({
 	const providerLabel = providerLabels[kind];
 	const providerMeta = PROVIDER_META[kind];
 	const defaultModelId = getDefaultModelId(provider);
-	// A project can hold several endpoints of this kind, told apart by the name given here.
+	// A clinic can hold several endpoints of this kind, told apart by the name given here.
 	const needsName = !isEditing && kind === NAMED_PROVIDER_KIND;
 
 	const defaultCredentials = Object.fromEntries(extraFields.map((f) => [f.name, '']));
@@ -283,7 +283,7 @@ export function LlmProviderForm({
 					<TriangleAlert className={styles.contentTriangleAlert} />
 					<p className={styles.contentP}>
 						This provider is defined in <span className={styles.contentSpan2}>loopwise_config.yaml</span>.
-						Settings saved here are stored in the project and take precedence over the file, so later edits
+						Settings saved here are stored in the clinic and take precedence over the file, so later edits
 						to <span className={styles.contentSpan2}>loopwise_config.yaml</span> are ignored until you
 						delete this provider here.
 					</p>

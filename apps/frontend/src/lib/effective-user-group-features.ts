@@ -23,7 +23,7 @@ const LOADING_ACCESS: EffectiveUserGroupAccess = {
 	},
 };
 
-const EXAMPLE_PROJECT_ACCESS: EffectiveUserGroupAccess = {
+const EXAMPLE_CLINIC_ACCESS: EffectiveUserGroupAccess = {
 	features: {
 		storyCreation: true,
 		customStoryCreation: true,
@@ -39,7 +39,7 @@ const EXAMPLE_PROJECT_ACCESS: EffectiveUserGroupAccess = {
  * Stand-in for upstream `userGroup.effectiveAccess` until user groups come back (Phase 6, docs/deferred-features.md):
  * every member gets what upstream's default "All Users" group grants, minus automations (Phase 5).
  */
-export const PROJECT_MEMBER_ACCESS: EffectiveUserGroupAccess = {
+export const CLINIC_MEMBER_ACCESS: EffectiveUserGroupAccess = {
 	features: {
 		storyCreation: true,
 		customStoryCreation: true,
@@ -56,10 +56,10 @@ export function canSeeAdvancedSettings(role: UserRole | null | undefined): boole
 export function getRenderableUserGroupAccess(
 	access: EffectiveUserGroupAccess | undefined,
 	isAvailable: boolean,
-	isExampleProject = false,
+	isExampleClinic = false,
 ): EffectiveUserGroupAccess {
-	if (isExampleProject) {
-		return EXAMPLE_PROJECT_ACCESS;
+	if (isExampleClinic) {
+		return EXAMPLE_CLINIC_ACCESS;
 	}
 	return isAvailable && access ? access : LOADING_ACCESS;
 }

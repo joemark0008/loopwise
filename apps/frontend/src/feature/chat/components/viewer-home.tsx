@@ -6,21 +6,21 @@ import styles from './viewer-home.module.css';
 import type { StoryPanelDisplayMode, Visibility } from '@loopwise/shared/types';
 import type { GroupBy, SharedItem } from '@/lib/viewer-home';
 import { MobileHeader } from '@/layout/mobile-header';
-import { ProjectSwitcher } from '@/components/project-selector';
+import { ClinicSwitcher } from '@/components/clinic-selector';
 import { NoResults } from '@/components/item-card';
 import { Spinner } from '@/components/ui/spinner';
-import { useMultiProject } from '@/hooks/use-multi-project';
-import { useProjectSwitch } from '@/hooks/use-project-switch';
+import { useMultiClinic } from '@/hooks/use-multi-clinic';
+import { useClinicSwitch } from '@/hooks/use-clinic-switch';
 import { VIEWER_DISPLAY_KEY, VIEWER_GROUP_KEY, filterItems, getStoredSetting, groupItems } from '@/lib/viewer-home';
-import { useCurrentProject, useProjects } from '@/hooks/use-current-project';
+import { useCurrentClinic, useClinics } from '@/hooks/use-current-clinic';
 import { chatApi } from '@/lib/chat-api';
 
 export function ViewerHome() {
-	const project = useCurrentProject();
-	const projects = useProjects();
-	const projectId = project.data?.id;
-	const switchProject = useProjectSwitch(projectId);
-	const multiProjectMode = useMultiProject();
+	const clinic = useCurrentClinic();
+	const clinics = useClinics();
+	const clinicId = clinic.data?.id;
+	const switchClinic = useClinicSwitch(clinicId);
+	const multiClinicMode = useMultiClinic();
 	const sharedChats = useQuery(chatApi.sharedChat.list.queryOptions());
 	const [searchQuery, setSearchQuery] = useState('');
 	const [displayMode, setDisplayMode] = useState<StoryPanelDisplayMode>(() =>
@@ -42,7 +42,7 @@ export function ViewerHome() {
 
 	const allItems: SharedItem[] = useMemo(() => {
 		const chatItems: SharedItem[] = (sharedChats.data ?? [])
-			.filter((c) => c.projectId === projectId)
+			.filter((c) => c.clinicId === clinicId)
 			.map((c) => ({
 				id: c.id,
 				kind: 'chat',
@@ -53,34 +53,34 @@ export function ViewerHome() {
 				messageBubbles: c.messageBubbles,
 			}));
 		return chatItems;
-	}, [sharedChats.data, projectId]);
+	}, [sharedChats.data, clinicId]);
 
 	const filteredItems = useMemo(() => filterItems(allItems, searchQuery), [allItems, searchQuery]);
 	const groups = useMemo(() => groupItems(filteredItems, groupBy), [filteredItems, groupBy]);
 
-	const isLoading = sharedChats.isLoading || project.isLoading;
+	const isLoading = sharedChats.isLoading || clinic.isLoading;
 	const isEmpty = allItems.length === 0 && !isLoading;
 
-	const projectSelector = multiProjectMode === 'switch' && project.data && (projects.data?.length ?? 0) > 1 && (
-		<div className={styles.projectSelectorDiv}>
-			<ProjectSwitcher
-				projects={projects.data ?? []}
-				currentProjectId={project.data.id}
-				onChange={switchProject}
+	const clinicSelector = multiClinicMode === 'switch' && clinic.data && (clinics.data?.length ?? 0) > 1 && (
+		<div className={styles.clinicSelectorDiv}>
+			<ClinicSwitcher
+				clinics={clinics.data ?? []}
+				currentClinicId={clinic.data.id}
+				onChange={switchClinic}
 				variant='inline'
 			/>
 		</div>
 	);
 
-	const standaloneProjectSelector = projectSelector && (
-		<div className={styles.standaloneProjectSelectorDiv}>{projectSelector}</div>
+	const standaloneClinicSelector = clinicSelector && (
+		<div className={styles.standaloneClinicSelectorDiv}>{clinicSelector}</div>
 	);
 
 	if (isLoading) {
 		return (
 			<div className={styles.viewerHomeDiv}>
 				<MobileHeader />
-				{standaloneProjectSelector}
+				{standaloneClinicSelector}
 				<div className={styles.viewerHomeDiv2}>
 					<Spinner />
 				</div>
@@ -92,7 +92,7 @@ export function ViewerHome() {
 		return (
 			<div className={styles.viewerHomeDiv}>
 				<MobileHeader />
-				{standaloneProjectSelector}
+				{standaloneClinicSelector}
 				<ViewerEmptyState />
 			</div>
 		);
@@ -105,7 +105,7 @@ export function ViewerHome() {
 				<div className={styles.viewerHomeDiv5}>
 					<h1 className={styles.viewerHomeH1}>Shared with me</h1>
 					<div className={styles.viewerHomeDiv6}>
-						{projectSelector}
+						{clinicSelector}
 						<ViewerToolbarControls
 							searchQuery={searchQuery}
 							onSearchQueryChange={setSearchQuery}

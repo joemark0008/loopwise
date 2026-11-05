@@ -20,7 +20,7 @@ import { DangerZone } from '@/feature/settings/components/danger-zone';
 import { SettingsMemories } from '@/feature/settings/components/memories';
 import { SettingsCard, SettingsPageWrapper } from '@/components/ui/settings-card';
 import { SettingsControlRow, SettingsToggleRow } from '@/components/ui/settings-toggle-row';
-import { refetchProjectQueries } from '@/hooks/use-current-project';
+import { refetchClinicQueries } from '@/hooks/use-current-clinic';
 
 export function GeneralPage() {
 	const { data: session, refetch } = useSession();
@@ -37,7 +37,7 @@ export function GeneralPage() {
 
 	const handleEdit = async (name: string) => {
 		await updateProfile({ variables: { input: { name } } });
-		await refetchProjectQueries();
+		await refetchClinicQueries();
 		await refetch();
 	};
 

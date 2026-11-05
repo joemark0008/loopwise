@@ -24,7 +24,7 @@ interface ChatFilterMenuProps {
 const GROUP_BY_OPTIONS: { value: ChatGroupBy; label: string }[] = [
 	{ value: 'star', label: 'Star' },
 	{ value: 'date', label: 'Date' },
-	{ value: 'project', label: 'Projects' },
+	{ value: 'clinic', label: 'Clinics' },
 	{ value: 'ownership', label: 'Ownership' },
 	{ value: 'sourcePlatform', label: 'Source platform' },
 	{ value: 'none', label: 'None' },

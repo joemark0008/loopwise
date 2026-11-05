@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
 
-import { getActiveProjectId } from '@/lib/active-project';
+import { getActiveClinicId } from '@/lib/active-clinic';
 
 const STORAGE_KEY_PREFIX = 'loopwise.recommendations-view';
 
 function storageKey(): string {
-	return `${STORAGE_KEY_PREFIX}.${getActiveProjectId() ?? 'default'}`;
+	return `${STORAGE_KEY_PREFIX}.${getActiveClinicId() ?? 'default'}`;
 }
 
 function read<T extends Record<string, unknown>>(defaults: T): T {

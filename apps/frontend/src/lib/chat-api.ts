@@ -115,9 +115,9 @@ export const chatApi = {
 		),
 	},
 	sharedChat: {
-		/** Upstream `project.getProjectMembersByChatId`. */
+		/** Upstream `clinic.getClinicMembersByChatId`. */
 		shareMembers: query<{ chatId: string }, { id: string; name: string; email: string; role: string }[]>(
-			['project', 'getProjectMembersByChatId'],
+			['clinic', 'getClinicMembersByChatId'],
 			async ({ chatId }) => (await runQuery(ChatShareMembersDocument, { chatId })).chatShareMembers,
 		),
 		list: query<void, Outputs['sharedChat']['list']>(['sharedChat', 'list'], async () =>

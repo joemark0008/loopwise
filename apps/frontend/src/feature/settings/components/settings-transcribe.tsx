@@ -9,7 +9,7 @@ import { SettingsCard } from '@/components/ui/settings-card';
 import { Switch } from '@/components/ui/switch';
 import { capitalize } from '@/lib/utils';
 import { transcribeAudio } from '@/lib/transcribe';
-import { projectApi } from '@/lib/project-api';
+import { clinicApi } from '@/lib/clinic-api';
 
 const TEST_DURATION_MS = 5000;
 
@@ -19,14 +19,14 @@ interface SettingsTranscribeProps {
 
 export function SettingsTranscribe({ isAdmin }: SettingsTranscribeProps) {
 	const queryClient = useQueryClient();
-	const agentSettings = useQuery(projectApi.project.getAgentSettings.queryOptions());
-	const knownModels = useQuery(projectApi.project.getKnownTranscribeModels.queryOptions());
+	const agentSettings = useQuery(clinicApi.clinic.getAgentSettings.queryOptions());
+	const knownModels = useQuery(clinicApi.clinic.getKnownTranscribeModels.queryOptions());
 
 	const updateAgentSettings = useMutation(
-		projectApi.project.updateAgentSettings.mutationOptions({
+		clinicApi.clinic.updateAgentSettings.mutationOptions({
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: projectApi.project.getAgentSettings.queryOptions().queryKey,
+					queryKey: clinicApi.clinic.getAgentSettings.queryOptions().queryKey,
 				});
 			},
 		}),

@@ -81,16 +81,16 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 
 	// ── Organization ─────────────────────────────────────────
 
-	// ── Project Settings ─────────────────────────────────────
+	// ── Clinic Settings ─────────────────────────────────────
 	{
-		page: '/settings/project',
-		pageLabel: 'Project Settings',
+		page: '/settings/clinic',
+		pageLabel: 'Clinic Settings',
 		title: 'Information',
-		description: 'View or rename your project and see its filesystem path.',
-		keywords: ['project name', 'rename project', 'project path'],
+		description: 'View or rename your clinic and see its filesystem path.',
+		keywords: ['clinic name', 'rename clinic', 'clinic path'],
 	},
 
-	// ── Project > Budget ─────────────────────────────────────
+	// ── Clinic > Budget ─────────────────────────────────────
 
 	// ── Appearance ───────────────────────────────────────────
 	{
@@ -120,24 +120,24 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 			'pattern',
 		],
 	},
-	// ── Project > Skills ─────────────────────────────────
+	// ── Clinic > Skills ─────────────────────────────────
 	{
-		page: '/settings/project/skills',
+		page: '/settings/clinic/skills',
 		pageLabel: 'Skills',
 		section: 'Skills',
-		title: 'Project skills',
+		title: 'Clinic skills',
 		description: 'Create and edit the playbooks the agent loads when a question matches.',
 		keywords: ['skill', 'skills', 'playbook', 'instructions', 'slash', 'builder'],
 		adminOrContextAdmin: true,
 	},
-	// ── Project > Agent > Models ─────────────────────────────
+	// ── Clinic > Agent > Models ─────────────────────────────
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Models',
 		search: { tab: 'models' },
 		title: 'LLM Configuration',
-		description: 'Configure the LLM providers for the agent in this project.',
+		description: 'Configure the LLM providers for the agent in this clinic.',
 		keywords: [
 			'openai',
 			'anthropic',
@@ -163,7 +163,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 		adminOnly: true,
 	},
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Models',
 		search: { tab: 'models' },
@@ -186,7 +186,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 		],
 	},
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Models',
 		search: { tab: 'models' },
@@ -217,7 +217,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 		adminOnly: true,
 	},
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Models',
 		search: { tab: 'models' },
@@ -226,19 +226,19 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 		keywords: ['voice', 'speech', 'microphone', 'whisper', 'stt'],
 	},
 
-	// ── Project > Agent ──────────────────────────────────────
+	// ── Clinic > Agent ──────────────────────────────────────
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
-		title: 'Project memory',
-		description: 'Controls memory for everyone in this project. When off, no member can use memory.',
+		title: 'Clinic memory',
+		description: 'Controls memory for everyone in this clinic. When off, no member can use memory.',
 		keywords: ['remember', 'learn', 'personalization'],
 		adminOnly: true,
 	},
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
@@ -247,7 +247,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 		keywords: ['internet', 'browse', 'fetch', 'online'],
 	},
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
@@ -256,7 +256,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 		keywords: ['prompt template', 'instruction', 'preset'],
 	},
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
@@ -266,7 +266,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 		adminOnly: true,
 	},
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
@@ -277,7 +277,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	},
 
 	{
-		page: '/settings/project/agent',
+		page: '/settings/clinic/agent',
 		pageLabel: 'Agent',
 		section: 'Display map',
 		search: { tab: 'tools' },
@@ -369,11 +369,11 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 		cloudHidden: true,
 	},
 
-	// ── Project > Integrations & MCP ─────────────────────────
+	// ── Clinic > Integrations & MCP ─────────────────────────
 
-	// ── Project > Users & Groups ─────────────────────────────
+	// ── Clinic > Users & Groups ─────────────────────────────
 
-	// ── Project > Automations ────────────────────────────────
+	// ── Clinic > Automations ────────────────────────────────
 
 	// ── Usage & Costs ──────────────────────────────────────────
 	{

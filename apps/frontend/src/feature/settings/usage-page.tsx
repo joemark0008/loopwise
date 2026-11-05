@@ -67,7 +67,7 @@ const messageSeries = [
 
 /**
  * Port of upstream `routes/_sidebar-layout.settings.usage.tsx` (Settings → Usage): messages, tokens and cost of the
- * project, scoped to the user unless they are a project admin. Chat replay is not ported (docs/deferred-features.md).
+ * clinic, scoped to the user unless they are a clinic admin. Chat replay is not ported (docs/deferred-features.md).
  */
 export function UsagePage() {
 	const usageSearch = Route.useSearch();
@@ -91,8 +91,8 @@ export function UsagePage() {
 				<div>
 					<h1 className={styles.title}>Usage</h1>
 					<p className={styles.description}>
-						Messages, tokens and cost of the models this project calls, chats and background tasks included.{' '}
-						{canViewAllUsage ? 'As a project admin you see every member.' : 'You see your own usage.'}
+						Messages, tokens and cost of the models this clinic calls, chats and background tasks included.{' '}
+						{canViewAllUsage ? 'As a clinic admin you see every member.' : 'You see your own usage.'}
 					</p>
 				</div>
 				<UsageOverview

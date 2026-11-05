@@ -20,8 +20,8 @@ query MemorySettings {
 	}
 }
 
-query ProjectMemorySettings {
-	projectMemorySettings {
+query ClinicMemorySettings {
+	clinicMemorySettings {
 		memoryEnabled
 	}
 }

@@ -43,13 +43,13 @@ import { chatInputRestoreStore, useChatInputRestore } from '@/stores/chat-input-
 import { chatPendingCitationStore } from '@/stores/chat-pending-citation';
 import { useChatPendingCitation } from '@/hooks/use-chat-pending-citation';
 import { useIsCloud } from '@/hooks/use-loopwise-mode';
-import { useCurrentProject } from '@/hooks/use-current-project';
-import { projectApi } from '@/lib/project-api';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
+import { clinicApi } from '@/lib/clinic-api';
 import { storageApi } from '@/lib/storage-api';
 
 const cycleModelShortcut = getShortcut('cycle-model').shortcut;
 const TRIAL_ATTACHMENT_ACCEPT = ALLOWED_IMAGE_MEDIA_TYPES.join(',');
-const TRIAL_DOCUMENTS_DISABLED_REASON = 'Documents can be attached once your project is set up. Images work now.';
+const TRIAL_DOCUMENTS_DISABLED_REASON = 'Documents can be attached once your clinic is set up. Images work now.';
 
 type ChatInputVariant = 'default' | 'onboarding';
 
@@ -138,12 +138,12 @@ function ChatInputBase({
 		navigate({ to: '/', search: { admin: true } });
 	}, [adminModeLocked, isAdminMode, setAdminMode, navigate]);
 	const { canCycleModels, cycleModel } = useModelSelection();
-	const project = useCurrentProject();
-	const hasProject = project.data != null;
-	const isTrial = useIsCloud() && project.data === null;
+	const clinic = useCurrentClinic();
+	const hasClinic = clinic.data != null;
+	const isTrial = useIsCloud() && clinic.data === null;
 	const uploadLimits = useQuery({
 		...storageApi.storage.getUploadLimits.queryOptions(),
-		enabled: hasProject,
+		enabled: hasClinic,
 	});
 	const attachmentUpload = useAttachmentUpload({
 		documentsEnabled: isTrial ? false : uploadLimits.data?.enabled,
@@ -153,14 +153,14 @@ function ChatInputBase({
 	const chatInputRestore = useChatInputRestore(!!allowQueueing);
 
 	const agentSettings = useQuery({
-		...projectApi.project.getAgentSettings.queryOptions(),
-		enabled: hasProject,
+		...clinicApi.clinic.getAgentSettings.queryOptions(),
+		enabled: hasClinic,
 	});
 	const transcribeModels = useQuery({
-		...projectApi.project.getKnownTranscribeModels.queryOptions(),
-		enabled: hasProject,
+		...clinicApi.clinic.getKnownTranscribeModels.queryOptions(),
+		enabled: hasClinic,
 	});
-	const isTranscribeEnabled = hasProject && (agentSettings.data?.transcribe?.enabled ?? false);
+	const isTranscribeEnabled = hasClinic && (agentSettings.data?.transcribe?.enabled ?? false);
 	const hasTranscribeProvider = Object.values(transcribeModels.data ?? {}).some((p) => p.hasKey);
 	const isTranscribeReady = isTranscribeEnabled && hasTranscribeProvider;
 
@@ -347,8 +347,8 @@ function ChatInputBase({
 	const pendingCitation = useChatPendingCitation(chatId);
 	const isInputEmpty = !inputText.trim() && !attachmentUpload.hasAttachments && !pendingCitation;
 
-	const skills = useQuery({ ...skillApi.skill.list.queryOptions(), enabled: hasProject });
-	const hasSkills = hasProject && Boolean(skills.data?.length);
+	const skills = useQuery({ ...skillApi.skill.list.queryOptions(), enabled: hasClinic });
+	const hasSkills = hasClinic && Boolean(skills.data?.length);
 	const shortcutPlaceholder = buildShortcutPlaceholder({ hasSkills });
 	const effectivePlaceholder =
 		isRunning && allowQueueing
@@ -635,7 +635,7 @@ function MicWarningBanner({ onDismiss }: { onDismiss: () => void }) {
 			</button>
 			<p className={styles.micWarningBannerP}>
 				Voice input is disabled.{' '}
-				<Link to='/settings/project/models' className={styles.micWarningBannerLink}>
+				<Link to='/settings/clinic/models' className={styles.micWarningBannerLink}>
 					Go to Settings &rarr; Models
 				</Link>{' '}
 				to enable transcription. Ask your admin.

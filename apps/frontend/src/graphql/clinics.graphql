@@ -1,0 +1,100 @@
+fragment ClinicSummaryFields on ClinicSummary {
+	id
+	name
+	type
+	path
+	orgId
+	userRole
+	createdAt
+	updatedAt
+}
+
+query CurrentClinic {
+	currentClinic {
+		...ClinicSummaryFields
+	}
+}
+
+query Clinics {
+	clinics {
+		...ClinicSummaryFields
+	}
+}
+
+mutation CreateClinic($input: CreateClinicInput!) {
+	createClinic(input: $input) {
+		...ClinicSummaryFields
+	}
+}
+
+mutation RenameClinic($input: RenameClinicInput!) {
+	renameClinic(input: $input) {
+		...ClinicSummaryFields
+	}
+}
+
+mutation DeleteClinic($clinicId: ID!) {
+	deleteClinic(clinicId: $clinicId)
+}
+
+query SavedPrompts {
+	savedPrompts {
+		id
+		title
+		prompt
+		createdAt
+		updatedAt
+	}
+}
+
+mutation CreateSavedPrompt($input: SavedPromptInput!) {
+	createSavedPrompt(input: $input) {
+		id
+		title
+		prompt
+		createdAt
+		updatedAt
+	}
+}
+
+mutation UpdateSavedPrompt($input: UpdateSavedPromptInput!) {
+	updateSavedPrompt(input: $input) {
+		id
+		title
+		prompt
+		createdAt
+		updatedAt
+	}
+}
+
+mutation DeleteSavedPrompt($promptId: ID!) {
+	deleteSavedPrompt(promptId: $promptId)
+}
+
+query ClinicSavedPrompts($clinicId: ID!) {
+	clinicSavedPrompts(clinicId: $clinicId) {
+		id
+		title
+		prompt
+		createdAt
+		updatedAt
+	}
+}
+
+query DatabaseObjects {
+	databaseObjects {
+		type
+		database
+		schema
+		table
+		fqdn
+	}
+}
+
+query DisplaySettings {
+	displaySettings
+}
+
+mutation UpdateDisplaySettings($input: JSON!) {
+	updateDisplaySettings(input: $input)
+}

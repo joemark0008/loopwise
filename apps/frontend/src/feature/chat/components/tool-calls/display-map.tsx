@@ -36,7 +36,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ExportDataMenu } from '@/components/export-data-menu';
 import { cn } from '@/lib/utils';
 import { chartsApi } from '@/lib/charts-api';
-import { projectApi } from '@/lib/project-api';
+import { clinicApi } from '@/lib/clinic-api';
 import { useBreakoutStyle } from '@/hooks/use-breakout-width';
 import { MAP_STYLE_OPTIONS, useMapStyle } from '@/hooks/use-map-style';
 import { useSourceQuery } from '@/hooks/use-source-query';
@@ -69,7 +69,7 @@ export const DisplayMapToolCall = ({
 		}
 	}, [viewMode]);
 	const isEditable = Boolean(agent && !agent.isReadonly && !agent.isRunning);
-	const { data: customBoundaries = [] } = useQuery(projectApi.project.getMapBoundaries.queryOptions());
+	const { data: customBoundaries = [] } = useQuery(clinicApi.clinic.getMapBoundaries.queryOptions());
 
 	const { mutateAsync: updateMap, isPending: isUpdatingMap } = useMutation(
 		chartsApi.map.updateConfig.mutationOptions({

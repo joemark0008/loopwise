@@ -78,24 +78,24 @@ export function VisibilityPicker({
 	visibility,
 	onChange,
 	specificLabel = 'Specific people',
-	canShareToProject = true,
+	canShareToClinic = true,
 }: {
 	visibility: Visibility;
 	onChange: (v: Visibility) => void;
 	specificLabel?: string;
-	canShareToProject?: boolean;
+	canShareToClinic?: boolean;
 }) {
-	if (!canShareToProject) {
+	if (!canShareToClinic) {
 		return null;
 	}
 	return (
 		<div className={styles.visibilityPickerDiv}>
 			<VisibilityOption
-				active={visibility === 'project'}
+				active={visibility === 'clinic'}
 				icon={<Globe className={styles.visibilityPickerGlobe} />}
-				label='Entire project'
-				description='All project members'
-				onClick={() => onChange('project')}
+				label='Entire clinic'
+				description='All clinic members'
+				onClick={() => onChange('clinic')}
 			/>
 			<VisibilityOption
 				active={visibility === 'specific'}
@@ -143,14 +143,14 @@ export function VisibilitySummary({
 }) {
 	return (
 		<div className={styles.visibilitySummaryDiv}>
-			{visibility === 'project' ? (
+			{visibility === 'clinic' ? (
 				<>
 					<div className={styles.visibilitySummaryDiv2}>
 						<Globe className={styles.visibilitySummaryGlobe} />
 					</div>
 					<div className={styles.visibilitySummaryDiv3}>
-						<p className={`${styles.notifyPeopleToggleLabel} text-md`}>Shared with entire project</p>
-						<p className={styles.notifyPeopleToggleP}>All project members can view this {itemLabel}</p>
+						<p className={`${styles.notifyPeopleToggleLabel} text-md`}>Shared with entire clinic</p>
+						<p className={styles.notifyPeopleToggleP}>All clinic members can view this {itemLabel}</p>
 					</div>
 				</>
 			) : (
@@ -274,7 +274,7 @@ export function MemberPicker({
 	groups = [],
 	selectedGroupIds = new Set(),
 	onToggleGroup,
-	emptyMessage = 'No other members in this project',
+	emptyMessage = 'No other members in this clinic',
 }: {
 	members: { id: string; name: string; email: string }[];
 	selectedUserIds: Set<string>;

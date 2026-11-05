@@ -20,7 +20,7 @@ const MANAGE_MODELS_VALUE = 'manage-models';
 const LOOPWISE_DEFAULT_VALUE = 'loopwise-default';
 const LOOPWISE_DEFAULT_LABEL = 'Auto';
 const EXAMPLE_MODEL_VALUE = 'example-model';
-const PROJECT_SETUP_VALUE = 'project-setup';
+const CLINIC_SETUP_VALUE = 'clinic-setup';
 const EXAMPLE_MODEL_NAME = 'GPT 6 Sol';
 
 export function ChatInputModelSelect({ isExample = false }: { isExample?: boolean }) {
@@ -34,7 +34,7 @@ export function ChatInputModelSelect({ isExample = false }: { isExample?: boolea
 		setSelectedModel,
 		isPending,
 		canCycleModels,
-		hasProject,
+		hasClinic,
 	} = useModelSelection();
 	const { isTooltipOpen, onTooltipOpenChange, onSelectOpenChange } = useSelectTriggerTooltip();
 
@@ -51,7 +51,7 @@ export function ChatInputModelSelect({ isExample = false }: { isExample?: boolea
 	const handleModelValueChange = useCallback(
 		(value: string) => {
 			if (value === MANAGE_MODELS_VALUE) {
-				navigate({ to: '/settings/project/models' });
+				navigate({ to: '/settings/clinic/models' });
 				return;
 			}
 			if (value === LOOPWISE_DEFAULT_VALUE) {
@@ -89,11 +89,11 @@ export function ChatInputModelSelect({ isExample = false }: { isExample?: boolea
 	}
 
 	if (!availableModels?.length) {
-		if (!hasProject) {
+		if (!hasClinic) {
 			return <ExampleModel />;
 		}
 		return (
-			<Link to='/settings/project/models' className={styles.chatInputModelSelectLink}>
+			<Link to='/settings/clinic/models' className={styles.chatInputModelSelectLink}>
 				<TriangleAlert className={styles.chatInputModelSelectTriangleAlert} />
 				<span>Configure a model</span>
 			</Link>
@@ -120,7 +120,7 @@ export function ChatInputModelSelect({ isExample = false }: { isExample?: boolea
 		}
 
 		return (
-			<Link to='/settings/project/models' className={styles.chatInputModelSelectLink2}>
+			<Link to='/settings/clinic/models' className={styles.chatInputModelSelectLink2}>
 				{singleModel}
 			</Link>
 		);
@@ -219,9 +219,9 @@ function ExampleModel() {
 					{EXAMPLE_MODEL_NAME}
 				</SelectItem>
 				<SelectSeparator />
-				<SelectItem value={PROJECT_SETUP_VALUE} disabled className={styles.chatInputModelSelectSpan2}>
+				<SelectItem value={CLINIC_SETUP_VALUE} disabled className={styles.chatInputModelSelectSpan2}>
 					<Settings className={styles.singleModelLlmProviderIcon} />
-					Set up a project to switch models
+					Set up a clinic to switch models
 				</SelectItem>
 			</SelectContent>
 		</Select>

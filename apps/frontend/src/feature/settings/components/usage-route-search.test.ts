@@ -20,7 +20,7 @@ describe('validateUsageSearch', () => {
 			setItem: (key: string, value: string) => storedValues.set(key, value),
 		});
 		localStorage.clear();
-		localStorage.setItem('loopwise.active-project-id', JSON.stringify('project-a'));
+		localStorage.setItem('loopwise.active-clinic-id', JSON.stringify('clinic-a'));
 	});
 
 	it('accepts supported providers', () => {
@@ -48,7 +48,7 @@ describe('validateUsageSearch', () => {
 		expect(validateUsageSearch({ tab: 'other' }).tab).toBeUndefined();
 	});
 
-	it('does not persist the selected tab with project filters', () => {
+	it('does not persist the selected tab with clinic filters', () => {
 		saveUsageFilters({ ...DEFAULT_USAGE_SEARCH, tab: 'usage', provider: 'openai' });
 
 		expect(validateUsageSearchWithStoredFilters({})).toMatchObject({
@@ -109,7 +109,7 @@ describe('validateUsageSearch', () => {
 
 	it('keeps stored periods for migration without applying them to route state', () => {
 		localStorage.setItem(
-			'loopwise.usage-filters.project-a',
+			'loopwise.usage-filters.clinic-a',
 			JSON.stringify({ provider: 'openai', periodMode: '6m' }),
 		);
 
@@ -117,16 +117,16 @@ describe('validateUsageSearch', () => {
 			provider: 'openai',
 			periodMode: undefined,
 		});
-		expect(readStoredUsagePeriodSelection('project-a')).toEqual({ mode: '6m' });
+		expect(readStoredUsagePeriodSelection('clinic-a')).toEqual({ mode: '6m' });
 	});
 
 	it('preserves a legacy period while saving other filters', () => {
-		localStorage.setItem('loopwise.usage-filters.project-a', JSON.stringify({ periodMode: '6m' }));
+		localStorage.setItem('loopwise.usage-filters.clinic-a', JSON.stringify({ periodMode: '6m' }));
 
 		saveUsageFilters({ ...DEFAULT_USAGE_SEARCH, provider: 'openai' });
 
-		expect(readStoredUsagePeriodSelection('project-a')).toEqual({ mode: '6m' });
-		expect(JSON.parse(localStorage.getItem('loopwise.usage-filters.project-a') ?? '{}')).toMatchObject({
+		expect(readStoredUsagePeriodSelection('clinic-a')).toEqual({ mode: '6m' });
+		expect(JSON.parse(localStorage.getItem('loopwise.usage-filters.clinic-a') ?? '{}')).toMatchObject({
 			provider: 'openai',
 			periodMode: '6m',
 		});

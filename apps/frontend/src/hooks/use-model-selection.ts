@@ -3,23 +3,23 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { LlmSelectedModel } from '@loopwise/shared/types';
 import { useAgentContext } from '@/contexts/agent.provider';
-import { useCurrentProject } from '@/hooks/use-current-project';
-import { projectApi } from '@/lib/project-api';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
+import { clinicApi } from '@/lib/clinic-api';
 
 export function useModelSelection() {
 	const { selectedModel, usesDefaultModel, setSelectedModel } = useAgentContext();
-	const currentProjectQuery = useCurrentProject();
-	const hasProject = currentProjectQuery.isError || currentProjectQuery.data != null;
+	const currentClinicQuery = useCurrentClinic();
+	const hasClinic = currentClinicQuery.isError || currentClinicQuery.data != null;
 	const availableModelsQuery = useQuery({
-		...projectApi.project.listAvailableTranscribeModels.queryOptions(),
-		enabled: hasProject,
+		...clinicApi.clinic.listAvailableTranscribeModels.queryOptions(),
+		enabled: hasClinic,
 	});
 	const defaultModelQuery = useQuery({
-		...projectApi.project.getDefaultChatModel.queryOptions(),
-		enabled: hasProject,
+		...clinicApi.clinic.getDefaultChatModel.queryOptions(),
+		enabled: hasClinic,
 	});
-	const availableModels = hasProject ? availableModelsQuery.data : undefined;
-	const isPending = currentProjectQuery.isPending || (hasProject && availableModelsQuery.isPending);
+	const availableModels = hasClinic ? availableModelsQuery.data : undefined;
+	const isPending = currentClinicQuery.isPending || (hasClinic && availableModelsQuery.isPending);
 	const canCycleModels = (availableModels?.length ?? 0) > 1;
 
 	/** Cycles through "loopwise default" followed by every available model. */
@@ -38,14 +38,14 @@ export function useModelSelection() {
 
 	return {
 		availableModels,
-		defaultModel: hasProject ? (defaultModelQuery.data ?? null) : null,
+		defaultModel: hasClinic ? (defaultModelQuery.data ?? null) : null,
 		selectedModel,
 		usesDefaultModel,
 		setSelectedModel,
 		isPending,
 		canCycleModels,
 		cycleModel,
-		hasProject,
+		hasClinic,
 	};
 }
 

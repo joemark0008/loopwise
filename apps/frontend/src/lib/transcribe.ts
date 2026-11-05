@@ -1,4 +1,4 @@
-import { getProjectRequestHeaders } from '@/lib/active-project';
+import { getClinicRequestHeaders } from '@/lib/active-clinic';
 
 /** `POST /api/transcribe` on apps/api (upstream tRPC `transcribe.transcribe`): base64 audio in, text out. */
 export async function transcribeAudio(input: {
@@ -8,7 +8,7 @@ export async function transcribeAudio(input: {
 }): Promise<{ text: string }> {
 	const response = await fetch('/api/transcribe', {
 		method: 'POST',
-		headers: { 'content-type': 'application/json', ...getProjectRequestHeaders() },
+		headers: { 'content-type': 'application/json', ...getClinicRequestHeaders() },
 		body: JSON.stringify(input),
 	});
 	if (!response.ok) {

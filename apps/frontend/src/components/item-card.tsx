@@ -114,8 +114,8 @@ export function SharingBadge({
 	sharedWithGroupCount?: number;
 }) {
 	const tooltip =
-		visibility === 'project'
-			? 'Shared with the project'
+		visibility === 'clinic'
+			? 'Shared with the clinic'
 			: sharedWithCount != null
 				? `Shared with ${formatSharedWith(sharedWithCount, sharedWithGroupCount ?? 0)}`
 				: 'Shared with specific people';
@@ -123,7 +123,7 @@ export function SharingBadge({
 	return (
 		<SimpleTooltip content={tooltip}>
 			<span className={styles.sharingBadgeSpan}>
-				{visibility === 'project' ? (
+				{visibility === 'clinic' ? (
 					<Globe className={styles.liveBadgeActivity} />
 				) : (
 					<Users className={styles.liveBadgeActivity} />

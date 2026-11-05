@@ -1,4 +1,4 @@
-import { getActiveProjectId } from '@/lib/active-project';
+import { getActiveClinicId } from '@/lib/active-clinic';
 
 interface McpOAuthMessage {
 	type: 'loopwise-mcp-oauth';
@@ -21,9 +21,9 @@ const isOAuthMessage = (data: unknown): data is McpOAuthMessage =>
  */
 export function openMcpConnectPopup(server: string): Promise<McpConnectResult> {
 	const params = new URLSearchParams({ server, returnTo: window.location.pathname });
-	const projectId = getActiveProjectId();
-	if (projectId) {
-		params.set('projectId', projectId);
+	const clinicId = getActiveClinicId();
+	if (clinicId) {
+		params.set('clinicId', clinicId);
 	}
 
 	const popup = window.open(

@@ -1,6 +1,6 @@
 fragment ChatFields on Chat {
 	id
-	projectId
+	clinicId
 	title
 	isStarred
 	isOnboarding
@@ -14,7 +14,7 @@ fragment ChatFields on Chat {
 fragment SharedChatFields on SharedChat {
 	id
 	chatId
-	projectId
+	clinicId
 	userId
 	visibility
 	createdAt
@@ -39,7 +39,7 @@ query ChatList($input: ChatListInput) {
 			label
 			chats {
 				id
-				projectId
+				clinicId
 				title
 				isStarred
 				isOnboarding

@@ -25,16 +25,16 @@ import { useMemoriesQuery, useMemoryMutations, useMemorySettingsQuery } from '@/
 import { memoryApi } from '@/lib/memory-api';
 
 export function SettingsMemories({ isAdmin }: { isAdmin: boolean }) {
-	const projectMemorySettings = useQuery(memoryApi.project.getMemorySettings.queryOptions());
+	const clinicMemorySettings = useQuery(memoryApi.clinic.getMemorySettings.queryOptions());
 	const memorySettings = useMemorySettingsQuery();
 
 	const { updateMemorySettingsMutation, updateMutation, deleteMutation } = useMemoryMutations();
 
-	const projectMemoryEnabled = projectMemorySettings.data?.memoryEnabled ?? true;
+	const clinicMemoryEnabled = clinicMemorySettings.data?.memoryEnabled ?? true;
 	const userMemoryEnabled = memorySettings.data?.memoryEnabled ?? true;
-	const isProjectDisabled = !projectMemoryEnabled;
+	const isClinicDisabled = !clinicMemoryEnabled;
 	const isUserDisabled = !userMemoryEnabled;
-	const canShowMemories = !isProjectDisabled && !isUserDisabled;
+	const canShowMemories = !isClinicDisabled && !isUserDisabled;
 
 	const { data: memories, isLoading: isMemoriesLoading } = useMemoriesQuery(canShowMemories);
 
@@ -42,17 +42,17 @@ export function SettingsMemories({ isAdmin }: { isAdmin: boolean }) {
 	const [editContent, setEditContent] = useState('');
 	const [deleteMemory, setDeleteMemory] = useState<UserMemoryRecord | null>(null);
 
-	const isUserToggleDisabled = isProjectDisabled || updateMemorySettingsMutation.isPending;
+	const isUserToggleDisabled = isClinicDisabled || updateMemorySettingsMutation.isPending;
 
 	const memoryStatusMessage = useMemo(() => {
-		if (isProjectDisabled) {
+		if (isClinicDisabled) {
 			return {
 				toggle: isAdmin
-					? 'Turned off for the whole project.'
-					: 'An admin has turned memory off for this project.',
+					? 'Turned off for the whole clinic.'
+					: 'An admin has turned memory off for this clinic.',
 				empty: isAdmin
-					? 'Turn on project memory in Agent → Capabilities to see and use your saved memories.'
-					: 'Ask an admin to turn on project memory to see and use your saved memories.',
+					? 'Turn on clinic memory in Agent → Capabilities to see and use your saved memories.'
+					: 'Ask an admin to turn on clinic memory to see and use your saved memories.',
 			};
 		}
 		if (isUserDisabled) {
@@ -62,7 +62,7 @@ export function SettingsMemories({ isAdmin }: { isAdmin: boolean }) {
 			};
 		}
 		return null;
-	}, [isAdmin, isProjectDisabled, isUserDisabled]);
+	}, [isAdmin, isClinicDisabled, isUserDisabled]);
 
 	const handleUserToggle = (enabled: boolean) => {
 		updateMemorySettingsMutation.mutate({ memoryEnabled: enabled });
@@ -105,7 +105,7 @@ export function SettingsMemories({ isAdmin }: { isAdmin: boolean }) {
 				id='user-memory'
 				label='Enable memory for me'
 				description={
-					isProjectDisabled
+					isClinicDisabled
 						? memoryStatusMessage?.toggle
 						: 'Allow Loopwise to save and use memories about you.'
 				}

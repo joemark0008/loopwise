@@ -127,7 +127,7 @@ function SkillDraftCard({
 			{createMutation.error && <ErrorMessage message={createMutation.error.message} />}
 			{canManage && status.data?.message && <p className={styles.proposeSkillNote}>{status.data.message}</p>}
 			{!canManage && (
-				<p className={styles.proposeSkillNote}>Only project admins can save skills. Copy this to share it.</p>
+				<p className={styles.proposeSkillNote}>Only clinic admins can save skills. Copy this to share it.</p>
 			)}
 
 			<div className={styles.proposeSkillActions}>

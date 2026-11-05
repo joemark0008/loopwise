@@ -75,7 +75,7 @@ function useInvalidateShareQueries(chatId: string) {
 
 function CreateShareDialog({ open, onOpenChange, chatId }: ShareChatDialogProps) {
 	const { data: session } = useSession();
-	const [visibility, setVisibility] = useState<Visibility>('project');
+	const [visibility, setVisibility] = useState<Visibility>('clinic');
 	const [notify, setNotify] = useState(false);
 	const [isCopied, setIsCopied] = useState(false);
 	const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -92,11 +92,11 @@ function CreateShareDialog({ open, onOpenChange, chatId }: ShareChatDialogProps)
 		undefined,
 		chatId,
 	);
-	const effectiveVisibility: Visibility = audience.canShareToProject ? visibility : 'specific';
+	const effectiveVisibility: Visibility = audience.canShareToClinic ? visibility : 'specific';
 
 	useEffect(() => {
 		if (open) {
-			setVisibility('project');
+			setVisibility('clinic');
 			setNotify(false);
 			reset();
 			setIsCopied(false);
@@ -137,7 +137,7 @@ function CreateShareDialog({ open, onOpenChange, chatId }: ShareChatDialogProps)
 		onOpenChange,
 	]);
 
-	const canShare = effectiveVisibility === 'project' || selectedUserIds.size > 0;
+	const canShare = effectiveVisibility === 'clinic' || selectedUserIds.size > 0;
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,7 +151,7 @@ function CreateShareDialog({ open, onOpenChange, chatId }: ShareChatDialogProps)
 					<VisibilityPicker
 						visibility={effectiveVisibility}
 						onChange={setVisibility}
-						canShareToProject={audience.canShareToProject}
+						canShareToClinic={audience.canShareToClinic}
 					/>
 					{isSmtpEnabled && (
 						<NotifyPeopleToggle checked={notify} onCheckedChange={setNotify} itemLabel='chat' />

@@ -26,7 +26,7 @@ export function useBackToApp() {
 	return { href, goBack };
 }
 
-/** The remembered page may belong to another project, so forget it once the project changes. */
+/** The remembered page may belong to another clinic, so forget it once the clinic changes. */
 export function resetLastAppLocation() {
 	sessionStorage.removeItem(LAST_APP_LOCATION_KEY);
 }

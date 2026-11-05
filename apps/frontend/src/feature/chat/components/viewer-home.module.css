@@ -1,9 +1,9 @@
-.projectSelectorDiv {
+.clinicSelectorDiv {
 	@media (width < 48rem) {
 		display: none;
 	}
 }
-.standaloneProjectSelectorDiv {
+.standaloneClinicSelectorDiv {
 	margin-left: -0.5rem;
 	padding-inline: 1rem;
 	padding-top: 0.75rem;

@@ -2,7 +2,7 @@ import { redirect } from '@tanstack/react-router';
 
 import type { UserRole } from '@loopwise/shared/types';
 import { fetchPublicConfig } from '@/hooks/use-public-config';
-import { fetchCurrentProject } from '@/hooks/use-current-project';
+import { fetchCurrentClinic } from '@/hooks/use-current-clinic';
 import { canSeeAdvancedSettings } from '@/lib/effective-user-group-features';
 import { CurrentOrgRoleDocument } from '@/graphql/generated/graphql';
 import { apolloClient } from '@/lib/apollo-client';
@@ -11,23 +11,23 @@ export async function requireAdvancedSettingsAccess(pathname: string) {
 	if (pathname.startsWith('/settings/account')) {
 		return;
 	}
-	const project = await fetchCurrentProject();
-	if (!project) {
+	const clinic = await fetchCurrentClinic();
+	if (!clinic) {
 		return;
 	}
-	if (!canSeeAdvancedSettings(project.userRole as UserRole)) {
+	if (!canSeeAdvancedSettings(clinic.userRole as UserRole)) {
 		throw redirect({ to: '/settings/account' });
 	}
 }
 
 export async function requireAdmin() {
-	const project = await fetchCurrentProject();
-	if (!project || project.userRole !== 'admin') {
+	const clinic = await fetchCurrentClinic();
+	if (!clinic || clinic.userRole !== 'admin') {
 		throw redirect({ to: '/settings/account' });
 	}
 }
 
-/** Organization admins: the users page. A project admin role alone is not enough. */
+/** Organization admins: the users page. A clinic admin role alone is not enough. */
 export async function requireOrgAdmin() {
 	const role = await apolloClient
 		.query({ query: CurrentOrgRoleDocument, fetchPolicy: 'network-only' })
@@ -64,15 +64,15 @@ export async function requireNonViewerNonCloud() {
 }
 
 export async function requireContextAdminOrAdmin() {
-	const project = await fetchCurrentProject();
-	if (!project || (project.userRole !== 'admin' && project.userRole !== 'context_admin')) {
+	const clinic = await fetchCurrentClinic();
+	if (!clinic || (clinic.userRole !== 'admin' && clinic.userRole !== 'context_admin')) {
 		throw redirect({ to: '/settings/account' });
 	}
 }
 
 export async function requireNonViewer() {
-	const project = await fetchCurrentProject();
-	if (!project || project.userRole === 'viewer') {
+	const clinic = await fetchCurrentClinic();
+	if (!clinic || clinic.userRole === 'viewer') {
 		throw redirect({ to: '/settings/account' });
 	}
 }

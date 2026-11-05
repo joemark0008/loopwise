@@ -107,7 +107,7 @@ interface GraphQLProcedures {
 		>;
 		listGrouped: Procedure<
 			{
-				groupBy?: 'date' | 'none' | 'project' | 'star' | 'ownership' | 'sourcePlatform' | undefined;
+				groupBy?: 'date' | 'none' | 'clinic' | 'star' | 'ownership' | 'sourcePlatform' | undefined;
 				filters?: ('all' | 'mine' | 'starred' | 'shared' | 'shared_with_me')[] | undefined;
 			},
 			GroupedChatListResponse
@@ -167,7 +167,7 @@ interface GraphQLProcedures {
 		>;
 		setEnabled: Procedure<{ memoryEnabled: boolean }, { memoryEnabled: boolean }>;
 	};
-	project: {
+	clinic: {
 		addMapBoundary: Procedure<
 			{
 				key: string;
@@ -181,7 +181,7 @@ interface GraphQLProcedures {
 		>;
 		createSavedPrompt: Procedure<
 			{ title: string; prompt: string },
-			{ id: string; createdAt: Date; updatedAt: Date; prompt: string; title: string; projectId: string }
+			{ id: string; createdAt: Date; updatedAt: Date; prompt: string; title: string; clinicId: string }
 		>;
 		deleteLlmConfig: Procedure<{ provider: LlmProvider }, { success: boolean }>;
 		deleteMapBoundary: Procedure<{ key: string }, CustomBoundarySet[]>;
@@ -233,7 +233,7 @@ interface GraphQLProcedures {
 		getLlmConfigs: Procedure<
 			void,
 			{
-				projectConfigs: {
+				clinicConfigs: {
 					id: string;
 					provider: LlmProvider;
 					apiKeyPreview: string | null;
@@ -358,7 +358,7 @@ interface GraphQLProcedures {
 		>;
 		getMapBoundaries: Procedure<void, CustomBoundarySet[]>;
 		getMemorySettings: Procedure<void, { memoryEnabled: boolean }>;
-		getProjectSavedPrompts: Procedure<{ projectId: string }, SavedPrompt[]>;
+		getClinicSavedPrompts: Procedure<{ clinicId: string }, SavedPrompt[]>;
 		getSavedPrompts: Procedure<void, SavedPrompt[]>;
 		listAvailableTranscribeModels: Procedure<
 			void,
@@ -424,7 +424,7 @@ interface GraphQLProcedures {
 		>;
 		updateSavedPrompt: Procedure<
 			{ id: string; title?: string | undefined; prompt?: string | undefined },
-			{ id: string; createdAt: Date; updatedAt: Date; prompt: string; title: string; projectId: string }
+			{ id: string; createdAt: Date; updatedAt: Date; prompt: string; title: string; clinicId: string }
 		>;
 		upsertLlmConfig: Procedure<
 			{
@@ -557,11 +557,11 @@ interface GraphQLProcedures {
 		create: Procedure<
 			{
 				chatId: string;
-				visibility?: 'project' | 'specific' | undefined;
+				visibility?: 'clinic' | 'specific' | undefined;
 				allowedUserIds?: string[] | undefined;
 				notify?: boolean | undefined;
 			},
-			{ id: string; createdAt: Date; chatId: string; visibility: 'project' | 'specific' }
+			{ id: string; createdAt: Date; chatId: string; visibility: 'clinic' | 'specific' }
 		>;
 		delete: Procedure<{ shareId: string }, void>;
 		getShareOptionsByChatId: Procedure<

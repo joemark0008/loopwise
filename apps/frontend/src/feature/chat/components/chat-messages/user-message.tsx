@@ -29,7 +29,7 @@ import TeamsIcon from '@/components/icons/microsoft-teams.svg';
 import McpIcon from '@/components/icons/model-context-protocol.svg';
 import TelegramIcon from '@/components/icons/telegram.svg';
 import WhatsAppIcon from '@/components/icons/whatsapp.svg';
-import { useCurrentProject } from '@/hooks/use-current-project';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
 
 const messageTheme: PromptTheme = {
 	backgroundColor: 'transparent',
@@ -74,10 +74,10 @@ function MessageSourceBadge({ source }: { source: UIMessage['source'] }) {
 }
 
 function useMentionConfigs(): MessageMentionConfig[] {
-	const project = useCurrentProject();
-	const hasProject = project.data != null;
-	const skillsQuery = useQuery({ ...skillApi.skill.list.queryOptions(), enabled: hasProject });
-	const skills = hasProject ? skillsQuery.data : undefined;
+	const clinic = useCurrentClinic();
+	const hasClinic = clinic.data != null;
+	const skillsQuery = useQuery({ ...skillApi.skill.list.queryOptions(), enabled: hasClinic });
+	const skills = hasClinic ? skillsQuery.data : undefined;
 
 	return useMemo(() => {
 		const skillOptions: MentionOption[] = (skills ?? []).map((skill) => ({

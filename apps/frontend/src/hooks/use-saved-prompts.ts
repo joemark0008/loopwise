@@ -1,35 +1,35 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { SavedPrompt } from '@/lib/api-types';
-import { useCurrentProject } from '@/hooks/use-current-project';
-import { projectApi } from '@/lib/project-api';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
+import { clinicApi } from '@/lib/clinic-api';
 
-/** Saved prompts of `projectId`, or of the current project when it is omitted. */
-export function useSavedPromptsQuery(projectId?: string) {
-	const project = useCurrentProject();
+/** Saved prompts of `clinicId`, or of the current clinic when it is omitted. */
+export function useSavedPromptsQuery(clinicId?: string) {
+	const clinic = useCurrentClinic();
 	const savedPromptsQuery = useQuery({
-		...projectApi.project.getSavedPrompts.queryOptions(),
-		enabled: !projectId && (project.isError || project.data != null),
+		...clinicApi.clinic.getSavedPrompts.queryOptions(),
+		enabled: !clinicId && (clinic.isError || clinic.data != null),
 	});
-	const projectSavedPromptsQuery = useQuery({
-		...projectApi.project.getProjectSavedPrompts.queryOptions({ projectId: projectId ?? '' }),
-		enabled: !!projectId,
+	const clinicSavedPromptsQuery = useQuery({
+		...clinicApi.clinic.getClinicSavedPrompts.queryOptions({ clinicId: clinicId ?? '' }),
+		enabled: !!clinicId,
 	});
-	if (projectId) {
-		return projectSavedPromptsQuery;
+	if (clinicId) {
+		return clinicSavedPromptsQuery;
 	}
 	return {
 		...savedPromptsQuery,
-		data: project.data === null ? undefined : savedPromptsQuery.data,
-		isLoading: project.isPending || savedPromptsQuery.isLoading,
+		data: clinic.data === null ? undefined : savedPromptsQuery.data,
+		isLoading: clinic.isPending || savedPromptsQuery.isLoading,
 	};
 }
 
 /** CRUD mutations for saved prompts */
 export function useSavedPromptMutations() {
 	const createMutation = useMutation(
-		projectApi.project.createSavedPrompt.mutationOptions({
+		clinicApi.clinic.createSavedPrompt.mutationOptions({
 			onSuccess: (newPrompt, _, __, ctx) => {
-				ctx.client.setQueryData(projectApi.project.getSavedPrompts.queryKey(), (prev: SavedPrompt[] = []) => [
+				ctx.client.setQueryData(clinicApi.clinic.getSavedPrompts.queryKey(), (prev: SavedPrompt[] = []) => [
 					...prev,
 					newPrompt,
 				]);
@@ -38,9 +38,9 @@ export function useSavedPromptMutations() {
 	);
 
 	const updateMutation = useMutation(
-		projectApi.project.updateSavedPrompt.mutationOptions({
+		clinicApi.clinic.updateSavedPrompt.mutationOptions({
 			onSuccess: (updatedPrompt, _, __, ctx) => {
-				ctx.client.setQueryData(projectApi.project.getSavedPrompts.queryKey(), (prev: SavedPrompt[] = []) =>
+				ctx.client.setQueryData(clinicApi.clinic.getSavedPrompts.queryKey(), (prev: SavedPrompt[] = []) =>
 					prev.map((p) => (p.id === updatedPrompt.id ? updatedPrompt : p)),
 				);
 			},
@@ -48,9 +48,9 @@ export function useSavedPromptMutations() {
 	);
 
 	const deleteMutation = useMutation(
-		projectApi.project.deleteSavedPrompt.mutationOptions({
+		clinicApi.clinic.deleteSavedPrompt.mutationOptions({
 			onSuccess: (_, variables, __, ctx) => {
-				ctx.client.setQueryData(projectApi.project.getSavedPrompts.queryKey(), (prev: SavedPrompt[] = []) =>
+				ctx.client.setQueryData(clinicApi.clinic.getSavedPrompts.queryKey(), (prev: SavedPrompt[] = []) =>
 					prev.filter((p) => p.id !== variables.promptId),
 				);
 			},

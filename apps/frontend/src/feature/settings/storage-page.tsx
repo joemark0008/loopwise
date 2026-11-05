@@ -37,7 +37,7 @@ function AdminStoragePage() {
 	const description = (
 		<>
 			Permanent storage is where the agent keeps files that outlive a chat. It appears to the agent as the{' '}
-			<Mono>/home</Mono> folder for each user, alongside the project context.
+			<Mono>/home</Mono> folder for each user, alongside the clinic context.
 		</>
 	);
 
@@ -71,7 +71,7 @@ function AdminStoragePage() {
 					{!health.isLoading && health.data?.ok === false && (
 						<ErrorMessage message={health.data.error ?? 'The storage location could not be reached.'} />
 					)}
-					<ProjectUsageCard usage={usage} />
+					<ClinicUsageCard usage={usage} />
 				</>
 			)}
 
@@ -145,7 +145,7 @@ function AdminStoragePage() {
 						/>
 						<DetailRow
 							label='File layout'
-							value={<Mono>projects/&lt;project&gt;/users/&lt;user&gt;/…</Mono>}
+							value={<Mono>projects/&lt;clinic&gt;/users/&lt;user&gt;/…</Mono>}
 						/>
 					</>
 				)}
@@ -162,7 +162,7 @@ function MyStoragePage() {
 	const usage = useStorageUsage({ enabled: isEnabled });
 	const limitsError = limits.error instanceof Error ? limits.error.message : 'Failed to load storage configuration.';
 	const description =
-		'Permanent storage is where the agent keeps files that outlive a chat: the exports it writes, the spreadsheets it builds, and the files you attach to a message. You get your own space in every project you belong to, and nobody else can read it.';
+		'Permanent storage is where the agent keeps files that outlive a chat: the exports it writes, the spreadsheets it builds, and the files you attach to a message. You get your own space in every clinic you belong to, and nobody else can read it.';
 
 	return (
 		<StoragePageLayout description={description}>
@@ -176,7 +176,7 @@ function MyStoragePage() {
 					to turn permanent storage on.
 				</DisabledNotice>
 			) : (
-				<SettingsCard title='Your space' description='Files stored for you in this project.'>
+				<SettingsCard title='Your space' description='Files stored for you in this clinic.'>
 					<OwnUsageKpis usage={usage} />
 				</SettingsCard>
 			)}
@@ -192,7 +192,7 @@ const BYTES_VALUE_FORMAT = {
 
 const COUNT_VALUE_FORMAT = { d3_format: ',.0f' } satisfies displayChart.ValueFormat;
 
-function ProjectUsageCard({ usage }: { usage: StorageUsageQuery }) {
+function ClinicUsageCard({ usage }: { usage: StorageUsageQuery }) {
 	const byUser = usage.data?.byUser ?? [];
 	const totals = byUser.reduce(
 		(total, user) => ({
@@ -208,12 +208,12 @@ function ProjectUsageCard({ usage }: { usage: StorageUsageQuery }) {
 	}));
 
 	return (
-		<SettingsCard title='Usage' description='Files kept by everyone in this project.'>
+		<SettingsCard title='Usage' description='Files kept by everyone in this clinic.'>
 			<UsageState query={usage} isEmpty={byUser.length === 0}>
 				<ChartDisplay
 					data={[
 						{
-							scope: 'project',
+							scope: 'clinic',
 							fileCount: totals.fileCount,
 							totalBytes: totals.totalBytes,
 							userCount: byUser.length,
@@ -271,7 +271,7 @@ function ProjectUsageCard({ usage }: { usage: StorageUsageQuery }) {
 							value_format: COUNT_VALUE_FORMAT,
 						},
 					]}
-					chartContainerClassName={styles.projectUsageCardChartDisplay}
+					chartContainerClassName={styles.clinicUsageCardChartDisplay}
 				/>
 			</UsageState>
 		</SettingsCard>

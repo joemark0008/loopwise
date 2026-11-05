@@ -17,7 +17,7 @@ interface SidebarSettingsNavProps {
 	isContextAdmin: boolean;
 	isViewer: boolean;
 	isCloud: boolean;
-	hasProject: boolean;
+	hasClinic: boolean;
 }
 
 export function SidebarSettingsNav({
@@ -27,7 +27,7 @@ export function SidebarSettingsNav({
 	isContextAdmin,
 	isViewer,
 	isCloud,
-	hasProject,
+	hasClinic,
 }: SidebarSettingsNavProps) {
 	const navigate = useNavigate();
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -41,7 +41,7 @@ export function SidebarSettingsNav({
 		isCloud,
 		isViewer,
 	};
-	const navGroups = getVisibleSettingsNavGroups(navContext, hasProject);
+	const navGroups = getVisibleSettingsNavGroups(navContext, hasClinic);
 
 	useEffect(() => {
 		const handleSlashKey = (e: KeyboardEvent) => {

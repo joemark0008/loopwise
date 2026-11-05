@@ -16,7 +16,7 @@ interface LlmProvidersSectionProps {
 
 export function LlmProvidersSection({ isAdmin, providerToEdit, onProviderToEditOpened }: LlmProvidersSectionProps) {
 	const {
-		projectConfigs,
+		clinicConfigs,
 		configProviders,
 		envProviders,
 		envBaseUrls,
@@ -52,7 +52,7 @@ export function LlmProvidersSection({ isAdmin, providerToEdit, onProviderToEditO
 		onProviderToEditOpened?.();
 	}, [providerToEdit, isLoaded, isAdmin, handleEditProvider, onProviderToEditOpened]);
 
-	const projectConfigBadges = (config: (typeof projectConfigs)[number]) => {
+	const clinicConfigBadges = (config: (typeof clinicConfigs)[number]) => {
 		const badges: string[] = [];
 		const hasOwnCredentials = !!(config.apiKeyPreview || config.credentialPreviews);
 		if (envProviders.includes(config.provider)) {
@@ -137,8 +137,8 @@ export function LlmProvidersSection({ isAdmin, providerToEdit, onProviderToEditO
 				);
 			})}
 
-			{/* Project configs */}
-			{projectConfigs.map((config) => {
+			{/* Clinic configs */}
+			{clinicConfigs.map((config) => {
 				if (editingState?.isEditing && editingState.provider === config.provider) {
 					return (
 						<LlmProviderForm
@@ -166,7 +166,7 @@ export function LlmProvidersSection({ isAdmin, providerToEdit, onProviderToEditO
 						baseUrl={config.baseUrl}
 						envBaseUrl={envBaseUrls[config.provider]}
 						enabledModels={config.enabledModels}
-						badges={projectConfigBadges(config)}
+						badges={clinicConfigBadges(config)}
 						isAdmin={isAdmin}
 						isFormActive={!!editingState}
 						onEdit={() => handleEditConfig(config)}
@@ -217,7 +217,7 @@ export function LlmProvidersSection({ isAdmin, providerToEdit, onProviderToEditO
 				</div>
 			)}
 
-			{projectConfigs.length === 0 &&
+			{clinicConfigs.length === 0 &&
 				unconfiguredEnvProviders.length === 0 &&
 				unconfiguredConfigProviders.length === 0 &&
 				availableProvidersToAdd.length === 0 && (

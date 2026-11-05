@@ -39,10 +39,10 @@ import type {
 } from '@loopwise/shared';
 
 import { getMapStyle, isMapStyleDark, MAP_STYLE_LIGHT, resolveStyleUrl, useMapStyle } from '@/hooks/use-map-style';
-import { getActiveProjectId } from '@/lib/active-project';
+import { getActiveClinicId } from '@/lib/active-clinic';
 import { resolveCssVariableColor } from '@/lib/css-color';
 import { maplibregl } from '@/lib/maplibre';
-import { projectApi } from '@/lib/project-api';
+import { clinicApi } from '@/lib/clinic-api';
 import { isDarkColorScheme, setColorSchemeAttribute } from '@/lib/color-scheme';
 
 const POINTS_SOURCE_ID = 'query-points';
@@ -62,9 +62,9 @@ interface MapViewProps {
 	rows: Record<string, unknown>[];
 	config: displayMap.Input;
 	ref?: Ref<MapViewHandle>;
-	/** Boundary sets injected by unauthenticated hosts (e.g. public embeds) instead of the protected project query. */
+	/** Boundary sets injected by unauthenticated hosts (e.g. public embeds) instead of the protected clinic query. */
 	customBoundaries?: CustomBoundarySet[];
-	boundaryProjectId?: string | null;
+	boundaryClinicId?: string | null;
 }
 
 export default memo(function MapView({
@@ -73,7 +73,7 @@ export default memo(function MapView({
 	rows,
 	ref,
 	customBoundaries: injectedBoundaries,
-	boundaryProjectId,
+	boundaryClinicId,
 }: MapViewProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const mapRef = useRef<maplibregl.Map | null>(null);
@@ -92,7 +92,7 @@ export default memo(function MapView({
 	const isBubble = config.map_type === 'scatter_bubble';
 
 	const { data: fetchedBoundaries = [] } = useQuery({
-		...projectApi.project.getMapBoundaries.queryOptions(),
+		...clinicApi.clinic.getMapBoundaries.queryOptions(),
 		enabled: injectedBoundaries === undefined,
 	});
 	const customBoundaries = injectedBoundaries ?? fetchedBoundaries;
@@ -111,8 +111,8 @@ export default memo(function MapView({
 		const key = config.region_boundaries;
 		const custom = customBoundaries.find((s) => s.key === key);
 		if (custom) {
-			const projectId = boundaryProjectId ?? getActiveProjectId();
-			const url = projectId ? `/api/map-boundaries/${projectId}/${key}` : custom.url;
+			const clinicId = boundaryClinicId ?? getActiveClinicId();
+			const url = clinicId ? `/api/map-boundaries/${clinicId}/${key}` : custom.url;
 			return { url, joinProps: [custom.joinProperty] };
 		}
 		const builtins = resolveBoundary(key);
@@ -130,7 +130,7 @@ export default memo(function MapView({
 		config.boundaries_join_property,
 		config.region_boundaries,
 		customBoundaries,
-		boundaryProjectId,
+		boundaryClinicId,
 	]);
 	const boundaries = useBoundaries(resolvedBoundary?.url);
 	const choroplethEntries = useMemo(

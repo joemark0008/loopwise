@@ -27,14 +27,14 @@ describe('ExportDataMenu', () => {
 		vi.clearAllMocks();
 	});
 
-	it('exports CSV using the project date format', async () => {
+	it('exports CSV using the clinic date format', async () => {
 		renderMenu();
 		await selectMenuItem('CSV');
 
 		expect(downloadCsv).toHaveBeenCalledWith('sales.csv', 'day,label\n03/15/2024,launch');
 	});
 
-	it('exports XLSX using the project date format', async () => {
+	it('exports XLSX using the clinic date format', async () => {
 		renderMenu();
 		await selectMenuItem('Excel (XLSX)');
 

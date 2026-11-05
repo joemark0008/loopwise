@@ -27,7 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/hooks/use-map-style';
 import { maplibregl } from '@/lib/maplibre';
 import { cn } from '@/lib/utils';
-import { projectApi } from '@/lib/project-api';
+import { clinicApi } from '@/lib/clinic-api';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -37,13 +37,13 @@ interface SettingsDisplayMapProps {
 
 export function SettingsDisplayMap({ isAdmin }: SettingsDisplayMapProps) {
 	const queryClient = useQueryClient();
-	const agentSettings = useQuery(projectApi.project.getAgentSettings.queryOptions());
+	const agentSettings = useQuery(clinicApi.clinic.getAgentSettings.queryOptions());
 
 	const updateAgentSettings = useMutation(
-		projectApi.project.updateAgentSettings.mutationOptions({
+		clinicApi.clinic.updateAgentSettings.mutationOptions({
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: projectApi.project.getAgentSettings.queryOptions().queryKey,
+					queryKey: clinicApi.clinic.getAgentSettings.queryOptions().queryKey,
 				});
 			},
 		}),
@@ -82,12 +82,12 @@ function MapBoundariesLibrary({ isAdmin }: { isAdmin: boolean }) {
 	const [expandedKey, setExpandedKey] = useState<string | null>(null);
 	const [deleteTarget, setDeleteTarget] = useState<CustomBoundarySet | null>(null);
 
-	const { data: boundaries = [], isLoading } = useQuery(projectApi.project.getMapBoundaries.queryOptions());
+	const { data: boundaries = [], isLoading } = useQuery(clinicApi.clinic.getMapBoundaries.queryOptions());
 
 	const deleteMutation = useMutation(
-		projectApi.project.deleteMapBoundary.mutationOptions({
+		clinicApi.clinic.deleteMapBoundary.mutationOptions({
 			onSuccess: (next, _, __, ctx) => {
-				ctx.client.setQueryData(projectApi.project.getMapBoundaries.queryKey(), next);
+				ctx.client.setQueryData(clinicApi.clinic.getMapBoundaries.queryKey(), next);
 			},
 		}),
 	);
@@ -244,18 +244,18 @@ function BoundaryEditPanel({
 	const [loadError, setLoadError] = useState<string | null>(null);
 	const [featureCount, setFeatureCount] = useState<number | undefined>(undefined);
 
-	const validateMutation = useMutation(projectApi.project.validateMapBoundaryUrl.mutationOptions());
+	const validateMutation = useMutation(clinicApi.clinic.validateMapBoundaryUrl.mutationOptions());
 	const addMutation = useMutation(
-		projectApi.project.addMapBoundary.mutationOptions({
+		clinicApi.clinic.addMapBoundary.mutationOptions({
 			onSuccess: (next, _, __, ctx) => {
-				ctx.client.setQueryData(projectApi.project.getMapBoundaries.queryKey(), next);
+				ctx.client.setQueryData(clinicApi.clinic.getMapBoundaries.queryKey(), next);
 			},
 		}),
 	);
 	const updateMutation = useMutation(
-		projectApi.project.updateMapBoundary.mutationOptions({
+		clinicApi.clinic.updateMapBoundary.mutationOptions({
 			onSuccess: (next, _, __, ctx) => {
-				ctx.client.setQueryData(projectApi.project.getMapBoundaries.queryKey(), next);
+				ctx.client.setQueryData(clinicApi.clinic.getMapBoundaries.queryKey(), next);
 			},
 		}),
 	);

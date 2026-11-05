@@ -9,7 +9,7 @@ interface McpContextValue {
 }
 
 /**
- * MCP server connections come back with Phase 7 (`docs/deferred-features.md`). Until then the project has no
+ * MCP server connections come back with Phase 7 (`docs/deferred-features.md`). Until then the clinic has no
  * MCP servers; tool-call views that look servers up for icons and labels fall back to their defaults.
  */
 const NO_MCP_SERVERS: McpContextValue = { servers: [], configError: null, refresh: async () => {} };

@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
 import type { UserRole } from '@loopwise/shared/types';
-import { useCurrentProject } from '@/hooks/use-current-project';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
 
 export function usePermissions() {
-	const project = useCurrentProject();
-	const role = project.data?.userRole as UserRole | undefined;
+	const clinic = useCurrentClinic();
+	const role = clinic.data?.userRole as UserRole | undefined;
 
 	return useMemo(
 		() => ({

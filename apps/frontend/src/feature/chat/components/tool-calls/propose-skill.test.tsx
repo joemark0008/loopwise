@@ -150,7 +150,7 @@ describe('ProposeSkillToolCall', () => {
 		renderCard();
 		expect(await screen.findByRole('button', { name: 'Copy' })).toBeTruthy();
 		expect(screen.queryByRole('button', { name: 'Save skill' })).toBeNull();
-		expect(screen.getByText(/Only project admins/)).toBeTruthy();
+		expect(screen.getByText(/Only clinic admins/)).toBeTruthy();
 		expect(mocks.saveStatus).not.toHaveBeenCalled();
 	});
 

@@ -12,9 +12,9 @@ const SHOW_DURATION = 8_000;
 const ANIMATION_DURATION = 600;
 const ANIMATION_DELAY = 50;
 
-export function SavedPromptSuggestions({ projectId }: { projectId?: string }) {
+export function SavedPromptSuggestions({ clinicId }: { clinicId?: string }) {
 	const setPromptCallback = useSetChatInputCallback();
-	const { data: savedPrompts } = useSavedPromptsQuery(projectId);
+	const { data: savedPrompts } = useSavedPromptsQuery(clinicId);
 	const { displayedPrompts, animationKey, hidePrompts, pause, resume } = usePromptRotation(savedPrompts, 3);
 
 	if (displayedPrompts.length === 0) {

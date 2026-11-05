@@ -22,7 +22,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, useIsDarkMode } from './contexts/theme.provider';
 import { McpProvider } from './contexts/mcp';
 import { TooltipProvider } from './components/ui/tooltip';
-import { subscribeToExternalActiveProjectChanges } from './lib/active-project';
+import { subscribeToExternalActiveClinicChanges } from './lib/active-clinic';
 import { apolloClient } from './lib/apollo-client';
 import { routeTree } from './routeTree.gen';
 import { cssVariablesResolver, theme } from './theme';
@@ -62,7 +62,7 @@ export const queryClient = new QueryClient({
 	},
 });
 
-subscribeToExternalActiveProjectChanges(() => {
+subscribeToExternalActiveClinicChanges(() => {
 	void queryClient.invalidateQueries();
 	void apolloClient.resetStore();
 	void router.invalidate();

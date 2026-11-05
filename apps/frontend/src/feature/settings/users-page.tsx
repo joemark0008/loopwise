@@ -39,8 +39,8 @@ interface IssuedLink {
 }
 
 const ROLES = [
-	{ value: 'admin', label: 'Admin', description: 'Manages users and every project.' },
-	{ value: 'user', label: 'User', description: 'Chats and builds stories in every project.' },
+	{ value: 'admin', label: 'Admin', description: 'Manages users and every clinic.' },
+	{ value: 'user', label: 'User', description: 'Chats and builds stories in every clinic.' },
 	{ value: 'viewer', label: 'Viewer', description: 'Reads what others share.' },
 ];
 
@@ -95,7 +95,7 @@ export function UsersPage() {
 
 			<SettingsCard
 				title='People'
-				description='Roles apply to every project unless a project sets its own.'
+				description='Roles apply to every clinic unless a clinic sets its own.'
 				action={
 					<Button size='sm' variant='outline' onClick={() => setCreateOpen(true)}>
 						<UserPlus className={styles.usersPageIcon} />

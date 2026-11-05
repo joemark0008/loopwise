@@ -17,7 +17,7 @@ import type { AvailableModel, ResolvedModel } from './model-select-field';
 import { LlmProviderIcon } from '@/components/ui/llm-provider-icon';
 import { SettingsCard } from '@/components/ui/settings-card';
 import { cn } from '@/lib/utils';
-import { projectApi } from '@/lib/project-api';
+import { clinicApi } from '@/lib/clinic-api';
 
 interface DefaultModelsSectionProps {
 	isAdmin: boolean;
@@ -25,15 +25,13 @@ interface DefaultModelsSectionProps {
 
 export function DefaultModelsSection({ isAdmin }: DefaultModelsSectionProps) {
 	const queryClient = useQueryClient();
-	const { data } = useQuery(projectApi.project.getDefaultModels.queryOptions());
+	const { data } = useQuery(clinicApi.clinic.getDefaultModels.queryOptions());
 	const invalidate = () =>
 		Promise.all([
-			queryClient.invalidateQueries({ queryKey: projectApi.project.getDefaultModels.queryOptions().queryKey }),
-			queryClient.invalidateQueries({ queryKey: projectApi.project.getDefaultChatModel.queryOptions().queryKey }),
+			queryClient.invalidateQueries({ queryKey: clinicApi.clinic.getDefaultModels.queryOptions().queryKey }),
+			queryClient.invalidateQueries({ queryKey: clinicApi.clinic.getDefaultChatModel.queryOptions().queryKey }),
 		]);
-	const updateMutation = useMutation(
-		projectApi.project.updateDefaultModels.mutationOptions({ onSuccess: invalidate }),
-	);
+	const updateMutation = useMutation(clinicApi.clinic.updateDefaultModels.mutationOptions({ onSuccess: invalidate }));
 
 	const availableModels = (data?.availableModels ?? []) as AvailableModel[];
 	const settings = data?.settings ?? null;

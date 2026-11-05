@@ -2,14 +2,14 @@ import { getRouteApi, useRouter } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Folder, GitFork, Globe, Upload } from 'lucide-react';
-import { SYSTEM_EXAMPLE_PROJECT_ID } from '@loopwise/shared';
+import { SYSTEM_EXAMPLE_CLINIC_ID } from '@loopwise/shared';
 import styles from './chat-page.module.css';
 import type { ForkMetadata } from '@loopwise/api/agent/types/chat';
 import type { SelectionData } from '@/feature/chat/components/highlight-bubble';
 import type { Chat } from '@/queries/use-chat-query';
 import { NEW_CHAT_ID } from '@/lib/ai';
 import { ChatAccessError } from '@/feature/chat/components/chat-access-error';
-import { ExampleProjectInfoCard } from '@/feature/chat/components/example-project-info-card';
+import { ExampleClinicInfoCard } from '@/feature/chat/components/example-clinic-info-card';
 import { ChatInput } from '@/feature/chat/components/chat-input';
 import { ChatMessages } from '@/feature/chat/components/chat-messages/chat-messages';
 import { HighlightBubble } from '@/feature/chat/components/highlight-bubble';
@@ -30,7 +30,7 @@ import { SelectionProvider } from '@/contexts/text-selection';
 import { chatPendingCitationStore } from '@/stores/chat-pending-citation';
 import { useSetChatInputCallback } from '@/contexts/set-chat-input-callback';
 import { shouldShowChatAccessError } from '@/lib/api-error';
-import { useProjects } from '@/hooks/use-current-project';
+import { useClinics } from '@/hooks/use-current-clinic';
 import { chatApi } from '@/lib/chat-api';
 
 const Route = getRouteApi('/_protected/_chat-layout/$chatId');
@@ -68,10 +68,10 @@ function ChatPage() {
 		enabled: !!chat.data && !shouldShowChatError,
 	});
 	const isShared = !!shareQuery.data?.shareId;
-	const projects = useProjects();
-	const isExampleChat = chat.data?.projectId === SYSTEM_EXAMPLE_PROJECT_ID;
-	const isInMultipleProjects = (projects.data?.length ?? 0) > 1;
-	const chatProject = isInMultipleProjects ? projects.data?.find((p) => p.id === chat.data?.projectId) : undefined;
+	const clinics = useClinics();
+	const isExampleChat = chat.data?.clinicId === SYSTEM_EXAMPLE_CLINIC_ID;
+	const isInMultipleClinics = (clinics.data?.length ?? 0) > 1;
+	const chatClinic = isInMultipleClinics ? clinics.data?.find((p) => p.id === chat.data?.clinicId) : undefined;
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const chatColumnRef = useRef<HTMLDivElement>(null);
@@ -119,7 +119,7 @@ function ChatPage() {
 						<MobileHeader
 							chatId={chatId}
 							title={title}
-							showExampleProjectInfo={isExampleChat && !chat.data?.isOnboarding}
+							showExampleClinicInfo={isExampleChat && !chat.data?.isOnboarding}
 						/>
 
 						<div className={`${styles.chatPageDiv3} group/header`}>
@@ -131,10 +131,10 @@ function ChatPage() {
 										className={styles.chatPageEditableChatTitle}
 									/>
 								)}
-								{chatProject && (
+								{chatClinic && (
 									<Badge variant='outline' className={styles.chatPageBadge}>
 										<Folder />
-										<span className={styles.chatPageSpan}>{chatProject.name}</span>
+										<span className={styles.chatPageSpan}>{chatClinic.name}</span>
 									</Badge>
 								)}
 								{chat.data?.forkMetadata && (
@@ -154,7 +154,7 @@ function ChatPage() {
 								)}
 							</div>
 							<div className={styles.chatPageDiv5}>
-								{isExampleChat && !chat.data?.isOnboarding && <ExampleProjectInfoCard compact />}
+								{isExampleChat && !chat.data?.isOnboarding && <ExampleClinicInfoCard compact />}
 								<Button
 									variant='outline'
 									size='icon-sm'
@@ -220,7 +220,7 @@ function ChatPage() {
 function selectChatHeader(chat: Chat) {
 	return {
 		title: chat.title,
-		projectId: chat.projectId,
+		clinicId: chat.clinicId,
 		isOnboarding: chat.isOnboarding,
 		forkMetadata: chat.forkMetadata,
 		automationRun: chat.automationRun,

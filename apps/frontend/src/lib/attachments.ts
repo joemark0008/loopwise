@@ -1,4 +1,4 @@
-import { getActiveProjectId } from '@/lib/active-project';
+import { getActiveClinicId } from '@/lib/active-clinic';
 import { triggerDownload } from '@/lib/download';
 
 export interface DocumentAttachment {
@@ -20,11 +20,11 @@ export async function uploadAttachment(file: File): Promise<UploadedAttachmentIn
 	const body = new FormData();
 	body.append('file', file, file.name);
 
-	const projectId = getActiveProjectId();
+	const clinicId = getActiveClinicId();
 	const response = await fetch('/api/attachments', {
 		method: 'POST',
 		body,
-		headers: projectId ? { 'x-loopwise-project-id': projectId } : undefined,
+		headers: clinicId ? { 'x-loopwise-clinic-id': clinicId } : undefined,
 	});
 
 	if (!response.ok) {
@@ -36,9 +36,9 @@ export async function uploadAttachment(file: File): Promise<UploadedAttachmentIn
 
 /** The bytes of an attachment already in permanent storage, for previewing or saving it. */
 export async function fetchAttachment(path: string): Promise<Blob> {
-	const projectId = getActiveProjectId();
+	const clinicId = getActiveClinicId();
 	const response = await fetch(`/api/attachments/file?path=${encodeURIComponent(path)}`, {
-		headers: projectId ? { 'x-loopwise-project-id': projectId } : undefined,
+		headers: clinicId ? { 'x-loopwise-clinic-id': clinicId } : undefined,
 	});
 
 	if (!response.ok) {
@@ -50,10 +50,10 @@ export async function fetchAttachment(path: string): Promise<Blob> {
 
 /** Reads attachment metadata without downloading its contents. */
 export async function fetchAttachmentSize(path: string): Promise<number> {
-	const projectId = getActiveProjectId();
+	const clinicId = getActiveClinicId();
 	const response = await fetch(`/api/attachments/file?path=${encodeURIComponent(path)}`, {
 		method: 'HEAD',
-		headers: projectId ? { 'x-loopwise-project-id': projectId } : undefined,
+		headers: clinicId ? { 'x-loopwise-clinic-id': clinicId } : undefined,
 	});
 
 	if (!response.ok) {

@@ -39,7 +39,7 @@
 			"Search chats⌘K",
 			"Start voice input",
 			"Stories⇧⌘S",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"Toggle sidebar"
 		],
 		"links": [
@@ -72,7 +72,7 @@
 			"Select",
 			"Sort: Last updated, newest first",
 			"Stories⇧⌘S",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"Toggle sidebar"
 		],
 		"links": [
@@ -101,7 +101,7 @@
 			"Light",
 			"New chat",
 			"Sign out",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"System",
 			"Toggle sidebar"
 		],
@@ -113,7 +113,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -122,15 +122,15 @@
 		],
 		"inputs": ["Search settings..."]
 	},
-	"/settings/project": {
-		"url": "/settings/project",
+	"/settings/clinic": {
+		"url": "/settings/clinic",
 		"errors": [],
-		"headings": ["Project Settings"],
+		"headings": ["Clinic Settings"],
 		"buttons": [
-			"Copy project ID 117c1d66-0101-446a-a641-7bc9796f9070",
+			"Copy clinic ID 117c1d66-0101-446a-a641-7bc9796f9070",
 			"New chat",
-			"Rename project",
-			"Switch project. Current project: Test Project",
+			"Rename clinic",
+			"Switch clinic. Current clinic: Test Clinic",
 			"Toggle sidebar"
 		],
 		"links": [
@@ -141,7 +141,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -150,16 +150,11 @@
 		],
 		"inputs": ["Search settings..."]
 	},
-	"/settings/project/warehouse": {
-		"url": "/settings/project/warehouse",
+	"/settings/clinic/warehouse": {
+		"url": "/settings/clinic/warehouse",
 		"errors": [],
 		"headings": ["Warehouse"],
-		"buttons": [
-			"Connect a warehouse",
-			"New chat",
-			"Switch project. Current project: Test Project",
-			"Toggle sidebar"
-		],
+		"buttons": ["Connect a warehouse", "New chat", "Switch clinic. Current clinic: Test Clinic", "Toggle sidebar"],
 		"links": [
 			"Account",
 			"Agent",
@@ -168,7 +163,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -177,8 +172,8 @@
 		],
 		"inputs": ["Search settings..."]
 	},
-	"/settings/project/agent": {
-		"url": "/settings/project/agent",
+	"/settings/clinic/agent": {
+		"url": "/settings/clinic/agent",
 		"errors": [],
 		"headings": ["Agent"],
 		"buttons": [
@@ -200,7 +195,7 @@
 			"OpenRouter",
 			"Qwen",
 			"Requesty",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"Toggle sidebar",
 			"Vertex AI",
 			"Loopwise default · GPT 6 Sol",
@@ -214,7 +209,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -223,8 +218,8 @@
 		],
 		"inputs": ["Search settings..."]
 	},
-	"/settings/project/models": {
-		"url": "/settings/project/agent",
+	"/settings/clinic/models": {
+		"url": "/settings/clinic/agent",
 		"errors": [],
 		"headings": ["Agent"],
 		"buttons": [
@@ -246,7 +241,7 @@
 			"OpenRouter",
 			"Qwen",
 			"Requesty",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"Toggle sidebar",
 			"Vertex AI",
 			"Loopwise default · GPT 6 Sol",
@@ -260,7 +255,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -269,11 +264,11 @@
 		],
 		"inputs": ["Search settings..."]
 	},
-	"/settings/project/query-tools": {
-		"url": "/settings/project/query-tools",
+	"/settings/clinic/query-tools": {
+		"url": "/settings/clinic/query-tools",
 		"errors": [],
 		"headings": ["Query tools"],
-		"buttons": ["New chat", "New query tool", "Switch project. Current project: Test Project", "Toggle sidebar"],
+		"buttons": ["New chat", "New query tool", "Switch clinic. Current clinic: Test Clinic", "Toggle sidebar"],
 		"links": [
 			"Account",
 			"Agent",
@@ -282,7 +277,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -300,7 +295,7 @@
 			"General",
 			"New chat",
 			"Stories",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"Toggle sidebar"
 		],
 		"links": [
@@ -311,7 +306,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -334,7 +329,7 @@
 			"Run now",
 			"Selection",
 			"Sort",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"Toggle sidebar"
 		],
 		"links": [
@@ -345,7 +340,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -363,7 +358,7 @@
 			"New chat",
 			"Search inside files",
 			"Set up git",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"Toggle sidebar",
 			"assets",
 			"nest-cli.json",
@@ -371,7 +366,7 @@
 			"package.json",
 			"prisma",
 			"prisma.config.ts",
-			"projects",
+			"clinics",
 			"schema.gql",
 			"src",
 			"storage",
@@ -388,7 +383,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -410,7 +405,7 @@
 			"Light",
 			"New chat",
 			"Sign out",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"System",
 			"Toggle sidebar"
 		],
@@ -422,7 +417,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -435,7 +430,7 @@
 		"url": "/settings/storage",
 		"errors": [],
 		"headings": ["Storage"],
-		"buttons": ["New chat", "Switch project. Current project: Test Project", "Toggle sidebar"],
+		"buttons": ["New chat", "Switch clinic. Current clinic: Test Clinic", "Toggle sidebar"],
 		"links": [
 			"Account",
 			"Agent",
@@ -444,7 +439,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",
@@ -462,7 +457,7 @@
 			"General",
 			"New chat",
 			"Stories",
-			"Switch project. Current project: Test Project",
+			"Switch clinic. Current clinic: Test Clinic",
 			"Toggle sidebar"
 		],
 		"links": [
@@ -473,7 +468,7 @@
 			"Chat with Loopwise dataOpens a chat outside settings",
 			"File Explorer",
 			"Git",
-			"Project Settings",
+			"Clinic Settings",
 			"Query tools",
 			"Recommendations",
 			"Storage",

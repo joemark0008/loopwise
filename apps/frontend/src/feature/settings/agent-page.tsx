@@ -7,14 +7,14 @@ import { DefaultModelsSection } from '@/feature/settings/components/default-mode
 import { LlmProvidersSection } from '@/feature/settings/components/llm-providers-section';
 import { SavedPrompts } from '@/feature/settings/components/saved-prompts';
 import { SettingsDisplayMap } from '@/feature/settings/components/display-map';
-import { SettingsProjectMemory } from '@/feature/settings/components/project-memory';
+import { SettingsClinicMemory } from '@/feature/settings/components/clinic-memory';
 import { SettingsTranscribe } from '@/feature/settings/components/settings-transcribe';
 import { SettingsWebSearch } from '@/feature/settings/components/web-search';
 import { SettingsCard } from '@/components/ui/settings-card';
 import { TabBar, TabPanel } from '@/components/ui/tab-bar';
 import { usePermissions } from '@/hooks/use-permissions';
 
-const Route = getRouteApi('/_protected/settings/project/agent');
+const Route = getRouteApi('/_protected/settings/clinic/agent');
 
 type AgentTab = 'models' | 'tools';
 
@@ -29,11 +29,11 @@ const tabs: TabBarItem<AgentTab>[] = [
 	{ id: 'tools', label: 'Capabilities' },
 ];
 
-const tabIdBase = 'project-agent';
+const tabIdBase = 'clinic-agent';
 
-export function ProjectAgentPage() {
+export function ClinicAgentPage() {
 	const { tab, provider, model } = Route.useSearch();
-	const navigate = useNavigate({ from: '/settings/project/agent' });
+	const navigate = useNavigate({ from: '/settings/clinic/agent' });
 	const { isAdmin } = usePermissions();
 	const providerToEdit = provider ? { provider, modelId: model } : undefined;
 
@@ -49,9 +49,9 @@ export function ProjectAgentPage() {
 					});
 				}}
 				idBase={tabIdBase}
-				className={styles.projectAgentPageTabBar}
+				className={styles.clinicAgentPageTabBar}
 			/>
-			<TabPanel idBase={tabIdBase} tabId={tab} className={styles.projectAgentPageTabPanel}>
+			<TabPanel idBase={tabIdBase} tabId={tab} className={styles.clinicAgentPageTabPanel}>
 				{tab === 'models' && (
 					<ModelsSettings
 						isAdmin={isAdmin}
@@ -78,7 +78,7 @@ function ModelsSettings({
 		<>
 			<SettingsCard
 				title='LLM Configuration'
-				description='Configure the LLM providers for the agent in this project.'
+				description='Configure the LLM providers for the agent in this clinic.'
 			>
 				<LlmProvidersSection
 					isAdmin={isAdmin}
@@ -97,7 +97,7 @@ function ToolsSettings({ isAdmin }: { isAdmin: boolean }) {
 		<>
 			<SettingsWebSearch isAdmin={isAdmin} />
 			<SavedPrompts isAdmin={isAdmin} />
-			{isAdmin && <SettingsProjectMemory />}
+			{isAdmin && <SettingsClinicMemory />}
 			<SettingsDisplayMap isAdmin={isAdmin} />
 		</>
 	);

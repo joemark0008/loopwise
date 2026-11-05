@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 
 const mocks = vi.hoisted(() => ({
 	setSelectedModel: vi.fn(),
-	hasProject: false,
+	hasClinic: false,
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -33,7 +33,7 @@ vi.mock('@/hooks/use-model-selection', () => ({
 		setSelectedModel: mocks.setSelectedModel,
 		isPending: false,
 		canCycleModels: false,
-		hasProject: mocks.hasProject,
+		hasClinic: mocks.hasClinic,
 	}),
 }));
 
@@ -43,10 +43,10 @@ vi.mock('@/hooks/use-permissions', () => ({
 
 afterEach(() => {
 	cleanup();
-	mocks.hasProject = false;
+	mocks.hasClinic = false;
 });
 
-it('shows the example model instead of setup for a project-less user', () => {
+it('shows the example model instead of setup for a clinic-less user', () => {
 	render(<ChatInputModelSelect />);
 
 	expect(screen.getByLabelText('Loopwise model')).toBeTruthy();
@@ -56,13 +56,13 @@ it('shows the example model instead of setup for a project-less user', () => {
 
 	fireEvent.click(screen.getByRole('combobox', { name: 'Model' }));
 
-	expect(
-		screen.getByRole('option', { name: 'Set up a project to switch models' }).getAttribute('aria-disabled'),
-	).toBe('true');
+	expect(screen.getByRole('option', { name: 'Set up a clinic to switch models' }).getAttribute('aria-disabled')).toBe(
+		'true',
+	);
 });
 
-it('shows the example model for an example chat when the user has a project', () => {
-	mocks.hasProject = true;
+it('shows the example model for an example chat when the user has a clinic', () => {
+	mocks.hasClinic = true;
 
 	render(<ChatInputModelSelect isExample />);
 

@@ -1,0 +1,25 @@
+.clinicPageDiv {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+.clinicPageH1 {
+	font-family: var(--app-font-heading);
+	font-size: 1.625rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	line-height: 1.2;
+	color: var(--app-text);
+}
+.clinicPageP {
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-muted);
+}
+.clinicPageDiv2 {
+	margin-bottom: 1rem;
+	display: flex;
+	min-width: 0px;
+	flex-direction: column;
+	gap: 3rem;
+}

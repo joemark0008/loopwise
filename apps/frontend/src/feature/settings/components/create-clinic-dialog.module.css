@@ -1,0 +1,10 @@
+.createClinicDialogForm {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.createClinicDialogP {
+	font-size: 0.8125rem;
+	line-height: var(--fx-leading, calc(1.25 / 0.875));
+	color: var(--app-danger);
+}

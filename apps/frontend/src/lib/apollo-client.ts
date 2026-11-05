@@ -2,15 +2,15 @@ import { ApolloClient, ApolloLink, HttpLink, InMemoryCache } from '@apollo/clien
 import { SetContextLink } from '@apollo/client/link/context';
 
 import { getActiveOrganizationId } from './active-organization';
-import { getProjectRequestHeaders } from './active-project';
+import { getClinicRequestHeaders } from './active-clinic';
 
-/** Sends the selected project and organization, like the tRPC client, so `@ProjectAccess()` resolves them. */
+/** Sends the selected clinic and organization, like the tRPC client, so `@ClinicAccess()` resolves them. */
 const selectionHeadersLink = new SetContextLink((prevContext) => {
 	const activeOrganizationId = getActiveOrganizationId();
 	return {
 		headers: {
 			...prevContext.headers,
-			...getProjectRequestHeaders(),
+			...getClinicRequestHeaders(),
 			...(activeOrganizationId ? { 'x-loopwise-organization-id': activeOrganizationId } : {}),
 		},
 	};

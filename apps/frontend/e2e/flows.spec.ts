@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { logIn, selectProjectWithWarehouse, trackErrors, USER } from './helpers';
+import { logIn, selectClinicWithWarehouse, trackErrors, USER } from './helpers';
 import type { Page } from '@playwright/test';
 
 const isDark = (page: Page) =>
@@ -69,10 +69,10 @@ test.describe('signed in', () => {
 	test('settings navigation reaches each section', async ({ page }) => {
 		await page.goto('/settings/account');
 		for (const [label, path, heading] of [
-			['Project Settings', '/settings/project', null],
-			['Warehouse', '/settings/project/warehouse', 'Warehouse'],
-			['Agent', '/settings/project/agent', 'Agent'],
-			['Query tools', '/settings/project/query-tools', null],
+			['Clinic Settings', '/settings/clinic', null],
+			['Warehouse', '/settings/clinic/warehouse', 'Warehouse'],
+			['Agent', '/settings/clinic/agent', 'Agent'],
+			['Query tools', '/settings/clinic/query-tools', null],
 			['Appearance', '/settings/appearance', 'Appearance'],
 			['Recommendations', '/settings/recommendations', null],
 			['File Explorer', '/settings/context-explorer', null],
@@ -89,7 +89,7 @@ test.describe('signed in', () => {
 	});
 
 	test('the agent settings tabs switch', async ({ page }) => {
-		await page.goto('/settings/project/agent');
+		await page.goto('/settings/clinic/agent');
 		await expect(page.getByText('LLM Configuration').first()).toBeVisible();
 		await page
 			.getByRole('button', { name: 'Capabilities' })
@@ -168,7 +168,7 @@ test.describe('signed in', () => {
 test.describe('query workbench', () => {
 	test.beforeEach(async ({ page }) => {
 		await logIn(page);
-		test.skip(!(await selectProjectWithWarehouse(page)), 'needs a project with a warehouse connection');
+		test.skip(!(await selectClinicWithWarehouse(page)), 'needs a clinic with a warehouse connection');
 	});
 
 	/** Through Monaco's API: Playwright's ⌘ shortcuts don't reach it in headless Chromium on macOS. */
@@ -185,7 +185,7 @@ test.describe('query workbench', () => {
 
 	test('runs a query first, then saves it as a tool', async ({ page }) => {
 		const name = `e2e_orders_${Date.now()}`;
-		await page.goto('/settings/project/query-tools');
+		await page.goto('/settings/clinic/query-tools');
 		await page.getByRole('button', { name: 'New query' }).click();
 		await expect(page).toHaveURL(/tool=new/);
 
@@ -216,7 +216,7 @@ test.describe('query workbench', () => {
 	});
 
 	test('a failed run offers the assistant', async ({ page }) => {
-		await page.goto('/settings/project/query-tools?tool=new');
+		await page.goto('/settings/clinic/query-tools?tool=new');
 		await page.getByRole('button', { name: 'New draft' }).click();
 		await typeSql(page, 'SELECT missing_column FROM missing_table');
 		await page.getByRole('button', { name: 'Run', exact: true }).click();
@@ -224,7 +224,7 @@ test.describe('query workbench', () => {
 	});
 
 	test('the assistant proposes a tested query that the user applies (real LLM call)', async ({ page }) => {
-		await page.goto('/settings/project/query-tools?tool=new');
+		await page.goto('/settings/clinic/query-tools?tool=new');
 		await page.getByRole('button', { name: 'New draft' }).click();
 		await page.getByPlaceholder('Ask for a query…').fill('How many orders are there in total?');
 		await page.getByPlaceholder('Ask for a query…').press('Enter');
@@ -255,11 +255,11 @@ test.describe('query workbench', () => {
 test.describe('skills', () => {
 	test.beforeEach(async ({ page }) => {
 		await logIn(page);
-		test.skip(!(await selectProjectWithWarehouse(page)), 'needs a project with a warehouse connection');
+		test.skip(!(await selectClinicWithWarehouse(page)), 'needs a clinic with a warehouse connection');
 	});
 
 	const deleteSkill = async (page: Page, name: string) => {
-		await page.goto('/settings/project/skills');
+		await page.goto('/settings/clinic/skills');
 		await page.getByRole('button', { name: `Delete ${name}` }).click();
 		await page.getByRole('button', { name: 'Delete', exact: true }).click();
 		await expect(page.getByRole('button', { name: `Delete ${name}` })).toBeHidden();
@@ -267,7 +267,7 @@ test.describe('skills', () => {
 
 	test('creates a skill in the form, finds it in chat, edits and deletes it', async ({ page }) => {
 		const name = `e2e-skill-${Date.now()}`;
-		await page.goto('/settings/project/skills');
+		await page.goto('/settings/clinic/skills');
 		await page.getByRole('button', { name: 'New skill' }).click();
 		await page.getByPlaceholder('churn-analysis').fill(name);
 		await page.getByPlaceholder(/Use when the user asks/).fill('Use for the e2e flow.');
@@ -280,7 +280,7 @@ test.describe('skills', () => {
 		await page.keyboard.type(`/${name.slice(0, 12)}`);
 		await expect(page.getByText(name).first()).toBeVisible();
 
-		await page.goto('/settings/project/skills');
+		await page.goto('/settings/clinic/skills');
 		await page.getByRole('button', { name: `Edit ${name}` }).click();
 		await expect(page.getByPlaceholder(/Call qt_monthly_churn/)).toHaveValue('1. Say hello.');
 		await page.getByPlaceholder(/Use when the user asks/).fill('Edited description.');
@@ -292,7 +292,7 @@ test.describe('skills', () => {
 
 	test('the assistant drafts a skill from a query and the user saves it (real LLM call)', async ({ page }) => {
 		test.setTimeout(180_000);
-		await page.goto('/settings/project/query-tools?tool=new');
+		await page.goto('/settings/clinic/query-tools?tool=new');
 		await page.getByRole('button', { name: 'New draft' }).click();
 		await page.getByTestId('query-tool-sql-editor').locator('.view-lines').click();
 		await page.keyboard.type('SELECT count(*) AS order_count FROM public.orders');
@@ -305,7 +305,7 @@ test.describe('skills', () => {
 		await page.getByRole('button', { name: 'Save skill' }).click();
 		await expect(card.getByText('Saved', { exact: true })).toBeVisible({ timeout: 30_000 });
 
-		await page.goto('/settings/project/skills');
+		await page.goto('/settings/clinic/skills');
 		await page.getByRole('button', { name: `Edit ${saved}` }).click();
 		const instructions = page.getByPlaceholder(/Call qt_monthly_churn/);
 		await expect(instructions).toHaveValue(/order/i);

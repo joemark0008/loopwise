@@ -1,16 +1,16 @@
 import styles from './mobile-header.module.css';
 import { EditableChatTitle } from '@/feature/chat/components/editable-chat-title';
-import { ExampleProjectInfoCard } from '@/feature/chat/components/example-project-info-card';
+import { ExampleClinicInfoCard } from '@/feature/chat/components/example-clinic-info-card';
 import { useSidebar } from '@/contexts/sidebar';
 
 export function MobileHeader({
 	chatId,
 	title,
-	showExampleProjectInfo = false,
+	showExampleClinicInfo = false,
 }: {
 	chatId?: string;
 	title?: string;
-	showExampleProjectInfo?: boolean;
+	showExampleClinicInfo?: boolean;
 }) {
 	const { isMobile } = useSidebar();
 
@@ -20,7 +20,7 @@ export function MobileHeader({
 
 	return (
 		<div className={`${styles.mobileHeaderDiv} group/header`}>
-			{showExampleProjectInfo && <ExampleProjectInfoCard compact />}
+			{showExampleClinicInfo && <ExampleClinicInfoCard compact />}
 			{chatId && title && (
 				<>
 					<EditableChatTitle chatId={chatId} title={title} className={styles.mobileHeaderEditableChatTitle} />

@@ -6,10 +6,10 @@ import { Prompt } from 'prompt-mentions';
 import styles from './chat-input-prompt.module.css';
 import type { PromptHandle, PromptTheme, SelectedMention } from 'prompt-mentions';
 import type { RefObject } from 'react';
-import { useActiveProjectId } from '@/lib/active-project';
+import { useActiveClinicId } from '@/lib/active-clinic';
 import { cn } from '@/lib/utils';
 import { skillApi } from '@/lib/skill-api';
-import { useCurrentProject } from '@/hooks/use-current-project';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
 
 export { SKILL_MENTION_TRIGGER };
 
@@ -66,15 +66,15 @@ export function ChatPrompt({
 	onChange,
 	onEnter,
 }: ChatPromptProps) {
-	const activeProjectId = useActiveProjectId();
-	const project = useCurrentProject();
-	const projectId = project.data?.id;
-	const hasProject = projectId != null && (!activeProjectId || activeProjectId === projectId);
+	const activeClinicId = useActiveClinicId();
+	const clinic = useCurrentClinic();
+	const clinicId = clinic.data?.id;
+	const hasClinic = clinicId != null && (!activeClinicId || activeClinicId === clinicId);
 	const skillsQuery = useQuery({
 		...skillApi.skill.list.queryOptions(),
-		enabled: hasProject,
+		enabled: hasClinic,
 	});
-	const skills = hasProject && !skillsQuery.isFetching ? skillsQuery.data : undefined;
+	const skills = hasClinic && !skillsQuery.isFetching ? skillsQuery.data : undefined;
 	const promptTheme = minHeight ? { ...theme, minHeight } : theme;
 
 	return (

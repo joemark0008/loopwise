@@ -87,11 +87,11 @@ function dedupeByDestination(entries: SettingsSearchEntry[]): SettingsSearchEntr
 
 const settingsSuggestionPages = [
 	'/settings/account',
-	'/settings/project',
+	'/settings/clinic',
 	'/settings/context-explorer',
-	'/settings/project/agent',
-	'/settings/project/warehouse',
-	'/settings/project/query-tools',
+	'/settings/clinic/agent',
+	'/settings/clinic/warehouse',
+	'/settings/clinic/query-tools',
 ];
 
 const viewerVisiblePages = ['/settings/account'];

@@ -109,7 +109,7 @@ export function WiseToolsPage() {
 						Wise reads the workspace&apos;s skills (clinical guidelines and playbooks) through{' '}
 						<strong>Use skills</strong>.{' '}
 						{isWorkspaceAdmin ? (
-							<Link to='/settings/project/skills' className={styles.link}>
+							<Link to='/settings/clinic/skills' className={styles.link}>
 								Manage skills
 							</Link>
 						) : (

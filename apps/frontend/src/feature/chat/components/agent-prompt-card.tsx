@@ -26,7 +26,7 @@ export function AgentPromptCard({ prompt }: { prompt: string }) {
 				<div className={styles.agentPromptCardDiv3}>
 					<span className={styles.agentPromptCardSpan}>Local agent prompt</span>
 					<p className={styles.agentPromptCardP}>
-						Open your coding agent in the project folder, then paste this prompt.
+						Open your coding agent in the clinic folder, then paste this prompt.
 					</p>
 				</div>
 				<Button

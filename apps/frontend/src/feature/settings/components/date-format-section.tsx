@@ -13,7 +13,7 @@ import type { DateFormatPreset } from '@loopwise/shared/date';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SettingsCard } from '@/components/ui/settings-card';
-import { projectApi } from '@/lib/project-api';
+import { clinicApi } from '@/lib/clinic-api';
 
 interface DateFormatSectionProps {
 	isAdmin: boolean;
@@ -53,13 +53,13 @@ const SAMPLE_DATE = '2024-03-15';
 
 export function DateFormatSection({ isAdmin }: DateFormatSectionProps) {
 	const queryClient = useQueryClient();
-	const displaySettings = useQuery(projectApi.project.getDisplaySettings.queryOptions());
+	const displaySettings = useQuery(clinicApi.clinic.getDisplaySettings.queryOptions());
 
 	const updateDisplaySettings = useMutation(
-		projectApi.project.updateDisplaySettings.mutationOptions({
+		clinicApi.clinic.updateDisplaySettings.mutationOptions({
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: projectApi.project.getDisplaySettings.queryOptions().queryKey,
+					queryKey: clinicApi.clinic.getDisplaySettings.queryOptions().queryKey,
 				});
 			},
 		}),
@@ -97,7 +97,7 @@ export function DateFormatSection({ isAdmin }: DateFormatSectionProps) {
 	// When the user blurs the custom input by clicking on the preset selector
 	// (or one of its options) the Select also issues an update mutation.
 	// Skipping the blur save here avoids a race where the two writes can land
-	// out of order and leave the project pinned to "custom" instead of the
+	// out of order and leave the clinic pinned to "custom" instead of the
 	// preset the user actually picked.
 	const handleCustomBlur = (event: React.FocusEvent<HTMLInputElement>) => {
 		const next = event.relatedTarget as HTMLElement | null;
@@ -120,7 +120,7 @@ export function DateFormatSection({ isAdmin }: DateFormatSectionProps) {
 	return (
 		<SettingsCard
 			title='Date format'
-			description='Choose how dates are displayed in charts, tooltips and query result tables for this project.'
+			description='Choose how dates are displayed in charts, tooltips and query result tables for this clinic.'
 		>
 			<div className={styles.dateFormatSectionDiv}>
 				<label htmlFor={PRESET_SELECT_ID} className={styles.dateFormatSectionLabel}>

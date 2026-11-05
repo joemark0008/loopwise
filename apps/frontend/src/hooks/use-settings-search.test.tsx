@@ -36,18 +36,18 @@ describe('useSettingsSearch', () => {
 
 	afterEach(cleanup);
 
-	it('finds project settings for admins', () => {
+	it('finds clinic settings for admins', () => {
 		Object.assign(mocks.permissions, { isAdmin: true, isViewer: false });
 		const { result } = renderHook(() => useSettingsSearch('skills'));
 
-		expect(result.current.map((entry) => entry.page)).toContain('/settings/project/skills');
+		expect(result.current.map((entry) => entry.page)).toContain('/settings/clinic/skills');
 	});
 
 	it('finds the agent page for members', () => {
 		Object.assign(mocks.permissions, { isViewer: false });
 		const { result } = renderHook(() => useSettingsSearch('saved prompts'));
 
-		expect(result.current.map((entry) => entry.page)).toContain('/settings/project/agent');
+		expect(result.current.map((entry) => entry.page)).toContain('/settings/clinic/agent');
 	});
 
 	it('keeps members without advanced settings on their account page', () => {

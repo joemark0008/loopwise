@@ -70,8 +70,8 @@ query UsageUserFacets {
 	}
 }
 
-query UsagePeriodSettings($projectId: ID!) {
-	usagePeriodSettings(projectId: $projectId) {
+query UsagePeriodSettings($clinicId: ID!) {
+	usagePeriodSettings(clinicId: $clinicId) {
 		selection {
 			...UsagePeriodSelectionFields
 		}
@@ -81,26 +81,26 @@ query UsagePeriodSettings($projectId: ID!) {
 	}
 }
 
-mutation UpdateUsagePeriodSelection($projectId: ID!, $selection: UsagePeriodSelectionInput!) {
-	updateUsagePeriodSelection(projectId: $projectId, selection: $selection) {
+mutation UpdateUsagePeriodSelection($clinicId: ID!, $selection: UsagePeriodSelectionInput!) {
+	updateUsagePeriodSelection(clinicId: $clinicId, selection: $selection) {
 		...UsagePeriodSelectionFields
 	}
 }
 
-mutation CreateSavedUsagePeriod($projectId: ID!, $savedPeriod: SavedUsagePeriodInput!) {
-	createSavedUsagePeriod(projectId: $projectId, savedPeriod: $savedPeriod) {
+mutation CreateSavedUsagePeriod($clinicId: ID!, $savedPeriod: SavedUsagePeriodInput!) {
+	createSavedUsagePeriod(clinicId: $clinicId, savedPeriod: $savedPeriod) {
 		...SavedUsagePeriodFields
 	}
 }
 
-mutation UpdateSavedUsagePeriod($projectId: ID!, $savedPeriod: UpdateSavedUsagePeriodInput!) {
-	updateSavedUsagePeriod(projectId: $projectId, savedPeriod: $savedPeriod) {
+mutation UpdateSavedUsagePeriod($clinicId: ID!, $savedPeriod: UpdateSavedUsagePeriodInput!) {
+	updateSavedUsagePeriod(clinicId: $clinicId, savedPeriod: $savedPeriod) {
 		...SavedUsagePeriodFields
 	}
 }
 
-mutation DeleteSavedUsagePeriod($projectId: ID!, $id: ID!) {
-	deleteSavedUsagePeriod(projectId: $projectId, id: $id) {
+mutation DeleteSavedUsagePeriod($clinicId: ID!, $id: ID!) {
+	deleteSavedUsagePeriod(clinicId: $clinicId, id: $id) {
 		id
 		selection {
 			...UsagePeriodSelectionFields

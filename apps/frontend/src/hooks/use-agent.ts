@@ -15,7 +15,7 @@ import type { DocumentAttachment } from '@/lib/attachments';
 import type { FileUIPart, InferUIMessageChunk } from 'ai';
 import type { MentionOption } from 'prompt-mentions';
 
-import { getProjectRequestHeaders } from '@/lib/active-project';
+import { getClinicRequestHeaders } from '@/lib/active-clinic';
 import {
 	checkIsAgentRunning,
 	extractDocumentPathsFromMessage,
@@ -37,9 +37,9 @@ import { cancellingMessageIdStore } from '@/stores/chat-cancelling-message';
 import { editedMessageIdStore } from '@/stores/chat-edited-message';
 import { chatInputRestoreStore } from '@/stores/chat-input-restore';
 import { messageQueueStore } from '@/stores/chat-message-queue';
-import { useCurrentProject } from '@/hooks/use-current-project';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
 import { chatApi } from '@/lib/chat-api';
-import { projectApi } from '@/lib/project-api';
+import { clinicApi } from '@/lib/clinic-api';
 
 export type AgentMode = 'default' | 'onboarding' | 'example' | 'query_workbench';
 
@@ -122,14 +122,14 @@ export const useAgent = ({
 
 	// A null pick means "loopwise default": no model is sent and the server resolves the admin default.
 	const [pinnedModel, setSelectedModel] = useLocalStorage(selectedModelStorage);
-	const currentProject = useCurrentProject();
-	const hasProject = currentProject.data != null;
+	const currentClinic = useCurrentClinic();
+	const hasClinic = currentClinic.data != null;
 	const defaultChatModel = useQuery({
-		...projectApi.project.getDefaultChatModel.queryOptions(),
-		enabled: hasProject,
+		...clinicApi.clinic.getDefaultChatModel.queryOptions(),
+		enabled: hasClinic,
 	});
 	const usesDefaultModel = pinnedModel === null;
-	const selectedModel = hasProject ? (pinnedModel ?? defaultChatModel.data ?? null) : null;
+	const selectedModel = hasClinic ? (pinnedModel ?? defaultChatModel.data ?? null) : null;
 	const setChat = useSetChat();
 	const queryClient = useQueryClient();
 
@@ -138,7 +138,7 @@ export const useAgent = ({
 	const chatIdRef = useRef(chatId);
 	chatIdRef.current = chatId;
 	const selectedModelRef = useRef<LlmSelectedModel | null>(null);
-	selectedModelRef.current = hasProject ? pinnedModel : null;
+	selectedModelRef.current = hasClinic ? pinnedModel : null;
 	const modeRef = useRef(mode);
 	modeRef.current = mode;
 	const getWorkbenchContextRef = useRef(getWorkbenchContext);
@@ -254,7 +254,7 @@ export const useAgent = ({
 					const adminModeAtSend = activeAdminModeRef.current;
 					agentAdminModeStore.set(newAgent, adminModeAtSend);
 					return {
-						headers: getProjectRequestHeaders(),
+						headers: getClinicRequestHeaders(),
 						body: {
 							...body,
 							mode: activeModeRef.current,

@@ -13,7 +13,7 @@ interface EditProfileDialogProps {
 	onSubmit: (name: string) => Promise<void>;
 }
 
-/** The signed-in user's name. Roles are managed with project members, which come back with Phase 6. */
+/** The signed-in user's name. Roles are managed with clinic members, which come back with Phase 6. */
 export function EditProfileDialog({ open, onOpenChange, name, onSubmit }: EditProfileDialogProps) {
 	const [error, setError] = useState('');
 

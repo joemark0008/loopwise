@@ -5,7 +5,7 @@ import {
 	EditMemoryDocument,
 	MemoriesDocument,
 	MemorySettingsDocument,
-	ProjectMemorySettingsDocument,
+	ClinicMemorySettingsDocument,
 	SetMemoryEnabledDocument,
 } from '@/graphql/generated/graphql';
 import { mutation, query, runMutation, runQuery } from '@/lib/apollo-procedures';
@@ -16,7 +16,7 @@ type Memory = Outputs['user']['getMemories'][number];
 
 /**
  * Memory settings moved to apps/api (`lib/apollo-procedures.ts`): call sites swap upstream tRPC's `memory.*`,
- * `user.getMemories` / `getMemorySettings` and `project.getMemorySettings` for `memoryApi.*`.
+ * `user.getMemories` / `getMemorySettings` and `clinic.getMemorySettings` for `memoryApi.*`.
  */
 export const memoryApi = {
 	user: {
@@ -28,10 +28,10 @@ export const memoryApi = {
 			async () => (await runQuery(MemorySettingsDocument, {})).memorySettings,
 		),
 	},
-	project: {
-		getMemorySettings: query<void, Outputs['project']['getMemorySettings']>(
-			['project', 'getMemorySettings'],
-			async () => (await runQuery(ProjectMemorySettingsDocument, {})).projectMemorySettings,
+	clinic: {
+		getMemorySettings: query<void, Outputs['clinic']['getMemorySettings']>(
+			['clinic', 'getMemorySettings'],
+			async () => (await runQuery(ClinicMemorySettingsDocument, {})).clinicMemorySettings,
 		),
 	},
 	memory: {

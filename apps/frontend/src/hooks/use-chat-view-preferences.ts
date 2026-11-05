@@ -1,13 +1,12 @@
 import { useCallback, useState } from 'react';
+import { CHAT_GROUP_BY_OPTIONS } from '@loopwise/shared/types';
 import type { ChatFilterType, ChatGroupBy } from '@loopwise/shared/types';
 
 const GROUP_BY_KEY = 'sidebar-chat-group-by';
 const FILTERS_KEY = 'sidebar-chat-filters';
 
 export function useChatViewPreferences() {
-	const [groupBy, setGroupByState] = useState<ChatGroupBy>(
-		() => (localStorage.getItem(GROUP_BY_KEY) as ChatGroupBy) || 'none',
-	);
+	const [groupBy, setGroupByState] = useState<ChatGroupBy>(() => readStoredGroupBy());
 
 	const [filters, setFiltersState] = useState<ChatFilterType[]>(() => {
 		try {
@@ -45,4 +44,10 @@ export function useChatViewPreferences() {
 	}, []);
 
 	return { groupBy, filters, setGroupBy, toggleFilter };
+}
+
+/** The saved grouping, or `none` when it is missing or a value that no longer exists (such as `project`). */
+function readStoredGroupBy(): ChatGroupBy {
+	const stored = localStorage.getItem(GROUP_BY_KEY);
+	return CHAT_GROUP_BY_OPTIONS.includes(stored as ChatGroupBy) ? (stored as ChatGroupBy) : 'none';
 }

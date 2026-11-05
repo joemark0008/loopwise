@@ -141,7 +141,7 @@ describe('AssistantTextWithCitation', () => {
 
 	it.each([
 		['Read the docs', 'https://docs.example.com'],
-		['Set up your project', '/onboarding'],
+		['Set up your clinic', '/onboarding'],
 	])('keeps the %s message action as plain markdown', (label, href) => {
 		renderAnswer(`[${label}](${href})`);
 

@@ -37,8 +37,8 @@ import { Route as ProtectedPatientsNewRouteImport } from './routes/_protected/pa
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings.index'
 import { Route as ProtectedSettingsAccountRouteImport } from './routes/_protected/settings.account'
 import { Route as ProtectedSettingsAppearanceRouteImport } from './routes/_protected/settings.appearance'
+import { Route as ProtectedSettingsClinicRouteImport } from './routes/_protected/settings.clinic'
 import { Route as ProtectedSettingsMemoryRouteImport } from './routes/_protected/settings.memory'
-import { Route as ProtectedSettingsProjectRouteImport } from './routes/_protected/settings.project'
 import { Route as ProtectedSettingsStorageRouteImport } from './routes/_protected/settings.storage'
 import { Route as ProtectedSettingsUsageRouteImport } from './routes/_protected/settings.usage'
 import { Route as ProtectedSettingsUsersRouteImport } from './routes/_protected/settings.users'
@@ -51,10 +51,10 @@ import { Route as ProtectedPatientsPatientIdIndexRouteImport } from './routes/_p
 import { Route as ProtectedPatientsPatientIdCasesRouteImport } from './routes/_protected/patients.$patientId.cases'
 import { Route as ProtectedPatientsPatientIdMessagesRouteImport } from './routes/_protected/patients.$patientId.messages'
 import { Route as ProtectedPatientsPatientIdResultsRouteImport } from './routes/_protected/patients.$patientId.results'
-import { Route as ProtectedSettingsProjectIndexRouteImport } from './routes/_protected/settings.project.index'
-import { Route as ProtectedSettingsProjectAgentRouteImport } from './routes/_protected/settings.project.agent'
-import { Route as ProtectedSettingsProjectModelsRouteImport } from './routes/_protected/settings.project.models'
-import { Route as ProtectedSettingsProjectSkillsRouteImport } from './routes/_protected/settings.project.skills'
+import { Route as ProtectedSettingsClinicIndexRouteImport } from './routes/_protected/settings.clinic.index'
+import { Route as ProtectedSettingsClinicAgentRouteImport } from './routes/_protected/settings.clinic.agent'
+import { Route as ProtectedSettingsClinicModelsRouteImport } from './routes/_protected/settings.clinic.models'
+import { Route as ProtectedSettingsClinicSkillsRouteImport } from './routes/_protected/settings.clinic.skills'
 import { Route as ProtectedPatientsPatientIdEncountersEncounterIdRouteImport } from './routes/_protected/patients.$patientId.encounters.$encounterId'
 
 const PrintRoute = PrintRouteImport.update({
@@ -198,17 +198,16 @@ const ProtectedSettingsAppearanceRoute =
     path: '/appearance',
     getParentRoute: () => ProtectedSettingsRoute,
   } as any)
+const ProtectedSettingsClinicRoute = ProtectedSettingsClinicRouteImport.update({
+  id: '/clinic',
+  path: '/clinic',
+  getParentRoute: () => ProtectedSettingsRoute,
+} as any)
 const ProtectedSettingsMemoryRoute = ProtectedSettingsMemoryRouteImport.update({
   id: '/memory',
   path: '/memory',
   getParentRoute: () => ProtectedSettingsRoute,
 } as any)
-const ProtectedSettingsProjectRoute =
-  ProtectedSettingsProjectRouteImport.update({
-    id: '/project',
-    path: '/project',
-    getParentRoute: () => ProtectedSettingsRoute,
-  } as any)
 const ProtectedSettingsStorageRoute =
   ProtectedSettingsStorageRouteImport.update({
     id: '/storage',
@@ -279,29 +278,29 @@ const ProtectedPatientsPatientIdResultsRoute =
     path: '/results',
     getParentRoute: () => ProtectedPatientsPatientIdRoute,
   } as any)
-const ProtectedSettingsProjectIndexRoute =
-  ProtectedSettingsProjectIndexRouteImport.update({
+const ProtectedSettingsClinicIndexRoute =
+  ProtectedSettingsClinicIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => ProtectedSettingsProjectRoute,
+    getParentRoute: () => ProtectedSettingsClinicRoute,
   } as any)
-const ProtectedSettingsProjectAgentRoute =
-  ProtectedSettingsProjectAgentRouteImport.update({
+const ProtectedSettingsClinicAgentRoute =
+  ProtectedSettingsClinicAgentRouteImport.update({
     id: '/agent',
     path: '/agent',
-    getParentRoute: () => ProtectedSettingsProjectRoute,
+    getParentRoute: () => ProtectedSettingsClinicRoute,
   } as any)
-const ProtectedSettingsProjectModelsRoute =
-  ProtectedSettingsProjectModelsRouteImport.update({
+const ProtectedSettingsClinicModelsRoute =
+  ProtectedSettingsClinicModelsRouteImport.update({
     id: '/models',
     path: '/models',
-    getParentRoute: () => ProtectedSettingsProjectRoute,
+    getParentRoute: () => ProtectedSettingsClinicRoute,
   } as any)
-const ProtectedSettingsProjectSkillsRoute =
-  ProtectedSettingsProjectSkillsRouteImport.update({
+const ProtectedSettingsClinicSkillsRoute =
+  ProtectedSettingsClinicSkillsRouteImport.update({
     id: '/skills',
     path: '/skills',
-    getParentRoute: () => ProtectedSettingsProjectRoute,
+    getParentRoute: () => ProtectedSettingsClinicRoute,
   } as any)
 const ProtectedPatientsPatientIdEncountersEncounterIdRoute =
   ProtectedPatientsPatientIdEncountersEncounterIdRouteImport.update({
@@ -333,8 +332,8 @@ export interface FileRoutesByFullPath {
   '/patients/new': typeof ProtectedPatientsNewRoute
   '/settings/account': typeof ProtectedSettingsAccountRoute
   '/settings/appearance': typeof ProtectedSettingsAppearanceRoute
+  '/settings/clinic': typeof ProtectedSettingsClinicRouteWithChildren
   '/settings/memory': typeof ProtectedSettingsMemoryRoute
-  '/settings/project': typeof ProtectedSettingsProjectRouteWithChildren
   '/settings/storage': typeof ProtectedSettingsStorageRoute
   '/settings/usage': typeof ProtectedSettingsUsageRoute
   '/settings/users': typeof ProtectedSettingsUsersRoute
@@ -348,11 +347,11 @@ export interface FileRoutesByFullPath {
   '/patients/$patientId/cases': typeof ProtectedPatientsPatientIdCasesRoute
   '/patients/$patientId/messages': typeof ProtectedPatientsPatientIdMessagesRoute
   '/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
-  '/settings/project/agent': typeof ProtectedSettingsProjectAgentRoute
-  '/settings/project/models': typeof ProtectedSettingsProjectModelsRoute
-  '/settings/project/skills': typeof ProtectedSettingsProjectSkillsRoute
+  '/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
+  '/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
+  '/settings/clinic/skills': typeof ProtectedSettingsClinicSkillsRoute
   '/patients/$patientId/': typeof ProtectedPatientsPatientIdIndexRoute
-  '/settings/project/': typeof ProtectedSettingsProjectIndexRoute
+  '/settings/clinic/': typeof ProtectedSettingsClinicIndexRoute
   '/patients/$patientId/encounters/$encounterId': typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
 }
 export interface FileRoutesByTo {
@@ -389,11 +388,11 @@ export interface FileRoutesByTo {
   '/patients/$patientId/cases': typeof ProtectedPatientsPatientIdCasesRoute
   '/patients/$patientId/messages': typeof ProtectedPatientsPatientIdMessagesRoute
   '/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
-  '/settings/project/agent': typeof ProtectedSettingsProjectAgentRoute
-  '/settings/project/models': typeof ProtectedSettingsProjectModelsRoute
-  '/settings/project/skills': typeof ProtectedSettingsProjectSkillsRoute
+  '/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
+  '/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
+  '/settings/clinic/skills': typeof ProtectedSettingsClinicSkillsRoute
   '/patients/$patientId': typeof ProtectedPatientsPatientIdIndexRoute
-  '/settings/project': typeof ProtectedSettingsProjectIndexRoute
+  '/settings/clinic': typeof ProtectedSettingsClinicIndexRoute
   '/patients/$patientId/encounters/$encounterId': typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
 }
 export interface FileRoutesById {
@@ -423,8 +422,8 @@ export interface FileRoutesById {
   '/_protected/patients/new': typeof ProtectedPatientsNewRoute
   '/_protected/settings/account': typeof ProtectedSettingsAccountRoute
   '/_protected/settings/appearance': typeof ProtectedSettingsAppearanceRoute
+  '/_protected/settings/clinic': typeof ProtectedSettingsClinicRouteWithChildren
   '/_protected/settings/memory': typeof ProtectedSettingsMemoryRoute
-  '/_protected/settings/project': typeof ProtectedSettingsProjectRouteWithChildren
   '/_protected/settings/storage': typeof ProtectedSettingsStorageRoute
   '/_protected/settings/usage': typeof ProtectedSettingsUsageRoute
   '/_protected/settings/users': typeof ProtectedSettingsUsersRoute
@@ -439,11 +438,11 @@ export interface FileRoutesById {
   '/_protected/patients/$patientId/cases': typeof ProtectedPatientsPatientIdCasesRoute
   '/_protected/patients/$patientId/messages': typeof ProtectedPatientsPatientIdMessagesRoute
   '/_protected/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
-  '/_protected/settings/project/agent': typeof ProtectedSettingsProjectAgentRoute
-  '/_protected/settings/project/models': typeof ProtectedSettingsProjectModelsRoute
-  '/_protected/settings/project/skills': typeof ProtectedSettingsProjectSkillsRoute
+  '/_protected/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
+  '/_protected/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
+  '/_protected/settings/clinic/skills': typeof ProtectedSettingsClinicSkillsRoute
   '/_protected/patients/$patientId/': typeof ProtectedPatientsPatientIdIndexRoute
-  '/_protected/settings/project/': typeof ProtectedSettingsProjectIndexRoute
+  '/_protected/settings/clinic/': typeof ProtectedSettingsClinicIndexRoute
   '/_protected/patients/$patientId/encounters/$encounterId': typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
 }
 export interface FileRouteTypes {
@@ -471,8 +470,8 @@ export interface FileRouteTypes {
     | '/patients/new'
     | '/settings/account'
     | '/settings/appearance'
+    | '/settings/clinic'
     | '/settings/memory'
-    | '/settings/project'
     | '/settings/storage'
     | '/settings/usage'
     | '/settings/users'
@@ -486,11 +485,11 @@ export interface FileRouteTypes {
     | '/patients/$patientId/cases'
     | '/patients/$patientId/messages'
     | '/patients/$patientId/results'
-    | '/settings/project/agent'
-    | '/settings/project/models'
-    | '/settings/project/skills'
+    | '/settings/clinic/agent'
+    | '/settings/clinic/models'
+    | '/settings/clinic/skills'
     | '/patients/$patientId/'
-    | '/settings/project/'
+    | '/settings/clinic/'
     | '/patients/$patientId/encounters/$encounterId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -527,11 +526,11 @@ export interface FileRouteTypes {
     | '/patients/$patientId/cases'
     | '/patients/$patientId/messages'
     | '/patients/$patientId/results'
-    | '/settings/project/agent'
-    | '/settings/project/models'
-    | '/settings/project/skills'
+    | '/settings/clinic/agent'
+    | '/settings/clinic/models'
+    | '/settings/clinic/skills'
     | '/patients/$patientId'
-    | '/settings/project'
+    | '/settings/clinic'
     | '/patients/$patientId/encounters/$encounterId'
   id:
     | '__root__'
@@ -560,8 +559,8 @@ export interface FileRouteTypes {
     | '/_protected/patients/new'
     | '/_protected/settings/account'
     | '/_protected/settings/appearance'
+    | '/_protected/settings/clinic'
     | '/_protected/settings/memory'
-    | '/_protected/settings/project'
     | '/_protected/settings/storage'
     | '/_protected/settings/usage'
     | '/_protected/settings/users'
@@ -576,11 +575,11 @@ export interface FileRouteTypes {
     | '/_protected/patients/$patientId/cases'
     | '/_protected/patients/$patientId/messages'
     | '/_protected/patients/$patientId/results'
-    | '/_protected/settings/project/agent'
-    | '/_protected/settings/project/models'
-    | '/_protected/settings/project/skills'
+    | '/_protected/settings/clinic/agent'
+    | '/_protected/settings/clinic/models'
+    | '/_protected/settings/clinic/skills'
     | '/_protected/patients/$patientId/'
-    | '/_protected/settings/project/'
+    | '/_protected/settings/clinic/'
     | '/_protected/patients/$patientId/encounters/$encounterId'
   fileRoutesById: FileRoutesById
 }
@@ -792,18 +791,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSettingsAppearanceRouteImport
       parentRoute: typeof ProtectedSettingsRoute
     }
+    '/_protected/settings/clinic': {
+      id: '/_protected/settings/clinic'
+      path: '/clinic'
+      fullPath: '/settings/clinic'
+      preLoaderRoute: typeof ProtectedSettingsClinicRouteImport
+      parentRoute: typeof ProtectedSettingsRoute
+    }
     '/_protected/settings/memory': {
       id: '/_protected/settings/memory'
       path: '/memory'
       fullPath: '/settings/memory'
       preLoaderRoute: typeof ProtectedSettingsMemoryRouteImport
-      parentRoute: typeof ProtectedSettingsRoute
-    }
-    '/_protected/settings/project': {
-      id: '/_protected/settings/project'
-      path: '/project'
-      fullPath: '/settings/project'
-      preLoaderRoute: typeof ProtectedSettingsProjectRouteImport
       parentRoute: typeof ProtectedSettingsRoute
     }
     '/_protected/settings/storage': {
@@ -890,33 +889,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPatientsPatientIdResultsRouteImport
       parentRoute: typeof ProtectedPatientsPatientIdRoute
     }
-    '/_protected/settings/project/': {
-      id: '/_protected/settings/project/'
+    '/_protected/settings/clinic/': {
+      id: '/_protected/settings/clinic/'
       path: '/'
-      fullPath: '/settings/project/'
-      preLoaderRoute: typeof ProtectedSettingsProjectIndexRouteImport
-      parentRoute: typeof ProtectedSettingsProjectRoute
+      fullPath: '/settings/clinic/'
+      preLoaderRoute: typeof ProtectedSettingsClinicIndexRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
     }
-    '/_protected/settings/project/agent': {
-      id: '/_protected/settings/project/agent'
+    '/_protected/settings/clinic/agent': {
+      id: '/_protected/settings/clinic/agent'
       path: '/agent'
-      fullPath: '/settings/project/agent'
-      preLoaderRoute: typeof ProtectedSettingsProjectAgentRouteImport
-      parentRoute: typeof ProtectedSettingsProjectRoute
+      fullPath: '/settings/clinic/agent'
+      preLoaderRoute: typeof ProtectedSettingsClinicAgentRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
     }
-    '/_protected/settings/project/models': {
-      id: '/_protected/settings/project/models'
+    '/_protected/settings/clinic/models': {
+      id: '/_protected/settings/clinic/models'
       path: '/models'
-      fullPath: '/settings/project/models'
-      preLoaderRoute: typeof ProtectedSettingsProjectModelsRouteImport
-      parentRoute: typeof ProtectedSettingsProjectRoute
+      fullPath: '/settings/clinic/models'
+      preLoaderRoute: typeof ProtectedSettingsClinicModelsRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
     }
-    '/_protected/settings/project/skills': {
-      id: '/_protected/settings/project/skills'
+    '/_protected/settings/clinic/skills': {
+      id: '/_protected/settings/clinic/skills'
       path: '/skills'
-      fullPath: '/settings/project/skills'
-      preLoaderRoute: typeof ProtectedSettingsProjectSkillsRouteImport
-      parentRoute: typeof ProtectedSettingsProjectRoute
+      fullPath: '/settings/clinic/skills'
+      preLoaderRoute: typeof ProtectedSettingsClinicSkillsRouteImport
+      parentRoute: typeof ProtectedSettingsClinicRoute
     }
     '/_protected/patients/$patientId/encounters/$encounterId': {
       id: '/_protected/patients/$patientId/encounters/$encounterId'
@@ -997,31 +996,31 @@ const ProtectedPatientsRouteChildren: ProtectedPatientsRouteChildren = {
 const ProtectedPatientsRouteWithChildren =
   ProtectedPatientsRoute._addFileChildren(ProtectedPatientsRouteChildren)
 
-interface ProtectedSettingsProjectRouteChildren {
-  ProtectedSettingsProjectAgentRoute: typeof ProtectedSettingsProjectAgentRoute
-  ProtectedSettingsProjectModelsRoute: typeof ProtectedSettingsProjectModelsRoute
-  ProtectedSettingsProjectSkillsRoute: typeof ProtectedSettingsProjectSkillsRoute
-  ProtectedSettingsProjectIndexRoute: typeof ProtectedSettingsProjectIndexRoute
+interface ProtectedSettingsClinicRouteChildren {
+  ProtectedSettingsClinicAgentRoute: typeof ProtectedSettingsClinicAgentRoute
+  ProtectedSettingsClinicModelsRoute: typeof ProtectedSettingsClinicModelsRoute
+  ProtectedSettingsClinicSkillsRoute: typeof ProtectedSettingsClinicSkillsRoute
+  ProtectedSettingsClinicIndexRoute: typeof ProtectedSettingsClinicIndexRoute
 }
 
-const ProtectedSettingsProjectRouteChildren: ProtectedSettingsProjectRouteChildren =
+const ProtectedSettingsClinicRouteChildren: ProtectedSettingsClinicRouteChildren =
   {
-    ProtectedSettingsProjectAgentRoute: ProtectedSettingsProjectAgentRoute,
-    ProtectedSettingsProjectModelsRoute: ProtectedSettingsProjectModelsRoute,
-    ProtectedSettingsProjectSkillsRoute: ProtectedSettingsProjectSkillsRoute,
-    ProtectedSettingsProjectIndexRoute: ProtectedSettingsProjectIndexRoute,
+    ProtectedSettingsClinicAgentRoute: ProtectedSettingsClinicAgentRoute,
+    ProtectedSettingsClinicModelsRoute: ProtectedSettingsClinicModelsRoute,
+    ProtectedSettingsClinicSkillsRoute: ProtectedSettingsClinicSkillsRoute,
+    ProtectedSettingsClinicIndexRoute: ProtectedSettingsClinicIndexRoute,
   }
 
-const ProtectedSettingsProjectRouteWithChildren =
-  ProtectedSettingsProjectRoute._addFileChildren(
-    ProtectedSettingsProjectRouteChildren,
+const ProtectedSettingsClinicRouteWithChildren =
+  ProtectedSettingsClinicRoute._addFileChildren(
+    ProtectedSettingsClinicRouteChildren,
   )
 
 interface ProtectedSettingsRouteChildren {
   ProtectedSettingsAccountRoute: typeof ProtectedSettingsAccountRoute
   ProtectedSettingsAppearanceRoute: typeof ProtectedSettingsAppearanceRoute
+  ProtectedSettingsClinicRoute: typeof ProtectedSettingsClinicRouteWithChildren
   ProtectedSettingsMemoryRoute: typeof ProtectedSettingsMemoryRoute
-  ProtectedSettingsProjectRoute: typeof ProtectedSettingsProjectRouteWithChildren
   ProtectedSettingsStorageRoute: typeof ProtectedSettingsStorageRoute
   ProtectedSettingsUsageRoute: typeof ProtectedSettingsUsageRoute
   ProtectedSettingsUsersRoute: typeof ProtectedSettingsUsersRoute
@@ -1032,8 +1031,8 @@ interface ProtectedSettingsRouteChildren {
 const ProtectedSettingsRouteChildren: ProtectedSettingsRouteChildren = {
   ProtectedSettingsAccountRoute: ProtectedSettingsAccountRoute,
   ProtectedSettingsAppearanceRoute: ProtectedSettingsAppearanceRoute,
+  ProtectedSettingsClinicRoute: ProtectedSettingsClinicRouteWithChildren,
   ProtectedSettingsMemoryRoute: ProtectedSettingsMemoryRoute,
-  ProtectedSettingsProjectRoute: ProtectedSettingsProjectRouteWithChildren,
   ProtectedSettingsStorageRoute: ProtectedSettingsStorageRoute,
   ProtectedSettingsUsageRoute: ProtectedSettingsUsageRoute,
   ProtectedSettingsUsersRoute: ProtectedSettingsUsersRoute,

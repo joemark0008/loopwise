@@ -25,7 +25,7 @@ vi.mock('@/contexts/side-panel', () => ({
 vi.mock('@/hooks/use-date-format', () => ({
 	useDateFormat: () => ({ preset: 'european' }),
 }));
-// The SQL body offers "Save as query tool", which reads the project role and navigates to settings.
+// The SQL body offers "Save as query tool", which reads the clinic role and navigates to settings.
 vi.mock('@/hooks/use-permissions', () => ({ usePermissions: () => ({ canSendMessages: true }) }));
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
 	...(await importOriginal<Record<string, unknown>>()),

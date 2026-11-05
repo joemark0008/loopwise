@@ -2,7 +2,7 @@ import { CHAT_REPLAY_FEEDBACK_STATES, CHAT_REPLAY_TOOL_STATES, providerLabels } 
 import { USAGE_PERIOD_PRESET_NAMES, USAGE_SOURCES } from '@loopwise/shared/usage';
 import type { UsagePeriodPreset, UsagePeriodSelection, UsageSource } from '@loopwise/shared/usage';
 import type { ChatReplayFeedbackState, ChatReplayToolState, LlmProvider } from '@loopwise/shared/types';
-import { getActiveProjectId } from '@/lib/active-project';
+import { getActiveClinicId } from '@/lib/active-clinic';
 
 export type TokenChartDisplayMode = 'tokens' | 'dollars';
 
@@ -84,8 +84,8 @@ export function saveUsageFilters(search: UsageRouteSearch): void {
 	}
 }
 
-export function readStoredUsagePeriodSelection(projectId: string | null): UsagePeriodSelection | undefined {
-	const period = parsePeriodSearch(readStoredUsageFilters(getUsageFiltersStorageKey(projectId ?? 'default')));
+export function readStoredUsagePeriodSelection(clinicId: string | null): UsagePeriodSelection | undefined {
+	const period = parsePeriodSearch(readStoredUsageFilters(getUsageFiltersStorageKey(clinicId ?? 'default')));
 	if (!period.mode) {
 		return undefined;
 	}
@@ -93,12 +93,12 @@ export function readStoredUsagePeriodSelection(projectId: string | null): UsageP
 	return { mode: period.mode };
 }
 
-export function clearStoredUsagePeriodSelection(projectId: string): void {
+export function clearStoredUsagePeriodSelection(clinicId: string): void {
 	if (typeof window === 'undefined') {
 		return;
 	}
 
-	const storageKey = getUsageFiltersStorageKey(projectId);
+	const storageKey = getUsageFiltersStorageKey(clinicId);
 	const filters = readStoredUsageFilters(storageKey);
 	for (const key of periodSearchKeys) {
 		delete filters[key];
@@ -151,8 +151,8 @@ function readStoredUsageFilters(storageKey = getUsageFiltersStorageKey()): Recor
 	}
 }
 
-function getUsageFiltersStorageKey(projectId = getActiveProjectId() ?? 'default'): string {
-	return `${usageFiltersStorageKey}.${projectId}`;
+function getUsageFiltersStorageKey(clinicId = getActiveClinicId() ?? 'default'): string {
+	return `${usageFiltersStorageKey}.${clinicId}`;
 }
 
 function pickUsageFilters(filters: Record<string, unknown>): Record<string, unknown> {

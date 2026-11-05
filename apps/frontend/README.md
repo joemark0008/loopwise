@@ -19,7 +19,7 @@ npm run build
 
 ## Testing
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+This clinic uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
 
 ```bash
 npm run test
@@ -27,11 +27,11 @@ npm run test
 
 ## Styling
 
-This project uses [Mantine](https://mantine.dev/) components with CSS Modules and the design tokens in `src/theme/tokens.css`. See [docs/frontend-design.md](../../docs/frontend-design.md) for the pattern. `npm run lint` includes `scripts/check-styles.mjs`, which fails on stray px and hex values and on CSS Module classes that don't exist.
+This clinic uses [Mantine](https://mantine.dev/) components with CSS Modules and the design tokens in `src/theme/tokens.css`. See [docs/frontend-design.md](../../docs/frontend-design.md) for the pattern. `npm run lint` includes `scripts/check-styles.mjs`, which fails on stray px and hex values and on CSS Module classes that don't exist.
 
 ## Linting & Formatting
 
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
+This clinic uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
 
 ```bash
 npm run lint
@@ -41,7 +41,7 @@ npm run check
 
 ## Routing
 
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
+This clinic uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
 
 ### Adding A Route
 
@@ -217,7 +217,7 @@ You can find out everything you need to know on how to use React-Query in the [R
 
 ## State Management
 
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
+Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your clinic.
 
 First you need to add TanStack Store as a dependency:
 

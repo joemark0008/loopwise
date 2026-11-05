@@ -6,7 +6,7 @@ import { SidebarSettingsNav } from './sidebar-settings-nav';
 import { SidebarUserMenu } from './sidebar-user-menu';
 import styles from './sidebar.module.css';
 import type { NavLink } from '@/lib/navigation';
-import { ProjectSwitcher } from '@/components/project-selector';
+import { ClinicSwitcher } from '@/components/clinic-selector';
 
 import LoopwiseFullLogo from '@/components/icons/loopwise-full-logo.svg';
 import LoopwiseLogo from '@/components/icons/loopwise-logo.svg';
@@ -15,14 +15,14 @@ import { SimpleTooltip, Tooltip, TooltipContent, TooltipTrigger } from '@/compon
 import { useSidebar } from '@/contexts/sidebar';
 import { resetLastAppLocation, useTrackLastAppLocation } from '@/hooks/use-last-app-location';
 import { useIsCloud } from '@/hooks/use-loopwise-mode';
-import { useProjectSwitch } from '@/hooks/use-project-switch';
+import { useClinicSwitch } from '@/hooks/use-clinic-switch';
 import { useStaffRole } from '@/hooks/use-staff-role';
-import { getActiveProjectId, setActiveProjectId } from '@/lib/active-project';
+import { getActiveClinicId, setActiveClinicId } from '@/lib/active-clinic';
 import { getShortcutLabel } from '@/lib/keyboard-shortcuts';
 import { roleNavLinks } from '@/lib/navigation';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useCanSeeAdvancedSettings } from '@/hooks/use-can-see-advanced-settings';
-import { useCurrentProject, useProjects } from '@/hooks/use-current-project';
+import { useCurrentClinic, useClinics } from '@/hooks/use-current-clinic';
 
 export function Sidebar() {
 	const navigate = useNavigate();
@@ -36,9 +36,9 @@ export function Sidebar() {
 		expand: expandSidebar,
 	} = useSidebar();
 	const [toggleHintOpen, setToggleHintOpen] = useState(false);
-	const project = useCurrentProject();
-	const projects = useProjects();
-	const switchProject = useProjectSwitch(project.data?.id);
+	const clinic = useCurrentClinic();
+	const clinics = useClinics();
+	const switchClinic = useClinicSwitch(clinic.data?.id);
 	const { isAdmin, isContextAdmin, isViewer } = usePermissions();
 	const canSeeAdvancedSettings = useCanSeeAdvancedSettings();
 	const isCloud = useIsCloud();
@@ -74,18 +74,18 @@ export function Sidebar() {
 	}, [navigate, isMobile, closeMobile]);
 
 	useEffect(() => {
-		if (!project.data?.id) {
+		if (!clinic.data?.id) {
 			return;
 		}
 
-		if (getActiveProjectId() !== project.data.id) {
-			setActiveProjectId(project.data.id);
+		if (getActiveClinicId() !== clinic.data.id) {
+			setActiveClinicId(clinic.data.id);
 		}
-	}, [project.data?.id]);
+	}, [clinic.data?.id]);
 
-	const handleProjectChange = useCallback(
-		async (projectId: string) => {
-			const didSwitch = await switchProject(projectId);
+	const handleClinicChange = useCallback(
+		async (clinicId: string) => {
+			const didSwitch = await switchClinic(clinicId);
 			if (!didSwitch) {
 				return;
 			}
@@ -94,7 +94,7 @@ export function Sidebar() {
 				closeMobile();
 			}
 		},
-		[closeMobile, isMobile, switchProject],
+		[closeMobile, isMobile, switchClinic],
 	);
 
 	return (
@@ -138,10 +138,10 @@ export function Sidebar() {
 				<div className={styles.settingsHeader}>
 					<SidebarBackToApp isCollapsed={effectiveIsCollapsed} />
 					{!effectiveIsCollapsed && isAdmin && (
-						<ProjectSwitcher
-							projects={projects.data ?? []}
-							currentProjectId={project.data?.id}
-							onChange={handleProjectChange}
+						<ClinicSwitcher
+							clinics={clinics.data ?? []}
+							currentClinicId={clinic.data?.id}
+							onChange={handleClinicChange}
 							variant='sidebar'
 						/>
 					)}
@@ -156,7 +156,7 @@ export function Sidebar() {
 					isContextAdmin={isContextAdmin}
 					isViewer={isViewer}
 					isCloud={isCloud}
-					hasProject={project.data != null}
+					hasClinic={clinic.data != null}
 				/>
 			) : (
 				<nav className={styles.section} aria-label='Main'>

@@ -12,7 +12,7 @@ import {
 	readStoredUsagePeriodSelection,
 } from '@/feature/settings/components/usage-route-search';
 import { usageApi } from '@/lib/usage-api';
-import { getActiveProjectId } from '@/lib/active-project';
+import { getActiveClinicId } from '@/lib/active-clinic';
 
 interface UseUsagePeriodSettingsOptions {
 	canViewUsage: boolean;
@@ -27,16 +27,16 @@ interface UsagePeriodSettings {
 
 export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSearch }: UseUsagePeriodSettingsOptions) {
 	const queryClient = useQueryClient();
-	const projectId = getActiveProjectId();
-	const queryProjectId = projectId ?? '';
-	const queriesEnabled = canViewUsage && projectId !== null;
-	const legacyPeriodSelection = useMemo(() => readStoredUsagePeriodSelection(projectId), [projectId]);
-	const [actionError, setActionError] = useState<ProjectActionError>();
+	const clinicId = getActiveClinicId();
+	const queryClinicId = clinicId ?? '';
+	const queriesEnabled = canViewUsage && clinicId !== null;
+	const legacyPeriodSelection = useMemo(() => readStoredUsagePeriodSelection(clinicId), [clinicId]);
+	const [actionError, setActionError] = useState<ClinicActionError>();
 	const [migrationStatuses, setMigrationStatuses] = useState<Record<string, MigrationStatus>>({});
 	const selectionVersion = useRef(0);
-	const migrationStatus = migrationStatuses[queryProjectId];
+	const migrationStatus = migrationStatuses[queryClinicId];
 
-	const settingsOptions = usageApi.usage.getPeriodSettings.queryOptions({ projectId: queryProjectId });
+	const settingsOptions = usageApi.usage.getPeriodSettings.queryOptions({ clinicId: queryClinicId });
 	const settingsQuery = useQuery({
 		...settingsOptions,
 		enabled: queriesEnabled,
@@ -44,8 +44,8 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 
 	const updateSelection = useMutation({
 		...usageApi.usage.updatePeriodSelection.mutationOptions({
-			onMutate: async ({ projectId: mutationProjectId, selection: nextSelection }) => {
-				const queryKey = getPeriodSettingsQueryKey(mutationProjectId);
+			onMutate: async ({ clinicId: mutationClinicId, selection: nextSelection }) => {
+				const queryKey = getPeriodSettingsQueryKey(mutationClinicId);
 				await queryClient.cancelQueries({ queryKey });
 				const previousSettings = queryClient.getQueryData<UsagePeriodSettings>(queryKey);
 				queryClient.setQueryData<UsagePeriodSettings>(queryKey, (current) =>
@@ -53,37 +53,37 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 				);
 				return { previousSettings };
 			},
-			onError: (_error, { projectId: mutationProjectId }, context) => {
-				queryClient.setQueryData(getPeriodSettingsQueryKey(mutationProjectId), context?.previousSettings);
+			onError: (_error, { clinicId: mutationClinicId }, context) => {
+				queryClient.setQueryData(getPeriodSettingsQueryKey(mutationClinicId), context?.previousSettings);
 			},
-			onSettled: (_data, _error, { projectId: mutationProjectId }) => {
-				queryClient.invalidateQueries({ queryKey: getPeriodSettingsQueryKey(mutationProjectId) });
+			onSettled: (_data, _error, { clinicId: mutationClinicId }) => {
+				queryClient.invalidateQueries({ queryKey: getPeriodSettingsQueryKey(mutationClinicId) });
 			},
 		}),
-		scope: { id: `usage-period-selection-${queryProjectId}` },
+		scope: { id: `usage-period-selection-${queryClinicId}` },
 	});
 
 	const createSavedPeriodMutation = useMutation(
 		usageApi.usage.createSavedPeriod.mutationOptions({
-			onSuccess: (savedPeriod, { projectId: mutationProjectId }) => {
+			onSuccess: (savedPeriod, { clinicId: mutationClinicId }) => {
 				queryClient.setQueryData<UsagePeriodSettings>(
-					getPeriodSettingsQueryKey(mutationProjectId),
+					getPeriodSettingsQueryKey(mutationClinicId),
 					(current) => ({
 						selection: { mode: 'saved', savedPeriodId: savedPeriod.id },
 						savedPeriods: [...(current?.savedPeriods ?? []), savedPeriod],
 					}),
 				);
 			},
-			onSettled: (_data, _error, { projectId: mutationProjectId }) => {
-				queryClient.invalidateQueries({ queryKey: getPeriodSettingsQueryKey(mutationProjectId) });
+			onSettled: (_data, _error, { clinicId: mutationClinicId }) => {
+				queryClient.invalidateQueries({ queryKey: getPeriodSettingsQueryKey(mutationClinicId) });
 			},
 		}),
 	);
 
 	const updateSavedPeriodMutation = useMutation(
 		usageApi.usage.updateSavedPeriod.mutationOptions({
-			onMutate: async ({ projectId: mutationProjectId, savedPeriod }) => {
-				const queryKey = getPeriodSettingsQueryKey(mutationProjectId);
+			onMutate: async ({ clinicId: mutationClinicId, savedPeriod }) => {
+				const queryKey = getPeriodSettingsQueryKey(mutationClinicId);
 				await queryClient.cancelQueries({ queryKey });
 				const previousSettings = queryClient.getQueryData<UsagePeriodSettings>(queryKey);
 				queryClient.setQueryData<UsagePeriodSettings>(queryKey, (current) =>
@@ -98,19 +98,19 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 				);
 				return { previousSettings };
 			},
-			onError: (_error, { projectId: mutationProjectId }, context) => {
-				queryClient.setQueryData(getPeriodSettingsQueryKey(mutationProjectId), context?.previousSettings);
+			onError: (_error, { clinicId: mutationClinicId }, context) => {
+				queryClient.setQueryData(getPeriodSettingsQueryKey(mutationClinicId), context?.previousSettings);
 			},
-			onSettled: (_data, _error, { projectId: mutationProjectId }) => {
-				queryClient.invalidateQueries({ queryKey: getPeriodSettingsQueryKey(mutationProjectId) });
+			onSettled: (_data, _error, { clinicId: mutationClinicId }) => {
+				queryClient.invalidateQueries({ queryKey: getPeriodSettingsQueryKey(mutationClinicId) });
 			},
 		}),
 	);
 
 	const deleteSavedPeriodMutation = useMutation(
 		usageApi.usage.deleteSavedPeriod.mutationOptions({
-			onMutate: async ({ projectId: mutationProjectId, id }) => {
-				const queryKey = getPeriodSettingsQueryKey(mutationProjectId);
+			onMutate: async ({ clinicId: mutationClinicId, id }) => {
+				const queryKey = getPeriodSettingsQueryKey(mutationClinicId);
 				await queryClient.cancelQueries({ queryKey });
 				const previousSettings = queryClient.getQueryData<UsagePeriodSettings>(queryKey);
 				queryClient.setQueryData<UsagePeriodSettings>(queryKey, (current) => {
@@ -128,11 +128,11 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 				});
 				return { previousSettings };
 			},
-			onError: (_error, { projectId: mutationProjectId }, context) => {
-				queryClient.setQueryData(getPeriodSettingsQueryKey(mutationProjectId), context?.previousSettings);
+			onError: (_error, { clinicId: mutationClinicId }, context) => {
+				queryClient.setQueryData(getPeriodSettingsQueryKey(mutationClinicId), context?.previousSettings);
 			},
-			onSettled: (_data, _error, { projectId: mutationProjectId }) => {
-				queryClient.invalidateQueries({ queryKey: getPeriodSettingsQueryKey(mutationProjectId) });
+			onSettled: (_data, _error, { clinicId: mutationClinicId }) => {
+				queryClient.invalidateQueries({ queryKey: getPeriodSettingsQueryKey(mutationClinicId) });
 			},
 		}),
 	);
@@ -147,7 +147,7 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 	);
 
 	const selectPeriod = async (nextSelection: UsagePeriodSelection) => {
-		const mutationProjectId = queryProjectId;
+		const mutationClinicId = queryClinicId;
 		const previousSelection = selection;
 		const version = ++selectionVersion.current;
 		const replacesLegacySelection =
@@ -156,23 +156,23 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 			legacyPeriodSelection !== undefined;
 		setActionError(undefined);
 		if (replacesLegacySelection) {
-			setMigrationStatuses((current) => ({ ...current, [mutationProjectId]: 'pending' }));
+			setMigrationStatuses((current) => ({ ...current, [mutationClinicId]: 'pending' }));
 		}
 		onUpdateSearch(toPeriodSearch(nextSelection));
 		try {
-			await updateSelection.mutateAsync({ projectId: mutationProjectId, selection: nextSelection });
+			await updateSelection.mutateAsync({ clinicId: mutationClinicId, selection: nextSelection });
 			if (replacesLegacySelection) {
-				clearStoredUsagePeriodSelection(mutationProjectId);
-				setMigrationStatuses((current) => ({ ...current, [mutationProjectId]: 'succeeded' }));
+				clearStoredUsagePeriodSelection(mutationClinicId);
+				setMigrationStatuses((current) => ({ ...current, [mutationClinicId]: 'succeeded' }));
 			}
 		} catch (cause) {
 			if (replacesLegacySelection) {
-				setMigrationStatuses((current) => ({ ...current, [mutationProjectId]: 'failed' }));
+				setMigrationStatuses((current) => ({ ...current, [mutationClinicId]: 'failed' }));
 			}
-			if (version === selectionVersion.current && isActiveProject(mutationProjectId)) {
+			if (version === selectionVersion.current && isActiveClinic(mutationClinicId)) {
 				onUpdateSearch(toPeriodSearch(previousSelection));
 				setActionError({
-					projectId: mutationProjectId,
+					clinicId: mutationClinicId,
 					message: toErrorMessage(cause, 'Unable to save the selected period.'),
 				});
 			}
@@ -181,13 +181,13 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 	};
 
 	const createSavedPeriod = async (input: SavedUsagePeriodInput) => {
-		const mutationProjectId = queryProjectId;
+		const mutationClinicId = queryClinicId;
 		setActionError(undefined);
 		const savedPeriod = await createSavedPeriodMutation.mutateAsync({
-			projectId: mutationProjectId,
+			clinicId: mutationClinicId,
 			savedPeriod: input,
 		});
-		if (isActiveProject(mutationProjectId)) {
+		if (isActiveClinic(mutationClinicId)) {
 			onUpdateSearch(toPeriodSearch({ mode: 'saved', savedPeriodId: savedPeriod.id }));
 		}
 		if (
@@ -195,22 +195,22 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 			settingsQuery.data?.selection === null &&
 			legacyPeriodSelection !== undefined
 		) {
-			clearStoredUsagePeriodSelection(mutationProjectId);
-			setMigrationStatuses((current) => ({ ...current, [mutationProjectId]: 'succeeded' }));
+			clearStoredUsagePeriodSelection(mutationClinicId);
+			setMigrationStatuses((current) => ({ ...current, [mutationClinicId]: 'succeeded' }));
 		}
 	};
 
 	const updateSavedPeriod = async (savedPeriod: SavedUsagePeriod) => {
 		setActionError(undefined);
-		await updateSavedPeriodMutation.mutateAsync({ projectId: queryProjectId, savedPeriod });
+		await updateSavedPeriodMutation.mutateAsync({ clinicId: queryClinicId, savedPeriod });
 	};
 
 	const deleteSavedPeriod = async (id: string) => {
-		const mutationProjectId = queryProjectId;
+		const mutationClinicId = queryClinicId;
 		setActionError(undefined);
 		const isActive = selection.mode === 'saved' && selection.savedPeriodId === id;
-		await deleteSavedPeriodMutation.mutateAsync({ projectId: mutationProjectId, id });
-		if (isActive && isActiveProject(mutationProjectId)) {
+		await deleteSavedPeriodMutation.mutateAsync({ clinicId: mutationClinicId, id });
+		if (isActive && isActiveClinic(mutationClinicId)) {
 			onUpdateSearch(toPeriodSearch(DEFAULT_USAGE_PERIOD_SELECTION));
 		}
 	};
@@ -225,25 +225,25 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 			return;
 		}
 
-		const migrationProjectId = queryProjectId;
-		setMigrationStatuses((current) => ({ ...current, [migrationProjectId]: 'pending' }));
+		const migrationClinicId = queryClinicId;
+		setMigrationStatuses((current) => ({ ...current, [migrationClinicId]: 'pending' }));
 		try {
 			const settings = await queryClient.fetchQuery(
-				usageApi.usage.getPeriodSettings.queryOptions({ projectId: migrationProjectId }),
+				usageApi.usage.getPeriodSettings.queryOptions({ clinicId: migrationClinicId }),
 			);
 			if (settings.selection === null) {
 				await updateSelection.mutateAsync({
-					projectId: migrationProjectId,
+					clinicId: migrationClinicId,
 					selection: legacyPeriodSelection,
 				});
 			}
-			clearStoredUsagePeriodSelection(migrationProjectId);
-			setMigrationStatuses((current) => ({ ...current, [migrationProjectId]: 'succeeded' }));
+			clearStoredUsagePeriodSelection(migrationClinicId);
+			setMigrationStatuses((current) => ({ ...current, [migrationClinicId]: 'succeeded' }));
 		} catch (cause) {
-			setMigrationStatuses((current) => ({ ...current, [migrationProjectId]: 'failed' }));
-			if (isActiveProject(migrationProjectId)) {
+			setMigrationStatuses((current) => ({ ...current, [migrationClinicId]: 'failed' }));
+			if (isActiveClinic(migrationClinicId)) {
 				setActionError({
-					projectId: migrationProjectId,
+					clinicId: migrationClinicId,
 					message: toErrorMessage(cause, 'Unable to migrate the saved period.'),
 				});
 			}
@@ -256,7 +256,7 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 		}
 		if (settingsQuery.data.selection !== null) {
 			if (migrationStatus === undefined) {
-				clearStoredUsagePeriodSelection(queryProjectId);
+				clearStoredUsagePeriodSelection(queryClinicId);
 			}
 			return;
 		}
@@ -264,24 +264,24 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 			return;
 		}
 
-		const migrationProjectId = queryProjectId;
-		setMigrationStatuses((current) => ({ ...current, [migrationProjectId]: 'pending' }));
+		const migrationClinicId = queryClinicId;
+		setMigrationStatuses((current) => ({ ...current, [migrationClinicId]: 'pending' }));
 		void updateSelection
-			.mutateAsync({ projectId: migrationProjectId, selection: legacyPeriodSelection })
+			.mutateAsync({ clinicId: migrationClinicId, selection: legacyPeriodSelection })
 			.then(() => {
-				clearStoredUsagePeriodSelection(migrationProjectId);
-				setMigrationStatuses((current) => ({ ...current, [migrationProjectId]: 'succeeded' }));
+				clearStoredUsagePeriodSelection(migrationClinicId);
+				setMigrationStatuses((current) => ({ ...current, [migrationClinicId]: 'succeeded' }));
 			})
 			.catch((cause) => {
-				setMigrationStatuses((current) => ({ ...current, [migrationProjectId]: 'failed' }));
-				if (isActiveProject(migrationProjectId)) {
+				setMigrationStatuses((current) => ({ ...current, [migrationClinicId]: 'failed' }));
+				if (isActiveClinic(migrationClinicId)) {
 					setActionError({
-						projectId: migrationProjectId,
+						clinicId: migrationClinicId,
 						message: toErrorMessage(cause, 'Unable to migrate the saved period.'),
 					});
 				}
 			});
-	}, [legacyPeriodSelection, migrationStatus, queriesEnabled, queryProjectId, settingsQuery.data, updateSelection]);
+	}, [legacyPeriodSelection, migrationStatus, queriesEnabled, queryClinicId, settingsQuery.data, updateSelection]);
 
 	useEffect(() => {
 		const savedPeriodId = usageSearch.savedPeriodId;
@@ -290,7 +290,7 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 			deleteSavedPeriodMutation.isPending ||
 			!savedPeriodId ||
 			settingsQuery.data.savedPeriods.some((savedPeriod) => savedPeriod.id === savedPeriodId) ||
-			!isActiveProject(queryProjectId)
+			!isActiveClinic(queryClinicId)
 		) {
 			return;
 		}
@@ -298,14 +298,14 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 	}, [
 		deleteSavedPeriodMutation.isPending,
 		onUpdateSearch,
-		queryProjectId,
+		queryClinicId,
 		settingsQuery.data,
 		settingsQuery.isSuccess,
 		usageSearch.savedPeriodId,
 	]);
 
 	const loadError = settingsQuery.error;
-	const currentActionError = actionError?.projectId === queryProjectId ? actionError.message : undefined;
+	const currentActionError = actionError?.clinicId === queryClinicId ? actionError.message : undefined;
 	const migrationError = migrationStatus === 'failed' ? 'Unable to migrate the saved period.' : undefined;
 	const error =
 		currentActionError ??
@@ -323,7 +323,7 @@ export function useUsagePeriodSettings({ canViewUsage, usageSearch, onUpdateSear
 		selection,
 		period: resolveUsagePeriod(selection, savedPeriods),
 		granularity: resolveUsagePeriodGranularity(selection, savedPeriods),
-		isLoading: canViewUsage && (projectId === null || (!isReady && !loadError)),
+		isLoading: canViewUsage && (clinicId === null || (!isReady && !loadError)),
 		isReady,
 		error,
 		retry: loadError || migrationStatus === 'failed' ? () => void retry() : undefined,
@@ -367,13 +367,13 @@ function toErrorMessage(cause: unknown, fallback: string): string {
 	return cause instanceof Error && cause.message ? cause.message : fallback;
 }
 
-function isActiveProject(projectId: string): boolean {
-	return getActiveProjectId() === projectId;
+function isActiveClinic(clinicId: string): boolean {
+	return getActiveClinicId() === clinicId;
 }
 
-function getPeriodSettingsQueryKey(projectId: string) {
-	return usageApi.usage.getPeriodSettings.queryOptions({ projectId }).queryKey;
+function getPeriodSettingsQueryKey(clinicId: string) {
+	return usageApi.usage.getPeriodSettings.queryOptions({ clinicId }).queryKey;
 }
 
 type MigrationStatus = 'pending' | 'failed' | 'succeeded';
-type ProjectActionError = { projectId: string; message: string };
+type ClinicActionError = { clinicId: string; message: string };

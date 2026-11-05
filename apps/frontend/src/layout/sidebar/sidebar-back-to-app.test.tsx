@@ -59,12 +59,12 @@ describe('SidebarBackToApp', () => {
 		expect(router.navigate).not.toHaveBeenCalled();
 	});
 
-	it('forgets the remembered page once the project changes', () => {
+	it('forgets the remembered page once the clinic changes', () => {
 		const { rerender } = renderAt('/chats/chat-1', '/chats/chat-1');
 		visit('/settings/general', '/settings/general', rerender);
 
 		resetLastAppLocation();
-		visit('/settings/project', '/settings/project', rerender);
+		visit('/settings/clinic', '/settings/clinic', rerender);
 
 		expect(screen.getByRole('link', { name: 'Back to app' }).getAttribute('href')).toBe('/');
 	});

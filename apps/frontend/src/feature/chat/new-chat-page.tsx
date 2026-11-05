@@ -1,7 +1,7 @@
 import { getRouteApi, Link, Navigate } from '@tanstack/react-router';
 import { ArrowRight } from 'lucide-react';
 import { useEffect } from 'react';
-import { SYSTEM_EXAMPLE_PROJECT_ID } from '@loopwise/shared';
+import { SYSTEM_EXAMPLE_CLINIC_ID } from '@loopwise/shared';
 import styles from './new-chat-page.module.css';
 import type { UIMessage } from '@loopwise/api/agent/types/chat';
 import { ChatInput } from '@/feature/chat/components/chat-input';
@@ -9,18 +9,18 @@ import { ChatMessages } from '@/feature/chat/components/chat-messages/chat-messa
 import { SavedPromptSuggestions } from '@/feature/chat/components/chat-saved-prompt-suggestions';
 import { TodayPage } from '@/feature/today/today-page';
 import { MobileHeader } from '@/layout/mobile-header';
-import { ProjectSwitcher } from '@/components/project-selector';
+import { ClinicSwitcher } from '@/components/clinic-selector';
 import { ViewerHome } from '@/feature/chat/components/viewer-home';
 import { useAgentContext, useAgentMessagesSelector } from '@/contexts/agent.provider';
 import { useIsDarkMode } from '@/contexts/theme.provider';
-import { useMultiProject } from '@/hooks/use-multi-project';
+import { useMultiClinic } from '@/hooks/use-multi-clinic';
 import { useIsCloud } from '@/hooks/use-loopwise-mode';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useStaffRole } from '@/hooks/use-staff-role';
-import { useProjectSwitch } from '@/hooks/use-project-switch';
+import { useClinicSwitch } from '@/hooks/use-clinic-switch';
 import { useSession } from '@/lib/auth-client';
 import { capitalize, cn } from '@/lib/utils';
-import { useCurrentProject, useProjects } from '@/hooks/use-current-project';
+import { useCurrentClinic, useClinics } from '@/hooks/use-current-clinic';
 
 const Route = getRouteApi('/_protected/_chat-layout/');
 
@@ -52,13 +52,13 @@ function HomePage() {
 		setAdminMode(adminSearch === true);
 	}, [canChatWithLoopwiseData, adminSearch, setAdminMode]);
 
-	const project = useCurrentProject();
-	const projects = useProjects();
-	const switchProject = useProjectSwitch(project.data?.id);
-	const multiProjectMode = useMultiProject();
+	const clinic = useCurrentClinic();
+	const clinics = useClinics();
+	const switchClinic = useClinicSwitch(clinic.data?.id);
+	const multiClinicMode = useMultiClinic();
 	const isCloud = useIsCloud();
-	const showProjectSetupCue = project.isSuccess && project.data === null;
-	const showExampleProject = isCloud && (showProjectSetupCue || exampleSearch === true);
+	const showClinicSetupCue = clinic.isSuccess && clinic.data === null;
+	const showExampleClinic = isCloud && (showClinicSetupCue || exampleSearch === true);
 	const stateTitle = `${username ? capitalize(username) : ''}, how can I help with your patients today?`;
 	const isDark = useIsDarkMode();
 	const logoSrc = isDark ? '/darkLogo.svg' : '/lightLogo.svg';
@@ -66,17 +66,17 @@ function HomePage() {
 
 	return (
 		<div className={styles.homePageDiv}>
-			<MobileHeader showExampleProjectInfo={showExampleProject} />
+			<MobileHeader showExampleClinicInfo={showExampleClinic} />
 			{isEmptyState &&
-				!showExampleProject &&
-				multiProjectMode === 'switch' &&
-				project.data &&
-				(projects.data?.length ?? 0) > 1 && (
+				!showExampleClinic &&
+				multiClinicMode === 'switch' &&
+				clinic.data &&
+				(clinics.data?.length ?? 0) > 1 && (
 					<div className={styles.homePageDiv2}>
-						<ProjectSwitcher
-							projects={projects.data ?? []}
-							currentProjectId={project.data.id}
-							onChange={switchProject}
+						<ClinicSwitcher
+							clinics={clinics.data ?? []}
+							currentClinicId={clinic.data.id}
+							onChange={switchClinic}
 							variant='inline'
 						/>
 					</div>
@@ -86,7 +86,7 @@ function HomePage() {
 					<ChatMessages />
 					<ChatInput />
 				</>
-			) : showExampleProject ? (
+			) : showExampleClinic ? (
 				<div className={styles.homePageDiv3}>
 					<div className={styles.homePageDiv6}>
 						<h1 className={styles.homePageH1}>{stateTitle}</h1>
@@ -94,17 +94,17 @@ function HomePage() {
 					<div className={styles.homePageDiv7}>
 						<img src={logoSrc} alt='' aria-hidden className={styles.homePageImg} />
 						<ChatInput />
-						<SavedPromptSuggestions projectId={SYSTEM_EXAMPLE_PROJECT_ID} />
+						<SavedPromptSuggestions clinicId={SYSTEM_EXAMPLE_CLINIC_ID} />
 					</div>
 				</div>
-			) : showProjectSetupCue ? (
+			) : showClinicSetupCue ? (
 				<div className={styles.homePageDiv3}>
 					<div className={styles.homePageDiv8}>
 						<HomeLinkCard
-							to='/settings/project'
-							label='Project required'
-							title='Create your first project'
-							subtitle='Use New project in the project switcher to start chatting'
+							to='/settings/clinic'
+							label='Clinic required'
+							title='Create your first clinic'
+							subtitle='Use New clinic in the clinic switcher to start chatting'
 							logoSrc={cardLogoSrc}
 						/>
 					</div>
@@ -123,7 +123,7 @@ function HomeLinkCard({
 	subtitle,
 	logoSrc,
 }: {
-	to: '/settings/project';
+	to: '/settings/clinic';
 	label: string;
 	title: string;
 	subtitle: string;

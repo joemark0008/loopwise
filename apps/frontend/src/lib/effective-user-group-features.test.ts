@@ -33,7 +33,7 @@ describe('getRenderableUserGroupAccess', () => {
 		});
 	});
 
-	it('uses loading-safe access when no project result exists', () => {
+	it('uses loading-safe access when no clinic result exists', () => {
 		expect(getRenderableUserGroupAccess(undefined, true)).toEqual({
 			features: {
 				storyCreation: false,
@@ -47,7 +47,7 @@ describe('getRenderableUserGroupAccess', () => {
 		});
 	});
 
-	it('enables classic story creation for the example project', () => {
+	it('enables classic story creation for the example clinic', () => {
 		expect(getRenderableUserGroupAccess(undefined, false, true)).toEqual({
 			features: {
 				storyCreation: true,

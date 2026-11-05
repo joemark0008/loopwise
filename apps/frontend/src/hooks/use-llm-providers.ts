@@ -12,7 +12,7 @@ import {
 import type { CustomModelMetadata, ModelSettingsMap } from '@loopwise/api/agent/types/llm';
 import type { LlmProvider, LlmProviderKind } from '@loopwise/shared/types';
 import type { InheritedKeySource } from '@/feature/settings/components/llm-provider-form';
-import { projectApi } from '@/lib/project-api';
+import { clinicApi } from '@/lib/clinic-api';
 
 export interface EditingState {
 	provider: LlmProvider;
@@ -31,41 +31,41 @@ export function useLlmProviders() {
 	const queryClient = useQueryClient();
 
 	// Queries
-	const llmConfigs = useQuery(projectApi.project.getLlmConfigs.queryOptions());
-	const knownModels = useQuery(projectApi.project.getKnownModels.queryOptions());
+	const llmConfigs = useQuery(clinicApi.clinic.getLlmConfigs.queryOptions());
+	const knownModels = useQuery(clinicApi.clinic.getKnownModels.queryOptions());
 
 	// Mutations
-	const upsertLlmConfig = useMutation(projectApi.project.upsertLlmConfig.mutationOptions());
-	const deleteLlmConfig = useMutation(projectApi.project.deleteLlmConfig.mutationOptions());
+	const upsertLlmConfig = useMutation(clinicApi.clinic.upsertLlmConfig.mutationOptions());
+	const deleteLlmConfig = useMutation(clinicApi.clinic.deleteLlmConfig.mutationOptions());
 
 	// Local state
 	const [editingState, setEditingState] = useState<EditingState | null>(null);
 
 	// Derived data
-	const projectConfigs = llmConfigs.data?.projectConfigs ?? [];
+	const clinicConfigs = llmConfigs.data?.clinicConfigs ?? [];
 	const configProviders = llmConfigs.data?.configProviders ?? [];
 	const envProviders = llmConfigs.data?.envProviders ?? [];
 	const envBaseUrls = llmConfigs.data?.envBaseUrls ?? {};
-	const projectConfiguredProviders = projectConfigs.map((c) => c.provider);
+	const clinicConfiguredProviders = clinicConfigs.map((c) => c.provider);
 
 	// Kinds that accept several instances stay on offer: each new one is added under its own name.
 	const availableProvidersToAdd: LlmProviderKind[] = LLM_PROVIDERS.filter(
 		(p) =>
 			!isManagedProvider(p) &&
 			(p === NAMED_PROVIDER_KIND ||
-				(!projectConfiguredProviders.includes(p) &&
+				(!clinicConfiguredProviders.includes(p) &&
 					!envProviders.includes(p) &&
 					!configProviders.some((c) => c.provider === p))),
 	);
 
 	// Names already in use, so that adding an endpoint cannot silently overwrite one of them.
-	const takenProviderNames = [...projectConfiguredProviders, ...configProviders.map((c) => c.provider)]
+	const takenProviderNames = [...clinicConfiguredProviders, ...configProviders.map((c) => c.provider)]
 		.map(providerName)
 		.filter((name): name is string => name !== null);
 
-	const unconfiguredEnvProviders = envProviders.filter((p) => !projectConfiguredProviders.includes(p));
+	const unconfiguredEnvProviders = envProviders.filter((p) => !clinicConfiguredProviders.includes(p));
 
-	const unconfiguredConfigProviders = configProviders.filter((c) => !projectConfiguredProviders.includes(c.provider));
+	const unconfiguredConfigProviders = configProviders.filter((c) => !clinicConfiguredProviders.includes(c.provider));
 
 	const currentModels =
 		editingState?.provider && knownModels.data ? knownModels.data[providerKind(editingState.provider)] : [];
@@ -83,15 +83,15 @@ export function useLlmProviders() {
 	// Handlers
 	const invalidateQueries = async () => {
 		await Promise.all([
-			queryClient.invalidateQueries({ queryKey: projectApi.project.getLlmConfigs.queryOptions().queryKey }),
+			queryClient.invalidateQueries({ queryKey: clinicApi.clinic.getLlmConfigs.queryOptions().queryKey }),
 			queryClient.invalidateQueries({
-				queryKey: projectApi.project.listAvailableTranscribeModels.queryOptions().queryKey,
+				queryKey: clinicApi.clinic.listAvailableTranscribeModels.queryOptions().queryKey,
 			}),
 			queryClient.invalidateQueries({
-				queryKey: projectApi.project.getKnownTranscribeModels.queryOptions().queryKey,
+				queryKey: clinicApi.clinic.getKnownTranscribeModels.queryOptions().queryKey,
 			}),
-			queryClient.invalidateQueries({ queryKey: projectApi.project.getDefaultModels.queryOptions().queryKey }),
-			queryClient.invalidateQueries({ queryKey: projectApi.project.getDefaultChatModel.queryOptions().queryKey }),
+			queryClient.invalidateQueries({ queryKey: clinicApi.clinic.getDefaultModels.queryOptions().queryKey }),
+			queryClient.invalidateQueries({ queryKey: clinicApi.clinic.getDefaultChatModel.queryOptions().queryKey }),
 		]);
 	};
 
@@ -133,7 +133,7 @@ export function useLlmProviders() {
 		upsertLlmConfig.reset();
 	};
 
-	const handleEditConfig = (config: (typeof projectConfigs)[0]) => {
+	const handleEditConfig = (config: (typeof clinicConfigs)[0]) => {
 		setEditingState({
 			provider: config.provider,
 			isEditing: true,
@@ -195,9 +195,9 @@ export function useLlmProviders() {
 	};
 
 	const openProviderForm = (provider: LlmProvider) => {
-		const projectConfig = projectConfigs.find((c) => c.provider === provider);
-		if (projectConfig) {
-			handleEditConfig(projectConfig);
+		const clinicConfig = clinicConfigs.find((c) => c.provider === provider);
+		if (clinicConfig) {
+			handleEditConfig(clinicConfig);
 			return;
 		}
 		const configProvider = configProviders.find((c) => c.provider === provider);
@@ -221,18 +221,18 @@ export function useLlmProviders() {
 	};
 
 	const findCustomModel = (provider: LlmProvider, modelId: string) => {
-		const fromProjectConfig = projectConfigs
+		const fromClinicConfig = clinicConfigs
 			.find((c) => c.provider === provider)
 			?.customModels?.find((m) => m.id === modelId);
-		if (fromProjectConfig) {
-			return fromProjectConfig;
+		if (fromClinicConfig) {
+			return fromClinicConfig;
 		}
 		return configProviders.find((c) => c.provider === provider)?.customModels.find((m) => m.id === modelId);
 	};
 
 	return {
 		// Data
-		projectConfigs,
+		clinicConfigs,
 		configProviders,
 		envProviders,
 		envBaseUrls,
@@ -264,7 +264,7 @@ export function useLlmProviders() {
 	};
 }
 
-/** A provider the admin named is saved under that name, so the project can hold several of its kind. */
+/** A provider the admin named is saved under that name, so the clinic can hold several of its kind. */
 function resolveSubmittedProvider(provider: LlmProvider, name?: string): LlmProvider {
 	const instanceName = name ? toProviderName(name) : null;
 	return instanceName ? toNamedProvider(instanceName) : provider;

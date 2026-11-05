@@ -14,7 +14,7 @@ interface MapAppViewProps {
 	data: Record<string, unknown>[];
 	columns: string[];
 	loopwiseUrl?: string;
-	projectId?: string;
+	clinicId?: string;
 	customBoundaries?: CustomBoundarySet[];
 }
 
@@ -22,7 +22,7 @@ export const MapAppView = memo(function MapAppView({
 	config,
 	data,
 	loopwiseUrl,
-	projectId,
+	clinicId,
 	customBoundaries,
 }: MapAppViewProps) {
 	const resolvedConfig = useMemo(() => resolveMapConfig(data, config), [data, config]);
@@ -49,7 +49,7 @@ export const MapAppView = memo(function MapAppView({
 								rows={data}
 								config={resolvedConfig}
 								customBoundaries={customBoundaries}
-								boundaryProjectId={projectId}
+								boundaryClinicId={clinicId}
 							/>
 						</Suspense>
 					)}

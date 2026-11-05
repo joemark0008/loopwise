@@ -1,20 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useActiveProjectId } from '@/lib/active-project';
+import { useActiveClinicId } from '@/lib/active-clinic';
 import { chatApi } from '@/lib/chat-api';
-import { useCurrentProject } from '@/hooks/use-current-project';
+import { useCurrentClinic } from '@/hooks/use-current-clinic';
 
 export function useShareAudience() {
-	const activeProjectId = useActiveProjectId();
-	const project = useCurrentProject();
-	const projectId = project.data?.id;
-	const hasProject = projectId != null && (!activeProjectId || activeProjectId === projectId);
-	// Until user groups (Phase 6) every member may share with the whole project, as apps/api's share audience.
-	const canShareToProject = hasProject;
+	const activeClinicId = useActiveClinicId();
+	const clinic = useCurrentClinic();
+	const clinicId = clinic.data?.id;
+	const hasClinic = clinicId != null && (!activeClinicId || activeClinicId === clinicId);
+	// Until user groups (Phase 6) every member may share with the whole clinic, as apps/api's share audience.
+	const canShareToClinic = hasClinic;
 	return {
-		canShareToProject,
-		emptyMessage: canShareToProject ? undefined : 'No other members in your groups',
+		canShareToClinic,
+		emptyMessage: canShareToClinic ? undefined : 'No other members in your groups',
 	};
 }
 
@@ -22,20 +22,20 @@ export function useMemberPicker(currentUserId: string | undefined, initialIds: s
 	const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(() => new Set(initialIds));
 	const [search, setSearch] = useState('');
 
-	const activeProjectId = useActiveProjectId();
-	const project = useCurrentProject();
-	const projectId = project.data?.id;
-	const hasProject = projectId != null && (!activeProjectId || activeProjectId === projectId);
+	const activeClinicId = useActiveClinicId();
+	const clinic = useCurrentClinic();
+	const clinicId = clinic.data?.id;
+	const hasClinic = clinicId != null && (!activeClinicId || activeClinicId === clinicId);
 	const membersQuery = useQuery({
 		...chatApi.sharedChat.shareMembers.queryOptions({ chatId }),
-		enabled: hasProject,
+		enabled: hasClinic,
 	});
 
 	const otherMembers = useMemo(() => {
-		return hasProject && !membersQuery.isFetching
+		return hasClinic && !membersQuery.isFetching
 			? (membersQuery.data ?? []).filter((m) => m.id !== currentUserId)
 			: [];
-	}, [hasProject, membersQuery.data, membersQuery.isFetching, currentUserId]);
+	}, [hasClinic, membersQuery.data, membersQuery.isFetching, currentUserId]);
 
 	const filteredMembers = useMemo(() => {
 		if (!search.trim()) {

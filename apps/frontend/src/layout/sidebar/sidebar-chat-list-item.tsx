@@ -136,7 +136,7 @@ export function ChatListItem({ chat }: Props) {
 				) : (
 					<>
 						{activity.unread && <span className={styles.chatListItemSpan} />}
-						<div className={styles.chatListItemDiv}>{chat.isOnboarding ? 'Project setup' : chat.title}</div>
+						<div className={styles.chatListItemDiv}>{chat.isOnboarding ? 'Clinic setup' : chat.title}</div>
 						{activity.running ? (
 							<Spinner className={styles.chatListItemSpinner} />
 						) : (
