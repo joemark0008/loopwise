@@ -27,8 +27,8 @@ first: it holds the problem, the data model (§7), the case state machine (§8),
 - **Business logic lives in services.**
 - **Prisma is only used in repositories.** Services call repositories, never `PrismaService` directly. Raw SQL goes to
   Prisma TypedSQL (`prisma/sql/*.sql`) or `$queryRaw` inside a repository.
-- Access control through decorators on a global `AuthGuard`: `@Public()`, `@CurrentUser()`, `@ProjectAccess()`,
-  `@OrgMember()`, `@OrgAdmin()`, `@ProjectAdmin()`.
+- Access control through decorators on a global `AuthGuard`: `@Public()`, `@CurrentUser()`, `@ClinicAccess()`,
+  `@OrgMember()`, `@OrgAdmin()`, `@ClinicAdmin()`.
 - N+1: request-scoped DataLoaders, one `<feature>.loader.ts` per module.
 - Background work (SLA timers, escalations, reminders): pg-boss jobs registered with `@Job(name)`.
 

@@ -135,7 +135,10 @@ The patient never learns bad news from a machine.
 
 - Not one deployment per doctor or per hospital: that recreates the fragmentation the challenge is about and is an
   operations burden.
-- Each facility is an **organization (tenant)**; each doctor is a **user**.
+- Each facility is an **organization (tenant)**. For a clinic group the organization is the company that runs the
+  branches; each branch is a **clinic** inside it, holding the staff's chats, LLM settings, saved prompts, members and
+  user groups. Clinical data stays scoped by the organization (`orgId`), not by clinic. Each doctor is a **user**.
+  (Clinics were called projects before; the `project*` tables and columns keep their names.)
 - Facilities keep their LIS/RIS/EMR. Facilities with no system use the hub's web screens.
 - Deployment options from one codebase:
     - **Cloud SaaS** for private networks and HMOs.
@@ -600,7 +603,7 @@ repeat the SQL.
 - Agent core, LLM providers (OpenAI, Anthropic, Gemini, Mistral, OpenRouter, OpenAI-compatible), streaming, chat UI.
 - `clarification`, `suggest-follow-ups`, `load-skill`, skills (clinical guidelines), memory.
 - Attachments (upload previous results as PDF), voice transcription (dictation).
-- Auth (better-auth), organizations, users, projects → tenants/facilities.
+- Auth (better-auth), organizations, users, clinics (formerly projects) → tenants/facilities and their branches.
 - pg-boss jobs (SLA timers, escalations, scheduled reminders).
 - Charts (dashboard, de-identified only).
 

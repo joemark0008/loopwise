@@ -22,7 +22,7 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
 
 - Patient registration (§7, §9.2, branch `patient-registration`), the first clinical module and the pattern for the
   others: `apps/api/src/clinical/patients/` (module, resolver, service, repository, loader, `dto/`, `models/`).
-  `myFacilities` (the user's organizations that own no project), `searchPatients` / `patient(id)` as the user (RLS,
+  `myFacilities` (the user's organizations that own no clinic), `searchPatients` / `patient(id)` as the user (RLS,
   views audited), `checkPatientDuplicates`, `registerPatient` (system work: patient, identifiers at the facility,
   `encounter` care relationship, `patient.register` audit row; consent required) and `linkExistingPatient` (only a
   matched patient; `patient.link` audit row). Duplicates: MRN at the facility or PhilHealth anywhere blocks; name +
@@ -100,7 +100,7 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
   linked breadcrumbs, skip link and route focus. Today at `/`, Wise chats at `/chats`, planned pages for results,
   cases, worklist, referrals, orders and dashboard (and the patient's results, cases and messages), all in the page
   registry. `/patients/:id/*` is one layout: sticky patient banner with allergies (`patientAllergies` query), Wise
-  docked (overlay below 80rem, sheet on a phone). Agent, project and storage settings are admin-only. `e2e/a11y.spec.ts` (axe, WCAG 2.2
+  docked (overlay below 80rem, sheet on a phone). Agent, clinic and storage settings are admin-only. `e2e/a11y.spec.ts` (axe, WCAG 2.2
   AA) and `e2e/ux-screens.spec.ts` (screenshots, `E2E_UX_DIR`).
 
 - UX redesign phase 2: patients list as a table; registration in fieldsets with required markers, linked errors and
@@ -222,9 +222,21 @@ Where the Loopwise work stands, so any session can pick it up. Branch: `main` (t
   metric, the card's chart-type menu, seed BMI vitals for the panel (`seedPanelVitals`). Tests:
   `analytics-chart.test.tsx` (shared, per type), `analytics-result.test.tsx` (frontend, per type),
   `analytics-chart.spec.ts`, `e2e/analytics.spec.ts` (scatter and funnel, real LLM).
+- Project renamed to **Clinic** (branch `worktree-agent-ae2e43b670342579e`): organization = the clinic group (tenant,
+  still the scope of clinical data), clinic = one branch inside it (chats, LLM configs, saved prompts, members, user
+  groups, settings). Renamed across Prisma models (`Clinic`, `ClinicLlmConfig`, `ClinicMember`, `ClinicSavedPrompt`,
+  `clinicId`), GraphQL (`clinic`, `clinics`, `clinicId` args), decorators (`@ClinicAccess()`, `@ClinicAdmin()`,
+  `@ClinicNonViewer()`), `apps/api/src/clinics/`, the frontend (`/settings/clinic/...`, `clinic-selector`,
+  `clinicApi`), the `x-loopwise-clinic-id` header, the `loopwise.active-clinic-id` local storage key and the env vars
+  `LOOPWISE_CLINICS_DIR` / `LOOPWISE_DEFAULT_CLINIC_PATH` (were `LOOPWISE_PROJECTS_DIR` / `..._DEFAULT_PROJECT_PATH`).
+  No migration: tables, columns, indexes and FKs keep their `project*` names through `@@map` / `@map`. Stored values
+  kept: `shared_chat.visibility = 'project'` (the API says `clinic`, mapped in `SharedChatRepository`), the
+  `projectSharing` key in `user_group.feature_grants` (read as `clinicSharing`), `projectPreferences` in
+  `user_preference.preferences`, storage keys under `projects/<clinicId>/`, the default folder `./projects`, and the
+  example clinic id `system-example-project`. An existing database keeps its seeded "Test Project" name.
 
 Flaky tests: `test/usage.e2e-spec.ts` › "rejects a range above the chart bucket limit" (inherited, now passes
-most runs); `project-identifier.test.tsx` and the connector's "reports halted (503) on /health" failed once each under
+most runs); `clinic-identifier.test.tsx` and the connector's "reports halted (503) on /health" failed once each under
 full-suite load and passed on rerun; real-LLM Playwright specs (`navigation`, `patient-chart` encounter wording) can
 flake on model wording.
 
