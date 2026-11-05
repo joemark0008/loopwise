@@ -37,6 +37,8 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
   (`CHROME_PATH`).
 - **Report layout** (§7.2, 5 Nov 2026): the `report` tool takes the stories' `<grid>` and `<tab>` layout and a
   `<kpi>` block (`apps/shared/src/report-blocks.ts`, `report-kpi.ts`), in the side panel and the PDF.
+- **Reports library** (§7.2, 5 Nov 2026): `/reports` lists your reports across chats (`myReports`) and opens one
+  in its chat's side panel; `open_page` key `reports.list`.
 - **UX:** clinical design system ([design-system.md](design-system.md)), role navigation, Today at `/`, Wise chats at
   `/chats`, Wise dock on list pages, a11y tests (`e2e/a11y.spec.ts`).
 

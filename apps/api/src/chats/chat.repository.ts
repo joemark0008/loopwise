@@ -615,6 +615,37 @@ export class ChatRepository {
 		return parts.map((part) => part.toolOutput);
 	}
 
+	/**
+	 * The `report` tool outputs of the user's own chats, newest first (at most `limit`): every version of every report,
+	 * which the reports library folds to the latest per report.
+	 */
+	async listOwnReportParts(
+		userId: string,
+		limit: number,
+	): Promise<{ toolCallId: string; output: unknown; createdAt: Date; chatId: string; chatTitle: string }[]> {
+		const parts = await this.prisma.messagePart.findMany({
+			where: {
+				toolName: 'report',
+				toolState: 'output-available',
+				chatMessage: { chat: { userId, deletedAt: null } },
+			},
+			orderBy: [{ chatMessage: { createdAt: 'desc' } }, { order: 'desc' }],
+			take: limit,
+			select: {
+				toolCallId: true,
+				toolOutput: true,
+				chatMessage: { select: { createdAt: true, chatId: true, chat: { select: { title: true } } } },
+			},
+		});
+		return parts.map((part) => ({
+			toolCallId: part.toolCallId ?? '',
+			output: part.toolOutput,
+			createdAt: part.chatMessage.createdAt,
+			chatId: part.chatMessage.chatId,
+			chatTitle: part.chatMessage.chat.title,
+		}));
+	}
+
 	async updateExecuteSqlPart(
 		toolCallId: string,
 		toolInput: executeSql.Input,

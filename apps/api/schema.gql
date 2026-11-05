@@ -1433,6 +1433,11 @@ type Query {
   """The facilities the signed-in user works at."""
   myFacilities: [Facility!]!
 
+  """
+  Your Wise reports across your chats, the latest version of each, newest first.
+  """
+  myReports: [WiseReportSummary!]!
+
   """Labs, imaging centers and hospitals that receive orders."""
   orderTargets: [Facility!]!
 
@@ -2212,6 +2217,26 @@ type WiseProposalOutcome {
   status: String!
   toolCallId: ID!
   toolName: String!
+}
+
+type WiseReportSummary {
+  chatId: ID!
+  chatTitle: String!
+  patientId: ID
+
+  """The patient's name, when you may still see them."""
+  patientName: String
+
+  """The report's id within its chat (the `report` tool's kebab-case id)."""
+  reportId: String!
+  title: String!
+
+  """The tool call of the latest version."""
+  toolCallId: String!
+  updatedAt: DateTime!
+
+  """The latest version."""
+  version: Int!
 }
 
 """

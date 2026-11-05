@@ -11,6 +11,7 @@ import { ClinicalDbService } from '../rls/clinical-db.service.js';
 import type { WiseOriginInput } from '../wise-proposals/dto/wise-origin.input.js';
 import { assertCardPatient, WiseProposalService } from '../wise-proposals/wise-proposal.service.js';
 import type { ClinicalDocument } from './models/clinical-document.model.js';
+import type { WiseReportSummary } from './models/wise-report-summary.model.js';
 import { type EmbeddedResult, renderReportDocumentHtml } from './report-document-html.js';
 import { type DocumentRow, ReportsRepository } from './reports.repository.js';
 
@@ -40,6 +41,45 @@ export class ReportsService {
 			const parsed = report.OutputSchema.safeParse(output);
 			return parsed.success ? [parsed.data] : [];
 		});
+	}
+
+	/**
+	 * The reports library: the latest version of each report in the user's own chats, newest first. Report versions
+	 * are folded from the newest `REPORT_PARTS_LIMIT` report outputs. A patient's name shows only while RLS lets the
+	 * user see them; the report itself stays theirs either way.
+	 */
+	async listMine(userId: string): Promise<WiseReportSummary[]> {
+		const parts = await this.chats.listOwnReportParts(userId, REPORT_PARTS_LIMIT);
+		const latest = new Map<string, WiseReportSummary>();
+		for (const part of parts) {
+			const parsed = report.OutputSchema.safeParse(part.output);
+			if (!parsed.success) {
+				continue;
+			}
+			const key = `${part.chatId}:${parsed.data.id}`;
+			const known = latest.get(key);
+			if (known && known.version >= parsed.data.version) {
+				continue;
+			}
+			latest.set(key, {
+				chatId: part.chatId,
+				chatTitle: part.chatTitle,
+				reportId: parsed.data.id,
+				title: parsed.data.title,
+				version: parsed.data.version,
+				toolCallId: part.toolCallId,
+				patientId: parsed.data.patientId,
+				patientName: null,
+				updatedAt: known && known.updatedAt > part.createdAt ? known.updatedAt : part.createdAt,
+			});
+		}
+		const summaries = [...latest.values()].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+		const patientIds = [...new Set(summaries.flatMap((summary) => (summary.patientId ? [summary.patientId] : [])))];
+		const names = await this.db.asUser(userId, (tx) => this.reports.patientNames(tx, patientIds));
+		return summaries.map((summary) => ({
+			...summary,
+			patientName: summary.patientId ? (names.get(summary.patientId) ?? null) : null,
+		}));
 	}
 
 	/** Prints one version of a report the user built, from its embedded results; audited as `report.export`. */
@@ -165,6 +205,9 @@ export class ReportsService {
 		});
 	}
 }
+
+/** Report outputs the library reads at most (every version counts). */
+const REPORT_PARTS_LIMIT = 2000;
 
 /** The tool call ids a report's blocks embed. */
 export function blockRefs(code: string): string[] {

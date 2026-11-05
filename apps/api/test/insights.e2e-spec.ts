@@ -366,6 +366,23 @@ describe('charts and reports (e2e)', () => {
 			await prisma.auditLog.count({ where: { action: 'document.create', resourceId: saved.id, patientId } }),
 		).toBe(1);
 
+		const library = (cookie: string[]) =>
+			graphql(cookie, '{ myReports { chatId reportId title version toolCallId patientId patientName } }');
+		expect((await library(users.reyes.cookie)).body.data.myReports).toContainEqual({
+			chatId: chatMessage.chatId,
+			reportId: 'bp',
+			title: 'Maria BP',
+			version: 1,
+			toolCallId: reportId,
+			patientId,
+			patientName: expect.stringContaining('Maria'),
+		});
+		expect(
+			(await library(users.cruz.cookie)).body.data.myReports.filter(
+				(row: { toolCallId: string }) => row.toolCallId === reportId,
+			),
+		).toEqual([]);
+
 		const list = (cookie: string[]) =>
 			graphql(cookie, 'query ($p: ID!) { patientDocuments(patientId: $p) { id } }', { p: patientId });
 		expect((await list(users.reyes.cookie)).body.data.patientDocuments).toEqual([{ id: saved.id }]);

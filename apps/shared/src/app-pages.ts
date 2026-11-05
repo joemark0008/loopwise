@@ -11,6 +11,7 @@ const patientParams = z.object({ patientId: z.string().uuid('Use the id that fin
 export const APP_PAGES = {
 	'chat.new': { label: 'Today (and a new chat)', path: '/', params: noParams },
 	'chats.list': { label: 'Wise chats', path: '/chats', params: noParams },
+	'reports.list': { label: 'Reports (your Wise reports)', path: '/reports', params: noParams },
 	'patients.list': { label: 'Patients', path: '/patients', params: noParams },
 	'patients.new': { label: 'Register a patient', path: '/patients/new', params: noParams },
 	'patients.detail': { label: 'Patient chart', path: '/patients/$patientId', params: patientParams },

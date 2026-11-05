@@ -5,12 +5,20 @@ import { CurrentUser } from '../../common/decorators/current.decorator.js';
 import { ReportPdf } from '../insights/models/report-pdf.model.js';
 import { WiseOriginInput } from '../wise-proposals/dto/wise-origin.input.js';
 import { ClinicalDocument } from './models/clinical-document.model.js';
+import { WiseReportSummary } from './models/wise-report-summary.model.js';
 import { ReportsService } from './reports.service.js';
 
 /** Wise reports leaving the system as a PDF (DESIGN.md §7.2). */
 @Resolver()
 export class ReportsResolver {
 	constructor(private readonly service: ReportsService) {}
+
+	@Query(() => [WiseReportSummary], {
+		description: 'Your Wise reports across your chats, the latest version of each, newest first.',
+	})
+	myReports(@CurrentUser() user: AuthUser): Promise<WiseReportSummary[]> {
+		return this.service.listMine(user.id);
+	}
 
 	@Mutation(() => ReportPdf, {
 		description: 'Prints one version of a Wise report in your own chat to PDF; audited as `report.export`.',

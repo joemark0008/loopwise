@@ -337,7 +337,9 @@ Notes on the built tools:
   result holds are refused. Layout as in the base app's stories: `<grid widths="2,1">` places 2–4 blocks side by side
   (stacked in a narrow panel), `<tab title>` splits a report into tabs (then it is tabs only; the PDF prints each tab
   on its own page). The parser is `@loopwise/shared/report-blocks`, and the KPI value and comparison are drawn by
-  `report-kpi` in the panel and the PDF alike. Each call is a new version; the panel has a version menu, Print and PDF. **Save to chart** freezes a patient report version into
+  `report-kpi` in the panel and the PDF alike. **`/reports`** lists the latest version of every report in the user's own
+  chats (`myReports`; patient names only while RLS shows them) and opens one in its chat (`?report=<id>`). Each call is
+  a new version; the panel has a version menu, Print and PDF. **Save to chart** freezes a patient report version into
   `clinical_document` (append-only, audited `document.create`).
 - Old chats may still hold cards of tools no longer offered to the model (`display_chart`, `display_map`,
   `chart_facility_panel`); their cards still render.
