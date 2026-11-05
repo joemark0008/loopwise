@@ -1,4 +1,4 @@
-import { REPORT_BLOCK_TOOLS, splitReport } from '@loopwise/shared/report-blocks';
+import { reportBlocks } from '@loopwise/shared/report-blocks';
 import { report } from '@loopwise/shared/tools';
 import { Injectable } from '@nestjs/common';
 
@@ -168,13 +168,7 @@ export class ReportsService {
 
 /** The tool call ids a report's blocks embed. */
 export function blockRefs(code: string): string[] {
-	return [
-		...new Set(
-			splitReport(code).flatMap((segment) =>
-				segment.kind !== 'markdown' && REPORT_BLOCK_TOOLS[segment.kind] ? [segment.ref] : [],
-			),
-		),
-	];
+	return [...new Set(reportBlocks(code).map((block) => block.ref))];
 }
 
 function toDocument(row: DocumentRow): ClinicalDocument {

@@ -35,6 +35,7 @@
 		"./icd10": "./src/icd10.ts",
 		"./icd10-chapters": "./src/icd10-chapters.ts",
 		"./report-blocks": "./src/report-blocks.ts",
+		"./report-kpi": "./src/report-kpi.ts",
 		"./analytics-chart": "./src/analytics-chart.tsx",
 		"./lab-tests": "./src/lab-tests.ts",
 		"./medical-certificate": "./src/medical-certificate.ts",

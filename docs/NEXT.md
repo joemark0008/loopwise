@@ -35,6 +35,8 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
 - **Analytics, charts and reports** (§7.2, §8, §10): migration `0015_analytics`, `clinical/analytics/`,
   `clinical/insights/`, `clinical/reports/`, saved documents (migration `0016`), PDF via headless Chrome
   (`CHROME_PATH`).
+- **Report layout** (§7.2, 5 Nov 2026): the `report` tool takes the stories' `<grid>` and `<tab>` layout and a
+  `<kpi>` block (`apps/shared/src/report-blocks.ts`, `report-kpi.ts`), in the side panel and the PDF.
 - **UX:** clinical design system ([design-system.md](design-system.md)), role navigation, Today at `/`, Wise chats at
   `/chats`, Wise dock on list pages, a11y tests (`e2e/a11y.spec.ts`).
 

@@ -332,8 +332,12 @@ Notes on the built tools:
   never classifies a result itself.
 - **Reports in a side panel** (`agent/tools/report.ts`, `clinical/reports/`, `feature/reports/`). The `report` tool
   writes markdown with blocks that embed tool results of the same chat (`<chart ref/>`, `<table ref/>`,
-  `<sections ref/>`), checked against the chat; prose with a number no embedded result holds is refused. Each call is
-  a new version; the panel has a version menu, Print and PDF. **Save to chart** freezes a patient report version into
+  `<sections ref/>`, and `<kpi ref column compare label/>` for a headline number: the last row of a column, with the
+  change from the row before), checked against the chat; prose, tab titles or KPI labels with a number no embedded
+  result holds are refused. Layout as in the base app's stories: `<grid widths="2,1">` places 2–4 blocks side by side
+  (stacked in a narrow panel), `<tab title>` splits a report into tabs (then it is tabs only; the PDF prints each tab
+  on its own page). The parser is `@loopwise/shared/report-blocks`, and the KPI value and comparison are drawn by
+  `report-kpi` in the panel and the PDF alike. Each call is a new version; the panel has a version menu, Print and PDF. **Save to chart** freezes a patient report version into
   `clinical_document` (append-only, audited `document.create`).
 - Old chats may still hold cards of tools no longer offered to the model (`display_chart`, `display_map`,
   `chart_facility_panel`); their cards still render.

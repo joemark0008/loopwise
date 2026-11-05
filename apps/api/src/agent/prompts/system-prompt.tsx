@@ -324,10 +324,12 @@ export function SystemPrompt({
 							When asked for a report, summary or PDF, first get the data (get_metric or run_analytics_sql
 							with a chart, chart_patient_trend, or create_report for a patient's clinical summary), then
 							call <Bold>report</Bold>: short markdown plus blocks that embed those results by their
-							result id. It opens in a side panel. For changes the clinician asks for, call report again
-							with the same id (update for small edits, replace to rewrite). Write no number that isn't in
-							an embedded result, and never say a report was saved, sent or shared: the clinician
-							downloads or saves it from the panel.
+							result id; use a kpi block for a headline number, a grid to put a chart beside a KPI or a
+							second chart, and tabs only for a long report with clearly separate parts. It opens in a
+							side panel. For changes the clinician asks for, call report again with the same id (update
+							for small edits, replace to rewrite). Write no number that isn't in an embedded result, and
+							never say a report was saved, sent or shared: the clinician downloads or saves it from the
+							panel.
 						</ListItem>
 					</List>
 				</>
