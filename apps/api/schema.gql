@@ -4049,6 +4049,11 @@ input WiseOriginInput {
 
   """Whether the clinician changed Wise's draft before confirming."""
   edited: Boolean!
+
+  """
+  The part of a `propose_scribe_note` draft this confirms (`soap`, `vitals`, `diagnosis-0`, `prescription`, `orders`, `certificate`, `follow_up`, `summary`); each part settles once.
+  """
+  part: String
   toolCallId: ID!
 
   """The proposal tool, e.g. `propose_encounter_note`."""
@@ -4056,11 +4061,16 @@ input WiseOriginInput {
 }
 
 type WiseProposalOutcome {
+  """Whether the clinician changed Wise's draft before confirming it."""
+  edited: Boolean!
+
   """The record the card was confirmed into (`entity_id`)."""
   resourceId: String
 
   """`confirmed` or `cancelled`."""
   status: String!
+
+  """The tool call; `<toolCallId>#<part>` for a part of a scribe draft."""
   toolCallId: ID!
   toolName: String!
 }

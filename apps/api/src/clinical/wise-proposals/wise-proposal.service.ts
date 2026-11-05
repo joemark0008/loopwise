@@ -1,3 +1,4 @@
+import { SCRIBE_TOOL_NAME, scribeOutcomeKey, scribePartTool } from '@loopwise/shared/scribe';
 import { type WiseActionMutation, wiseActionToolsFor } from '@loopwise/shared/wise-actions';
 import { Injectable } from '@nestjs/common';
 
@@ -30,6 +31,8 @@ export type WiseOrigin = {
 	messageId: string;
 	toolCallId: string;
 	edited: boolean;
+	/** The part of a scribe draft (`propose_scribe_note`) the change confirms. */
+	part?: string;
 };
 
 /** A verified card: its audit origin, and the patient of its chat (null outside a chart chat). */
@@ -69,15 +72,35 @@ export class WiseProposalService {
 		input: WiseOriginInput,
 		opts: { toolNames: readonly string[]; organizationId?: string },
 	): Promise<VerifiedWiseCard> {
-		if (!opts.toolNames.includes(input.toolName)) {
-			throw new WiseCardInvalidError(`A ${input.toolName} card can't confirm this change.`);
+		if (input.toolName === SCRIBE_TOOL_NAME && !input.part) {
+			throw new WiseCardInvalidError('Name the part of the scribe draft.');
+		}
+		// A part of a scribe draft confirms as the card it stands for (the SOAP part as `propose_encounter_note` …).
+		const standsFor = input.part ? scribePartTool(input.part) : input.toolName;
+		if (!standsFor || !opts.toolNames.includes(standsFor)) {
+			throw new WiseCardInvalidError(
+				`A ${input.toolName}${input.part ? ` (${input.part})` : ''} card can't confirm this change.`,
+			);
 		}
 		await this.toolSettings.assertEnabled(userId, input.toolName, opts.organizationId);
+		if (standsFor !== input.toolName) {
+			// Turning off prescriptions also turns off the scribe's prescription part.
+			await this.toolSettings.assertEnabled(userId, standsFor, opts.organizationId);
+		}
 		return this.verifyCall(userId, input);
 	}
 
-	/** The tool call is in the user's own chat, by this tool, and not settled yet. */
+	/**
+	 * The tool call is in the user's own chat, by this tool, and not settled yet. A scribe draft settles part by part,
+	 * so it needs the part, and only it has parts.
+	 */
 	private async verifyCall(userId: string, input: WiseOriginInput): Promise<VerifiedWiseCard> {
+		const part = input.part ?? undefined;
+		if ((input.toolName === SCRIBE_TOOL_NAME) !== Boolean(part)) {
+			throw new WiseCardInvalidError(
+				part ? `A ${input.toolName} card has no parts.` : 'Name the part of the scribe draft.',
+			);
+		}
 		const call = await this.proposals.findToolCall(input.toolCallId);
 		const chat = call?.message.chat;
 		if (!call || !chat || call.message.chatId !== input.chatId || chat.userId !== userId) {
@@ -86,7 +109,7 @@ export class WiseProposalService {
 		if (call.toolName !== input.toolName) {
 			throw new WiseCardInvalidError(`This card was drafted by ${call.toolName}, not ${input.toolName}.`);
 		}
-		const settled = await this.proposals.findOutcome(input.toolCallId);
+		const settled = await this.proposals.findOutcome(scribeOutcomeKey(input.toolCallId, part));
 		if (settled) {
 			throw new WiseCardAlreadySettledError(settled.status);
 		}
@@ -98,6 +121,7 @@ export class WiseProposalService {
 				messageId: call.messageId,
 				toolCallId: input.toolCallId,
 				edited: input.edited,
+				...(part && { part }),
 			},
 			chatPatientId: chat.patientId,
 		};
@@ -189,12 +213,13 @@ export class WiseProposalService {
 		status: 'confirmed' | 'cancelled',
 		entity?: WiseCardEntity,
 	) {
+		const key = scribeOutcomeKey(origin.toolCallId, origin.part);
 		try {
 			return await this.proposals.insertOutcome(tx, {
 				userId,
 				chatId: origin.chatId,
 				messageId: origin.messageId,
-				toolCallId: origin.toolCallId,
+				toolCallId: key,
 				toolName: origin.toolName,
 				status,
 				entityType: entity?.entityType ?? null,
@@ -203,7 +228,7 @@ export class WiseProposalService {
 			});
 		} catch (error) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-				const settled = await this.proposals.findOutcome(origin.toolCallId);
+				const settled = await this.proposals.findOutcome(key);
 				throw new WiseCardAlreadySettledError(settled?.status ?? 'confirmed');
 			}
 			throw error;

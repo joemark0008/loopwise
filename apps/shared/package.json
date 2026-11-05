@@ -38,6 +38,7 @@
 		"./lab-tests": "./src/lab-tests.ts",
 		"./medical-certificate": "./src/medical-certificate.ts",
 		"./prescription": "./src/prescription.ts",
+		"./scribe": "./src/scribe.ts",
 		"./staff-roles": "./src/staff-roles.ts",
 		"./vitals": "./src/vitals.ts",
 		"./wise-proposal": "./src/wise-proposal.ts",
