@@ -4,7 +4,6 @@ import styles from './patient-chart.module.css';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/ui/error-message';
-import { Skeleton } from '@/components/ui/skeleton';
 import { AgentProvider, useAgentContext, useAgentMessages } from '@/contexts/agent.provider';
 import { SetChatInputCallbackProvider } from '@/contexts/set-chat-input-callback';
 import { ChatInput } from '@/feature/chat/components/chat-input';
@@ -15,18 +14,47 @@ import { patientApi } from '@/lib/patient-api';
 const SUGGESTIONS = ['Summarise this patient', 'Start an encounter for today'];
 
 /**
- * The patient's chart chat with Wise: one per clinician per patient, so it resumes where it was left. Wise is told
- * about the patient on every message, and drafts encounters from it.
+ * The patient's chart chat (one per clinician per patient, so it resumes where it was left), read once per visit of
+ * the chart: the agent keeps track of a chat it creates, so the id given to it must not change mid-chat.
  */
-export function PatientWisePanel({ patientId, actions }: { patientId: string; actions?: ReactNode }) {
-	// Read once per visit: the agent keeps track of a chat it creates, so the id given to it must not change mid-chat.
-	const chat = useQuery({
+export function usePatientChat(patientId: string) {
+	return useQuery({
 		...patientApi.patient.chat.queryOptions({ patientId }),
 		staleTime: Infinity,
 		refetchOnWindowFocus: false,
 		gcTime: 0,
 	});
+}
 
+/**
+ * Gives the patient's pages the chart chat's agent: the Wise panel beside them and the encounter page's AI scribe talk
+ * to the same conversation, so a scribe draft shows in the chat and its cards on the visit.
+ */
+export function PatientAgentProvider({
+	patientId,
+	chatId,
+	children,
+}: {
+	patientId: string;
+	chatId: string | null;
+	children: ReactNode;
+}) {
+	return (
+		<ChatIdContext.Provider value={chatId ?? undefined}>
+			<SetChatInputCallbackProvider>
+				<AgentProvider disableNavigation patientId={patientId}>
+					{children}
+				</AgentProvider>
+			</SetChatInputCallbackProvider>
+		</ChatIdContext.Provider>
+	);
+}
+
+/**
+ * The patient's chart chat with Wise, in the agent of `PatientAgentProvider`. Wise is told about the patient on every
+ * message, and drafts encounters from it.
+ */
+export function PatientWisePanel({ actions, chatError }: { actions?: ReactNode; chatError?: Error | null }) {
 	return (
 		<section className={styles.wisePanel} aria-label='Ask Wise'>
 			<header className={styles.wiseHeader}>
@@ -34,21 +62,13 @@ export function PatientWisePanel({ patientId, actions }: { patientId: string; ac
 				<span>Ask Wise about this patient</span>
 				{actions && <div className={styles.wiseHeaderActions}>{actions}</div>}
 			</header>
-			{chat.isPending ? (
-				<Skeleton className={styles.chartSkeleton} />
-			) : chat.error ? (
-				<ErrorMessage message={chat.error.message} />
+			{chatError ? (
+				<ErrorMessage message={chatError.message} />
 			) : (
-				<ChatIdContext.Provider value={chat.data ?? undefined}>
-					<SetChatInputCallbackProvider>
-						<AgentProvider disableNavigation patientId={patientId}>
-							<WiseConversation
-								intro='Wise knows this patient’s record and recent visits. Describe a visit and it drafts the encounter for you to confirm.'
-								suggestions={SUGGESTIONS}
-							/>
-						</AgentProvider>
-					</SetChatInputCallbackProvider>
-				</ChatIdContext.Provider>
+				<WiseConversation
+					intro='Wise knows this patient’s record and recent visits. Describe a visit and it drafts the encounter for you to confirm.'
+					suggestions={SUGGESTIONS}
+				/>
 			)}
 		</section>
 	);

@@ -3,9 +3,10 @@ import { Link, Outlet, useMatchRoute, useRouterState } from '@tanstack/react-rou
 import { ArrowLeft, Maximize2, MessageSquare, Minimize2, PanelRightClose, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import styles from './patient-layout.module.css';
-import { PatientWisePanel } from './patient-wise-panel';
+import { PatientAgentProvider, PatientWisePanel, usePatientChat } from './patient-wise-panel';
 import { useWiseLayout } from './use-wise-layout';
 import { WiseSplitter } from './wise-splitter';
+import type { ReactNode } from 'react';
 import { PatientBanner } from '@/components/clinical/patient-banner';
 import { Button } from '@/components/ui/button';
 import { Empty } from '@/components/ui/empty';
@@ -27,6 +28,7 @@ export function PatientLayout({ patientId }: { patientId: string }) {
 	const patient = useQuery(patientApi.patient.get.queryOptions({ id: patientId }));
 	const allergies = useQuery(encounterRecordApi.encounterRecord.allergies.queryOptions({ patientId }));
 	const clinics = useQuery(patientApi.patient.clinics.queryOptions());
+	const chat = usePatientChat(patientId);
 	const matchRoute = useMatchRoute();
 	const isEncounter = !!matchRoute({ to: '/patients/$patientId/encounters/$encounterId', params: { patientId } });
 	const [isWiseOpen, setIsWiseOpen] = useState(false);
@@ -46,7 +48,8 @@ export function PatientLayout({ patientId }: { patientId: string }) {
 		return () => document.removeEventListener('keydown', onKeyDown);
 	}, [isWiseOpen]);
 
-	if (patient.isPending) {
+	// The chart chat is read before the pages mount, so its agent wraps them from the first render.
+	if (patient.isPending || chat.isPending) {
 		return (
 			<div className={styles.state}>
 				<Skeleton className={styles.skeleton} />
@@ -72,6 +75,14 @@ export function PatientLayout({ patientId }: { patientId: string }) {
 		);
 	}
 
+	const withAgent = (body: ReactNode) =>
+		chat.isSuccess ? (
+			<PatientAgentProvider patientId={patientId} chatId={chat.data}>
+				{body}
+			</PatientAgentProvider>
+		) : (
+			body
+		);
 	// Allergies are kept by the staff of the patient's organization.
 	const canRecordAllergy = !!clinics.data?.some((clinic) => clinic.organizationId === patient.data?.organizationId);
 	return (
@@ -104,66 +115,70 @@ export function PatientLayout({ patientId }: { patientId: string }) {
 					}
 				/>
 			</div>
-			<div className={styles.body} ref={bodyRef}>
-				<div className={styles.main}>
-					<div className={styles.inner}>
-						{!isEncounter && <PatientTabs patientId={patientId} />}
-						<Outlet />
+			{withAgent(
+				<div className={styles.body} ref={bodyRef}>
+					<div className={styles.main}>
+						<div className={styles.inner}>
+							{!isEncounter && <PatientTabs patientId={patientId} />}
+							<Outlet />
+						</div>
 					</div>
-				</div>
-				{wise.mode === 'docked' && (
-					<WiseSplitter width={wise.width} onWidthChange={wise.setWidth} containerRef={bodyRef} />
-				)}
-				{wise.mode === 'collapsed' && (
-					<button
-						type='button'
-						className={styles.wiseRail}
-						onClick={() => wise.setMode('docked')}
-						aria-controls='patient-wise'
-						aria-expanded={false}
-					>
-						<Sparkles aria-hidden />
-						<span>Wise</span>
-					</button>
-				)}
-				<aside className={styles.wise} id='patient-wise' aria-label='Wise'>
-					<div className={styles.wiseClose}>
-						<Button
-							ref={closeWiseRef}
-							variant='ghost'
-							size='icon'
-							onClick={() => setIsWiseOpen(false)}
-							aria-label='Close Wise'
+					{wise.mode === 'docked' && (
+						<WiseSplitter width={wise.width} onWidthChange={wise.setWidth} containerRef={bodyRef} />
+					)}
+					{wise.mode === 'collapsed' && (
+						<button
+							type='button'
+							className={styles.wiseRail}
+							onClick={() => wise.setMode('docked')}
+							aria-controls='patient-wise'
+							aria-expanded={false}
 						>
-							<X />
-						</Button>
-					</div>
-					<PatientWisePanel
-						patientId={patientId}
-						actions={
-							<span className={styles.wiseModeActions}>
-								<Button
-									variant='ghost'
-									size='icon-sm'
-									onClick={() => wise.setMode(wise.mode === 'expanded' ? 'docked' : 'expanded')}
-									aria-label={wise.mode === 'expanded' ? 'Show the chart beside Wise' : 'Expand Wise'}
-									aria-pressed={wise.mode === 'expanded'}
-								>
-									{wise.mode === 'expanded' ? <Minimize2 /> : <Maximize2 />}
-								</Button>
-								<Button
-									variant='ghost'
-									size='icon-sm'
-									onClick={() => wise.setMode('collapsed')}
-									aria-label='Collapse Wise'
-								>
-									<PanelRightClose />
-								</Button>
-							</span>
-						}
-					/>
-				</aside>
-			</div>
+							<Sparkles aria-hidden />
+							<span>Wise</span>
+						</button>
+					)}
+					<aside className={styles.wise} id='patient-wise' aria-label='Wise'>
+						<div className={styles.wiseClose}>
+							<Button
+								ref={closeWiseRef}
+								variant='ghost'
+								size='icon'
+								onClick={() => setIsWiseOpen(false)}
+								aria-label='Close Wise'
+							>
+								<X />
+							</Button>
+						</div>
+						<PatientWisePanel
+							chatError={chat.error}
+							actions={
+								<span className={styles.wiseModeActions}>
+									<Button
+										variant='ghost'
+										size='icon-sm'
+										onClick={() => wise.setMode(wise.mode === 'expanded' ? 'docked' : 'expanded')}
+										aria-label={
+											wise.mode === 'expanded' ? 'Show the chart beside Wise' : 'Expand Wise'
+										}
+										aria-pressed={wise.mode === 'expanded'}
+									>
+										{wise.mode === 'expanded' ? <Minimize2 /> : <Maximize2 />}
+									</Button>
+									<Button
+										variant='ghost'
+										size='icon-sm'
+										onClick={() => wise.setMode('collapsed')}
+										aria-label='Collapse Wise'
+									>
+										<PanelRightClose />
+									</Button>
+								</span>
+							}
+						/>
+					</aside>
+				</div>,
+			)}
 			{canRecordAllergy && (
 				<AllergyDialog patientId={patientId} open={isAllergyOpen} onOpenChange={setIsAllergyOpen} />
 			)}
