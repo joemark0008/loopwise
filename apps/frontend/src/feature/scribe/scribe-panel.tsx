@@ -18,6 +18,7 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { Textarea } from '@/components/ui/textarea';
 import { useAgentMessagesSelector, useOptionalAgentContext } from '@/contexts/agent.provider';
 import { useTranscribe } from '@/hooks/use-transcribe';
+import { clinicApi } from '@/lib/clinic-api';
 import { patientApi } from '@/lib/patient-api';
 import { scribeApi, transcribeVisit } from '@/lib/scribe-api';
 
@@ -158,9 +159,14 @@ function ScribeWorkspace({ record }: { record: EncounterRecordFieldsFragment }) 
 	);
 }
 
+/** Shown, with Record off, while the clinic's Transcription switch is off (the API refuses with TRANSCRIPTION_DISABLED). */
+const TRANSCRIPTION_OFF_TEXT =
+	'Transcription is off for this clinic. Turn it on in Settings → Clinic → Agent, or type the dictation.';
+
 /**
  * Recording needs the patient's consent for this visit (a `patient_consents` row, PHOTO_VIDEO); the doctor reads the
- * text and records the answer. Without it the record button stays off, and typing still works.
+ * text and records the answer. Without it, or while the clinic has transcription off (Settings → Clinic → Agent), the
+ * record button stays off, and typing still works.
  */
 function RecordingConsentStep({
 	encounterId,
@@ -175,6 +181,9 @@ function RecordingConsentStep({
 }) {
 	const queryClient = useQueryClient();
 	const consent = useQuery(scribeApi.scribe.consent.queryOptions({ encounterId }));
+	const agentSettings = useQuery(clinicApi.clinic.getAgentSettings.queryOptions());
+	const isTranscriptionOn = agentSettings.data?.transcribe?.enabled ?? false;
+	const isTranscriptionOff = !!agentSettings.data && !isTranscriptionOn;
 	const [asking, setAsking] = useState(false);
 	const answer = useMutation(
 		scribeApi.scribe.recordConsent.mutationOptions({
@@ -235,19 +244,23 @@ function RecordingConsentStep({
 					<Button
 						size='sm'
 						variant={recorder.isRecording ? 'destructive' : 'outline'}
-						disabled={!isActive || recorder.isTranscribing}
+						disabled={
+							recorder.isTranscribing || (!recorder.isRecording && (!isActive || !isTranscriptionOn))
+						}
 						onClick={toggleRecording}
 						aria-pressed={recorder.isRecording}
 					>
 						{recorder.isRecording ? <Square /> : <Mic />}
 						{recorder.isRecording ? 'Stop' : recorder.isTranscribing ? 'Transcribing…' : 'Record'}
 					</Button>
-					<span className={styles.muted}>
-						{isActive
-							? recorder.isRecording
-								? 'Recording… press Stop (or Escape) when the consult ends. The audio is not kept.'
-								: 'The recording is turned into text below; the audio is not kept.'
-							: 'Recording is off without the patient’s consent. Type the dictation instead.'}
+					<span className={styles.muted} data-testid='scribe-recording-hint'>
+						{isTranscriptionOff
+							? TRANSCRIPTION_OFF_TEXT
+							: isActive
+								? recorder.isRecording
+									? 'Recording… press Stop (or Escape) when the consult ends. The audio is not kept.'
+									: 'The recording is turned into text below; the audio is not kept.'
+								: 'Recording is off without the patient’s consent. Type the dictation instead.'}
 					</span>
 					<div className={`${styles.actions} ${styles.push}`}>
 						{isActive ? (

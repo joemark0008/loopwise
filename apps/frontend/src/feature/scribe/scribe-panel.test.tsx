@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 
 const mocks = vi.hoisted(() => ({
 	consent: null as unknown,
+	agentSettings: { transcribe: { enabled: true } } as unknown,
 	outcomes: [] as unknown[],
 	messages: [] as unknown[],
 	recordConsent: vi.fn(),
@@ -39,6 +40,9 @@ vi.mock('@/lib/scribe-api', () => ({
 		},
 	},
 	transcribeVisit: vi.fn(),
+}));
+vi.mock('@/lib/clinic-api', () => ({
+	clinicApi: { clinic: { getAgentSettings: mocks.query('agentSettings', () => mocks.agentSettings) } },
 }));
 vi.mock('@/lib/encounter-record-api', () => ({
 	encounterRecordApi: {
@@ -184,6 +188,7 @@ const origin = (part: string, edited = false) => ({
 beforeEach(() => {
 	vi.clearAllMocks();
 	mocks.consent = null;
+	mocks.agentSettings = { transcribe: { enabled: true } };
 	mocks.outcomes = [];
 	mocks.messages = [];
 	mocks.isRunning = false;
@@ -239,6 +244,31 @@ describe('AI scribe panel', () => {
 		);
 		expect((screen.getByRole('button', { name: /Record/ }) as HTMLButtonElement).disabled).toBe(true);
 		expect((screen.getByRole('button', { name: 'Ask for consent' }) as HTMLButtonElement).disabled).toBe(false);
+	});
+
+	it('keeps the record button off while the clinic has transcription off, and typing still works', async () => {
+		mocks.consent = { id: 'c1', granted: true, isActive: true, encounterId: 'e1' };
+		mocks.agentSettings = { transcribe: { enabled: false } };
+		renderPanel();
+		await waitFor(() =>
+			expect(screen.getByTestId('scribe-recording-hint').textContent).toBe(
+				'Transcription is off for this clinic. Turn it on in Settings → Clinic → Agent, or type the dictation.',
+			),
+		);
+		expect((screen.getByRole('button', { name: /Record/ }) as HTMLButtonElement).disabled).toBe(true);
+		fireEvent.change(screen.getByRole('textbox', { name: 'Transcript or dictation' }), {
+			target: { value: 'BP 150/95.' },
+		});
+		expect((screen.getByRole('button', { name: /Draft with Wise/ }) as HTMLButtonElement).disabled).toBe(false);
+	});
+
+	it('turns the record button on with consent and transcription on', async () => {
+		mocks.consent = { id: 'c1', granted: true, isActive: true, encounterId: 'e1' };
+		renderPanel();
+		await waitFor(() =>
+			expect((screen.getByRole('button', { name: /Record/ }) as HTMLButtonElement).disabled).toBe(false),
+		);
+		expect(screen.getByTestId('scribe-recording-hint').textContent).toContain('the audio is not kept');
 	});
 
 	it('shows one card per part and saves nothing until a card is confirmed', async () => {

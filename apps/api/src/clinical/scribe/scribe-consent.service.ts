@@ -86,7 +86,8 @@ export class ScribeConsentService {
 	}
 
 	/**
-	 * Transcribes one recording of the visit with the clinic's provider, only while the patient's consent stands. The
+	 * Transcribes one recording of the visit with the clinic's provider, only while the patient's consent stands and the
+	 * clinic has transcription on (`TRANSCRIPTION_DISABLED` otherwise). The
 	 * audit row (EXPORT: the audio leaves for the provider) is written before the audio is sent; nothing is stored.
 	 */
 	async transcribeVisit(userId: string, body: ScribeTranscribeBody): Promise<{ text: string }> {
@@ -96,6 +97,8 @@ export class ScribeConsentService {
 			if (!consent?.granted || consent.revokedAt) {
 				throw new RecordingConsentRequiredError(visit.encounterNo);
 			}
+			// `transcribeAudio` checks it too; checked here so a refused attempt isn't audited as sent.
+			await this.transcribe.assertEnabled(visit.clinicId);
 			await this.audit.record(tx, {
 				action: 'EXPORT',
 				event: 'scribe.transcribe',

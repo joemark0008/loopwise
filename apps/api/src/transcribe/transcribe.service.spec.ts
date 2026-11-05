@@ -27,7 +27,7 @@ describe('TranscribeService', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		configs.getAgentSettings.mockResolvedValue(null);
+		configs.getAgentSettings.mockResolvedValue({ transcribe: { enabled: true } });
 		configs.getClinicLlmConfigByProvider.mockResolvedValue(null);
 		process.env.OPENAI_API_KEY = 'sk-env';
 	});
@@ -49,7 +49,9 @@ describe('TranscribeService', () => {
 	});
 
 	it('prefers the model saved in the agent settings, then a per-request override', async () => {
-		configs.getAgentSettings.mockResolvedValue({ transcribe: { provider: 'openai', modelId: 'whisper-1' } });
+		configs.getAgentSettings.mockResolvedValue({
+			transcribe: { enabled: true, provider: 'openai', modelId: 'whisper-1' },
+		});
 		await service.transcribeAudio('clinic-1', '');
 		expect(mocks.createTranscribeModel).toHaveBeenLastCalledWith('openai', expect.anything(), 'whisper-1');
 
@@ -65,6 +67,16 @@ describe('TranscribeService', () => {
 			{ apiKey: 'sk-clinic', baseURL: 'https://proxy' },
 			'gpt-4o-mini-transcribe',
 		);
+	});
+
+	it('refuses while the clinic has transcription off, the default', async () => {
+		for (const settings of [null, {}, { transcribe: { provider: 'openai' } }, { transcribe: { enabled: false } }]) {
+			configs.getAgentSettings.mockResolvedValue(settings);
+			await expect(service.transcribeAudio('clinic-1', '')).rejects.toMatchObject({
+				errorCode: 'TRANSCRIPTION_DISABLED',
+			});
+		}
+		expect(mocks.transcribe).not.toHaveBeenCalled();
 	});
 
 	it('refuses to transcribe without a key', async () => {

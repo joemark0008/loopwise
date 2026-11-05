@@ -4,6 +4,7 @@ import { experimental_transcribe as transcribe } from 'ai';
 import { ClinicLlmConfigRepository } from '../agent/llm/clinic-llm-config.repository.js';
 import { getEnvApiKey } from '../agent/llm/llm.service.js';
 import type { AgentSettings } from '../agent/types/agent-settings.js';
+import { TranscriptionDisabledError } from './transcribe.errors.js';
 import {
 	createTranscribeModel,
 	getDefaultTranscribeModelId,
@@ -16,12 +17,24 @@ import {
 export class TranscribeService {
 	constructor(private readonly configs: ClinicLlmConfigRepository) {}
 
+	/**
+	 * Refuses while the clinic's Transcription switch (`agentSettings.transcribe.enabled`, off by default) is off. Every
+	 * transcription checks it here, the chat's and the AI scribe's; the scribe also calls it before it audits the export.
+	 */
+	async assertEnabled(clinicId: string): Promise<AgentSettings | null> {
+		const agentSettings = (await this.configs.getAgentSettings(clinicId)) as AgentSettings | null;
+		if (agentSettings?.transcribe?.enabled !== true) {
+			throw new TranscriptionDisabledError();
+		}
+		return agentSettings;
+	}
+
 	async transcribeAudio(
 		clinicId: string,
 		audio: string,
 		overrides?: { provider?: TranscribeProvider; modelId?: string },
 	): Promise<string> {
-		const agentSettings = (await this.configs.getAgentSettings(clinicId)) as AgentSettings | null;
+		const agentSettings = await this.assertEnabled(clinicId);
 		const savedProvider = agentSettings?.transcribe?.provider as TranscribeProvider | undefined;
 		const savedModelId = agentSettings?.transcribe?.modelId;
 

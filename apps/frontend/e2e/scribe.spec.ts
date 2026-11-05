@@ -28,6 +28,21 @@ async function openNewVisit(page: Page, reason: string) {
 	await expect(page.getByTestId('scribe-panel')).toBeVisible();
 }
 
+/** Turns the clinic's Transcription switch on or off as the signed-in admin; returns whether it was on. */
+async function setTranscription(page: Page, enabled: boolean): Promise<boolean> {
+	const graphql = async (query: string, variables: object = {}) => {
+		const response = await page.request.post('/graphql', { data: { query, variables } });
+		const body = await response.json();
+		expect(body.errors).toBeUndefined();
+		return body.data;
+	};
+	const { agentSettings } = await graphql('{ agentSettings }');
+	await graphql('mutation ($input: JSON!) { updateAgentSettings(input: $input) }', {
+		input: { transcribe: { ...agentSettings?.transcribe, enabled } },
+	});
+	return agentSettings?.transcribe?.enabled ?? false;
+}
+
 test.describe('AI scribe', () => {
 	test.beforeEach(async ({ page }) => {
 		await logIn(page, '/patients');
@@ -55,10 +70,25 @@ test.describe('AI scribe', () => {
 		// Maria prefers Cebuano: the summary follows her language.
 		await expect(panel.getByLabel('Patient summary in')).toHaveValue('ceb');
 
-		await panel.getByRole('button', { name: 'Ask for consent' }).click();
-		await panel.getByRole('button', { name: 'Patient agrees' }).click();
-		await expect(status).toHaveText('Consent to record given');
-		await expect(panel.getByRole('button', { name: 'Record' })).toBeEnabled();
+		// The clinic's Transcription switch (Settings → Clinic → Agent) has to be on too; it is put back at the end.
+		const transcriptionWasOn = await setTranscription(page, false);
+		try {
+			await page.reload();
+			await panel.getByRole('button', { name: 'Ask for consent' }).click();
+			await panel.getByRole('button', { name: 'Patient agrees' }).click();
+			await expect(status).toHaveText('Consent to record given');
+			await expect(panel.getByTestId('scribe-recording-hint')).toHaveText(
+				'Transcription is off for this clinic. Turn it on in Settings → Clinic → Agent, or type the dictation.',
+			);
+			await expect(panel.getByRole('button', { name: 'Record' })).toBeDisabled();
+			await expect(draft).toBeEnabled();
+
+			await setTranscription(page, true);
+			await page.reload();
+			await expect(panel.getByRole('button', { name: 'Record' })).toBeEnabled();
+		} finally {
+			await setTranscription(page, transcriptionWasOn);
+		}
 
 		// The answer is the visit's: it is there after a reload, and so is the typed dictation.
 		await page.reload();

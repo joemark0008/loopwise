@@ -144,6 +144,27 @@ describe('AI scribe (e2e)', () => {
 		expect(consent.version).toMatch(/^scribe-recording-/);
 		expect(await prisma.auditLog.count({ where: { event: 'consent.grant', entityId: consent.id } })).toBe(1);
 
+		// The clinic's Transcription switch (Settings → Clinic → Agent) is off by default: refused, and not audited as sent.
+		const disabled = await transcribe();
+		expect(disabled.status).toBe(403);
+		expect(disabled.body).toMatchObject({ errorCode: 'TRANSCRIPTION_DISABLED' });
+		expect(await prisma.auditLog.count({ where: { event: 'scribe.transcribe' } })).toBe(0);
+		expect(transcribeAudio).not.toHaveBeenCalled();
+		// The chat's dictation goes through the same check (`TranscribeService`).
+		vi.mocked(app.get(TranscribeService, { strict: false }).transcribeAudio).mockRestore();
+		const chatDictation = await request(app.getHttpServer())
+			.post('/api/transcribe')
+			.set('Cookie', doctor.cookie)
+			.set('x-loopwise-clinic-id', clinicId)
+			.send({ audio: Buffer.from('synthetic audio').toString('base64') });
+		expect(chatDictation.status).toBe(403);
+		expect(chatDictation.body).toMatchObject({ errorCode: 'TRANSCRIPTION_DISABLED' });
+		vi.spyOn(app.get(TranscribeService, { strict: false }), 'transcribeAudio').mockImplementation(transcribeAudio);
+		await prisma.clinic.update({
+			where: { id: clinicId },
+			data: { agentSettings: { transcribe: { enabled: true } } },
+		});
+
 		transcribeAudio.mockResolvedValueOnce(SCRIBE_DEMO_TRANSCRIPT);
 		const transcribed = await transcribe();
 		expect(transcribed.status).toBe(200);
