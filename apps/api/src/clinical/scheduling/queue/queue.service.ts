@@ -41,6 +41,10 @@ export class QueueService {
 		await this.access.atClinic(userId, input.clinicId);
 		return this.db.asUser(userId, async (tx) => {
 			const practitionerId = input.mine ? await this.myPractitionerId(tx, userId) : input.practitionerId;
+			if (input.mine && !practitionerId) {
+				// No practitioner profile: no line of their own (never every doctor's).
+				return [];
+			}
 			const rows = await this.queue.listForDay(tx, {
 				clinicId: input.clinicId,
 				queueDate: dateColumn(input.date ?? manilaDate()),

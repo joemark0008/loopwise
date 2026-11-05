@@ -390,6 +390,8 @@ describe('scheduling (e2e)', () => {
 
 			const line = await queue.list(scene.doctor.id, { clinicId: scene.clinic.id, mine: true });
 			expect(line.map((ticket) => [ticket.code, ticket.patient?.name])).toEqual([['A-001', 'Liza Mendoza']]);
+			// No practitioner profile, no line of one's own.
+			expect(await queue.list(nurse.id, { clinicId: scene.clinic.id, mine: true })).toEqual([]);
 			expect(
 				await failure(
 					queue.callNext(scene.otherDoctor.id, {
