@@ -19,6 +19,7 @@ import {
 import { seedDiagnostics } from './seed-diagnostics.js';
 import { seedEncounterRecords } from './seed-encounter-record.js';
 import { seedFollowUps } from './seed-follow-ups.js';
+import { DEMO_INVENTORY_CLERK, seedInventory } from './seed-inventory.js';
 import { seedReference } from './seed-reference.js';
 import { seedScheduling } from './seed-scheduling.js';
 import { seedPanelVitals, seedTrendHistory } from './seed-trends.js';
@@ -64,6 +65,7 @@ async function seed() {
 				await seedClinicSetup(tx, demo.practitioners);
 				await seedScheduling(tx, demo);
 				await seedFollowUps(tx, demo);
+				await seedInventory(tx, { passwordHash });
 				return true;
 			},
 			{ timeout: 120_000 },
@@ -80,6 +82,7 @@ async function seed() {
 		for (const person of STAFF) {
 			console.log(`    ${DEMO_STAFF[person.key].padEnd(34)} ${person.roles.join(', ')}`);
 		}
+		console.log(`    ${DEMO_INVENTORY_CLERK.padEnd(34)} INVENTORY_CLERK`);
 		if (!useGithubAuth) {
 			console.log(`  Password for all: ${DEMO_PASSWORD}`);
 		}
