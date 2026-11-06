@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { scribePartKind } from '@loopwise/shared/scribe';
-import { progressLine, scribeProgress } from './scribe-draft';
+import { isInLatestMessage, progressLine, scribeProgress } from './scribe-draft';
 import { FollowUpCard, SoapCard, SummaryCard } from './scribe-note-cards';
 import { CertificateCard, DiagnosisCard, OrdersCard, PrescriptionCard, VitalsCard } from './scribe-record-cards';
 import styles from './scribe.module.css';
@@ -12,7 +12,7 @@ import type { ComponentType } from 'react';
 import type { EncounterRecordFieldsFragment } from '@/graphql/generated/graphql';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAgentContext } from '@/contexts/agent.provider';
+import { useAgentContext, useAgentMessagesSelector } from '@/contexts/agent.provider';
 import { wiseProposalApi } from '@/lib/wise-proposal-api';
 
 const CARDS: Record<ScribePartKind, ComponentType<ScribePartProps>> = {
@@ -61,10 +61,14 @@ export function ScribeCards({ toolPart, record }: { toolPart: ScribeToolPart; re
 
 function DraftCards({ toolCallId, draft, output, record }: Omit<ScribePartProps, 'part'> & { toolCallId: string }) {
 	const progress = useScribeProgress(toolCallId, output.parts);
+	const { isRunning } = useAgentContext();
+	// The cards can be saved once Wise has finished the reply that holds the draft (the API saves it then).
+	const isFinishing = useAgentMessagesSelector((messages) => isInLatestMessage(messages, toolCallId)) && isRunning;
 	return (
 		<div className={styles.cards} data-testid='scribe-cards'>
 			<p className={styles.muted} data-testid='scribe-progress' aria-live='polite'>
 				{progressLine(progress)}.{progress.open > 0 && ' Nothing is saved until you confirm a card.'}
+				{isFinishing && progress.open > 0 && ' Wise is finishing its reply; you can save the cards then.'}
 			</p>
 			{output.parts.map((part) => {
 				const kind = scribePartKind(part);

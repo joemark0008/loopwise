@@ -37,6 +37,15 @@ export function latestScribeDraft(messages: readonly UIMessage[], encounterId: s
 	return null;
 }
 
+/**
+ * Whether the call is in the chat's latest message. While the agent runs, that message is still being written, and the
+ * API saves it only when the turn ends: until then a confirm can't find the call ("This Wise card isn't in your chat").
+ */
+export function isInLatestMessage(messages: readonly UIMessage[], toolCallId: string): boolean {
+	const parts = (messages.at(-1)?.parts ?? []) as readonly { toolCallId?: string }[];
+	return parts.some((part) => part.toolCallId === toolCallId);
+}
+
 /** Selector equality: the same call in the same state is the same draft. */
 export const sameDraft = (left: ScribeToolPart | null, right: ScribeToolPart | null) =>
 	left?.toolCallId === right?.toolCallId && left?.state === right?.state && left?.output === right?.output;

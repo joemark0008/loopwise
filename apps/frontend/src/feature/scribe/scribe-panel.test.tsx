@@ -332,6 +332,34 @@ describe('AI scribe panel', () => {
 		);
 	});
 
+	it('locks the cards while Wise is still writing the reply that holds the draft, until the API has it saved', async () => {
+		mocks.consent = { id: 'c1', granted: true, isActive: true, encounterId: 'e1' };
+		withDraft();
+		mocks.isRunning = true;
+		renderPanel();
+		await screen.findByTestId('scribe-cards');
+		expect(screen.getByTestId('scribe-progress').textContent).toContain('Wise is finishing its reply');
+		const save = within(card('soap')).getByRole('button', { name: 'Save note' }) as HTMLButtonElement;
+		expect(save.disabled).toBe(true);
+		expect((within(card('soap')).getByRole('button', { name: 'Dismiss' }) as HTMLButtonElement).disabled).toBe(
+			true,
+		);
+		fireEvent.click(save);
+		expect(mocks.updateNote).not.toHaveBeenCalled();
+		cleanup();
+
+		// A later turn (another question in the chat) doesn't lock a draft that is already saved.
+		mocks.messages = [
+			...mocks.messages,
+			{ id: 'm2', role: 'user', parts: [{ type: 'text', text: 'And the labs?' }] },
+		];
+		renderPanel();
+		await screen.findByTestId('scribe-cards');
+		expect(screen.getByTestId('scribe-progress').textContent).not.toContain('Wise is finishing');
+		fireEvent.click(within(card('soap')).getByRole('button', { name: 'Save note' }));
+		await waitFor(() => expect(mocks.updateNote).toHaveBeenCalledTimes(1));
+	});
+
 	it('dismisses one part without touching the others, and shows how each ended after a reload', async () => {
 		mocks.consent = { id: 'c1', granted: true, isActive: true, encounterId: 'e1' };
 		withDraft();

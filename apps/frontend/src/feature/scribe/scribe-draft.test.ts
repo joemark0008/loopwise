@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { scribeDemoDraft } from '@loopwise/shared/scribe-demo';
 import {
 	followUpDate,
+	isInLatestMessage,
 	latestScribeDraft,
 	progressLine,
 	scribeProgress,
@@ -42,6 +43,16 @@ describe('scribe draft helpers', () => {
 		expect(latestScribeDraft(messages, 'e1')?.toolCallId).toBe('c');
 		expect(latestScribeDraft(messages, 'e2')?.toolCallId).toBe('b');
 		expect(latestScribeDraft(messages, 'e3')).toBeNull();
+	});
+
+	it('tells whether a call is in the latest message, the one a running turn is still writing', () => {
+		const messages = [
+			{ id: 'm1', role: 'assistant', parts: [scribePart('a', 'e1')] },
+			{ id: 'm2', role: 'assistant', parts: [{ type: 'step-start' }, scribePart('b', 'e1')] },
+		] as unknown as UIMessage[];
+		expect(isInLatestMessage(messages, 'b')).toBe(true);
+		expect(isInLatestMessage(messages, 'a')).toBe(false);
+		expect(isInLatestMessage([], 'a')).toBe(false);
 	});
 
 	it('writes the drafted SOAP sections over the note and keeps the ones not drafted', () => {

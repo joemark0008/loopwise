@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Textarea } from '@/components/ui/textarea';
 import { useAgentContext, useAgentMessagesSelector } from '@/contexts/agent.provider';
+import { isInLatestMessage } from '@/feature/scribe/scribe-draft';
 import { wiseProposalApi } from '@/lib/wise-proposal-api';
 
 /** The card a confirm comes from; the mutation sends it back (`wiseOrigin`) with whether the draft was `edited`. */
@@ -67,7 +68,8 @@ const BADGES = {
  * Every Wise card that writes uses this shell.
  *
  * A `part` of a scribe draft settles only from the API's outcome for that part (`<toolCallId>#<part>`): the chat's
- * next message says nothing about it, Cancel ("Dismiss") sends none, and the agent running doesn't lock it.
+ * next message says nothing about it, Cancel ("Dismiss") sends none, and the agent running locks it only while it is
+ * still writing the reply that holds the draft (the API saves that reply, and so knows the card, once the turn ends).
  */
 export function ProposalCard({
 	toolCallId,
@@ -127,6 +129,8 @@ export function ProposalCard({
 	const queryClient = useQueryClient();
 	const { queueOrSendMessage, isRunning, chatId } = useAgentContext();
 	const answer = useAgentMessagesSelector((messages) => findAnswerForToolCall(messages, toolCallId));
+	const isInRunningReply =
+		useAgentMessagesSelector((messages) => isInLatestMessage(messages, toolCallId)) && isRunning;
 	const outcomes = useQuery(
 		wiseProposalApi.wiseProposal.outcomes.queryOptions({ chatId: chatId ?? '' }, { enabled: !!chatId }),
 	);
@@ -164,7 +168,7 @@ export function ProposalCard({
 	}
 
 	const origin = chatId ? { chatId, toolCallId, toolName, ...(part && { part }) } : null;
-	const busy = (!part && isRunning) || isPending || isSubmitting || cancel.isPending;
+	const busy = (part ? isInRunningReply : isRunning) || isPending || isSubmitting || cancel.isPending;
 	const needsReason = mode === 'destructive';
 	const needsSecondClick = needsReason || confirmStrength === 'strong';
 	const reasonOk = reason.trim().length >= DESTRUCTIVE_REASON_MIN_LENGTH;

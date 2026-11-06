@@ -1,6 +1,8 @@
+import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
-import { SCRIBE_DEMO_TRANSCRIPT } from '../../shared/src/scribe-demo';
-import { logIn, trackErrors } from './helpers';
+import { SCRIBE_DEMO_TRANSCRIPT, scribeDemoDraft } from '../../shared/src/scribe-demo';
+import { withDatabase } from './db';
+import { USER, logIn, trackErrors } from './helpers';
 import type { Page } from '@playwright/test';
 
 /**
@@ -41,6 +43,68 @@ async function setTranscription(page: Page, enabled: boolean): Promise<boolean> 
 		input: { transcribe: { ...agentSettings?.transcribe, enabled } },
 	});
 	return agentSettings?.transcribe?.enabled ?? false;
+}
+
+/**
+ * Puts a finished `propose_scribe_note` call for the open visit (SOAP and patient summary parts) in the user's chart
+ * chat, as Wise's saved reply would be, without an LLM call; then reloads so the AI scribe tab shows its cards.
+ */
+async function insertScribeDraft(page: Page) {
+	const [, patientId, encounterId] = new URL(page.url()).pathname.match(/\/patients\/([^/]+)\/encounters\/([^/]+)/)!;
+	const chat = await page.request.post('/graphql', {
+		data: { query: 'query ($id: ID!) { patientChat(patientId: $id) }', variables: { id: patientId } },
+	});
+	const existingChatId: string | null = (await chat.json()).data.patientChat;
+	const { soap, patientSummary } = scribeDemoDraft(encounterId);
+	await withDatabase(async (db) => {
+		const {
+			rows: [visit],
+		} = await db.query(
+			`SELECT e.encounter_no, e.started_at, e.clinic_id, c.name AS clinic_name, u.id AS user_id
+			 FROM encounters e JOIN clinics c ON c.id = e.clinic_id, users u WHERE e.id = $1 AND u.email = $2`,
+			[encounterId, USER.email],
+		);
+		const chatId = existingChatId ?? randomUUID();
+		if (!existingChatId) {
+			await db.query(
+				`INSERT INTO chats (id, user_id, clinic_id, surface, patient_id, title, updated_at)
+				 VALUES ($1, $2, $3, 'patient', $4, 'Scribe e2e', now())`,
+				[chatId, visit.user_id, visit.clinic_id, patientId],
+			);
+		}
+		const messageId = randomUUID();
+		await db.query(
+			`INSERT INTO chat_messages (id, chat_id, role, stop_reason) VALUES ($1, $2, 'assistant', 'stop')`,
+			[messageId, chatId],
+		);
+		const output = {
+			success: true,
+			patientId,
+			encounter: {
+				id: encounterId,
+				encounterNo: visit.encounter_no,
+				startedAt: new Date(visit.started_at).toISOString(),
+				clinicName: visit.clinic_name,
+			},
+			parts: ['soap', 'summary'],
+			diagnoses: [],
+			tests: { matched: [], unmatched: [] },
+			allergies: [],
+			allergyWarnings: [],
+		};
+		await db.query(
+			`INSERT INTO message_parts (id, message_id, "order", type, tool_call_id, tool_name, tool_state, tool_input, tool_output)
+			 VALUES ($1, $2, 0, 'tool-propose_scribe_note', $3, 'propose_scribe_note', 'output-available', $4, $5)`,
+			[
+				randomUUID(),
+				messageId,
+				`call_e2e_${randomUUID()}`,
+				JSON.stringify({ encounterId, soap, patientSummary }),
+				JSON.stringify(output),
+			],
+		);
+	});
+	await page.reload();
 }
 
 test.describe('AI scribe', () => {
@@ -96,6 +160,35 @@ test.describe('AI scribe', () => {
 		await expect(page.getByRole('textbox', { name: 'Transcript or dictation' })).toHaveValue(
 			'BP 150/95. Continue metformin.',
 		);
+		expect(errors).toEqual([]);
+	});
+
+	test('confirms and dismisses parts of a scribe draft from the AI scribe tab', async ({ page }) => {
+		const errors = trackErrors(page);
+		await openNewVisit(page, `Scribe cards ${Date.now().toString(36)}`);
+		await insertScribeDraft(page);
+
+		const panel = page.getByTestId('scribe-panel');
+		const cards = panel.getByTestId('scribe-cards');
+		await expect(panel.getByTestId('scribe-progress')).toContainText('0 of 2 saved');
+		const soap = cards.getByTestId('scribe-part-soap');
+		await expect(soap).toContainText('Changes an existing record');
+		await soap.getByRole('button', { name: 'Save note' }).click();
+		await expect(soap).toContainText('Saved');
+
+		const summary = cards.getByTestId('scribe-part-summary');
+		await summary.getByRole('button', { name: 'Dismiss' }).click();
+		await expect(summary).toContainText('Dismissed');
+		await expect(panel.getByTestId('scribe-progress')).toContainText('1 of 2 saved · 1 dismissed');
+
+		await page.getByRole('tab', { name: /Note & diagnosis/ }).click();
+		await expect(page.getByRole('textbox', { name: 'Assessment (A)' })).toHaveValue(/hypertension/i);
+
+		// Settled once: after a reload the cards say how they ended.
+		await page.getByRole('tab', { name: 'AI scribe' }).click();
+		await page.reload();
+		await expect(page.getByTestId('scribe-part-soap')).toContainText('Saved');
+		await expect(page.getByTestId('scribe-part-summary')).toContainText('Dismissed');
 		expect(errors).toEqual([]);
 	});
 
