@@ -31,19 +31,28 @@ const avatarVariants = classVariants(styles.avatarVariants, {
 });
 
 type AvatarProps = Omit<React.ComponentProps<'div'>, 'className'> &
-	VariantProps<typeof avatarVariants> & { username: string; className?: string };
+	VariantProps<typeof avatarVariants> & {
+		username: string;
+		className?: string;
+		/**
+		 * Inside a control that has its own label (the account menu button): the initials are drawn by CSS, not text, so
+		 * the control's name doesn't have to contain them (WCAG 2.5.3 label in name), and hidden from assistive tech.
+		 */
+		decorative?: boolean;
+	};
 
-export function Avatar({ username, size, className, style, ...props }: AvatarProps) {
+export function Avatar({ username, size, className, style, decorative, ...props }: AvatarProps) {
 	const initials = getInitials(username);
 
 	return (
 		<div
-			className={cn(avatarVariants({ size }), className)}
+			className={cn(avatarVariants({ size }), decorative && styles.decorative, className)}
 			style={{ backgroundColor: getColor(username), color: AVATAR_TEXT_COLOR, ...style }}
 			title={username}
+			{...(decorative && { 'aria-hidden': true, 'data-initials': initials })}
 			{...props}
 		>
-			{initials}
+			{!decorative && initials}
 		</div>
 	);
 }

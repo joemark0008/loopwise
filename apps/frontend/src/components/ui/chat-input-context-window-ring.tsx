@@ -65,7 +65,7 @@ export function ContextWindowRingView({
 	return (
 		<Tooltip delayDuration={200}>
 			<TooltipTrigger asChild>
-				<span tabIndex={0} aria-label={tooltipText} className={styles.contextWindowRingViewSpan}>
+				<span tabIndex={0} role='img' aria-label={tooltipText} className={styles.contextWindowRingViewSpan}>
 					<svg
 						width='20'
 						height='20'

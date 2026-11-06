@@ -148,12 +148,12 @@ The database now follows the PH clinic reference schema. What changed, for anyon
 - **Merging into main:** the `loopwise` database must be dropped, recreated, migrated and reseeded; its chats and the
   clinic's LLM config row do not survive. Re-enter the LLM key in Settings → Clinic → Agent as `test@test.test`.
 
-Flaky tests: real-LLM Playwright specs can flake on model wording; `a11y` (aria-prohibited-attr on the context-window
-ring) and the results-inbox ordering are known flakes; `patient-chart` › "Wise resizes from the keyboard" failed once
-(the first ArrowLeft lands before the splitter is ready) and passed 3/3 on rerun. `test/user-management.e2e-spec.ts`
-expects `BETTER_AUTH_URL=http://localhost:3000` (a worktree on another port must set it for that spec). A worktree
-running its own frontend next to main's also needs `TANSTACK_DEVTOOLS_PORT` (main uses 42069). The
-`flows` › "a chat from the list opens" test skips on a database without chats (a fresh seed has none).
+Flaky tests: real-LLM Playwright specs can flake on model wording; the results-inbox ordering is a known flake;
+`patient-chart` › "Wise resizes from the keyboard" failed once (the first ArrowLeft lands before the splitter is ready)
+and passed 3/3 on rerun. `test/user-management.e2e-spec.ts` expects `BETTER_AUTH_URL=http://localhost:3000` (a worktree
+on another port must set it for that spec). A worktree running its own frontend next to main's also needs
+`TANSTACK_DEVTOOLS_PORT` (main uses 42069). The `flows` › "a chat from the list opens" test skips on a database without
+chats (a fresh seed has none).
 
 ## Next: Phase 1 — front desk and AI scribe
 
@@ -243,8 +243,7 @@ from the cashier desk, which bills the clinic's patients.
   supplier and from patients (the billing hook already nets RETURN_FROM_PATIENT), a printed dangerous-drugs logbook and
   AMR report, Wise proposal cards for a receipt or an adjustment, a weighted-average unit cost (a lot keeps the latest
   cost), barcode scanning, and stock linked on the prescription form (`prescription_items.inventory_item_id` is set at
-  the first dispense only). The app shell's account menu fails axe `label-content-name-mismatch` for users whose name
-  shows next to it (seen as the pharmacist; `e2e/pharmacy.spec.ts` excludes it).
+  the first dispense only).
 - **Billing:** corporate accounts and consolidated invoices, HMO LOAs and transmittals, PhilHealth claims
   (`philhealth_claims`, Konsulta enrollment), refunds.
 - **Follow-ups, next:** the list is built (above). Left: patient reminders for due follow-ups (needs the SMS gateway;

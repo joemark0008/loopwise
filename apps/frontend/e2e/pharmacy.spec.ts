@@ -16,16 +16,9 @@ async function choose(page: Page, label: string | RegExp, option: string | RegEx
 	await page.getByRole('option', { name: option }).first().click();
 }
 
-/**
- * Serious and critical WCAG 2.1 AA violations of the pharmacy screen (as the other screens' checks). The app shell's
- * account menu is left out: its "Account menu" label doesn't contain the name it shows (label-content-name-mismatch),
- * an app-wide issue outside this screen.
- */
+/** Serious and critical WCAG 2.1 AA violations of the pharmacy screen (as the other screens' checks). */
 async function blockingViolations(page: Page): Promise<string[]> {
-	const results = await new AxeBuilder({ page })
-		.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-		.exclude('[aria-label="Account menu"]')
-		.analyze();
+	const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
 	return results.violations
 		.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
 		.map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`);

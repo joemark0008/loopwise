@@ -121,7 +121,7 @@ function AccountMenu({ onOpenKeyboardShortcuts }: { onOpenKeyboardShortcuts: () 
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<button type='button' className={styles.account} aria-label='Account menu'>
-					<Avatar username={user?.name ?? '?'} size='sm' />
+					<Avatar username={user?.name ?? '?'} size='sm' decorative />
 				</button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align='end' className={styles.menu}>
