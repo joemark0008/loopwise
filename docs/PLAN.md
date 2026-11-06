@@ -6,14 +6,13 @@ Loopwise becomes the operating system of a Philippine outpatient clinic: front d
 the patient, with **Wise** (the AI assistant) drafting the work at every desk and a person confirming it. Every
 visit is an encounter, and everything recorded during it hangs off that encounter.
 
-| Item             | Value                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------- |
-| Status           | Product with its own timeline (no longer scoped to the Hack2skill challenge)            |
-| Primary customer | Private / multi-doctor **outpatient clinics in the Philippines** (1–10 doctors)         |
-| Later customers  | Clinic chains (multi-branch), diagnostic centers, RHUs                                  |
-| Base             | Everything on `main` today (see §3); same stack and conventions as `CLAUDE.md`          |
-| Design           | `docs/DESIGN.md` (rewritten for the clinic product, 5 Nov 2026)                         |
-| Archived         | `docs/archive/early-warning-plan.md` (population/workforce early warning — not pursued) |
+| Item             | Value                                                                           |
+| ---------------- | ------------------------------------------------------------------------------- |
+| Status           | Product with its own timeline (no longer scoped to the Hack2skill challenge)    |
+| Primary customer | Private / multi-doctor **outpatient clinics in the Philippines** (1–10 doctors) |
+| Later customers  | Clinic chains (multi-branch), diagnostic centers, RHUs                          |
+| Base             | Everything on `main` today (see §3); same stack and conventions as `CLAUDE.md`  |
+| Design           | `docs/DESIGN.md` (rewritten for the clinic product, 5 Nov 2026)                 |
 
 ---
 
