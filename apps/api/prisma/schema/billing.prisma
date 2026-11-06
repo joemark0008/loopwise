@@ -95,6 +95,7 @@ enum PfStatus {
   UNPAID
   FOR_RELEASE
   RELEASED
+  CANCELLED // Loopwise: the invoice was voided
 
   @@map("pf_status")
 }
@@ -196,18 +197,20 @@ model Invoice {
   buyerBusinessStyle String? @map("buyer_business_style")
 
   // Amounts (PHP)
-  grossAmount    Decimal @default(0) @map("gross_amount") @db.Decimal(12, 2)
-  vatableSales   Decimal @default(0) @map("vatable_sales") @db.Decimal(12, 2)
-  vatExemptSales Decimal @default(0) @map("vat_exempt_sales") @db.Decimal(12, 2)
-  zeroRatedSales Decimal @default(0) @map("zero_rated_sales") @db.Decimal(12, 2)
-  vatAmount      Decimal @default(0) @map("vat_amount") @db.Decimal(12, 2)
-  lessVatScPwd   Decimal @default(0) @map("less_vat_sc_pwd") @db.Decimal(12, 2) // VAT removed for SC/PWD
-  scPwdDiscount  Decimal @default(0) @map("sc_pwd_discount") @db.Decimal(12, 2)
-  otherDiscount  Decimal @default(0) @map("other_discount") @db.Decimal(12, 2)
-  withholdingTax Decimal @default(0) @map("withholding_tax") @db.Decimal(12, 2) // CWT by corporate payors (BIR 2307)
-  netAmount      Decimal @default(0) @map("net_amount") @db.Decimal(12, 2)
-  amountPaid     Decimal @default(0) @map("amount_paid") @db.Decimal(12, 2)
-  balance        Decimal @default(0) @db.Decimal(12, 2)
+  grossAmount        Decimal @default(0) @map("gross_amount") @db.Decimal(12, 2)
+  vatableSales       Decimal @default(0) @map("vatable_sales") @db.Decimal(12, 2)
+  vatExemptSales     Decimal @default(0) @map("vat_exempt_sales") @db.Decimal(12, 2)
+  zeroRatedSales     Decimal @default(0) @map("zero_rated_sales") @db.Decimal(12, 2)
+  vatAmount          Decimal @default(0) @map("vat_amount") @db.Decimal(12, 2)
+  lessVatScPwd       Decimal @default(0) @map("less_vat_sc_pwd") @db.Decimal(12, 2) // VAT removed for SC/PWD
+  scPwdDiscount      Decimal @default(0) @map("sc_pwd_discount") @db.Decimal(12, 2)
+  otherDiscount      Decimal @default(0) @map("other_discount") @db.Decimal(12, 2)
+  withholdingTax     Decimal @default(0) @map("withholding_tax") @db.Decimal(12, 2) // CWT by corporate payors (BIR 2307)
+  /// Loopwise: the CWT rate withheld (0.02 = 2%), kept to redraw the draft.
+  withholdingTaxRate Decimal @default(0) @map("withholding_tax_rate") @db.Decimal(5, 4)
+  netAmount          Decimal @default(0) @map("net_amount") @db.Decimal(12, 2)
+  amountPaid         Decimal @default(0) @map("amount_paid") @db.Decimal(12, 2)
+  balance            Decimal @default(0) @db.Decimal(12, 2)
 
   status      InvoiceStatus @default(DRAFT)
   /// Loopwise: bumped by a trigger on every update; a Wise card saves against the version it showed.
@@ -312,6 +315,9 @@ model Payment {
   receivedById       String?       @map("received_by_id") @db.Uuid
   voidReason         String?       @map("void_reason")
   notes              String?
+  /// Loopwise: who voided the payment, and when.
+  voidedAt           DateTime?     @map("voided_at") @db.Timestamptz(3)
+  voidedById         String?       @map("voided_by_id") @db.Uuid
 
   clinic           Clinic              @relation(fields: [clinicId], references: [id])
   cashierShift     CashierShift?       @relation(fields: [cashierShiftId], references: [id])
@@ -354,6 +360,8 @@ model CashierShift {
   variance      Decimal?  @db.Decimal(12, 2)
   denominations Json? // { "1000": 5, "500": 3, "coins": 120.50 }
   remarks       String?
+  /// Loopwise: who took the Z reading. One open shift per cashier per clinic (partial unique index, migration 0003).
+  closedById    String?   @map("closed_by_id") @db.Uuid
 
   clinic   Clinic    @relation(fields: [clinicId], references: [id])
   cashier  User      @relation(fields: [cashierId], references: [id])
@@ -377,6 +385,8 @@ model ProfessionalFee {
   status         PfStatus  @default(UNPAID)
   releasedAt     DateTime? @map("released_at") @db.Timestamptz(3)
   releaseRef     String?   @map("release_ref") // check / bank transfer ref
+  /// Loopwise: who released the fee.
+  releasedById   String?   @map("released_by_id") @db.Uuid
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   practitioner Practitioner @relation(fields: [practitionerId], references: [id])

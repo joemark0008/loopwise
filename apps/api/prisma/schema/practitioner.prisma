@@ -78,11 +78,15 @@ model Practitioner {
 
 /// Which clinics a doctor holds clinic in, with clinic-specific fee/room
 model PractitionerClinic {
-  practitionerId String   @map("practitioner_id") @db.Uuid
-  clinicId       String   @map("clinic_id") @db.Uuid
-  roomName       String?  @map("room_name") // "Room 203"
-  consultFee     Decimal? @map("consult_fee") @db.Decimal(12, 2)
-  isActive       Boolean  @default(true) @map("is_active")
+  practitionerId  String   @map("practitioner_id") @db.Uuid
+  clinicId        String   @map("clinic_id") @db.Uuid
+  roomName        String?  @map("room_name") // "Room 203"
+  consultFee      Decimal? @map("consult_fee") @db.Decimal(12, 2)
+  isActive        Boolean  @default(true) @map("is_active")
+  /// Loopwise: professional fee terms here. EWT rate withheld from the fee (null = the 10% default) and the clinic's
+  /// share of it; to be confirmed by the clinic's accountant.
+  ewtRate         Decimal? @map("ewt_rate") @db.Decimal(5, 4)
+  clinicShareRate Decimal  @default(0) @map("clinic_share_rate") @db.Decimal(5, 4)
 
   practitioner Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
   clinic       Clinic       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
