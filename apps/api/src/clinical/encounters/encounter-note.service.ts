@@ -52,13 +52,15 @@ export class EncounterNoteService {
 	/**
 	 * Saves the note. With `expectedVersion`, a note that changed since the edit was drafted is refused
 	 * (STALE_VERSION). With `wiseOrigin` (`propose_encounter_note`), the card is verified and settled in the same
-	 * transaction, and the audit row records it. The review of systems, subjective and objective fields are kept as they
-	 * are when left out (forms that don't show them), and cleared when sent empty.
+	 * transaction, and the audit row records it. The review of systems, subjective, objective, follow-up date and
+	 * disposition are kept as they are when left out (forms and Wise cards that don't show them), and cleared when sent
+	 * empty or null.
 	 */
 	async update(userId: string, input: UpdateEncounterNoteInput): Promise<Encounter> {
 		const { encounterId, expectedVersion, wiseOrigin, ...fields } = input;
 		const note = parseInput(EncounterNoteSchema, fields);
-		const given = (key: 'reviewOfSystems' | 'subjective' | 'objective') => fields[key] !== undefined;
+		const given = (key: 'reviewOfSystems' | 'subjective' | 'objective' | 'followUpOn' | 'disposition') =>
+			fields[key] !== undefined;
 		return this.db.asUser(userId, async (tx) => {
 			const encounter = await this.encounterAccess.requireWritable(tx, userId, encounterId);
 			const card = wiseOrigin
@@ -83,8 +85,8 @@ export class EncounterNoteService {
 					assessment: note.assessment ?? null,
 					plan: note.plan ?? null,
 					patientInstructions: note.patientInstructions ?? null,
-					followUpDate: note.followUpOn ? dateOnly(note.followUpOn) : null,
-					disposition: note.disposition ?? null,
+					...(given('followUpOn') && { followUpDate: note.followUpOn ? dateOnly(note.followUpOn) : null }),
+					...(given('disposition') && { disposition: note.disposition ?? null }),
 					notes: note.notes ?? null,
 				},
 				expectedVersion,

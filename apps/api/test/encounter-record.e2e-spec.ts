@@ -211,6 +211,39 @@ describe('encounters and their record (e2e)', () => {
 		expect(audit.changes).toMatchObject({ after: { assessment: 'Hypertension, stage 1' } });
 	});
 
+	it('keeps the follow-up date and disposition when a save leaves them out, and clears them when sent null', async () => {
+		// As Wise's `propose_encounter_note` card saves: its fields only, no disposition.
+		const { encounterRecord } = await ok(cookies.doctor, RECORD, { id: visitId });
+		const { updateEncounterNote: kept } = await ok(cookies.doctor, NOTE, {
+			input: {
+				encounterId: visitId,
+				reason: 'Fatigue for 2 weeks',
+				plan: 'Amlodipine 10 mg once a day',
+				expectedVersion: encounterRecord.encounter.version,
+			},
+		});
+		expect(kept).toMatchObject({
+			plan: 'Amlodipine 10 mg once a day',
+			followUpOn: '2026-12-01',
+			disposition: 'FOR_FOLLOW_UP',
+		});
+
+		const { updateEncounterNote: cleared } = await ok(cookies.doctor, NOTE, {
+			input: { encounterId: visitId, reason: 'Fatigue for 2 weeks', followUpOn: null, disposition: null },
+		});
+		expect(cleared).toMatchObject({ followUpOn: null, disposition: null });
+
+		// Put them back for the tests after this one.
+		await ok(cookies.doctor, NOTE, {
+			input: {
+				encounterId: visitId,
+				reason: 'Fatigue for 2 weeks',
+				followUpOn: '2026-12-01',
+				disposition: 'FOR_FOLLOW_UP',
+			},
+		});
+	});
+
 	it('records vitals with the BMI computed, rejects implausible values, and voids an entry', async () => {
 		const { recordVitals } = await ok(cookies.doctor, VITALS, {
 			input: {

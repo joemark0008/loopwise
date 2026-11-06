@@ -20,9 +20,73 @@ async function gql<T>(page: Page, query: string, variables: Record<string, unkno
 	return body.data!;
 }
 
-/** The YYYY-MM-DD of tomorrow in Manila. */
-function manilaTomorrow(): string {
-	return new Date(Date.now() + 8 * 3_600_000 + 86_400_000).toISOString().slice(0, 10);
+/** The YYYY-MM-DD `days` from today in Manila. */
+function manilaDay(days: number): string {
+	return new Date(Date.now() + 8 * 3_600_000 + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** A number as letters (a name can't hold digits). */
+function lettersOf(n: number): string {
+	return n
+		.toString(26)
+		.split('')
+		.map((digit) => String.fromCharCode(97 + parseInt(digit, 26)))
+		.join('');
+}
+
+const NOTE = 'mutation ($input: UpdateEncounterNoteInput!) { updateEncounterNote(input: $input) { id } }';
+
+/**
+ * As the signed-in doctor: registers a new synthetic patient at the health center and records a completed visit 10
+ * days ago with a follow-up date 3 days ago ("For follow-up"). Returns the visit's id.
+ */
+async function dueFollowUp(doctor: Page, name: { givenName: string; familyName: string }): Promise<string> {
+	const { myCareClinics } = await gql<{ myCareClinics: { id: string; name: string }[] }>(
+		doctor,
+		'query { myCareClinics { id name } }',
+		{},
+	);
+	const clinicId = myCareClinics.find((clinic) => clinic.name === 'Tagbilaran City Health Center')!.id;
+	const { registerPatient } = await gql<{ registerPatient: { patient: { id: string } } }>(
+		doctor,
+		'mutation ($input: RegisterPatientInput!) { registerPatient(input: $input) { patient { id } } }',
+		{
+			input: {
+				clinicId,
+				...name,
+				birthDate: '1971-04-12',
+				sex: 'FEMALE',
+				consentGiven: true,
+				acknowledgeDuplicates: true,
+			},
+		},
+	);
+	const { createEncounter } = await gql<{ createEncounter: { id: string } }>(
+		doctor,
+		'mutation ($input: CreateEncounterInput!) { createEncounter(input: $input) { id } }',
+		{
+			input: {
+				patientId: registerPatient.patient.id,
+				clinicId,
+				reason: 'E2E follow-up visit',
+				startedAt: new Date(Date.now() - 10 * 86_400_000).toISOString(),
+			},
+		},
+	);
+	const encounterId = createEncounter.id;
+	await gql(doctor, NOTE, {
+		input: {
+			encounterId,
+			reason: 'E2E follow-up visit',
+			plan: 'Return with a BP log.',
+			followUpOn: manilaDay(-3),
+			disposition: 'FOR_FOLLOW_UP',
+		},
+	});
+	await gql(doctor, 'mutation ($input: TransitionEncounterInput!) { transitionEncounter(input: $input) { id } }', {
+		input: { encounterId, status: 'COMPLETED' },
+	});
+	return encounterId;
 }
 
 test.describe('visit flow, follow-ups and referrals', () => {
@@ -89,22 +153,30 @@ test.describe('visit flow, follow-ups and referrals', () => {
 
 	test('the front desk books a due follow-up from the list, with the patient and doctor filled in', async ({
 		page,
+		browser,
 	}) => {
 		test.setTimeout(120_000);
 		const errors = trackErrors(page);
 		const marker = `E2E follow-up ${Date.now().toString(36)}`;
+		// Its own due follow-up, so earlier runs and other specs don't matter: Dr. Reyes registers a new patient, saw
+		// her 10 days ago and asked her back 3 days ago.
+		const doctor = await signedIn(browser, '/', DOCTOR);
+		const name = { givenName: 'Follow', familyName: `Fu${lettersOf(Date.now())}` };
+		const patientName = `${name.givenName} ${name.familyName}`;
+		const visit = await dueFollowUp(doctor, name);
+
 		await logIn(page, '/follow-ups', FRONT_DESK);
 		await expect(page.getByRole('heading', { name: 'Follow-ups' })).toBeVisible();
-		const row = page.getByTestId('follow-up-row').filter({ hasText: 'Teresita Cabahug' });
-		await expect(row).toContainText(/Overdue \d+ d/);
+		const row = page.getByTestId('follow-up-row').filter({ hasText: patientName });
+		await expect(row).toContainText('Overdue 3 d');
 		await expect(row).toContainText('For follow-up');
 
-		await row.getByRole('button', { name: 'Book follow-up for Teresita Cabahug' }).click();
+		await row.getByRole('button', { name: `Book follow-up for ${patientName}` }).click();
 		const dialog = page.getByRole('dialog');
-		await expect(dialog.getByText('Teresita Cabahug')).toBeVisible();
+		await expect(dialog.getByText(patientName)).toBeVisible();
 		await expect(dialog.getByRole('combobox', { name: 'Doctor' })).toContainText(/Reyes/);
 		await expect(dialog.getByRole('combobox', { name: 'Visit' })).toContainText('Follow-up');
-		const day = manilaTomorrow();
+		const day = manilaDay(1);
 		await dialog.getByLabel('Day').fill(day);
 		await dialog.getByRole('group', { name: 'Open slots' }).getByRole('button').first().click();
 		await dialog.getByLabel('Reason for the visit').fill(marker);
@@ -113,7 +185,7 @@ test.describe('visit flow, follow-ups and referrals', () => {
 		// Booked with her doctor: off the list.
 		await expect(row).toBeHidden();
 
-		// Clean up: cancel the booking (a cancelled booking doesn't count), and she is due again.
+		// Cancel the booking (a cancelled booking doesn't count), and she is due again.
 		await page.goto(`/appointments?date=${day}`);
 		const booking = page.getByTestId('appointment-row').filter({ hasText: marker });
 		await booking.getByRole('button', { name: /^Cancel/ }).click();
@@ -124,8 +196,14 @@ test.describe('visit flow, follow-ups and referrals', () => {
 			.click();
 		await expect(booking).toContainText('Cancelled');
 		await page.goto('/follow-ups');
-		await expect(page.getByTestId('follow-up-row').filter({ hasText: 'Teresita Cabahug' })).toBeVisible();
+		await expect(page.getByTestId('follow-up-row').filter({ hasText: patientName })).toBeVisible();
 		expect(errors).toEqual([]);
+
+		// Clean up: without a follow-up date she leaves the list for good.
+		await gql(doctor, NOTE, { input: { encounterId: visit, reason: 'E2E follow-up visit', followUpOn: null } });
+		await page.reload();
+		await expect(page.getByRole('heading', { name: 'Follow-ups' })).toBeVisible();
+		await expect(page.getByTestId('follow-up-row').filter({ hasText: patientName })).toBeHidden();
 	});
 
 	test('the receiving doctor accepts, completes and declines referrals; the letter prints', async ({
