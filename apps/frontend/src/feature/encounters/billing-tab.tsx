@@ -1,36 +1,30 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import {
-	changeDue,
 	DISCOUNT_LABELS,
 	formatPesos,
 	INVOICE_STATUS_LABELS,
+	OTHER_DISCOUNT_LABELS,
 	PAYMENT_METHOD_LABELS,
-	PAYMENT_METHODS,
-	paymentReferenceLabel,
-	STATUTORY_DISCOUNT_TYPES,
 	TAX_TYPE_LABELS,
 } from '@loopwise/shared/invoice';
-import { Plus, Trash2 } from 'lucide-react';
+import { Download, Plus, Printer, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import styles from './encounter.module.css';
 import {
 	activeInvoice,
 	emptyInvoiceLine,
-	idNumberOnFile,
 	invoiceFormFrom,
 	invoiceFormTotals,
 	lineFromPriceItem,
-	paymentFormFrom,
-	toRecordPaymentInput,
 	toSaveInvoiceDraftInput,
 	validateInvoiceForm,
-	validatePaymentForm,
 } from './billing-form-values';
 import { formatDateTime } from './encounter-format';
 import { FormField } from './form-field';
 import { VoidDialog } from './void-dialog';
-import type { InvoiceFormValues, InvoiceLineFormValues, PaymentFormValues } from './billing-form-values';
-import type { PaymentMethod, StatutoryDiscountType } from '@loopwise/shared/invoice';
+import type { InvoiceFormValues, InvoiceLineFormValues } from './billing-form-values';
+import type { OtherDiscountType, StatutoryDiscountType } from '@loopwise/shared/invoice';
 import type { UseMutationOptions } from '@tanstack/react-query';
 import type {
 	EncounterBillingFieldsFragment,
@@ -42,16 +36,16 @@ import { Button } from '@/components/ui/button';
 import { Empty } from '@/components/ui/empty';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import billingStyles from '@/feature/billing/billing.module.css';
+import { DiscountFields } from '@/feature/billing/discount-fields';
+import { PaymentForm } from '@/feature/billing/payment-form';
 import { billingApi } from '@/lib/billing-api';
-
-const NO_DISCOUNT = 'none';
 
 /** The badge of an invoice status (the shared badge speaks lower case). */
 const badgeStatus = (status: InvoiceFieldsFragment['status']) => (status === 'VOID' ? 'voided' : status.toLowerCase());
 
-/** A billing write: on success the visit's billing is read again. */
+/** A billing write: on success the visit's billing (and the cashier desk) is read again. */
 function useBillingMutation<TInput, TOutput>(procedure: {
 	mutationOptions: (
 		opts?: Omit<UseMutationOptions<TOutput, Error, TInput>, 'mutationFn' | 'mutationKey'>,
@@ -59,17 +53,15 @@ function useBillingMutation<TInput, TOutput>(procedure: {
 }) {
 	const queryClient = useQueryClient();
 	return useMutation(
-		procedure.mutationOptions({
-			onSuccess: () => queryClient.invalidateQueries(billingApi.billing.get.pathFilter()),
-		}),
+		procedure.mutationOptions({ onSuccess: () => queryClient.invalidateQueries(billingApi.invalidate) }),
 	);
 }
 
 /**
- * The visit's invoice (BIR sales invoice): the doctor or the desk drafts it from the clinic's price list (the
- * consultation and the tests ordered to start), with the senior citizen / PWD discount and the ID shown; issuing
- * numbers and locks it; the cashier then records payments (a PhilHealth package such as Konsulta is a PhilHealth
- * payment) until it is paid, or voids it with a reason.
+ * The visit's invoice (BIR sales invoice): the doctor or the desk drafts it ("Load charges" brings the consultation,
+ * the tests ordered and the medicines dispensed), with an SC/PWD discount from the ID on file or another approved
+ * discount; issuing numbers it from the clinic's BIR series and locks it; the cashier then takes payments, split
+ * across tenders, on their open shift, prints it, and an admin voids it with a reason.
  */
 export function BillingTab({ record }: { record: EncounterRecordFieldsFragment }) {
 	const billing = useQuery(billingApi.billing.get.queryOptions({ encounterId: record.encounter.id }));
@@ -89,7 +81,7 @@ export function BillingTab({ record }: { record: EncounterRecordFieldsFragment }
 			{active && active.status !== 'DRAFT' ? (
 				<InvoiceCard billing={data} invoice={active} />
 			) : data.canDraft ? (
-				<InvoiceEditor key={active?.id ?? 'new'} billing={data} draft={active} />
+				<InvoiceEditor key={`${active?.id ?? 'new'}-${active?.version ?? 0}`} billing={data} draft={active} />
 			) : active ? (
 				<InvoiceCard billing={data} invoice={active} />
 			) : (
@@ -102,10 +94,11 @@ export function BillingTab({ record }: { record: EncounterRecordFieldsFragment }
 	);
 }
 
-/** The BIR breakdown: VATable / VAT-exempt / zero-rated sales, VAT, the SC/PWD discount and the amount due. */
+/** The BIR breakdown: sales by tax type, VAT, the SC/PWD and other discounts, withholding and the amount due. */
 export function InvoiceTotals({
 	totals,
 	discountType,
+	otherDiscountType,
 	payments,
 }: {
 	totals: {
@@ -116,9 +109,12 @@ export function InvoiceTotals({
 		vatAmount: number;
 		lessVatScPwd: number;
 		scPwdDiscount: number;
+		otherDiscount?: number;
+		withholdingTax?: number;
 		netAmount: number;
 	};
 	discountType: StatutoryDiscountType | null;
+	otherDiscountType?: OtherDiscountType | null;
 	payments?: { amountPaid: number; balance: number };
 }) {
 	const row = (label: string, value: number, strong = false) => (
@@ -137,6 +133,10 @@ export function InvoiceTotals({
 				{totals.zeroRatedSales > 0 && row('Zero-rated sales', totals.zeroRatedSales)}
 				{discountType && totals.lessVatScPwd > 0 && row('Less: VAT (SC/PWD)', -totals.lessVatScPwd)}
 				{discountType && row(`Less: ${DISCOUNT_LABELS[discountType]}`, -totals.scPwdDiscount)}
+				{otherDiscountType &&
+					(totals.otherDiscount ?? 0) > 0 &&
+					row(`Less: ${OTHER_DISCOUNT_LABELS[otherDiscountType]} discount`, -(totals.otherDiscount ?? 0))}
+				{(totals.withholdingTax ?? 0) > 0 && row('Less: withholding tax', -(totals.withholdingTax ?? 0))}
 				{row('Amount due', totals.netAmount, true)}
 				{payments && row('Paid', payments.amountPaid)}
 				{payments && row('Balance', payments.balance, true)}
@@ -165,6 +165,9 @@ function InvoiceLines({ lines }: { lines: InvoiceFieldsFragment['lines'] }) {
 								{line.taxType !== 'VAT_EXEMPT' && (
 									<span className={styles.muted}> · {TAX_TYPE_LABELS[line.taxType]}</span>
 								)}
+								{line.isProfessionalFee && line.practitionerName && (
+									<span className={styles.muted}> · PF {line.practitionerName}</span>
+								)}
 							</td>
 							<td data-numeric>{line.quantity}</td>
 							<td data-numeric>{formatPesos(line.unitPrice)}</td>
@@ -177,6 +180,13 @@ function InvoiceLines({ lines }: { lines: InvoiceFieldsFragment['lines'] }) {
 	);
 }
 
+const statutoryOf = (invoice: InvoiceFieldsFragment) => {
+	const discount = invoice.discounts.find((row) => row.type === 'SENIOR_CITIZEN' || row.type === 'PWD');
+	return discount && (discount.type === 'SENIOR_CITIZEN' || discount.type === 'PWD') ? discount : null;
+};
+const otherOf = (invoice: InvoiceFieldsFragment) =>
+	invoice.discounts.find((row) => row.type === 'EMPLOYEE' || row.type === 'PROMO' || row.type === 'SPECIAL') ?? null;
+
 /** An issued, paid or voided invoice (or a draft, read-only, for staff who don't bill). */
 function InvoiceCard({
 	billing,
@@ -186,10 +196,11 @@ function InvoiceCard({
 	invoice: InvoiceFieldsFragment;
 }) {
 	const [isVoiding, setIsVoiding] = useState(false);
+	const [voidingPayment, setVoidingPayment] = useState<string | null>(null);
 	const voidInvoice = useBillingMutation(billingApi.billing.void);
-	const discount = invoice.discounts[0];
-	const discountType =
-		discount && (discount.type === 'SENIOR_CITIZEN' || discount.type === 'PWD') ? discount.type : null;
+	const voidPayment = useBillingMutation(billingApi.billing.voidPayment);
+	const statutory = statutoryOf(invoice);
+	const other = otherOf(invoice);
 	const payable = invoice.status === 'ISSUED' || invoice.status === 'PARTIALLY_PAID';
 
 	return (
@@ -203,7 +214,15 @@ function InvoiceCard({
 				</span>
 				<span className={styles.actions}>
 					<StatusBadge status={badgeStatus(invoice.status)} title={INVOICE_STATUS_LABELS[invoice.status]} />
-					{billing.canCollect && invoice.status !== 'VOID' && (
+					{invoice.status !== 'DRAFT' && (
+						<Button size='sm' variant='ghost' asChild>
+							<Link to='/print/invoice/$invoiceId' params={{ invoiceId: invoice.id }} target='_blank'>
+								<Printer />
+								Print
+							</Link>
+						</Button>
+					)}
+					{billing.canVoid && invoice.status !== 'VOID' && (
 						<Button size='sm' variant='ghost-muted' onClick={() => setIsVoiding(true)}>
 							Void
 						</Button>
@@ -212,26 +231,68 @@ function InvoiceCard({
 			</div>
 			<p className={styles.muted}>Sold to {invoice.buyerName}</p>
 			<InvoiceLines lines={invoice.lines} />
-			{discount && (
+			{statutory && (
 				<p className={styles.muted} data-testid='invoice-discount'>
-					{discountType ? DISCOUNT_LABELS[discountType] : discount.type} · ID{' '}
-					{discount.idNumber ?? 'not recorded'}
-					{discount.identificationId ? ' (on file)' : ''}
+					{DISCOUNT_LABELS[statutory.type as StatutoryDiscountType]} · {statutory.beneficiaryName} · ID{' '}
+					{statutory.idNumber ?? 'not recorded'}
+				</p>
+			)}
+			{other && (
+				<p className={styles.muted} data-testid='invoice-other-discount'>
+					{OTHER_DISCOUNT_LABELS[other.type as OtherDiscountType]} discount · approved by{' '}
+					{billing.discountApprovers.find((approver) => approver.userId === other.approvedById)?.name ??
+						'a clinic approver'}
 				</p>
 			)}
 			<InvoiceTotals
 				totals={invoice}
-				discountType={discountType}
+				discountType={statutory ? (statutory.type as StatutoryDiscountType) : null}
+				otherDiscountType={other ? (other.type as OtherDiscountType) : null}
 				payments={invoice.status === 'DRAFT' ? undefined : invoice}
 			/>
-			{invoice.payments.length > 0 && <PaymentList payments={invoice.payments} />}
+			{invoice.payments.length > 0 && (
+				<ul className={styles.muted} data-testid='invoice-payments'>
+					{invoice.payments.map((payment) => (
+						<li key={payment.id}>
+							{PAYMENT_METHOD_LABELS[payment.method]} {formatPesos(payment.amount)}
+							{payment.referenceNo && ` · ${payment.referenceNo}`}
+							{payment.bankName && ` · ${payment.bankName}`}
+							{payment.changeAmount ? ` · change ${formatPesos(payment.changeAmount)}` : ''} ·{' '}
+							{payment.paymentNo}
+							{payment.status !== 'POSTED' && ` · ${payment.status.toLowerCase()}`}
+							{payment.voidReason && ` (${payment.voidReason})`}
+							{billing.canVoid && payment.status === 'POSTED' && invoice.status !== 'VOID' && (
+								<>
+									{' '}
+									<Button
+										size='sm'
+										variant='ghost-muted'
+										onClick={() => setVoidingPayment(payment.id)}
+										aria-label={`Void payment ${payment.paymentNo}`}
+									>
+										Void
+									</Button>
+								</>
+							)}
+						</li>
+					))}
+				</ul>
+			)}
 			{invoice.voidReason && <p className={styles.muted}>Voided: {invoice.voidReason}</p>}
-			{billing.canCollect && payable && <PaymentForm key={invoice.version} invoice={invoice} />}
+			{billing.canCollect &&
+				payable &&
+				(billing.openShiftId ? (
+					<PaymentForm key={invoice.version} invoice={invoice} />
+				) : (
+					<p className={billingStyles.notice} data-testid='no-open-shift'>
+						Open your cashier shift to take payments. <Link to='/cashier'>Go to the cashier desk</Link>
+					</p>
+				))}
 			<VoidDialog
 				open={isVoiding}
 				onOpenChange={setIsVoiding}
 				title='Void invoice'
-				description='The invoice stays in the record, marked void, with its payments; a new one can then be drafted.'
+				description='The invoice keeps its number, marked void with your reason, and its payments are voided; a new one can then be drafted.'
 				isPending={voidInvoice.isPending}
 				error={voidInvoice.error?.message}
 				onVoid={(reason) =>
@@ -241,113 +302,26 @@ function InvoiceCard({
 					)
 				}
 			/>
+			<VoidDialog
+				open={voidingPayment !== null}
+				onOpenChange={(open) => !open && setVoidingPayment(null)}
+				title='Void payment'
+				description='The payment stays on the record, marked void with your reason; the invoice gets its balance back.'
+				isPending={voidPayment.isPending}
+				error={voidPayment.error?.message}
+				onVoid={(reason) =>
+					voidingPayment &&
+					voidPayment.mutate(
+						{ paymentId: voidingPayment, reason },
+						{ onSuccess: () => setVoidingPayment(null) },
+					)
+				}
+			/>
 		</article>
 	);
 }
 
-function PaymentList({ payments }: { payments: InvoiceFieldsFragment['payments'] }) {
-	return (
-		<ul className={styles.muted} data-testid='invoice-payments'>
-			{payments.map((payment) => (
-				<li key={payment.id}>
-					{PAYMENT_METHOD_LABELS[payment.method]} {formatPesos(payment.amount)}
-					{payment.referenceNo && ` · ${payment.referenceNo}`}
-					{payment.changeAmount ? ` · change ${formatPesos(payment.changeAmount)}` : ''} · {payment.paymentNo}
-					{payment.status !== 'POSTED' && ` · ${payment.status.toLowerCase()}`}
-				</li>
-			))}
-		</ul>
-	);
-}
-
-/** The cashier's payment: method, amount (the balance by default), cash tendered and the OR / reference number. */
-function PaymentForm({ invoice }: { invoice: InvoiceFieldsFragment }) {
-	const [values, setValues] = useState<PaymentFormValues>(() => paymentFormFrom(invoice));
-	const [showErrors, setShowErrors] = useState(false);
-	const pay = useBillingMutation(billingApi.billing.recordPayment);
-	const errors = validatePaymentForm(values, invoice.balance);
-	const error = (key: string) => (showErrors ? errors[key] : undefined);
-	const isCash = values.method === 'CASH';
-	const change = isCash ? changeDue(Number(values.amount) || 0, Number(values.tenderedAmount) || 0) : 0;
-
-	return (
-		<form
-			className={styles.fields}
-			noValidate
-			data-testid='payment-form'
-			onSubmit={(event) => {
-				event.preventDefault();
-				setShowErrors(true);
-				if (Object.keys(errors).length === 0) {
-					pay.mutate(toRecordPaymentInput(invoice, values));
-				}
-			}}
-		>
-			<FormField label='Method'>
-				{() => (
-					<Select
-						value={values.method}
-						onValueChange={(method) => setValues({ ...values, method: method as PaymentMethod })}
-					>
-						<SelectTrigger className={styles.control} aria-label='Method'>
-							<SelectValue />
-						</SelectTrigger>
-						<SelectContent>
-							{PAYMENT_METHODS.map((method) => (
-								<SelectItem key={method} value={method}>
-									{PAYMENT_METHOD_LABELS[method]}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				)}
-			</FormField>
-			<FormField label='Amount' unit='₱' error={error('amount')}>
-				{(id) => (
-					<Input
-						id={id}
-						inputMode='decimal'
-						value={values.amount}
-						onChange={(event) => setValues({ ...values, amount: event.target.value })}
-						disabled={pay.isPending}
-					/>
-				)}
-			</FormField>
-			{isCash && (
-				<FormField label='Cash tendered' unit='₱' error={error('tenderedAmount')}>
-					{(id) => (
-						<Input
-							id={id}
-							inputMode='decimal'
-							value={values.tenderedAmount}
-							onChange={(event) => setValues({ ...values, tenderedAmount: event.target.value })}
-							disabled={pay.isPending}
-						/>
-					)}
-				</FormField>
-			)}
-			<FormField label={paymentReferenceLabel(values.method)} error={error('referenceNo')}>
-				{(id) => (
-					<Input
-						id={id}
-						value={values.referenceNo}
-						onChange={(event) => setValues({ ...values, referenceNo: event.target.value })}
-						disabled={pay.isPending}
-					/>
-				)}
-			</FormField>
-			<div className={styles.actions}>
-				{change > 0 && <span className={styles.muted}>Change {formatPesos(change)}</span>}
-				<Button type='submit' size='sm' disabled={pay.isPending}>
-					Record payment
-				</Button>
-			</div>
-			{pay.error && <ErrorMessage message={pay.error.message} />}
-		</form>
-	);
-}
-
-/** The draft: lines from the price list or free text, the SC/PWD discount, then save and issue. */
+/** The draft: "Load charges" from the visit, lines from the price list or free text, discounts, then save and issue. */
 function InvoiceEditor({
 	billing,
 	draft,
@@ -360,14 +334,16 @@ function InvoiceEditor({
 	const [values, setValues] = useState<InvoiceFormValues>(initial);
 	const [showErrors, setShowErrors] = useState(false);
 	const save = useBillingMutation(billingApi.billing.saveDraft);
+	const load = useBillingMutation(billingApi.billing.loadCharges);
 	const issue = useBillingMutation(billingApi.billing.issue);
 	const errors = validateInvoiceForm(values);
-	const totals = invoiceFormTotals(values);
+	const totals = invoiceFormTotals(values, billing.vatRegistered);
 	const isDirty = JSON.stringify(values) !== JSON.stringify(initial) || !draft;
-	const busy = save.isPending || issue.isPending;
+	const busy = save.isPending || issue.isPending || load.isPending;
 	const error = (key: string) => (showErrors ? errors[key] : undefined);
 	const setLine = (index: number, line: InvoiceLineFormValues) =>
 		setValues({ ...values, lines: values.lines.map((current, i) => (i === index ? line : current)) });
+	const failure = save.error ?? load.error ?? issue.error;
 
 	return (
 		<form
@@ -386,7 +362,26 @@ function InvoiceEditor({
 		>
 			<div className={styles.cardHeader}>
 				<span className={styles.cardTitle}>{draft ? 'Draft invoice' : 'New invoice'}</span>
-				<StatusBadge status='draft' />
+				<span className={styles.actions}>
+					<Button
+						type='button'
+						size='sm'
+						variant='outline'
+						disabled={busy || Boolean(draft && isDirty)}
+						title={
+							draft && isDirty
+								? 'Save the draft first'
+								: 'The consultation, tests and medicines dispensed'
+						}
+						onClick={() =>
+							load.mutate({ encounterId: billing.encounterId, expectedVersion: draft?.version ?? null })
+						}
+					>
+						<Download />
+						Load charges
+					</Button>
+					<StatusBadge status='draft' />
+				</span>
 			</div>
 			<div className={styles.itemRows}>
 				{values.lines.map((line, index) => (
@@ -406,7 +401,12 @@ function InvoiceEditor({
 												index,
 												item
 													? lineFromPriceItem(item, line.quantity)
-													: { ...line, serviceItemId: '', description: event.target.value },
+													: {
+															...line,
+															serviceItemId: '',
+															category: '',
+															description: event.target.value,
+														},
 											);
 										}}
 										disabled={busy}
@@ -438,7 +438,8 @@ function InvoiceEditor({
 						</div>
 						<div className={styles.actions}>
 							<span className={styles.muted}>
-								{line.serviceItemId ? TAX_TYPE_LABELS[line.taxType] : 'Not on the price list'} ·{' '}
+								{line.serviceItemId ? TAX_TYPE_LABELS[line.taxType] : 'Not on the price list'}
+								{line.practitionerId ? ' · doctor’s fee' : ''} ·{' '}
 								{formatPesos(totals.lines[index]?.lineTotal ?? 0)}
 							</span>
 							{values.lines.length > 1 && (
@@ -475,57 +476,18 @@ function InvoiceEditor({
 					Add line
 				</Button>
 			</div>
-			<div className={styles.fields}>
-				<FormField label='Discount'>
-					{() => (
-						<Select
-							value={values.discountType || NO_DISCOUNT}
-							onValueChange={(value) => {
-								const discountType = value === NO_DISCOUNT ? '' : (value as StatutoryDiscountType);
-								setValues({
-									...values,
-									discountType,
-									discountIdNumber: values.discountIdNumber || idNumberOnFile(billing, discountType),
-								});
-							}}
-						>
-							<SelectTrigger className={styles.control} aria-label='Discount'>
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value={NO_DISCOUNT}>None</SelectItem>
-								{STATUTORY_DISCOUNT_TYPES.map((type) => (
-									<SelectItem key={type} value={type}>
-										{DISCOUNT_LABELS[type]}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					)}
-				</FormField>
-				{values.discountType && (
-					<FormField
-						label={values.discountType === 'PWD' ? 'PWD ID number' : 'OSCA ID number'}
-						error={error('discountIdNumber')}
-					>
-						{(id) => (
-							<Input
-								id={id}
-								value={values.discountIdNumber}
-								onChange={(event) => setValues({ ...values, discountIdNumber: event.target.value })}
-								disabled={busy}
-							/>
-						)}
-					</FormField>
-				)}
-			</div>
-			<InvoiceTotals totals={totals} discountType={values.discountType || null} />
+			<DiscountFields billing={billing} values={values} onChange={setValues} errors={error} disabled={busy} />
+			{showErrors && errors.otherDiscountType && <p className={styles.fieldError}>{errors.otherDiscountType}</p>}
+			<InvoiceTotals
+				totals={totals}
+				discountType={values.discountType || null}
+				otherDiscountType={values.otherDiscountType || null}
+			/>
 			<p className={styles.muted}>
-				PhilHealth package coverage (e.g. Konsulta) is recorded as a PhilHealth payment once the invoice is
-				issued.
+				{billing.vatRegistered ? 'VAT-registered clinic.' : 'Non-VAT clinic: no VAT is added.'} PhilHealth
+				package coverage (e.g. Konsulta) is recorded as a PhilHealth payment once the invoice is issued.
 			</p>
-			{save.error && <ErrorMessage message={save.error.message} />}
-			{issue.error && <ErrorMessage message={issue.error.message} />}
+			{failure && <ErrorMessage message={failure.message} />}
 			<div className={styles.actions}>
 				<Button type='submit' size='sm' variant='outline' disabled={busy || !isDirty}>
 					Save draft

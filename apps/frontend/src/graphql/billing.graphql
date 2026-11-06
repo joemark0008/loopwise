@@ -2,6 +2,7 @@ fragment InvoiceFields on Invoice {
 	id
 	version
 	encounterId
+	seriesId
 	invoiceNo
 	invoiceDate
 	status
@@ -18,6 +19,10 @@ fragment InvoiceFields on Invoice {
 		vatAmount
 		discountAmount
 		lineTotal
+		isProfessionalFee
+		practitionerId
+		practitionerName
+		scPwdEligible
 	}
 	discounts {
 		id
@@ -28,6 +33,7 @@ fragment InvoiceFields on Invoice {
 		beneficiaryName
 		idNumber
 		identificationId
+		approvedById
 	}
 	payments {
 		id
@@ -37,8 +43,13 @@ fragment InvoiceFields on Invoice {
 		tenderedAmount
 		changeAmount
 		referenceNo
+		bankName
+		checkDate
 		status
 		receivedAt
+		cashierShiftId
+		voidReason
+		voidedAt
 	}
 	grossAmount
 	vatableSales
@@ -48,6 +59,8 @@ fragment InvoiceFields on Invoice {
 	lessVatScPwd
 	scPwdDiscount
 	otherDiscount
+	withholdingTax
+	withholdingTaxRate
 	netAmount
 	amountPaid
 	balance
@@ -61,8 +74,11 @@ fragment EncounterBillingFields on EncounterBilling {
 	encounterId
 	clinicId
 	patientId
+	vatRegistered
 	canDraft
 	canCollect
+	canVoid
+	openShiftId
 	invoices {
 		...InvoiceFields
 	}
@@ -73,18 +89,108 @@ fragment EncounterBillingFields on EncounterBilling {
 		category
 		price
 		taxType
+		isPfShareable
 	}
 	suggestedLines {
+		source
 		serviceItemId
 		description
 		quantity
 		unitPrice
 		taxType
+		practitionerId
+		isProfessionalFee
 	}
 	discountIdentifications {
 		id
 		discountType
 		idNumber
+		expiresAt
+	}
+	discountApprovers {
+		userId
+		name
+		types
+	}
+}
+
+fragment CashierShiftFields on CashierShift {
+	id
+	cashierId
+	cashierName
+	openedAt
+	closedAt
+	isOpen
+	openingCash
+	byMethod {
+		method
+		count
+		amount
+	}
+	paymentCount
+	totalCollected
+	cashCollected
+	voidedCount
+	voidedAmount
+	expectedCash
+	countedCash
+	variance
+	denominations {
+		denomination
+		count
+	}
+	remarks
+}
+
+fragment InvoiceSeriesFields on InvoiceSeries {
+	id
+	docType
+	prefix
+	startNo
+	endNo
+	nextNo
+	remaining
+	permitNo
+	permitDate
+	validUntil
+	isActive
+	state
+	firstNumber
+}
+
+fragment ProfessionalFeeReportFields on ProfessionalFeeReport {
+	from
+	to
+	generatedOn
+	grossAmount
+	ewtAmount
+	netPayable
+	doctors {
+		practitionerId
+		name
+		tin
+		count
+		grossAmount
+		clinicShare
+		ewtAmount
+		netPayable
+		unreleased
+		fees {
+			id
+			invoiceId
+			invoiceNo
+			invoiceDate
+			description
+			grossAmount
+			clinicShare
+			ewtRate
+			ewtAmount
+			netPayable
+			status
+			releasedAt
+			releaseRef
+			createdAt
+		}
 	}
 }
 
@@ -94,8 +200,92 @@ query EncounterBilling($encounterId: ID!) {
 	}
 }
 
+query CashierDesk($date: String) {
+	cashierDesk(date: $date) {
+		date
+		totalCollected
+		collections {
+			method
+			count
+			amount
+		}
+		openInvoices {
+			id
+			invoiceNo
+			status
+			buyerName
+			netAmount
+			balance
+			createdAt
+			encounterId
+			patientId
+			encounterNo
+		}
+		myShift {
+			...CashierShiftFields
+		}
+	}
+}
+
+query MyCashierShift {
+	myCashierShift {
+		...CashierShiftFields
+	}
+}
+
+query CashierShifts($input: CashierShiftsInput!) {
+	cashierShifts(input: $input) {
+		...CashierShiftFields
+	}
+}
+
+query InvoiceSeriesList {
+	invoiceSeries {
+		...InvoiceSeriesFields
+	}
+}
+
+query ProfessionalFeeReport($input: ProfessionalFeeReportInput!) {
+	professionalFeeReport(input: $input) {
+		...ProfessionalFeeReportFields
+	}
+}
+
+query PrintableInvoice($id: ID!) {
+	printableInvoice(id: $id) {
+		invoice {
+			...InvoiceFields
+		}
+		seller {
+			registeredName
+			tradeName
+			tin
+			vatRegistered
+			birBranchCode
+			clinicName
+			address
+			contactNo
+		}
+		permit {
+			permitNo
+			permitDate
+			validUntil
+			range
+		}
+		buyerTin
+		buyerAddress
+	}
+}
+
 mutation SaveInvoiceDraft($input: SaveInvoiceDraftInput!) {
 	saveInvoiceDraft(input: $input) {
+		id
+		version
+	}
+}
+
+mutation LoadInvoiceCharges($input: LoadInvoiceChargesInput!) {
+	loadInvoiceCharges(input: $input) {
 		id
 		version
 	}
@@ -116,8 +306,60 @@ mutation RecordPayment($input: RecordPaymentInput!) {
 	}
 }
 
+mutation RecordPayments($input: RecordPaymentsInput!) {
+	recordPayments(input: $input) {
+		id
+		status
+		balance
+	}
+}
+
+mutation VoidPayment($input: VoidPaymentInput!) {
+	voidPayment(input: $input) {
+		id
+		status
+		balance
+	}
+}
+
 mutation VoidInvoice($input: VoidInvoiceInput!) {
 	voidInvoice(input: $input) {
 		id
+	}
+}
+
+mutation OpenCashierShift($input: OpenCashierShiftInput!) {
+	openCashierShift(input: $input) {
+		...CashierShiftFields
+	}
+}
+
+mutation CashierShiftXReading($shiftId: ID!) {
+	cashierShiftXReading(shiftId: $shiftId) {
+		...CashierShiftFields
+	}
+}
+
+mutation CloseCashierShift($input: CloseCashierShiftInput!) {
+	closeCashierShift(input: $input) {
+		...CashierShiftFields
+	}
+}
+
+mutation CreateInvoiceSeries($input: CreateInvoiceSeriesInput!) {
+	createInvoiceSeries(input: $input) {
+		...InvoiceSeriesFields
+	}
+}
+
+mutation UpdateInvoiceSeries($input: UpdateInvoiceSeriesInput!) {
+	updateInvoiceSeries(input: $input) {
+		...InvoiceSeriesFields
+	}
+}
+
+mutation ReleaseProfessionalFees($input: ReleaseProfessionalFeesInput!) {
+	releaseProfessionalFees(input: $input) {
+		...ProfessionalFeeReportFields
 	}
 }

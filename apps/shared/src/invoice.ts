@@ -511,5 +511,6 @@ export function countedCash(denominations: Readonly<Record<string, number>>): nu
 	);
 }
 
+/** "₱1,234.50"; a negative amount (a discount, a short count) as "-₱100.00". */
 export const formatPesos = (value: number) =>
-	`₱${value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+	`${value < 0 ? '-' : ''}₱${Math.abs(value).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

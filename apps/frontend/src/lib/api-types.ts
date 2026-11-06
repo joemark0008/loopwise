@@ -72,6 +72,21 @@ import type {
 	RecordPaymentInput,
 	SaveInvoiceDraftInput,
 	VoidInvoiceInput,
+	CashierDeskQuery,
+	CashierShiftFieldsFragment,
+	CashierShiftsInput,
+	CloseCashierShiftInput,
+	CreateInvoiceSeriesInput,
+	InvoiceSeriesFieldsFragment,
+	LoadInvoiceChargesInput,
+	OpenCashierShiftInput,
+	PrintableInvoiceQuery,
+	ProfessionalFeeReportFieldsFragment,
+	ProfessionalFeeReportInput,
+	RecordPaymentsInput,
+	ReleaseProfessionalFeesInput,
+	UpdateInvoiceSeriesInput,
+	VoidPaymentInput,
 	CancelDiagnosticOrderInput,
 	CreateDiagnosticOrderInput,
 	DiagnosticItemStepInput,
@@ -670,9 +685,24 @@ interface GraphQLProcedures {
 	billing: {
 		get: Procedure<{ encounterId: string }, EncounterBillingFieldsFragment>;
 		saveDraft: Procedure<SaveInvoiceDraftInput, { id: string; version: number }>;
+		loadCharges: Procedure<LoadInvoiceChargesInput, { id: string; version: number }>;
 		issue: Procedure<IssueInvoiceInput, { id: string; invoiceNo: string | null }>;
 		recordPayment: Procedure<RecordPaymentInput, { id: string; status: string; balance: number }>;
+		recordPayments: Procedure<RecordPaymentsInput, { id: string; status: string; balance: number }>;
+		voidPayment: Procedure<VoidPaymentInput, { id: string; status: string; balance: number }>;
 		void: Procedure<VoidInvoiceInput, { id: string }>;
+		print: Procedure<{ id: string }, PrintableInvoiceQuery['printableInvoice']>;
+		desk: Procedure<{ date?: string | null }, CashierDeskQuery['cashierDesk']>;
+		myShift: Procedure<void, CashierShiftFieldsFragment | null>;
+		shifts: Procedure<CashierShiftsInput, CashierShiftFieldsFragment[]>;
+		openShift: Procedure<OpenCashierShiftInput, CashierShiftFieldsFragment>;
+		xReading: Procedure<{ shiftId: string }, CashierShiftFieldsFragment>;
+		closeShift: Procedure<CloseCashierShiftInput, CashierShiftFieldsFragment>;
+		series: Procedure<void, InvoiceSeriesFieldsFragment[]>;
+		createSeries: Procedure<CreateInvoiceSeriesInput, InvoiceSeriesFieldsFragment>;
+		updateSeries: Procedure<UpdateInvoiceSeriesInput, InvoiceSeriesFieldsFragment>;
+		feeReport: Procedure<ProfessionalFeeReportInput, ProfessionalFeeReportFieldsFragment>;
+		releaseFees: Procedure<ReleaseProfessionalFeesInput, ProfessionalFeeReportFieldsFragment>;
 	};
 	patient: {
 		clinics: Procedure<void, MyCareClinicsQuery['myCareClinics']>;

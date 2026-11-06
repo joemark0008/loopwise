@@ -11,7 +11,7 @@ import type { ToolPart } from './propose-action';
 import type { encounterProposal, proposeCharges } from '@loopwise/shared/tools';
 import type { ActionOutput, ProposeBillStepInput } from '@loopwise/shared/wise-actions';
 import type { ToolCallComponentProps } from '.';
-import type { InvoiceFormValues, PaymentFormValues } from '@/feature/encounters/billing-form-values';
+import type { InvoiceFormValues, PaymentTenderFormValues } from '@/feature/encounters/billing-form-values';
 import type {
 	EncounterBillingFieldsFragment,
 	EncounterRecordFieldsFragment,
@@ -29,10 +29,11 @@ import {
 	invoiceFormFrom,
 	invoiceFormTotals,
 	lineFromPriceItem,
+	emptyTender,
 	toRecordPaymentInput,
 	toSaveInvoiceDraftInput,
 	validateInvoiceForm,
-	validatePaymentForm,
+	validateTender,
 } from '@/feature/encounters/billing-form-values';
 import { FormField } from '@/feature/encounters/form-field';
 import { billingApi } from '@/lib/billing-api';
@@ -89,6 +90,7 @@ export function invoiceFormFromProposal(
 			: base.lines;
 	const discountType = draft.discountType ?? '';
 	return {
+		...base,
 		lines,
 		discountType,
 		discountIdNumber: discountType ? (draft.discountIdNumber ?? idNumberOnFile(billing, discountType)) : '',
@@ -141,7 +143,7 @@ function ChargesCard({
 	const [error, setError] = useState<string>();
 	const [pending, setPending] = useState(false);
 	const errors = validateInvoiceForm(values);
-	const totals = invoiceFormTotals(values);
+	const totals = invoiceFormTotals(values, billing.vatRegistered);
 	const active = activeInvoice(billing);
 	const locked = active && active.status !== 'DRAFT' ? active : null;
 	const existingDraft = active?.status === 'DRAFT' ? active : null;
@@ -383,15 +385,14 @@ function PaymentCard({
 	label: string;
 }) {
 	const step = useStep();
-	const [initial] = useState<PaymentFormValues>(() => ({
-		method: input.method ?? 'CASH',
-		amount: String(input.amount ?? invoice.balance),
+	const [initial] = useState<PaymentTenderFormValues>(() => ({
+		...emptyTender(input.method ?? 'CASH', String(input.amount ?? invoice.balance)),
 		tenderedAmount: input.tenderedAmount !== undefined ? String(input.tenderedAmount) : '',
 		referenceNo: input.referenceNo ?? '',
 	}));
 	const [values, setValues] = useState(initial);
 	const payable = invoice.status === 'ISSUED' || invoice.status === 'PARTIALLY_PAID';
-	const errors = validatePaymentForm(values, invoice.balance);
+	const errors = validateTender(values, invoice.balance);
 	const firstError = Object.values(errors)[0];
 	return (
 		<ActionCard
@@ -408,7 +409,7 @@ function PaymentCard({
 							...toRecordPaymentInput(invoice, values),
 							wiseOrigin: origin(confirmed, isEdited(values, initial)),
 						}),
-					`I recorded the payment: ${PAYMENT_METHOD_LABELS[values.method]} ${formatPesos(Number(values.amount))} (${values.referenceNo.trim()}).`,
+					`I recorded the payment: ${PAYMENT_METHOD_LABELS[values.method]} ${formatPesos(Number(values.amount))}${values.referenceNo.trim() ? ` (${values.referenceNo.trim()})` : ''}.`,
 				)
 			}
 			isPending={step.pending}
