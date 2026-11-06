@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { GuardsModule } from '../../common/guards/guards.module.js';
 import { AuditModule } from '../audit/audit.module.js';
 import { DocumentSequencesModule } from '../clinics/document-sequences/document-sequences.module.js';
 import { EncountersModule } from '../encounters/encounters.module.js';
@@ -15,6 +16,8 @@ import {
 } from './medical-certificates/medical-certificates.resolver.js';
 import { ReferralRepository } from './referrals/referral.repository.js';
 import { ReferralService } from './referrals/referral.service.js';
+import { ReferralListService } from './referrals/referral-list.service.js';
+import { ReferralResponseService } from './referrals/referral-response.service.js';
 import {
 	EncounterRecordReferralsResolver,
 	EncounterReferralsLoader,
@@ -23,12 +26,14 @@ import {
 
 /**
  * The clinical documents of an encounter (DESIGN.md §5): medical certificates (draft, issue, void, print) and
- * referrals (internal or outside), and their fields on the encounter record. Prescriptions have their own module.
+ * referrals (internal or outside: written, answered, listed per inbox / outbox, printed as a letter), and their fields
+ * on the encounter record. Prescriptions have their own module.
  */
 @Module({
 	imports: [
 		ClinicalDbModule,
 		AuditModule,
+		GuardsModule,
 		DocumentSequencesModule,
 		EncountersModule,
 		PractitionersModule,
@@ -43,9 +48,11 @@ import {
 		ReferralsResolver,
 		EncounterRecordReferralsResolver,
 		ReferralService,
+		ReferralResponseService,
+		ReferralListService,
 		ReferralRepository,
 		EncounterReferralsLoader,
 	],
-	exports: [MedicalCertificateService, ReferralService],
+	exports: [MedicalCertificateService, ReferralService, ReferralListService],
 })
 export class DocumentsModule {}

@@ -37,6 +37,38 @@ export class ReferralNotCancellableError extends DomainError {
 	}
 }
 
+/** An internal referral is answered by the practitioner it was sent to. */
+export class NotReferralRecipientError extends DomainError {
+	constructor() {
+		super('FORBIDDEN', 'NOT_REFERRAL_RECIPIENT', 'Only the doctor this referral was sent to can answer it.');
+	}
+}
+
+/** Declining needs a reason and completing needs the response notes. */
+export class ReferralResponseRequiredError extends DomainError {
+	constructor(what: 'reason' | 'notes') {
+		super(
+			'BAD_REQUEST',
+			'REFERRAL_RESPONSE_REQUIRED',
+			what === 'reason' ? 'Say why the referral is declined.' : 'Add the response notes: what was found or done.',
+		);
+	}
+}
+
+/** Another response reached the referral first (its status changed since it was read). */
+export class ReferralMovedError extends DomainError {
+	constructor() {
+		super('CONFLICT', 'REFERRAL_MOVED', 'This referral was answered meanwhile. Reload it.');
+	}
+}
+
+/** The clinic-wide referral list is for clinic admins. */
+export class ClinicReferralsAccessError extends DomainError {
+	constructor() {
+		super('FORBIDDEN', 'CLINIC_REFERRALS_ACCESS', "Only the clinic's admins see every referral of the clinic.");
+	}
+}
+
 /** The shared rules (`@loopwise/shared/medical-certificate`) refused the draft. */
 export class InvalidDocumentDraftError extends DomainError {
 	constructor(message: string) {

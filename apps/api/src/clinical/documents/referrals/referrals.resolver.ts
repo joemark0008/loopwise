@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Args, Mutation, Parent, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 
 import type { AuthUser } from '../../../auth/auth.service.js';
 import { Loaders } from '../../../common/dataloader/loaders.decorator.js';
@@ -10,14 +10,64 @@ import { EncounterRecord } from '../../encounters/models/encounter-record.model.
 import { Practitioner } from '../../practitioners/models/practitioner.model.js';
 import { PractitionerLoader } from '../../practitioners/practitioner.loader.js';
 import { ClinicalDbService, type ClinicalTx } from '../../rls/clinical-db.service.js';
-import { CancelReferralInput, CreateReferralInput } from './dto/referral.input.js';
-import { Referral } from './models/referral.model.js';
+import {
+	AcceptReferralInput,
+	CancelReferralInput,
+	CompleteReferralInput,
+	CreateReferralInput,
+	DeclineReferralInput,
+	ReferralsInput,
+} from './dto/referral.input.js';
+import { Referral, ReferralLetter } from './models/referral.model.js';
 import { ReferralService } from './referral.service.js';
+import { ReferralListService } from './referral-list.service.js';
+import { ReferralResponseService } from './referral-response.service.js';
 
-/** Referrals from an encounter. Access is row-level security plus the clinic check of the visit. */
+/**
+ * Referrals from an encounter, their answers (accept, decline, complete) and the printed letter. Access is row-level
+ * security plus the checks of the services: the visit's clinic to refer or mark an outside referral, the recipient for
+ * an internal one, the clinic's admins for the clinic-wide list.
+ */
 @Resolver(() => Referral)
 export class ReferralsResolver {
-	constructor(private readonly service: ReferralService) {}
+	constructor(
+		private readonly service: ReferralService,
+		private readonly responses: ReferralResponseService,
+		private readonly lists: ReferralListService,
+	) {}
+
+	@Query(() => [Referral], {
+		description: 'Referrals sent to the user (INBOX), sent by them (OUTBOX), or of a clinic (CLINIC, its admins).',
+	})
+	referrals(@CurrentUser() user: AuthUser, @Args('input') input: ReferralsInput): Promise<Referral[]> {
+		return this.lists.list(user.id, input);
+	}
+
+	@Query(() => ReferralLetter, {
+		nullable: true,
+		description: 'The referral letter to print (audited as a print); null when not in your care.',
+	})
+	referralLetter(
+		@CurrentUser() user: AuthUser,
+		@Args('id', { type: () => ID }) id: string,
+	): Promise<ReferralLetter | null> {
+		return this.lists.letter(user.id, id);
+	}
+
+	@Mutation(() => Referral, { description: 'Accepts a sent referral (SENT → ACCEPTED), with an optional note.' })
+	acceptReferral(@CurrentUser() user: AuthUser, @Args('input') input: AcceptReferralInput): Promise<Referral> {
+		return this.responses.accept(user.id, input);
+	}
+
+	@Mutation(() => Referral, { description: 'Declines a sent referral (SENT → DECLINED), with the reason.' })
+	declineReferral(@CurrentUser() user: AuthUser, @Args('input') input: DeclineReferralInput): Promise<Referral> {
+		return this.responses.decline(user.id, input);
+	}
+
+	@Mutation(() => Referral, { description: 'Completes an accepted referral (→ COMPLETED), with the response notes.' })
+	completeReferral(@CurrentUser() user: AuthUser, @Args('input') input: CompleteReferralInput): Promise<Referral> {
+		return this.responses.complete(user.id, input);
+	}
 
 	@Mutation(() => Referral, { description: 'Refers the patient of a visit (internal practitioner or outside).' })
 	createReferral(@CurrentUser() user: AuthUser, @Args('input') input: CreateReferralInput): Promise<Referral> {
