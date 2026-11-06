@@ -13,6 +13,7 @@ import { OrdersTab } from './orders-tab';
 import { PrescriptionsTab } from './prescriptions-tab';
 import { VitalsTab } from './vitals-tab';
 import type { EncounterTab } from './encounter-tabs';
+import { ReferralsTab } from '@/feature/follow-ups/referrals-tab';
 import { ScribePanel } from '@/feature/scribe/scribe-panel';
 import { Button } from '@/components/ui/button';
 import { Empty } from '@/components/ui/empty';
@@ -69,6 +70,7 @@ export function EncounterPage({
 		{ id: 'orders' as const, label: 'Orders & results' },
 		{ id: 'prescriptions' as const, label: 'Prescriptions' },
 		{ id: 'certificate' as const, label: 'Medical certificate' },
+		{ id: 'referrals' as const, label: 'Referrals', count: data.referrals.length },
 		{ id: 'billing' as const, label: 'Billing' },
 	];
 
@@ -134,6 +136,7 @@ export function EncounterPage({
 					{tab === 'orders' && <OrdersTab record={data} />}
 					{tab === 'prescriptions' && <PrescriptionsTab record={data} />}
 					{tab === 'certificate' && <CertificateTab record={data} />}
+					{tab === 'referrals' && <ReferralsTab record={data} />}
 					{tab === 'billing' && <BillingTab record={data} />}
 				</TabPanel>
 			</div>

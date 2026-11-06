@@ -6,6 +6,7 @@ export const ENCOUNTER_TABS = [
 	'orders',
 	'prescriptions',
 	'certificate',
+	'referrals',
 	'billing',
 ] as const;
 export type EncounterTab = (typeof ENCOUNTER_TABS)[number];

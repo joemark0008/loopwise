@@ -86,3 +86,15 @@ mutation CompleteReferral($input: CompleteReferralInput!) {
 		...ReferralListFields
 	}
 }
+
+mutation CreateReferral($input: CreateReferralInput!) {
+	createReferral(input: $input) {
+		...ReferralFields
+	}
+}
+
+mutation CancelReferral($input: CancelReferralInput!) {
+	cancelReferral(input: $input) {
+		...ReferralFields
+	}
+}

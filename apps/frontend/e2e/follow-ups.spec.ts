@@ -82,7 +82,8 @@ test.describe('visit flow, follow-ups and referrals', () => {
 		await doctor.getByRole('button', { name: 'Complete visit' }).click();
 		await expect(doctor.getByTestId('encounter-status-actions')).toBeHidden();
 		await page.reload();
-		await expect(page.locator(`[data-code="${code}"]`)).toBeHidden();
+		await expect(page.getByRole('list', { name: 'Cashier line' }).locator(`[data-code="${code}"]`)).toBeHidden();
+		await expect(page.locator(`[data-code="${code}"]`)).toHaveAttribute('data-status', 'DONE');
 		expect(errors).toEqual([]);
 	});
 
@@ -135,10 +136,36 @@ test.describe('visit flow, follow-ups and referrals', () => {
 		const marker = Date.now().toString(36);
 		// Dr. Reyes refers Roberto Lim (seeded visit) to Dr. Cruz twice.
 		await logIn(page, '/referrals?box=outbox', DOCTOR);
-		const outbox = await gql<{
-			referrals: { encounterId: string; patientName: string; toPractitioner: { id: string } | null }[];
-		}>(page, 'query { referrals(input: { box: OUTBOX }) { encounterId patientName toPractitioner { id } } }', {});
-		const seeded = outbox.referrals.find((row) => row.patientName === 'Roberto Lim' && row.toPractitioner)!;
+		type Sent = {
+			id: string;
+			reason: string;
+			encounterId: string;
+			patientId: string;
+			patientName: string;
+			toPractitioner: { id: string } | null;
+		};
+		const sent = () =>
+			gql<{ referrals: Sent[] }>(
+				page,
+				'query { referrals(input: { box: OUTBOX }) { id reason encounterId patientId patientName toPractitioner { id } } }',
+				{},
+			).then((data) => data.referrals);
+		const seeded = (await sent()).find((row) => row.patientName === 'Roberto Lim' && row.toPractitioner)!;
+
+		// One from the visit's Referrals tab, as the doctor writes it.
+		await page.goto(`/patients/${seeded.patientId}/encounters/${seeded.encounterId}?tab=referrals`);
+		await page.getByRole('button', { name: 'Refer', exact: true }).click();
+		const editor = page.getByTestId('referral-editor');
+		await editor.getByRole('combobox', { name: 'Doctor' }).click();
+		await page.getByRole('option', { name: /Cruz/ }).click();
+		await editor.getByLabel('Specialty').fill('Internal Medicine');
+		await editor.getByLabel('Reason for referral').fill(`E2E evaluate ${marker}`);
+		await editor.getByRole('button', { name: 'Send referral' }).click();
+		await expect(page.getByTestId('referral-card').filter({ hasText: `E2E evaluate ${marker}` })).toContainText(
+			'Waiting for an answer',
+		);
+		const toComplete = (await sent()).find((row) => row.reason === `E2E evaluate ${marker}`)!.id;
+
 		const refer = (reason: string) =>
 			gql<{ createReferral: { id: string } }>(
 				page,
@@ -152,7 +179,6 @@ test.describe('visit flow, follow-ups and referrals', () => {
 					},
 				},
 			).then((data) => data.createReferral.id);
-		const toComplete = await refer(`E2E evaluate ${marker}`);
 		await refer(`E2E decline ${marker}`);
 
 		// Dr. Cruz: accept with a note, then complete with the response notes.
@@ -179,7 +205,7 @@ test.describe('visit flow, follow-ups and referrals', () => {
 		await expect(declining).toContainText('Declined');
 
 		// Dr. Reyes sees the answers in the sent box and prints the letter.
-		await page.reload();
+		await page.goto('/referrals?box=outbox');
 		await expect(page.getByTestId('referral-row').filter({ hasText: `E2E evaluate ${marker}` })).toContainText(
 			'Completed',
 		);

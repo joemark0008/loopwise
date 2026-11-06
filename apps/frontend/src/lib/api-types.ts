@@ -26,6 +26,9 @@ import type { GroupedChatListResponse, LlmProvider, LlmSelectedModel, UserRole }
 import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import type {
 	AcceptReferralInput,
+	CancelReferralInput,
+	CreateReferralInput,
+	ReferralFieldsFragment,
 	AddAllergyInput,
 	AddDiagnosisInput,
 	CompleteReferralInput,
@@ -727,6 +730,8 @@ interface GraphQLProcedures {
 		accept: Procedure<AcceptReferralInput, ReferralListFieldsFragment>;
 		decline: Procedure<DeclineReferralInput, ReferralListFieldsFragment>;
 		complete: Procedure<CompleteReferralInput, ReferralListFieldsFragment>;
+		create: Procedure<CreateReferralInput, ReferralFieldsFragment>;
+		cancel: Procedure<CancelReferralInput, ReferralFieldsFragment>;
 	};
 	result: {
 		toReview: Procedure<void, DiagnosticReportFieldsFragment[]>;

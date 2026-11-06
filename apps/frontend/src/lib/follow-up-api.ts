@@ -2,7 +2,9 @@ import type { ApiInputs, ApiOutputs } from '@/lib/api-types';
 
 import {
 	AcceptReferralDocument,
+	CancelReferralDocument,
 	CompleteReferralDocument,
+	CreateReferralDocument,
 	DeclineReferralDocument,
 	FollowUpsDocument,
 	ReferralLetterDocument,
@@ -48,6 +50,14 @@ export const referralApi = {
 	complete: mutation<ReferralInputs['complete'], ReferralOutputs['complete']>(
 		['referral', 'complete'],
 		async (input) => (await runMutation(CompleteReferralDocument, { input })).completeReferral,
+	),
+	create: mutation<ReferralInputs['create'], ReferralOutputs['create']>(
+		['referral', 'create'],
+		async (input) => (await runMutation(CreateReferralDocument, { input })).createReferral,
+	),
+	cancel: mutation<ReferralInputs['cancel'], ReferralOutputs['cancel']>(
+		['referral', 'cancel'],
+		async (input) => (await runMutation(CancelReferralDocument, { input })).cancelReferral,
 	),
 	invalidate: { queryKey: [['referral']] as const },
 };
