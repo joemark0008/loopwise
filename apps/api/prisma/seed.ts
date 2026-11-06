@@ -6,6 +6,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { loadDotenv, parseEnv } from '../src/config/env.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { seedBilling } from './seed-billing.js';
+import { seedBillingDesk } from './seed-billing-desk.js';
 import { seedClinicSetup } from './seed-clinic-setup.js';
 import {
 	DEMO_CLINIC_CODE,
@@ -66,6 +67,7 @@ async function seed() {
 				await seedScheduling(tx, demo);
 				await seedFollowUps(tx, demo);
 				await seedInventory(tx, { passwordHash });
+				await seedBillingDesk(tx);
 				return true;
 			},
 			{ timeout: 120_000 },

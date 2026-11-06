@@ -1,9 +1,11 @@
+import { CASH_DENOMINATIONS } from '@loopwise/shared/invoice';
 import { LAB_TESTS } from '@loopwise/shared/lab-tests';
 
 import { InvoiceTotalsService, type PricedLine } from '../src/clinical/billing/invoices/invoice-totals.service.js';
+import { professionalFeeAmounts } from '../src/clinical/billing/professional-fees/professional-fee-amounts.js';
 import { DocumentSequenceRepository } from '../src/clinical/clinics/document-sequences/document-sequence.repository.js';
 import { DocumentSequenceService } from '../src/clinical/clinics/document-sequences/document-sequence.service.js';
-import type { Prisma, ServiceCategory, TaxType } from '../src/generated/prisma/client.js';
+import { Prisma, type ServiceCategory, type TaxType } from '../src/generated/prisma/client.js';
 import { DEMO_CLINIC_CODE, DEMO_ORG_SLUG, DEMO_STAFF, demoEncounterOf } from './seed-clinical.js';
 
 /**
@@ -150,7 +152,7 @@ async function billMariasFirstVisit(
 		return;
 	}
 	const patient = await tx.patient.findUniqueOrThrow({ where: { id: visit.patientId } });
-	const cashier = await tx.user.findUnique({ where: { email: DEMO_STAFF.cashier }, select: { id: true } });
+	const cashier = await tx.user.findUniqueOrThrow({ where: { email: DEMO_STAFF.cashier }, select: { id: true } });
 	const doctor = await tx.user.findUnique({ where: { email: DEMO_STAFF.doctor }, select: { id: true } });
 	const sequences = new DocumentSequenceService(new DocumentSequenceRepository());
 
@@ -160,8 +162,15 @@ async function billMariasFirstVisit(
 		quantity: 1,
 		unitPrice: item.price,
 		taxType: item.taxType,
+		scPwdEligible: true,
 	}));
-	const amounts = new InvoiceTotalsService().compute(lines, null);
+	const organization = await tx.organization.findFirstOrThrow({
+		where: { clinics: { some: { id: opts.clinic.id } } },
+		select: { vatRegistration: true },
+	});
+	const amounts = new InvoiceTotalsService().compute(lines, {
+		vatRegistered: organization.vatRegistration === 'VAT',
+	});
 	const issuedAt = new Date(visit.startedAt.getTime() + 60 * 60 * 1000);
 	const series = await tx.invoiceSeries.update({ where: { id: opts.seriesId }, data: { nextNo: { increment: 1 } } });
 
@@ -178,12 +187,16 @@ async function billMariasFirstVisit(
 						serviceItemId: line.serviceItemId,
 						encounterId: visit.id,
 						practitionerId: index === 0 ? visit.practitionerId : null,
+						// The consultation is Dr. Reyes's professional fee (a PF-shareable item).
+						isProfessionalFee: index === 0,
 						description: line.description,
 						quantity: line.quantity,
 						unitPrice: line.unitPrice,
 						taxType: line.taxType,
 						sortOrder: index,
-						...amounts.lines[index],
+						vatAmount: amounts.lines[index].vatAmount,
+						discountAmount: amounts.lines[index].discountAmount,
+						lineTotal: amounts.lines[index].lineTotal,
 					})),
 				},
 			},
@@ -201,37 +214,95 @@ async function billMariasFirstVisit(
 		},
 	});
 
-	// PhilHealth Konsulta covers the consultation; Maria pays the balance in cash.
+	// The consultation's professional fee, from the issued invoice (as `ProfessionalFeeService` does on issue).
+	const consultLine = await tx.invoiceLine.findFirst({ where: { invoiceId: invoice.id, isProfessionalFee: true } });
+	if (consultLine?.practitionerId) {
+		const terms = await tx.practitionerClinic.findUnique({
+			where: {
+				practitionerId_clinicId: { practitionerId: consultLine.practitionerId, clinicId: opts.clinic.id },
+			},
+		});
+		await tx.professionalFee.create({
+			data: {
+				practitionerId: consultLine.practitionerId,
+				invoiceLineId: consultLine.id,
+				encounterId: visit.id,
+				...professionalFeeAmounts(consultLine, terms),
+				createdAt: issuedAt,
+			},
+		});
+	}
+
+	// PhilHealth Konsulta covers the consultation; Maria pays the balance in cash, on the cashier's shift of that day
+	// (closed with its Z reading).
+	const cashAmount = amounts.invoice.netAmount.minus(300);
+	const openingCash = new Prisma.Decimal(1000);
+	const shift = await tx.cashierShift.create({
+		data: {
+			clinicId: opts.clinic.id,
+			cashierId: cashier.id,
+			openedAt: new Date(issuedAt.getTime() - 2 * 60 * 60 * 1000),
+			closedAt: new Date(issuedAt.getTime() + 6 * 60 * 60 * 1000),
+			closedById: cashier.id,
+			openingCash,
+			expectedCash: openingCash.plus(cashAmount),
+			countedCash: openingCash.plus(cashAmount),
+			variance: 0,
+			denominations: denominationsOf(openingCash.plus(cashAmount)),
+			remarks: null,
+		},
+	});
 	const payments = [
-		{ method: 'PHILHEALTH' as const, amount: 300, referenceNo: 'KONSULTA', tenderedAmount: null },
+		{
+			method: 'PHILHEALTH' as const,
+			amount: new Prisma.Decimal(300),
+			referenceNo: 'KONSULTA',
+			tenderedAmount: null,
+		},
 		{
 			method: 'CASH' as const,
-			amount: amounts.invoice.netAmount - 300,
+			amount: cashAmount,
 			referenceNo: 'OR-0000123',
-			tenderedAmount: 100,
+			tenderedAmount: new Prisma.Decimal(100),
 		},
 	];
-	let paid = 0;
+	let paid = new Prisma.Decimal(0);
 	for (const payment of payments) {
 		await tx.payment.create({
 			data: {
 				paymentNo: await sequences.next(tx, opts.clinic, 'PAYMENT', issuedAt),
 				clinicId: opts.clinic.id,
+				cashierShiftId: shift.id,
 				method: payment.method,
 				amount: payment.amount,
 				tenderedAmount: payment.tenderedAmount,
-				changeAmount: payment.tenderedAmount === null ? null : payment.tenderedAmount - payment.amount,
+				changeAmount: payment.tenderedAmount === null ? null : payment.tenderedAmount.minus(payment.amount),
 				referenceNo: payment.referenceNo,
 				receivedAt: issuedAt,
-				receivedById: cashier?.id ?? null,
+				receivedById: cashier.id,
 				allocations: { create: { invoiceId: invoice.id, amount: payment.amount } },
 			},
 		});
-		paid += payment.amount;
-		const balance = amounts.invoice.netAmount - paid;
+		paid = paid.plus(payment.amount);
+		const balance = amounts.invoice.netAmount.minus(paid);
 		await tx.invoice.update({
 			where: { id: invoice.id },
-			data: { amountPaid: paid, balance, status: balance === 0 ? 'PAID' : 'PARTIALLY_PAID' },
+			data: { amountPaid: paid, balance, status: balance.isZero() ? 'PAID' : 'PARTIALLY_PAID' },
 		});
 	}
+}
+
+/** Bills and coins making up `total`, largest first (the seeded Z reading's count). */
+export function denominationsOf(total: Prisma.Decimal): Record<string, number> {
+	let centavos = total.times(100).toNumber();
+	const counts: Record<string, number> = {};
+	for (const denomination of CASH_DENOMINATIONS) {
+		const unit = Math.round(denomination * 100);
+		const count = Math.floor(centavos / unit);
+		if (count > 0) {
+			counts[String(denomination)] = count;
+			centavos -= count * unit;
+		}
+	}
+	return counts;
 }
