@@ -57,10 +57,12 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
   seeded before (no reset).
 - **AI scribe (§7.5, Phase 1):** the encounter page's **AI scribe** tab: recording consent per visit
   (`patient_consents`, PHOTO_VIDEO, with `encounter_id`; recording refused without it, typing always works), record /
-  stop through `POST /api/scribe/transcribe` (audio not kept), the transcript, the patient summary language, and
+  stop through `POST /api/scribe/transcribe` (audio not kept; like the chat's dictation, refused with
+  `TRANSCRIPTION_DISABLED` while Settings → Clinic → Agent → Transcription is off), the transcript, the patient summary language, and
   **Draft with Wise** → one `propose_scribe_note` call → one card per part (SOAP, vitals, each diagnosis, Rx with
   allergies, tests from the catalog, certificate, follow-up, patient summary), each confirmed, edited or dismissed
-  through its record's own mutation (`wiseOrigin.part`, settled per part). The encounter note now carries the
+  through its record's own mutation (`wiseOrigin.part`, settled per part; locked while Wise is still writing the reply
+  that holds the draft, since the API saves it when the turn ends). The encounter note now carries the
   reference's review of systems, subjective and objective. `clinical/scribe/`, `agent/tools/propose-scribe-note.ts`,
   `@loopwise/shared/scribe`, `feature/scribe/`; synthetic demo consult in `@loopwise/shared/scribe-demo`.
 - **Wise (§7):** proposal cards settled once with versions (`clinical/wise-proposals/`), Wise actions and tool settings
@@ -119,6 +121,8 @@ running its own frontend next to main's also needs `TANSTACK_DEVTOOLS_PORT` (mai
   patients already in their care (a new patient shows in their line at check-in).
 - **AI scribe:** built (above, DESIGN.md §7.5). To check on a stack with an LLM key: the real-LLM Playwright test
   `e2e/scribe.spec.ts` › "drafts the whole visit as cards … (real LLM call)" (it creates a new visit for Maria Santos).
+  The non-LLM "confirms and dismisses parts …" test writes a finished draft into the chart chat through `e2e/db.ts`
+  (the stack's `DATABASE_URL`, from the repository `.env`).
   Notes for the other sessions:
     - The patient layout now reads the chart chat before its pages mount and wraps them in the chart chat's
       `AgentProvider` (`PatientAgentProvider`); pages under `/patients/:id` can use `useAgentContext()`.
