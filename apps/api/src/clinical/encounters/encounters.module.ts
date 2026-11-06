@@ -17,13 +17,15 @@ import { ENCOUNTER_NOTE_READER } from './encounter-note-reader.token.js';
 import { EncounterRecordRepository } from './encounter-record.repository.js';
 import { EncounterRecordResolver } from './encounter-record.resolver.js';
 import { EncounterRecordService } from './encounter-record.service.js';
+import { EncounterStatusEvents } from './encounter-status-events.js';
 import { EncountersResolver } from './encounters.resolver.js';
 import { VitalSignsService } from './vital-signs.service.js';
 
 /**
  * Encounters (DESIGN.md §5): the visit hub (create, status transitions, the clinic's queue) and its record (note,
  * vitals, diagnoses). Exports `EncounterService` (`requireWritable` / `findReadable`) and `EncounterCardService` for
- * the modules that add to a visit's record (prescriptions, documents, diagnostics, billing).
+ * the modules that add to a visit's record (prescriptions, documents, diagnostics, billing), and
+ * `EncounterStatusEvents` for the modules that follow the visit's status (scheduling's queue ticket and booking).
  */
 @Module({
 	imports: [
@@ -40,6 +42,7 @@ import { VitalSignsService } from './vital-signs.service.js';
 		EncountersResolver,
 		EncounterRecordResolver,
 		EncounterService,
+		EncounterStatusEvents,
 		EncounterCardService,
 		EncounterNoteService,
 		VitalSignsService,
@@ -49,6 +52,6 @@ import { VitalSignsService } from './vital-signs.service.js';
 		EncounterRecordRepository,
 		{ provide: ENCOUNTER_NOTE_READER, useExisting: EncounterNoteService },
 	],
-	exports: [EncounterService, EncounterCardService, ENCOUNTER_NOTE_READER],
+	exports: [EncounterService, EncounterStatusEvents, EncounterCardService, ENCOUNTER_NOTE_READER],
 })
 export class EncountersModule {}

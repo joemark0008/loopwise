@@ -14,6 +14,7 @@ import { assertCardPatient, WiseProposalService } from '../wise-proposals/wise-p
 import type { ClinicEncountersInput, CreateEncounterInput, TransitionEncounterInput } from './dto/encounter.input.js';
 import { type EncounterContextRow, EncounterRepository } from './encounter.repository.js';
 import { INITIAL_ENCOUNTER_STATUSES, transitionEncounterStatus } from './encounter-status.js';
+import { EncounterStatusEvents, type EncounterStatusTrigger } from './encounter-status-events.js';
 import type { EncounterStatus } from './encounters.enums.js';
 import {
 	EncounterCancelledError,
@@ -61,6 +62,7 @@ export class EncounterService {
 		private readonly audit: AuditService,
 		private readonly chats: ChatRepository,
 		private readonly wiseProposals: WiseProposalService,
+		private readonly statusEvents: EncounterStatusEvents,
 	) {}
 
 	/** The patient's visits, newest first; empty when the user may not see the patient. Not audited: a list. */
@@ -218,8 +220,16 @@ export class EncounterService {
 	 * Moves the visit along its status machine (`transitionEncounterStatus`), as staff of its clinic. A practitioner
 	 * taking an unassigned visit (→ IN_PROGRESS) becomes its doctor and gets a care relationship. With
 	 * `expectedVersion`, a visit changed since is refused (STALE_VERSION).
+	 *
+	 * The move publishes `EncounterStatusChanged` on its transaction (after the audit row), so what follows the visit
+	 * (the queue ticket and the booking, `VisitStatusSync`) moves with it or not at all. `trigger: 'queue'` is for
+	 * the queue pages, which move the ticket and booking themselves.
 	 */
-	async transition(userId: string, input: TransitionEncounterInput): Promise<Encounter> {
+	async transition(
+		userId: string,
+		input: TransitionEncounterInput,
+		opts: { trigger?: EncounterStatusTrigger } = {},
+	): Promise<Encounter> {
 		const { encounter, practitionerId } = await this.db.asUser(userId, async (tx) => ({
 			encounter: await this.requireWritable(tx, userId, input.encounterId, { allowCancelled: true }),
 			practitionerId: await this.practitioners.findIdForUser(tx, userId),
@@ -257,6 +267,19 @@ export class EncounterService {
 					{ status: row.status, practitionerId: row.practitionerId },
 				),
 				reason: input.reason?.trim() || null,
+			});
+			await this.statusEvents.publish(tx, {
+				encounterId: encounter.id,
+				patientId: encounter.patientId,
+				clinicId: encounter.clinicId,
+				organizationId: encounter.organizationId,
+				appointmentId: row.appointmentId,
+				practitionerId: row.practitionerId,
+				from: encounter.status,
+				to: row.status,
+				userId,
+				reason: input.reason?.trim() || null,
+				trigger: opts.trigger ?? 'encounter',
 			});
 			return toEncounter(row);
 		});

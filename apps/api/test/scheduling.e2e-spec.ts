@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../src/auth/auth.service.js';
+import { EncounterService } from '../src/clinical/encounters/encounter.service.js';
 import { VitalSignsService } from '../src/clinical/encounters/vital-signs.service.js';
 import { AppointmentService } from '../src/clinical/scheduling/appointments/appointment.service.js';
 import { AppointmentSlotService } from '../src/clinical/scheduling/appointments/appointment-slot.service.js';
@@ -63,6 +64,7 @@ describe('scheduling (e2e)', () => {
 	let queue: QueueService;
 	let flow: VisitFlowService;
 	let vitals: VitalSignsService;
+	let encounters: EncounterService;
 	let reminders: AppointmentReminderService;
 	const notifier: AppointmentNotifier = { sendReminder: vi.fn(() => Promise.resolve(true)) };
 
@@ -91,6 +93,7 @@ describe('scheduling (e2e)', () => {
 		queue = app.get(QueueService);
 		flow = app.get(VisitFlowService);
 		vitals = app.get(VitalSignsService, { strict: false });
+		encounters = app.get(EncounterService, { strict: false });
 		reminders = app.get(AppointmentReminderService);
 
 		scene = await createClinicScene(prisma);
@@ -467,6 +470,92 @@ describe('scheduling (e2e)', () => {
 			expect(board.waiting.length).toBeGreaterThanOrEqual(5);
 			expect(JSON.stringify(board)).not.toMatch(/Mendoza|Ramos|Walk/);
 			expect(board.waiting[0]).toMatchObject({ code: 'A-002', station: 'TRIAGE', stationLabel: 'Triage' });
+		});
+	});
+
+	describe('the ticket follows the visit moved from the encounter page', () => {
+		/** A walk-in with the doctor, checked in at the front desk: the visit OPEN, the ticket waiting at triage. */
+		async function walkIn(firstName: string) {
+			const someone = await createPatient(prisma, {
+				organizationId: scene.organization.id,
+				firstName,
+				lastName: 'Follows',
+				careTeam: [frontDesk.id],
+			});
+			const ticket = await checkIns.checkIn(frontDesk.id, {
+				clinicId: scene.clinic.id,
+				patientId: someone.id,
+				practitionerId: scene.doctorPractitioner.id,
+				reason: 'Cough',
+			});
+			return { ticketId: ticket.id, encounterId: ticket.encounter!.id, appointmentId: ticket.appointment!.id };
+		}
+		const ticketOf = (id: string) => prisma.queueTicket.findUniqueOrThrow({ where: { id } });
+		const bookingOf = (id: string) => prisma.appointment.findUniqueOrThrow({ where: { id } });
+
+		it('starts, bills, reopens and completes the visit from the chart; the ticket and the booking follow', async () => {
+			const visit = await walkIn('Start');
+
+			await encounters.transition(scene.doctor.id, { encounterId: visit.encounterId, status: 'IN_PROGRESS' });
+			expect(await ticketOf(visit.ticketId)).toMatchObject({
+				station: 'DOCTOR',
+				status: 'SERVING',
+				practitionerId: scene.doctorPractitioner.id,
+			});
+			expect(await bookingOf(visit.appointmentId)).toMatchObject({ status: 'IN_PROGRESS' });
+
+			await encounters.transition(scene.doctor.id, { encounterId: visit.encounterId, status: 'FOR_BILLING' });
+			expect(await ticketOf(visit.ticketId)).toMatchObject({ station: 'CASHIER', status: 'WAITING' });
+			expect(await bookingOf(visit.appointmentId)).toMatchObject({ status: 'COMPLETED' });
+
+			// Reopened before payment: back with the doctor (the booking stays COMPLETED, its end state).
+			await encounters.transition(scene.doctor.id, { encounterId: visit.encounterId, status: 'IN_PROGRESS' });
+			expect(await ticketOf(visit.ticketId)).toMatchObject({ station: 'DOCTOR', status: 'SERVING' });
+
+			await encounters.transition(scene.doctor.id, { encounterId: visit.encounterId, status: 'COMPLETED' });
+			expect(await ticketOf(visit.ticketId)).toMatchObject({ status: 'DONE' });
+
+			const followed = await prisma.auditLog.findMany({
+				where: { entityId: visit.ticketId, event: { startsWith: 'queue.follow_visit_' } },
+				orderBy: { createdAt: 'asc' },
+			});
+			expect(followed.map((row) => [row.event, row.userId])).toEqual([
+				['queue.follow_visit_in_progress', scene.doctor.id],
+				['queue.follow_visit_for_billing', scene.doctor.id],
+				['queue.follow_visit_in_progress', scene.doctor.id],
+				['queue.follow_visit_completed', scene.doctor.id],
+			]);
+		});
+
+		it('cancels the ticket and the booking with a visit cancelled from the chart', async () => {
+			const visit = await walkIn('Cancel');
+			await encounters.transition(frontDesk.id, {
+				encounterId: visit.encounterId,
+				status: 'CANCELLED',
+				reason: 'Registered twice',
+			});
+			expect(await ticketOf(visit.ticketId)).toMatchObject({ status: 'CANCELLED' });
+			expect(await bookingOf(visit.appointmentId)).toMatchObject({
+				status: 'CANCELLED',
+				cancelledReason: 'Registered twice',
+			});
+		});
+
+		it('leaves the moves made from the queue pages to the queue (no second move of the ticket)', async () => {
+			const visit = await walkIn('Queue');
+			// From the queue page: the visit moves with the queue's own audit rows, none from the listener.
+			await flow.start(nurse.id, visit.ticketId);
+			await flow.send(nurse.id, { ticketId: visit.ticketId, station: 'DOCTOR' });
+			const started = await flow.start(scene.doctor.id, visit.ticketId);
+			expect(started).toMatchObject({ status: 'SERVING', encounter: { status: 'IN_PROGRESS' } });
+			expect(
+				await prisma.auditLog.count({
+					where: { entityId: visit.ticketId, event: { startsWith: 'queue.follow_visit_' } },
+				}),
+			).toBe(0);
+			expect(
+				await prisma.auditLog.count({ where: { entityId: visit.encounterId, event: 'encounter.in_progress' } }),
+			).toBe(1);
 		});
 	});
 

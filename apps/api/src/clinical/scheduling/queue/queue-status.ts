@@ -109,3 +109,87 @@ export function byCallOrder<T extends { isPriority: boolean; number: number; iss
 export function ticketCode(ticket: { prefix: string; number: number }): string {
 	return `${ticket.prefix}-${String(ticket.number).padStart(3, '0')}`;
 }
+
+/** A visit's status, as the queue follows it. */
+type VisitStatus = 'OPEN' | 'IN_PROGRESS' | 'FOR_BILLING' | 'COMPLETED' | 'CANCELLED';
+
+/** The steps taken so far and where they leave the ticket. */
+interface Walk {
+	status: QueueStatus;
+	station: QueueStation;
+	steps: QueueTicketChange[];
+}
+
+function walk(from: Walk, change: QueueTicketChange): Walk {
+	return {
+		status: change.status,
+		station: change.station ?? from.station,
+		steps: [...from.steps, change],
+	};
+}
+
+/** At the ticket's station, on to SERVING: a skipped patient back in line, called, at the desk. */
+function toServing(from: Walk, now: Date): Walk {
+	let state = from;
+	if (state.status === 'SKIPPED') {
+		state = walk(state, requeueTicket(state.status));
+	}
+	if (state.status === 'WAITING') {
+		state = walk(state, callTicket(state.status, now));
+	}
+	if (state.status === 'CALLED') {
+		state = walk(state, serveTicket(state.status, now));
+	}
+	return state;
+}
+
+/**
+ * Where a visit's status puts its ticket when the visit moved outside the queue pages (the encounter page): with the
+ * doctor (IN_PROGRESS) the ticket is SERVING at the doctor's room; for billing it WAITS at the cashier; a completed
+ * visit's ticket is DONE and a cancelled one's CANCELLED. OPEN moves nothing.
+ *
+ * Returns the one change that walks the ticket there through the status machine (every step guarded by the functions
+ * above, their columns merged), or null when the ticket is there already or closed.
+ */
+export function followVisit(
+	ticket: { status: QueueStatus; station: string | null },
+	visit: VisitStatus,
+	now: Date = new Date(),
+): QueueTicketChange | null {
+	if (ticket.status === 'DONE' || ticket.status === 'CANCELLED') {
+		return null;
+	}
+	const start: Walk = { status: ticket.status, station: (ticket.station ?? 'TRIAGE') as QueueStation, steps: [] };
+	let state: Walk;
+	switch (visit) {
+		case 'OPEN':
+			return null;
+		case 'IN_PROGRESS':
+			if (start.station === 'DOCTOR' && start.status === 'SERVING') {
+				return null;
+			}
+			state = start.station === 'DOCTOR' ? start : toServing(start, now);
+			if (state.station !== 'DOCTOR') {
+				state = walk(state, transferTicket(state.status, 'DOCTOR'));
+			}
+			state = toServing(state, now);
+			break;
+		case 'FOR_BILLING':
+			if (start.station === 'CASHIER') {
+				return null;
+			}
+			state = toServing(start, now);
+			state = walk(state, transferTicket(state.status, 'CASHIER'));
+			break;
+		case 'COMPLETED':
+			state = toServing(start, now);
+			state = walk(state, finishTicket(state.status, now));
+			break;
+		case 'CANCELLED':
+			state = walk(start, cancelTicket(start.status, now));
+			break;
+	}
+	return state.steps.reduce<QueueTicketChange>((merged, change) => ({ ...merged, ...change }), {
+		status: state.status,
+	});
+}

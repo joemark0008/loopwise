@@ -33,7 +33,7 @@ const NEXT_STATIONS: Readonly<Record<QueueStation, readonly QueueStation[]>> = {
  *
  * The visit moves first, through the encounters module (its own transaction, status machine and audit row); the ticket
  * and the booking follow in one transaction as the user. A visit already moved (the doctor started it from the chart)
- * is left as it is.
+ * is left as it is. The other direction, a visit moved from the encounter page, is `VisitStatusSync`'s.
  */
 @Injectable()
 export class VisitFlowService {
@@ -168,12 +168,12 @@ export class VisitFlowService {
 		if (!visit || !from.includes(visit.status)) {
 			return;
 		}
-		await this.encounters.transition(userId, {
-			encounterId: visit.id,
-			status: to,
-			expectedVersion: visit.version,
-			reason: reason ?? null,
-		});
+		// The queue moves the ticket and the booking itself: `VisitStatusSync` skips this move.
+		await this.encounters.transition(
+			userId,
+			{ encounterId: visit.id, status: to, expectedVersion: visit.version, reason: reason ?? null },
+			{ trigger: 'queue' },
+		);
 	}
 
 	/** Moves the ticket's booking along with it, when its status machine allows (on the ticket's transaction). */

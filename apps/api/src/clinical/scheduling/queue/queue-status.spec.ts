@@ -6,6 +6,7 @@ import {
 	callTicket,
 	cancelTicket,
 	finishTicket,
+	followVisit,
 	laneOf,
 	requeueTicket,
 	serveTicket,
@@ -65,5 +66,53 @@ describe('queue ticket status', () => {
 			{ id: 'P-1', isPriority: true, number: 1, issuedAt: at(10) },
 		]);
 		expect(order.map((ticket) => ticket.id)).toEqual(['P-1', 'A-1', 'A-2']);
+	});
+
+	describe('followVisit (the visit moved from the encounter page)', () => {
+		it('brings a ticket waiting at triage to the doctor, serving', () => {
+			expect(followVisit({ status: 'WAITING', station: 'TRIAGE' }, 'IN_PROGRESS', now)).toEqual({
+				status: 'SERVING',
+				station: 'DOCTOR',
+				calledAt: now,
+				servedAt: now,
+			});
+			expect(followVisit({ status: 'SKIPPED', station: 'DOCTOR' }, 'IN_PROGRESS', now)).toEqual({
+				status: 'SERVING',
+				calledAt: now,
+				servedAt: now,
+			});
+			expect(followVisit({ status: 'SERVING', station: 'DOCTOR' }, 'IN_PROGRESS', now)).toBeNull();
+		});
+
+		it('sends the ticket to the cashier for billing, and back to the doctor on reopening', () => {
+			expect(followVisit({ status: 'SERVING', station: 'DOCTOR' }, 'FOR_BILLING', now)).toEqual({
+				status: 'WAITING',
+				station: 'CASHIER',
+				calledAt: null,
+				servedAt: null,
+			});
+			expect(followVisit({ status: 'WAITING', station: 'CASHIER' }, 'FOR_BILLING', now)).toBeNull();
+			expect(followVisit({ status: 'WAITING', station: 'CASHIER' }, 'IN_PROGRESS', now)).toEqual({
+				status: 'SERVING',
+				station: 'DOCTOR',
+				calledAt: now,
+				servedAt: now,
+			});
+		});
+
+		it('finishes or cancels the ticket with the visit, and leaves closed tickets and OPEN alone', () => {
+			expect(followVisit({ status: 'WAITING', station: 'DOCTOR' }, 'COMPLETED', now)).toEqual({
+				status: 'DONE',
+				calledAt: now,
+				servedAt: now,
+				doneAt: now,
+			});
+			expect(followVisit({ status: 'CALLED', station: 'TRIAGE' }, 'CANCELLED', now)).toEqual({
+				status: 'CANCELLED',
+				doneAt: now,
+			});
+			expect(followVisit({ status: 'DONE', station: 'CASHIER' }, 'COMPLETED', now)).toBeNull();
+			expect(followVisit({ status: 'WAITING', station: 'TRIAGE' }, 'OPEN', now)).toBeNull();
+		});
 	});
 });
