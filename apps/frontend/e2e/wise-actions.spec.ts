@@ -71,9 +71,11 @@ test.describe('Wise actions', () => {
 		await page.context().clearCookies();
 		await logIn(page, '/patients', DOCTOR);
 		await openChart(page, 'Carmen Torres');
+		// Carmen has more than one HbA1c to review (the seed's, this run's, any an earlier run left): name which one, so
+		// Wise drafts the card instead of asking.
 		const panel = await ask(
 			page,
-			'Any results for me to review? If there is one, draft its review with the note "Discussed at follow-up".',
+			'Any results for me to review? Draft the review of the most recently released HbA1c with the note "Discussed at follow-up". Do not ask which one.',
 		);
 
 		// The list is a read, folded under "Explored"; Wise cites it in its reply.
