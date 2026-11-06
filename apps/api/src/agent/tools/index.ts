@@ -35,6 +35,7 @@ import getMetric from './get-metric.js';
 import listAppointments from './list-appointments.js';
 import listFollowUps from './list-follow-ups.js';
 import listInventoryAlerts from './list-inventory-alerts.js';
+import listBilling from './list-billing.js';
 import listLabOrders from './list-lab-orders.js';
 import listQueue from './list-queue.js';
 import listReferrals from './list-referrals.js';
@@ -110,6 +111,7 @@ export const tools = {
 	propose_patient_update: createActionTool(proposePatientUpdate),
 	list_appointments: listAppointments,
 	list_queue: listQueue,
+	list_billing: listBilling,
 	propose_appointment: createActionTool(proposeAppointment),
 	propose_reschedule: createActionTool(proposeReschedule),
 	list_follow_ups: listFollowUps,

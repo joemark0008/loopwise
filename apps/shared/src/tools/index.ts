@@ -20,6 +20,7 @@ export * as list from './list';
 export * as listAppointments from './list-appointments';
 export * as listFollowUps from './list-follow-ups';
 export * as listInventoryAlerts from './list-inventory-alerts';
+export * as listBilling from './list-billing';
 export * as listLabOrders from './list-lab-orders';
 export * as listQueue from './list-queue';
 export * as listReferrals from './list-referrals';

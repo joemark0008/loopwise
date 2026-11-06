@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AttachmentsModule } from '../attachments/attachments.module.js';
 import { ChatsCoreModule } from '../chats/chats-core.module.js';
 import { AnalyticsModule } from '../clinical/analytics/analytics.module.js';
+import { BillingModule } from '../clinical/billing/billing.module.js';
 import { ClinicsCoreModule } from '../clinical/clinics/clinics/clinics-core.module.js';
 import { DiagnosticsModule } from '../clinical/diagnostics/diagnostics.module.js';
 import { EncountersModule } from '../clinical/encounters/encounters.module.js';
@@ -39,6 +40,7 @@ import { CompactionService } from './services/compaction.js';
 		SchedulingModule,
 		FollowUpsModule,
 		InventoryModule,
+		BillingModule,
 		ScribeModule,
 		WiseToolsModule,
 	],

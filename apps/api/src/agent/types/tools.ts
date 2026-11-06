@@ -14,6 +14,7 @@ import type {
 	listAppointments,
 	listFollowUps,
 	listInventoryAlerts,
+	listBilling,
 	listLabOrders,
 	listQueue,
 	listReferrals,
@@ -235,6 +236,18 @@ export interface AgentToolServices {
 			clinicId: string | null,
 			input: listInventoryAlerts.Input & { limit: number },
 		): Promise<Omit<listInventoryAlerts.Output, '_version'>>;
+	};
+	/**
+	 * `CashierDeskService` reads for `list_billing`, as the user at the chat's clinic and audited: a day's collections by
+	 * method, the open invoices (of the chart's patient, else the clinic's), the user's cashier shift. Payments, issuing,
+	 * voids and closing a shift are the user's own actions on the cashier pages.
+	 */
+	billing: {
+		forWise(
+			userId: string,
+			clinicId: string | null,
+			input: listBilling.Input & { chartPatientId?: string | null },
+		): Promise<Omit<listBilling.Output, '_version'>>;
 	};
 	scheduling: {
 		appointmentsForWise(

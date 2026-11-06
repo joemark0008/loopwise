@@ -153,6 +153,16 @@ export function SystemPrompt({
 					</Span>
 				</Block>
 			)}
+			{hasTool('list_billing') && (
+				<Block>
+					<Title level={2}>Cashier desk</Title>
+					<Span>
+						For the day's collections by method, the open invoices (this patient's, else the clinic's) or
+						the user's cashier shift, call list_billing. Taking payments, issuing, voiding and closing a
+						shift happen on the cashier pages, never from chat.
+					</Span>
+				</Block>
+			)}
 			{hasTool('read_attachment') && (
 				<Block>
 					<Title level={2}>Attached files</Title>

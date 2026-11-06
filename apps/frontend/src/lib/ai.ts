@@ -93,6 +93,7 @@ const WISE_ACTION_CARDS = [
 	'list_referrals',
 	'find_stock',
 	'list_inventory_alerts',
+	'list_billing',
 ] as const;
 
 /** Tools that should NOT be collapsed (important UI elements), per density setting. */

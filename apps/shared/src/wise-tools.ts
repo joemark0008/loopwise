@@ -348,6 +348,15 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 		category: 'pharmacy',
 		defaultOn: ALL,
 	},
+	{
+		name: 'list_billing',
+		label: 'Cashier desk',
+		summary:
+			"Reads the day's collections by method, open invoices or your cashier shift. Nothing is paid from chat.",
+		kind: 'read',
+		category: 'billing',
+		defaultOn: ALL,
+	},
 	// Charts and reports
 	{
 		name: 'chart_patient_trend',

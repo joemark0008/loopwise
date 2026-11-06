@@ -457,12 +457,12 @@ How it is enforced:
 
 Built:
 
-| Kind     | Tools                                                                                                                                                                                                                                                              |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| read     | `find_patient`, `list_results_to_review`, `list_lab_orders`, `list_appointments`, `list_queue`, `find_stock`, `list_inventory_alerts`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search` |
-| navigate | `open_page`                                                                                                                                                                                                                                                        |
-| display  | `report`, `clarification`, `suggest_follow_ups`                                                                                                                                                                                                                    |
-| propose  | `propose_patient_registration`, `propose_patient_update`, `propose_encounter`, `propose_encounter_note`, `propose_prescription`, `propose_medical_certificate`, `propose_charges`, `propose_scribe_note` (§7.5), the actions of §7.3, `propose_skill`              |
+| Kind     | Tools                                                                                                                                                                                                                                                                              |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| read     | `find_patient`, `list_results_to_review`, `list_lab_orders`, `list_appointments`, `list_queue`, `list_billing`, `find_stock`, `list_inventory_alerts`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search` |
+| navigate | `open_page`                                                                                                                                                                                                                                                                        |
+| display  | `report`, `clarification`, `suggest_follow_ups`                                                                                                                                                                                                                                    |
+| propose  | `propose_patient_registration`, `propose_patient_update`, `propose_encounter`, `propose_encounter_note`, `propose_prescription`, `propose_medical_certificate`, `propose_charges`, `propose_scribe_note` (§7.5), the actions of §7.3, `propose_skill`                              |
 
 Planned with the clinic modules: `propose_dispense`, `propose_referral`, `propose_patient_message`, `get_patient_timeline`.
 

@@ -11,6 +11,7 @@ import type { StorageScope } from '../attachments/storage/index.js';
 import { statUserFile } from '../attachments/storage/user-files.js';
 import { ChatRepository } from '../chats/chat.repository.js';
 import { ANALYTICS_READER } from '../clinical/analytics/analytics-reader.token.js';
+import { BILLING_READER } from '../clinical/billing/billing-reader.token.js';
 import { ClinicDirectoryService } from '../clinical/clinics/clinics/clinic-directory.service.js';
 import { DIAGNOSTICS_READER } from '../clinical/diagnostics/diagnostics-reader.token.js';
 import { ENCOUNTER_NOTE_READER } from '../clinical/encounters/encounter-note-reader.token.js';
@@ -100,6 +101,7 @@ export class AgentService {
 		@Inject(SCHEDULING_READER) private readonly scheduling: AgentToolServices['scheduling'],
 		@Inject(FOLLOW_UPS_READER) private readonly followUps: AgentToolServices['followUps'],
 		@Inject(INVENTORY_READER) private readonly inventory: AgentToolServices['inventory'],
+		@Inject(BILLING_READER) private readonly billing: AgentToolServices['billing'],
 		@Inject(SCRIBE_READER) private readonly scribe: AgentToolServices['scribe'],
 		private readonly toolSettings: WiseToolSettingsService,
 		private readonly attachments: AttachmentsService,
@@ -343,6 +345,7 @@ export class AgentService {
 					scheduling: this.scheduling,
 					followUps: this.followUps,
 					inventory: this.inventory,
+					billing: this.billing,
 					attachments: this.attachments,
 					scribe: this.scribe,
 				}),

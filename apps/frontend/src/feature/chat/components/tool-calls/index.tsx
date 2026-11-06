@@ -32,6 +32,7 @@ import {
 	ProposeVoidDocumentToolCall,
 	ProposeVoidVitalsToolCall,
 } from './propose-record-actions';
+import { ListBillingToolCall } from './list-billing';
 import {
 	ListAppointmentsToolCall,
 	ListQueueToolCall,
@@ -95,6 +96,7 @@ const toolComponents: Partial<{
 	propose_patient_update: ProposePatientUpdateToolCall,
 	list_appointments: ListAppointmentsToolCall,
 	list_queue: ListQueueToolCall,
+	list_billing: ListBillingToolCall,
 	propose_appointment: ProposeAppointmentToolCall,
 	list_follow_ups: ListFollowUpsToolCall,
 	list_referrals: ListReferralsToolCall,
