@@ -12,6 +12,10 @@ ALTER TABLE "practitioner_clinics"
 -- The creditable withholding tax rate a corporate buyer withholds (BIR 2307), kept to redraw the draft.
 ALTER TABLE "invoices" ADD COLUMN "withholding_tax_rate" DECIMAL(5,4) NOT NULL DEFAULT 0;
 
+-- The pharmacy's ledger rows (DISPENSE / RETURN_FROM_PATIENT) a line bills: `stock_movements` is append-only, so the
+-- invoice line keeps them, and "Load charges" leaves out movements already on another invoice of the visit.
+ALTER TABLE "invoice_lines" ADD COLUMN "stock_movement_ids" UUID[] NOT NULL DEFAULT '{}';
+
 -- Who voided a payment, and when (the reason is required).
 ALTER TABLE "payments"
     ADD COLUMN "voided_at" TIMESTAMPTZ(3),

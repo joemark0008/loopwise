@@ -34,6 +34,8 @@ export interface InvoiceLineFormValues {
 	category: ServiceCategory | '';
 	/** Whose fee the line is ('' for none). */
 	practitionerId: string;
+	/** The pharmacy ledger rows a dispensed line bills (kept so it is billed once). */
+	stockMovementIds?: string[];
 }
 
 export interface InvoiceFormValues {
@@ -118,6 +120,7 @@ export function chargeLines(billing: Billing): InvoiceLineFormValues[] {
 		taxType: line.taxType,
 		category: categoryOf(billing, line.serviceItemId),
 		practitionerId: line.practitionerId ?? '',
+		...(line.stockMovementIds.length > 0 ? { stockMovementIds: line.stockMovementIds } : {}),
 	}));
 }
 
@@ -139,6 +142,7 @@ export function invoiceFormFrom(billing: Billing): InvoiceFormValues {
 			taxType: line.taxType,
 			category: line.category ?? '',
 			practitionerId: line.practitionerId ?? '',
+			...(line.stockMovementIds.length > 0 ? { stockMovementIds: line.stockMovementIds } : {}),
 		})),
 		discountType: statutory && isStatutory(statutory.type) ? statutory.type : '',
 		discountIdentificationId: statutory?.identificationId ?? '',
@@ -220,6 +224,7 @@ export function toSaveInvoiceDraftInput(
 			unitPrice: Number(line.unitPrice),
 			taxType: line.taxType,
 			practitionerId: line.practitionerId || null,
+			...(line.stockMovementIds?.length ? { stockMovementIds: line.stockMovementIds } : {}),
 		})),
 		discountType: values.discountType || null,
 		discountIdentificationId: (values.discountType && values.discountIdentificationId) || null,

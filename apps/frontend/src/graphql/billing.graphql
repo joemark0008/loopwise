@@ -23,6 +23,7 @@ fragment InvoiceFields on Invoice {
 		practitionerId
 		practitionerName
 		scPwdEligible
+		stockMovementIds
 	}
 	discounts {
 		id
@@ -100,6 +101,7 @@ fragment EncounterBillingFields on EncounterBilling {
 		taxType
 		practitionerId
 		isProfessionalFee
+		stockMovementIds
 	}
 	discountIdentifications {
 		id

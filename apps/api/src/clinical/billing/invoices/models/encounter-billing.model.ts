@@ -40,6 +40,9 @@ export class SuggestedInvoiceLine {
 
 	@Field()
 	isProfessionalFee: boolean;
+
+	@Field(() => [ID], { description: 'The pharmacy ledger rows a dispensed line bills.' })
+	stockMovementIds: string[];
 }
 
 @ObjectType({ description: "The patient's senior citizen (OSCA) or PWD ID on file." })

@@ -18,6 +18,8 @@ export interface ChargeLine {
 	/** Whose fee the line is (the visit's doctor for the consultation). */
 	practitionerId: string | null;
 	isProfessionalFee: boolean;
+	/** The pharmacy ledger rows a dispensed line bills (none for the others). */
+	stockMovementIds: string[];
 }
 
 /** The visit, as charging needs it. */
@@ -32,7 +34,8 @@ export interface ChargedVisit {
  * What a visit is charged for, built from the visit itself ("Load charges"): the consultation, at the doctor's consult
  * fee at the clinic, else the item's clinic price (`clinic_service_prices`), else its default price; each test ordered
  * (not cancelled), at the price of the item that bills it (₱0 and named when none does, for the desk to price); and
- * the medicines dispensed, from the pharmacy's hook (`DISPENSED_CHARGES`), at the price given, else the linked item's.
+ * the medicines dispensed, from the pharmacy's hook (`DISPENSED_CHARGES`), at its price, with the ledger rows they bill
+ * (rows another invoice of the visit already bills are left out).
  * The consultation names the doctor, and is their professional fee when the item is PF-shareable.
  */
 @Injectable()
@@ -47,10 +50,15 @@ export class VisitChargesService {
 		userId: string,
 		visit: ChargedVisit,
 		priceList: readonly ServiceItemPrice[],
+		options: { draftInvoiceId?: string | null } = {},
 	): Promise<ChargeLine[]> {
 		const consultation = await this.consultation(tx, visit, priceList);
 		const tests = await this.charges.listOrderedTests(tx, visit.id);
-		const dispensed = await this.dispensed.dispensedChargesFor(visit.id, { userId, tx });
+		// What another invoice of the visit (not void, not the draft being rebuilt) already bills is left out.
+		const billed = await this.charges.billedStockMovementIds(tx, visit.id, options.draftInvoiceId ?? null);
+		const dispensed = (await this.dispensed.dispensedChargesFor(tx, visit.id)).filter(
+			(charge) => !charge.stockMovementIds.every((id) => billed.has(id)) || charge.stockMovementIds.length === 0,
+		);
 		const byTest = new Map(
 			priceList.flatMap((item) => (item.diagnosticTestId ? [[item.diagnosticTestId, item]] : [])),
 		);
@@ -73,6 +81,7 @@ export class VisitChargesService {
 							taxType: 'VAT_EXEMPT',
 							practitionerId: null,
 							isProfessionalFee: false,
+							stockMovementIds: [],
 						};
 			}),
 			...dispensed.map((charge): ChargeLine => {
@@ -80,23 +89,21 @@ export class VisitChargesService {
 					(charge.serviceItemId ? byId.get(charge.serviceItemId) : undefined) ??
 					(charge.inventoryItemId ? byStock.get(charge.inventoryItemId) : undefined);
 				if (item) {
-					return fromItem(
-						ChargeSource.DISPENSED,
-						item,
-						charge.quantity,
-						charge.unitPrice ?? item.price,
-						null,
-					);
+					return {
+						...fromItem(ChargeSource.DISPENSED, item, charge.quantity, charge.unitPrice, null),
+						stockMovementIds: charge.stockMovementIds,
+					};
 				}
 				return {
 					source: ChargeSource.DISPENSED,
 					serviceItemId: null,
 					description: charge.description,
 					quantity: charge.quantity,
-					unitPrice: charge.unitPrice ?? 0,
-					taxType: charge.taxType ?? 'VATABLE',
+					unitPrice: charge.unitPrice,
+					taxType: charge.taxType,
 					practitionerId: null,
 					isProfessionalFee: false,
+					stockMovementIds: charge.stockMovementIds,
 				};
 			}),
 		];
@@ -132,6 +139,7 @@ export class VisitChargesService {
 						taxType: 'VAT_EXEMPT',
 						practitionerId: visit.practitionerId,
 						isProfessionalFee: true,
+						stockMovementIds: [],
 					};
 		}
 		return fromItem(ChargeSource.CONSULTATION, item, 1, fee ?? item.price, visit.practitionerId);
@@ -155,5 +163,6 @@ function fromItem(
 		taxType: item.taxType,
 		practitionerId: isProfessionalFee || item.category === 'CONSULTATION' ? practitionerId : null,
 		isProfessionalFee,
+		stockMovementIds: [],
 	};
 }

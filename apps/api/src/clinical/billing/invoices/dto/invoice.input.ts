@@ -49,6 +49,16 @@ export class InvoiceLineInput {
 	@IsOptional()
 	@IsUUID()
 	practitionerId?: string | null;
+
+	@Field(() => [ID], {
+		nullable: true,
+		description: 'The pharmacy ledger rows the line bills (from "Load charges"); kept so they are billed once.',
+	})
+	@IsOptional()
+	@IsArray()
+	@ArrayMaxSize(500)
+	@IsUUID('all', { each: true })
+	stockMovementIds?: string[] | null;
 }
 
 @InputType()

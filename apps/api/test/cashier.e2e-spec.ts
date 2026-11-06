@@ -7,7 +7,6 @@ import { BillingModule } from '../src/clinical/billing/billing.module.js';
 import type { BillingActor } from '../src/clinical/billing/billing-access.js';
 import { CashierDeskService } from '../src/clinical/billing/cashier-desk/cashier-desk.service.js';
 import { CashierShiftService } from '../src/clinical/billing/cashier-shifts/cashier-shift.service.js';
-import { DISPENSED_CHARGES, type DispensedCharge } from '../src/clinical/billing/charges/dispensed-charges.port.js';
 import { InvoiceChargesService } from '../src/clinical/billing/charges/invoice-charges.service.js';
 import { InvoiceSeriesService } from '../src/clinical/billing/invoice-series/invoice-series.service.js';
 import { EncounterBillingService } from '../src/clinical/billing/invoices/encounter-billing.service.js';
@@ -72,14 +71,11 @@ describe('cashier desk (e2e)', () => {
 	let consultation: ServiceItem;
 	let certificate: ServiceItem;
 	let seniorIdId: string;
-	const dispensed: DispensedCharge[] = [];
+	let dispenseId: string;
 
 	beforeAll(async () => {
 		await resetDatabase(useTestDatabase());
-		const moduleRef = await Test.createTestingModule({ imports: [CashierTestModule] })
-			.overrideProvider(DISPENSED_CHARGES)
-			.useValue({ dispensedChargesFor: () => Promise.resolve(dispensed) })
-			.compile();
+		const moduleRef = await Test.createTestingModule({ imports: [CashierTestModule] }).compile();
 		const app = moduleRef.createNestApplication({ logger: ['error'] });
 		await app.init();
 		prisma = app.get(PrismaService);
@@ -172,7 +168,18 @@ describe('cashier desk (e2e)', () => {
 			taxType: 'VATABLE',
 			inventoryItemId: amoxicillin.id,
 		});
-		dispensed.push({ inventoryItemId: amoxicillin.id, description: 'Amoxicillin 500 mg', quantity: 21 });
+		// The pharmacy dispensed 21 capsules at the visit (its append-only ledger; the billing hook reads it).
+		dispenseId = (
+			await prisma.stockMovement.create({
+				data: {
+					clinicId: scene.clinic.id,
+					itemId: amoxicillin.id,
+					type: 'DISPENSE',
+					quantity: -21,
+					encounterId: scene.encounter.id,
+				},
+			})
+		).id;
 		await prisma.diagnosticOrder.create({
 			data: { orderNo: 'LAB-CASHIER-1', encounterId: scene.encounter.id, items: { create: { testId: fbs.id } } },
 		});
@@ -205,7 +212,13 @@ describe('cashier desk (e2e)', () => {
 				isProfessionalFee: true,
 			},
 			{ description: 'Fasting blood sugar', unitPrice: 150, isProfessionalFee: false, practitionerId: null },
-			{ description: 'Amoxicillin 500 mg capsule', quantity: 21, unitPrice: 8, taxType: 'VATABLE' },
+			{
+				description: 'Amoxicillin 500 mg capsule',
+				quantity: 21,
+				unitPrice: 8,
+				taxType: 'VATABLE',
+				stockMovementIds: [dispenseId],
+			},
 		]);
 		// 450 + 150 exempt; 168 VAT-inclusive → 150 net + 18 VAT.
 		expect(draft).toMatchObject({ grossAmount: 768, vatExemptSales: 600, vatableSales: 150, vatAmount: 18 });
@@ -229,6 +242,8 @@ describe('cashier desk (e2e)', () => {
 			'Amoxicillin 500 mg capsule',
 			'Medical certificate',
 		]);
+		// Loading again adds nothing: the dispensed medicine is one line, its ledger row kept on it.
+		expect(reloaded.lines.filter((line) => line.stockMovementIds.includes(dispenseId))).toHaveLength(1);
 		expect(
 			await failure(charges.load(cashier, { encounterId: scene.encounter.id, expectedVersion: 1 })),
 		).toMatchObject({
@@ -327,6 +342,9 @@ describe('cashier desk (e2e)', () => {
 		const issued = await invoices.issue(cashier, { id: draft.id, expectedVersion: draft.version });
 		expect(issued).toMatchObject({ status: 'ISSUED', invoiceNo: 'SI-001', seriesId: created.id, balance: 700 });
 		expect((await series.list(cashier))[0]).toMatchObject({ nextNo: 2, remaining: 499 });
+		// The issued invoice bills the dispensed capsules: they are no longer a charge to load.
+		const view = await billing.get(cashier, scene.encounter.id);
+		expect(view.suggestedLines.map((line) => line.source)).toEqual(['CONSULTATION', 'DIAGNOSTIC']);
 	});
 
 	it("creates the doctor's professional fee on issue: share, EWT and net payable", async () => {

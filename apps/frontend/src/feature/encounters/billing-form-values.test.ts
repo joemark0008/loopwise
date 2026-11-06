@@ -40,6 +40,7 @@ const invoice = (overrides: Partial<InvoiceFieldsFragment> = {}): InvoiceFieldsF
 			practitionerId: 'pr1',
 			practitionerName: 'Dr. Jose Reyes',
 			scPwdEligible: true,
+			stockMovementIds: [],
 		},
 	],
 	discounts: [
@@ -108,6 +109,7 @@ const billing = (overrides: Partial<EncounterBillingFieldsFragment> = {}): Encou
 			taxType: 'VAT_EXEMPT',
 			practitionerId: 'pr1',
 			isProfessionalFee: true,
+			stockMovementIds: [],
 		},
 		{
 			source: 'DIAGNOSTIC',
@@ -118,6 +120,7 @@ const billing = (overrides: Partial<EncounterBillingFieldsFragment> = {}): Encou
 			taxType: 'VAT_EXEMPT',
 			practitionerId: null,
 			isProfessionalFee: false,
+			stockMovementIds: [],
 		},
 	],
 	discountIdentifications: [{ id: 'pi1', discountType: 'PWD', idNumber: 'PWD-0042', expiresAt: null }],

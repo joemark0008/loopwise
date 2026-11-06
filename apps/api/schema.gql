@@ -294,6 +294,78 @@ input CancelReferralInput {
   reason: String!
 }
 
+"""A bill or coin counted at the Z reading."""
+type CashDenominationCount {
+  count: Int!
+
+  """Pesos, e.g. 1000 or 0.25."""
+  denomination: Float!
+}
+
+input CashDenominationInput {
+  count: Int!
+
+  """
+  A peso bill or coin: 1000, 500, 200, 100, 50, 20, 10, 5, 1, 0.25, 0.1, 0.05, 0.01.
+  """
+  denomination: Float!
+}
+
+"""
+The cashier desk: the day's collections, the invoices to settle and the user's shift.
+"""
+type CashierDesk {
+  """The clinic's posted payments of the day, by method."""
+  collections: [ShiftMethodTotal!]!
+
+  """YYYY-MM-DD (Manila)."""
+  date: String!
+  myShift: CashierShift
+  openInvoices: [OpenInvoice!]!
+  totalCollected: Float!
+}
+
+"""
+A cashier's shift with its reading: the X reading (open, mid-shift) or the Z reading (closed: counted cash and variance).
+"""
+type CashierShift {
+  """Posted payments by method."""
+  byMethod: [ShiftMethodTotal!]!
+
+  """Posted cash payments."""
+  cashCollected: Float!
+  cashierId: ID!
+  cashierName: String!
+  closedAt: DateTime
+
+  """Z reading: the cash counted."""
+  countedCash: Float
+  denominations: [CashDenominationCount!]!
+
+  """Opening cash + cash collected (at the Z reading: as stored then)."""
+  expectedCash: Float!
+  id: ID!
+  isOpen: Boolean!
+  openedAt: DateTime!
+  openingCash: Float!
+  paymentCount: Int!
+  remarks: String
+
+  """All posted payments."""
+  totalCollected: Float!
+
+  """Z reading: counted − expected (negative = short)."""
+  variance: Float
+  voidedAmount: Float!
+  voidedCount: Int!
+}
+
+input CashierShiftsInput {
+  """First day (YYYY-MM-DD, Manila)."""
+  from: String!
+  to: String
+}
+
 enum CertificateType {
   APE_CERTIFICATE
   DRIVERS_LICENSE_MEDICAL
@@ -308,6 +380,15 @@ enum CertificateType {
 input ChangePasswordInput {
   currentPassword: String!
   newPassword: String!
+}
+
+"""
+Where a visit charge comes from: the consultation, a test ordered, a medicine dispensed.
+"""
+enum ChargeSource {
+  CONSULTATION
+  DIAGNOSTIC
+  DISPENSED
 }
 
 """Source of a clinic chart plugin (upstream `chartPlugin.source`)."""
@@ -595,6 +676,15 @@ type ClinicalDocument {
   version: Int!
 }
 
+input CloseCashierShiftInput {
+  """The cash counted, by bill and coin."""
+  denominations: [CashDenominationInput!]!
+
+  """Why the count differs, when it does."""
+  remarks: String
+  shiftId: ID!
+}
+
 input CompleteReferralInput {
   id: ID!
 
@@ -675,6 +765,25 @@ input CreateEncounterInput {
 
   """Set by the Wise card (`propose_encounter`)."""
   wiseOrigin: WiseOriginInput
+}
+
+input CreateInvoiceSeriesInput {
+  """Default SALES_INVOICE."""
+  docType: InvoiceDocType
+  endNo: Int!
+
+  """YYYY-MM-DD."""
+  permitDate: String!
+
+  """ATP number or CAS / PTU permit number."""
+  permitNo: String!
+
+  """Printed before the number, e.g. "SI-"."""
+  prefix: String
+  startNo: Int!
+
+  """YYYY-MM-DD; none = no expiry."""
+  validUntil: String
 }
 
 input CreateReferralInput {
@@ -1036,10 +1145,22 @@ type DiagnosticTestParameter {
   valueType: ResultValueType!
 }
 
+"""Someone who may approve another discount at the clinic."""
+type DiscountApprover {
+  name: String!
+
+  """EMPLOYEE / PROMO (admins), SPECIAL (admins and doctors)."""
+  types: [DiscountType!]!
+  userId: ID!
+}
+
 """The patient's senior citizen (OSCA) or PWD ID on file."""
 type DiscountIdentification {
   """The discount the ID proves."""
   discountType: DiscountType!
+
+  """YYYY-MM-DD."""
+  expiresAt: String
   id: ID!
   idNumber: String!
 }
@@ -1319,7 +1440,7 @@ A visit's billing: its invoices and what the desk needs to draft or collect one.
 """
 type EncounterBilling {
   """
-  The user may take payments and void (cashier, billing clerk or admin at the clinic).
+  The user may take payments (cashier, billing clerk or admin at the clinic).
   """
   canCollect: Boolean!
 
@@ -1327,17 +1448,29 @@ type EncounterBilling {
   The user may draft and issue (doctor, cashier, billing clerk or admin at the clinic).
   """
   canDraft: Boolean!
+
+  """The user may void invoices and payments (a clinic admin)."""
+  canVoid: Boolean!
   clinicId: ID!
+  discountApprovers: [DiscountApprover!]!
   discountIdentifications: [DiscountIdentification!]!
   encounterId: ID!
 
   """Newest first, voided included; at most one is not void."""
   invoices: [Invoice!]!
+
+  """The user's open cashier shift here (payments need one)."""
+  openShiftId: ID
   patientId: ID!
 
   """The clinic's price list."""
   priceList: [ServiceItemPrice!]!
+
+  """The charges of the visit ("Load charges")."""
   suggestedLines: [SuggestedInvoiceLine!]!
+
+  """The organization is VAT-registered (VAT applies to VATable items)."""
+  vatRegistered: Boolean!
 }
 
 """A diagnosis of the encounter, ICD-10 coded (PhilHealth)."""
@@ -1711,6 +1844,9 @@ type Invoice {
   """Oldest first."""
   payments: [InvoicePayment!]!
   scPwdDiscount: Float!
+
+  """The BIR series it was numbered from."""
+  seriesId: ID
   status: InvoiceStatus!
   vatAmount: Float!
   vatExemptSales: Float!
@@ -1720,6 +1856,12 @@ type Invoice {
   version: Int!
   voidReason: String
   voidedAt: DateTime
+
+  """Creditable withholding tax of a corporate buyer (BIR 2307)."""
+  withholdingTax: Float!
+
+  """0.02 = 2%."""
+  withholdingTaxRate: Float!
   zeroRatedSales: Float!
 }
 
@@ -1728,13 +1870,18 @@ A statutory discount with the ID the beneficiary presented (RA 9994 / RA 10754).
 """
 type InvoiceDiscount {
   amount: Float!
+
+  """
+  Who approved it (another discount), or the desk user who checked the SC/PWD ID.
+  """
+  approvedById: ID
   beneficiaryName: String
   id: ID!
 
   """The OSCA / PWD ID number as presented."""
   idNumber: String
 
-  """The patient's ID on file, when it matched."""
+  """The patient's ID on file that was presented."""
   identificationId: ID
 
   """0.2 = 20%."""
@@ -1765,11 +1912,21 @@ type InvoiceLine {
   id: ID!
   isProfessionalFee: Boolean!
   lineTotal: Float!
+
+  """Whose fee the line is."""
+  practitionerId: ID
+  practitionerName: String
   quantity: Float!
+
+  """Takes the senior citizen / PWD discount (by its category)."""
+  scPwdEligible: Boolean!
   serviceItemCode: String
 
   """The catalog item, when the line is one."""
   serviceItemId: ID
+
+  """The pharmacy ledger rows the line bills."""
+  stockMovementIds: [ID!]!
   taxType: TaxType!
 
   """As charged: VAT included for VATABLE lines."""
@@ -1779,10 +1936,18 @@ type InvoiceLine {
 
 input InvoiceLineInput {
   description: String!
+
+  """Whose fee the line is (a doctor of the clinic)."""
+  practitionerId: ID
   quantity: Float!
 
   """The catalog item; else matched by name, else a free line."""
   serviceItemId: ID
+
+  """
+  The pharmacy ledger rows the line bills (from "Load charges"); kept so they are billed once.
+  """
+  stockMovementIds: [ID!]
 
   """Ignored for catalog items (the item's applies)."""
   taxType: TaxType
@@ -1794,7 +1959,14 @@ input InvoiceLineInput {
 """A payment allocated to an invoice (amount = the part allocated to it)."""
 type InvoicePayment {
   amount: Float!
+
+  """Check: the bank."""
+  bankName: String
+  cashierShiftId: ID
   changeAmount: Float
+
+  """Check: its date (YYYY-MM-DD)."""
+  checkDate: String
   id: ID!
   method: PaymentMethod!
   paymentNo: String!
@@ -1805,6 +1977,81 @@ type InvoicePayment {
   status: PaymentStatus!
   tenderedAmount: Float
   voidReason: String
+  voidedAt: DateTime
+}
+
+"""The BIR permit the invoice number belongs to."""
+type InvoicePermit {
+  """YYYY-MM-DD."""
+  permitDate: String
+
+  """ATP number or CAS / PTU permit."""
+  permitNo: String
+
+  """The series range as printed, e.g. "SI-00001 – SI-50000"."""
+  range: String!
+
+  """YYYY-MM-DD."""
+  validUntil: String
+}
+
+"""
+The seller as registered with the BIR (the organization) and the clinic (branch).
+"""
+type InvoiceSeller {
+  address: String
+
+  """The clinic's BIR branch code, e.g. "00001"."""
+  birBranchCode: String
+  clinicName: String!
+  contactNo: String
+
+  """Registered name (SEC / DTI)."""
+  registeredName: String!
+  tin: String
+  tradeName: String
+  vatRegistered: Boolean!
+}
+
+"""
+A BIR-registered range of a clinic's invoice numbers (ATP or CAS / PTU permit).
+"""
+type InvoiceSeries {
+  docType: InvoiceDocType!
+  endNo: Int!
+
+  """The first number as printed."""
+  firstNumber: String!
+  id: ID!
+  isActive: Boolean!
+
+  """The number the next issue takes."""
+  nextNo: Int!
+
+  """YYYY-MM-DD."""
+  permitDate: String
+
+  """ATP number or CAS / PTU permit."""
+  permitNo: String
+  prefix: String
+
+  """Numbers left."""
+  remaining: Int!
+  startNo: Int!
+  state: InvoiceSeriesState!
+
+  """YYYY-MM-DD; the last day numbers may be issued."""
+  validUntil: String
+}
+
+"""
+ACTIVE (numbers left, valid today), EXHAUSTED, EXPIRED (past valid until), INACTIVE (turned off).
+"""
+enum InvoiceSeriesState {
+  ACTIVE
+  EXHAUSTED
+  EXPIRED
+  INACTIVE
 }
 
 """
@@ -1904,6 +2151,13 @@ input LinkExistingPatientInput {
 
   """Set by the Wise card (`propose_patient_registration`)."""
   wiseOrigin: WiseOriginInput
+}
+
+input LoadInvoiceChargesInput {
+  encounterId: ID!
+
+  """The draft's `version` (none when there is no draft yet)."""
+  expectedVersion: Int
 }
 
 """An item whose unexpired stock is at or below its reorder level."""
@@ -2095,6 +2349,9 @@ type Mutation {
   """Cancels a Wise card, so it can no longer be confirmed."""
   cancelWiseProposal(input: WiseOriginInput!): WiseProposalOutcome!
 
+  """X reading: the summary by method; the shift stays open."""
+  cashierShiftXReading(shiftId: ID!): CashierShift!
+
   """
   Changes your own password (needs the current one) and signs out your other sessions.
   """
@@ -2102,6 +2359,9 @@ type Mutation {
 
   """Checks a patient in: opens the visit and issues the queue number."""
   checkInPatient(input: CheckInPatientInput!): QueueTicket!
+
+  """Z reading: counts the cash and closes the shift."""
+  closeCashierShift(input: CloseCashierShiftInput!): CashierShift!
 
   """
   The patient is done (at the cashier, or the doctor with nothing to bill).
@@ -2125,6 +2385,9 @@ type Mutation {
 
   """Opens a visit at one of your clinics."""
   createEncounter(input: CreateEncounterInput!): Encounter!
+
+  """Registers a BIR series (ATP / CAS permit and range)."""
+  createInvoiceSeries(input: CreateInvoiceSeriesInput!): InvoiceSeries!
 
   """
   A new set-password link for the user (an invite or a reset); the user's earlier links stop working.
@@ -2199,12 +2462,20 @@ type Mutation {
   """Uses a matched existing patient instead of registering a new one."""
   linkExistingPatient(input: LinkExistingPatientInput!): Patient!
 
+  """
+  Rebuilds the draft's lines from the visit (consultation, tests, medicines dispensed).
+  """
+  loadInvoiceCharges(input: LoadInvoiceChargesInput!): Invoice!
+
   """The patient didn't come (after the booked time)."""
   markAppointmentNoShow(appointmentId: ID!): Appointment!
 
   """The specimen was taken (with its accession number)."""
   markSpecimenCollected(input: MarkSpecimenCollectedInput!): LabWorklistItem!
   modifyPassword(input: ModifyPasswordInput!): Boolean!
+
+  """Opens a shift with the cash float."""
+  openCashierShift(input: OpenCashierShiftInput!): CashierShift!
 
   """
   Receives a delivery: creates or adds to each lot and writes RECEIPT movements (audited).
@@ -2216,6 +2487,9 @@ type Mutation {
 
   """Records a payment against an issued invoice; returns the invoice."""
   recordPayment(input: RecordPaymentInput!): Invoice!
+
+  """Split tender: several payments on one invoice; returns the invoice."""
+  recordPayments(input: RecordPaymentsInput!): Invoice!
 
   """
   Records the patient's answer to recording this visit (granted, refused or withdrawn).
@@ -2235,6 +2509,9 @@ type Mutation {
 
   """Releases the entered result to the requesting doctor's inbox."""
   releaseDiagnosticResult(input: DiagnosticItemStepInput!): LabWorklistItem!
+
+  """Marks fees paid out, with the payout reference."""
+  releaseProfessionalFees(input: ReleaseProfessionalFeesInput!): ProfessionalFeeReport!
 
   """Removes the clinic's own price: the default applies again."""
   removeClinicServicePrice(serviceItemId: ID!): ServiceCatalogItem!
@@ -2360,6 +2637,9 @@ type Mutation {
   updateDisplaySettings(input: JSON!): JSON!
   updateEncounterNote(input: UpdateEncounterNoteInput!): Encounter!
 
+  """Changes a series' permit details, validity or on / off."""
+  updateInvoiceSeries(input: UpdateInvoiceSeriesInput!): InvoiceSeries!
+
   """Upstream `clinic.updateMapBoundary`: the updated boundary sets."""
   updateMapBoundary(input: JSON!): JSON!
 
@@ -2393,16 +2673,40 @@ type Mutation {
   voidDiagnosis(input: VoidEntryInput!): EncounterDiagnosis!
 
   """
-  Voids an invoice (kept, marked void) and the payments that settle only it.
+  Voids an invoice (kept, marked void, its number used) and the payments that settle only it.
   """
   voidInvoice(input: VoidInvoiceInput!): Invoice!
 
   """Voids the certificate; it stays in the record, marked void."""
   voidMedicalCertificate(input: VoidEntryInput!): MedicalCertificate!
 
+  """Voids a payment with a reason; returns the invoice it paid."""
+  voidPayment(input: VoidPaymentInput!): Invoice!
+
   """Voids the prescription (status CANCELLED); it stays in the record."""
   voidPrescription(input: VoidEntryInput!): Prescription!
   voidVitals(input: VoidEntryInput!): VitalSigns!
+}
+
+input OpenCashierShiftInput {
+  """The cash float in the drawer (pesos)."""
+  openingCash: Float!
+}
+
+"""An invoice still to settle: a draft, or issued with a balance."""
+type OpenInvoice {
+  balance: Float!
+  buyerName: String!
+  createdAt: DateTime!
+  encounterId: ID
+  encounterNo: String
+  id: ID!
+  invoiceNo: String
+  netAmount: Float!
+
+  """For the link to the visit; null when the user may not see them."""
+  patientId: ID
+  status: InvoiceStatus!
 }
 
 enum OrderPriority {
@@ -2613,10 +2917,43 @@ enum PaymentMethod {
   QR_PH
 }
 
+"""POSTED (counted), VOIDED (with a reason), REFUNDED."""
 enum PaymentStatus {
   POSTED
   REFUNDED
   VOIDED
+}
+
+input PaymentTenderInput {
+  """Pesos applied to the invoice."""
+  amount: Float!
+
+  """Check: the bank."""
+  bankName: String
+
+  """Check: its date (YYYY-MM-DD)."""
+  checkDate: String
+
+  """PHILHEALTH records a package (e.g. Konsulta) PhilHealth pays."""
+  method: PaymentMethod!
+
+  """
+  Official receipt number (cash, optional), e-wallet / card / transfer reference, check number.
+  """
+  referenceNo: String
+
+  """Cash handed over; the change is computed."""
+  tenderedAmount: Float
+}
+
+"""
+A doctor's fee: UNPAID, FOR_RELEASE, RELEASED (paid out), CANCELLED (its invoice was voided).
+"""
+enum PfStatus {
+  CANCELLED
+  FOR_RELEASE
+  RELEASED
+  UNPAID
 }
 
 """
@@ -2904,6 +3241,19 @@ enum PrescriptionStatus {
   PARTIALLY_DISPENSED
 }
 
+"""A sales invoice with what the printed BIR invoice shows."""
+type PrintableInvoice {
+  buyerAddress: String
+
+  """The buyer's TIN (a corporate buyer)."""
+  buyerTin: String
+  invoice: Invoice!
+
+  """None when numbered from the document sequence."""
+  permit: InvoicePermit
+  seller: InvoiceSeller!
+}
+
 """
 The priority lane (RA 9994 seniors, RA 7277 / RA 10754 PWDs, pregnant, with an infant, emergency).
 """
@@ -2913,6 +3263,80 @@ enum PriorityReason {
   PWD
   SENIOR_CITIZEN
   WITH_INFANT
+}
+
+"""A doctor's professional fee from an issued invoice line (pesos)."""
+type ProfessionalFee {
+  clinicShare: Float!
+  createdAt: DateTime!
+
+  """The line billed."""
+  description: String
+
+  """Expanded withholding tax withheld (BIR 2307)."""
+  ewtAmount: Float!
+
+  """0.1 = 10%."""
+  ewtRate: Float!
+
+  """The line as billed, net of VAT."""
+  grossAmount: Float!
+  id: ID!
+  invoiceDate: DateTime
+  invoiceId: ID
+  invoiceNo: String
+  netPayable: Float!
+  practitionerId: ID!
+  releaseRef: String
+  releasedAt: DateTime
+  status: PfStatus!
+}
+
+"""One doctor's fees in the period, with their totals."""
+type ProfessionalFeeDoctor {
+  clinicShare: Float!
+  count: Int!
+  ewtAmount: Float!
+  fees: [ProfessionalFee!]!
+  grossAmount: Float!
+  name: String!
+  netPayable: Float!
+  practitionerId: ID!
+
+  """The doctor's TIN, for BIR 2307."""
+  tin: String
+
+  """Net payable not released yet (UNPAID and FOR_RELEASE)."""
+  unreleased: Float!
+}
+
+"""The clinic's professional fees of a period (Manila dates), by doctor."""
+type ProfessionalFeeReport {
+  doctors: [ProfessionalFeeDoctor!]!
+  ewtAmount: Float!
+
+  """YYYY-MM-DD."""
+  from: String!
+
+  """YYYY-MM-DD."""
+  generatedOn: String!
+  grossAmount: Float!
+  netPayable: Float!
+
+  """YYYY-MM-DD."""
+  to: String!
+}
+
+input ProfessionalFeeReportInput {
+  """First day (YYYY-MM-DD, Manila)."""
+  from: String!
+
+  """One doctor."""
+  practitionerId: ID
+  status: PfStatus
+
+  """Last day; default `from`."""
+  to: String
 }
 
 type PublicConfig {
@@ -2947,6 +3371,15 @@ type Query {
 
   """The barangays of a city or municipality (PSGC code), by name."""
   barangays(cityMunicipalityCode: String!): [Barangay!]!
+
+  """A day's collections, the invoices to settle and the user's shift."""
+  cashierDesk(
+    """YYYY-MM-DD; default today."""
+    date: String
+  ): CashierDesk!
+
+  """The clinic's shifts of a period, newest first."""
+  cashierShifts(input: CashierShiftsInput!): [CashierShift!]!
 
   """Upstream `chart.download`: the chart rendered as a base64 PNG."""
   chartDownload(toolCallId: String!): String!
@@ -3044,7 +3477,7 @@ type Query {
   """The selected clinic's document numbering this year."""
   documentSequences: [DocumentSequenceSetting!]!
 
-  """A visit's invoices, price list and suggested lines."""
+  """A visit's invoices, price list and charges."""
   encounterBilling(encounterId: ID!): EncounterBilling!
 
   """The visit's orders with their tests and results, oldest first."""
@@ -3088,6 +3521,9 @@ type Query {
   """The catalog services an inventory item can be sold as."""
   inventoryServiceOptions: [InventoryServiceOption!]!
 
+  """The clinic's invoice series, active first."""
+  invoiceSeries: [InvoiceSeries!]!
+
   """Models known per provider (upstream `clinic.getKnownModels`)."""
   knownModels: JSON!
 
@@ -3129,6 +3565,9 @@ type Query {
 
   """The clinics where you register patients and record visits."""
   myCareClinics: [ClinicRef!]!
+
+  """The user's open shift here, with running totals."""
+  myCashierShift: CashierShift
 
   """
   Your practitioner profile (PRC license, PTR, S2 …); null until you add one.
@@ -3176,6 +3615,12 @@ type Query {
 
   """An issued prescription with the stock that can fill it."""
   prescriptionToDispense(prescriptionId: ID!): DispenseQueueEntry!
+
+  """An issued invoice as the printed BIR sales invoice shows it."""
+  printableInvoice(id: ID!): PrintableInvoice!
+
+  """Professional fees of a period, by doctor."""
+  professionalFeeReport(input: ProfessionalFeeReportInput!): ProfessionalFeeReport!
   publicConfig: PublicConfig!
 
   """Upstream `chat.getQueryRows`."""
@@ -3469,8 +3914,14 @@ input RecordDamagedStockInput {
 }
 
 input RecordPaymentInput {
-  """Pesos applied to the invoice; at most its balance."""
+  """Pesos applied to the invoice."""
   amount: Float!
+
+  """Check: the bank."""
+  bankName: String
+
+  """Check: its date (YYYY-MM-DD)."""
+  checkDate: String
 
   """The invoice's `version` the card showed."""
   expectedVersion: Int
@@ -3481,15 +3932,22 @@ input RecordPaymentInput {
   notes: String
 
   """
-  Official receipt number, e-wallet / card reference, or the PhilHealth package code.
+  Official receipt number (cash, optional), e-wallet / card / transfer reference, check number.
   """
-  referenceNo: String!
+  referenceNo: String
 
   """Cash handed over; the change is computed."""
   tenderedAmount: Float
 
   """Set by a Wise card (`propose_bill_step`)."""
   wiseOrigin: WiseOriginInput
+}
+
+input RecordPaymentsInput {
+  expectedVersion: Int
+  invoiceId: ID!
+  notes: String
+  tenders: [PaymentTenderInput!]!
 }
 
 """
@@ -3691,6 +4149,13 @@ type RegisterPatientPayload {
   patient: Patient
 }
 
+input ReleaseProfessionalFeesInput {
+  ids: [ID!]!
+
+  """The check number or bank transfer reference of the payout."""
+  releaseRef: String!
+}
+
 input RenameChatInput {
   chatId: ID!
   title: String!
@@ -3804,8 +4269,11 @@ input SaveInventoryItemInput {
 }
 
 input SaveInvoiceDraftInput {
-  """The OSCA / PWD ID number presented."""
+  """Or its number as presented (matched against the IDs on file)."""
   discountIdNumber: String
+
+  """The patient's OSCA / PWD ID on file that was presented."""
+  discountIdentificationId: ID
 
   """SENIOR_CITIZEN or PWD only."""
   discountType: DiscountType
@@ -3817,8 +4285,23 @@ input SaveInvoiceDraftInput {
   expectedVersion: Int
   lines: [InvoiceLineInput!]!
 
+  """Pesos off; or give a percent."""
+  otherDiscountAmount: Float
+
+  """Who approved the other discount."""
+  otherDiscountApprovedById: ID
+
+  """Percent off (10 = 10%); or give an amount."""
+  otherDiscountPercent: Float
+
+  """EMPLOYEE, PROMO or SPECIAL; never with SC/PWD."""
+  otherDiscountType: DiscountType
+
   """Set by the Wise card (`propose_charges`)."""
   wiseOrigin: WiseOriginInput
+
+  """Creditable withholding tax rate (0.02 = 2%, BIR 2307)."""
+  withholdingTaxRate: Float
 }
 
 input SaveMedicalCertificateInput {
@@ -4158,6 +4641,14 @@ type ServiceItemPrice {
   """The lab or imaging test this item bills."""
   diagnosticTestId: ID
   id: ID!
+
+  """The stock item (medicine, supply) this item bills."""
+  inventoryItemId: ID
+
+  """
+  A doctor's professional fee (or a share of it): the line names the doctor.
+  """
+  isPfShareable: Boolean!
   name: String!
 
   """The clinic's price, else the organization's default."""
@@ -4267,6 +4758,13 @@ type SharedChatView {
   chat: Chat!
   share: SharedChat!
   userRole: String
+}
+
+"""The posted payments of one method on a shift (pesos)."""
+type ShiftMethodTotal {
+  amount: Float!
+  count: Int!
+  method: PaymentMethod!
 }
 
 """A clinic skill: a Markdown playbook in `agent/skills/`."""
@@ -4415,16 +4913,22 @@ type StockReceiptModel {
   totalCost: Float!
 }
 
-"""
-A line to start a new invoice with: the consultation and the tests ordered.
-"""
+"""A charge of the visit, as "Load charges" puts it on the invoice."""
 type SuggestedInvoiceLine {
   description: String!
+  isProfessionalFee: Boolean!
+
+  """Whose fee the line is."""
+  practitionerId: ID
   quantity: Float!
   serviceItemId: ID
+  source: ChargeSource!
+
+  """The pharmacy ledger rows a dispensed line bills."""
+  stockMovementIds: [ID!]!
   taxType: TaxType!
 
-  """The clinic price; 0 for a test missing from the price list."""
+  """The price charged; 0 for a test missing from the price list."""
   unitPrice: Float!
 }
 
@@ -4552,6 +5056,16 @@ input UpdateEncounterNoteInput {
 
   """Set by a Wise card (`propose_encounter_note`)."""
   wiseOrigin: WiseOriginInput
+}
+
+input UpdateInvoiceSeriesInput {
+  id: ID!
+  isActive: Boolean
+  permitDate: String
+  permitNo: String
+
+  """YYYY-MM-DD; send an empty string to clear it."""
+  validUntil: String
 }
 
 input UpdateOrganizationProfileInput {
@@ -4800,6 +5314,11 @@ input VoidInvoiceInput {
 
   """Set by a Wise card (`propose_bill_step`)."""
   wiseOrigin: WiseOriginInput
+}
+
+input VoidPaymentInput {
+  paymentId: ID!
+  reason: String!
 }
 
 input WiseOriginInput {

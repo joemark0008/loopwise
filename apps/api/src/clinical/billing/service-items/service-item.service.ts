@@ -17,6 +17,8 @@ export interface ResolvedLine extends PricedLine {
 	item: ServiceItemPrice | null;
 	/** The doctor the line names (from "Load charges"), checked by the invoice service. */
 	practitionerId: string | null;
+	/** The pharmacy ledger rows it bills. */
+	stockMovementIds: string[];
 }
 
 /**
@@ -68,6 +70,7 @@ export class ServiceItemService {
 				taxType: item?.taxType ?? line.taxType,
 				scPwdEligible: isScPwdEligible(item?.category),
 				practitionerId: line.practitionerId ?? null,
+				stockMovementIds: line.stockMovementIds,
 			};
 		});
 	}

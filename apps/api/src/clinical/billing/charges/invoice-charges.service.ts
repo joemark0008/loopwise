@@ -43,7 +43,9 @@ export class InvoiceChargesService {
 				assertInvoiceEditable(active);
 			}
 			return {
-				charges: await this.visitCharges.chargesFor(tx, actor.userId, encounter, priceList),
+				charges: await this.visitCharges.chargesFor(tx, actor.userId, encounter, priceList, {
+					draftInvoiceId: active?.id ?? null,
+				}),
 				current: active,
 			};
 		});
@@ -77,6 +79,7 @@ function mergeLines(charges: readonly ChargeLine[], current: InvoiceRow | null):
 			unitPrice: charge.unitPrice,
 			taxType: charge.taxType,
 			practitionerId: charge.practitionerId,
+			stockMovementIds: charge.stockMovementIds,
 		})),
 		...kept.map((line) => ({
 			serviceItemId: line.serviceItemId,
@@ -85,6 +88,7 @@ function mergeLines(charges: readonly ChargeLine[], current: InvoiceRow | null):
 			unitPrice: line.unitPrice.toNumber(),
 			taxType: line.taxType,
 			practitionerId: line.practitionerId,
+			stockMovementIds: line.stockMovementIds,
 		})),
 	];
 }

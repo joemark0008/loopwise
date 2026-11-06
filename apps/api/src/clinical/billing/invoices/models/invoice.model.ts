@@ -61,6 +61,9 @@ export class InvoiceLine {
 
 	@Field({ description: 'Takes the senior citizen / PWD discount (by its category).' })
 	scPwdEligible: boolean;
+
+	@Field(() => [ID], { description: 'The pharmacy ledger rows the line bills.' })
+	stockMovementIds: string[];
 }
 
 @ObjectType({ description: 'A statutory discount with the ID the beneficiary presented (RA 9994 / RA 10754).' })
@@ -282,6 +285,7 @@ export function toInvoice(row: InvoiceRow): Invoice {
 				? `Dr. ${line.practitioner.firstName} ${line.practitioner.lastName}`
 				: null,
 			scPwdEligible: isScPwdEligible(line.serviceItem?.category),
+			stockMovementIds: line.stockMovementIds,
 		})),
 		discounts: row.discounts.map((discount) => ({
 			id: discount.id,

@@ -39,6 +39,26 @@ export class VisitChargesRepository {
 		});
 	}
 
+	/** The pharmacy ledger rows the visit's other invoices (not void, not `exceptInvoiceId`) already bill. */
+	async billedStockMovementIds(
+		tx: ClinicalTx,
+		encounterId: string,
+		exceptInvoiceId: string | null,
+	): Promise<Set<string>> {
+		const lines = await tx.invoiceLine.findMany({
+			where: {
+				invoice: {
+					encounterId,
+					status: { not: 'VOID' },
+					...(exceptInvoiceId ? { id: { not: exceptInvoiceId } } : {}),
+				},
+				stockMovementIds: { isEmpty: false },
+			},
+			select: { stockMovementIds: true },
+		});
+		return new Set(lines.flatMap((line) => line.stockMovementIds));
+	}
+
 	/** Of `ids`, the practitioners who hold clinic at `clinicId`. */
 	async practitionersAt(tx: ClinicalTx, clinicId: string, ids: readonly string[]): Promise<Set<string>> {
 		if (ids.length === 0) {

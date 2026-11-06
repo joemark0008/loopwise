@@ -46,7 +46,10 @@ export class EncounterBillingService {
 			// One after another: the queries share the transaction's connection.
 			const invoices = await this.invoices.listForEncounter(tx, encounter.id);
 			const priceList = await this.serviceItems.priceList(tx, clinic);
-			const suggestedLines = await this.charges.chargesFor(tx, actor.userId, encounter, priceList);
+			const draft = invoices.find((invoice) => invoice.status === 'DRAFT');
+			const suggestedLines = await this.charges.chargesFor(tx, actor.userId, encounter, priceList, {
+				draftInvoiceId: draft?.id ?? null,
+			});
 			const identifications = await this.discounts.identifications(tx, encounter.patientId);
 			const approvers = await this.discounts.approvers(tx, encounter.clinicId);
 			const shift = await this.shifts.findOpen(tx, actor.clinicId, actor.userId);

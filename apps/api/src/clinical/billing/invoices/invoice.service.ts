@@ -1,6 +1,5 @@
 import { InvoiceDraftSchema, InvoiceVoidReasonSchema } from '@loopwise/shared/invoice';
 import { Injectable, Logger } from '@nestjs/common';
-import type { ZodType, ZodTypeDef } from 'zod/v3';
 
 import { EntityNotFoundError, StaleVersionError } from '../../../common/errors/domain-error.js';
 import type { Prisma } from '../../../generated/prisma/client.js';
@@ -12,7 +11,7 @@ import {
 	type VerifiedWiseCard,
 	WiseProposalService,
 } from '../../wise-proposals/wise-proposal.service.js';
-import { InvalidBillingInputError, LinePractitionerInvalidError, WrongClinicError } from '../billing.errors.js';
+import { LinePractitionerInvalidError, WrongClinicError } from '../billing.errors.js';
 import { type BillingActor, isBillingAdmin } from '../billing-access.js';
 import { VisitChargesRepository } from '../charges/visit-charges.repository.js';
 import { InvoiceDiscountService } from '../discounts/invoice-discount.service.js';
@@ -21,9 +20,10 @@ import { ProfessionalFeeService } from '../professional-fees/professional-fee.se
 import type { ResolvedLine } from '../service-items/service-item.service.js';
 import { ServiceItemService } from '../service-items/service-item.service.js';
 import type { IssueInvoiceInput, SaveInvoiceDraftInput, VoidInvoiceInput } from './dto/invoice.input.js';
-import { type BillingEncounter, type InvoiceLineData, InvoiceRepository } from './invoice.repository.js';
+import { type BillingEncounter, InvoiceRepository } from './invoice.repository.js';
+import { asObject, buyerNameOf, keepBilledMovements, parseOrThrow, toLineRow } from './invoice-helpers.js';
 import { assertInvoiceEditable, assertInvoiceTransition } from './invoice-status.js';
-import { InvoiceTotalsService, type LineAmounts } from './invoice-totals.service.js';
+import { InvoiceTotalsService } from './invoice-totals.service.js';
 import { type Invoice, type InvoiceRow, toInvoice } from './models/invoice.model.js';
 
 /** An invoice loaded for a change, with the visit it bills. */
@@ -104,7 +104,7 @@ export class InvoiceService {
 				throw new StaleVersionError('Invoice', input.expectedVersion ?? 0, current?.version);
 			}
 			const clinic = { id: encounter.clinic.id, organizationId: encounter.clinic.organizationId };
-			const lines = await this.serviceItems.resolveLines(tx, clinic, draft.lines);
+			const lines = keepBilledMovements(await this.serviceItems.resolveLines(tx, clinic, draft.lines), current);
 			await this.assertLinePractitioners(tx, encounter, lines);
 			const buyerName = buyerNameOf(encounter);
 			const plan = await this.discounts.plan(tx, draft, {
@@ -373,47 +373,4 @@ export class InvoiceService {
 	}
 }
 
-/** The patient as printed on the invoice (and as SC/PWD beneficiary). */
-export function buyerNameOf(encounter: BillingEncounter): string {
-	const { firstName, middleName, lastName, suffix } = encounter.patient;
-	return [firstName, middleName, lastName, suffix].filter(Boolean).join(' ');
-}
-
-function toLineRow(
-	line: ResolvedLine,
-	index: number,
-	encounter: BillingEncounter,
-	amounts: LineAmounts,
-): InvoiceLineData {
-	const category = line.item?.category;
-	const isProfessionalFee = category === 'PROFESSIONAL_FEE' || Boolean(line.item?.isPfShareable);
-	return {
-		serviceItemId: line.serviceItemId,
-		encounterId: encounter.id,
-		// Whose fee: the doctor the line names, else the visit's doctor for the consultation and professional fees.
-		practitionerId:
-			line.practitionerId ?? (isProfessionalFee || category === 'CONSULTATION' ? encounter.practitionerId : null),
-		description: line.description,
-		quantity: line.quantity,
-		unitPrice: line.unitPrice,
-		taxType: line.taxType,
-		isProfessionalFee,
-		sortOrder: index,
-		vatAmount: amounts.vatAmount,
-		discountAmount: amounts.discountAmount,
-		lineTotal: amounts.lineTotal,
-	};
-}
-
-const asObject = (value: Prisma.InputJsonValue | null | undefined): Prisma.InputJsonObject =>
-	value && typeof value === 'object' && !Array.isArray(value) ? (value as Prisma.InputJsonObject) : {};
-
-/** Parses with a shared schema; the first problem becomes a BAD_REQUEST the user can act on. */
-export function parseOrThrow<T>(schema: ZodType<T, ZodTypeDef, unknown>, value: unknown): T {
-	const result = schema.safeParse(value);
-	if (!result.success) {
-		const issue = result.error.issues[0];
-		throw new InvalidBillingInputError(issue.message, issue.path.join('.') || undefined);
-	}
-	return result.data;
-}
+export { buyerNameOf, parseOrThrow };

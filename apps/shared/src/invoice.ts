@@ -194,6 +194,8 @@ export const InvoiceLineSchema = z.object({
 	taxType: z.enum(TAX_TYPES).default('VAT_EXEMPT'),
 	/** Whose fee the line is (the visit's doctor for the consultation, from "Load charges"). */
 	practitionerId: z.preprocess(emptyToUndefined, z.string().uuid().optional()),
+	/** The pharmacy ledger rows a dispensed line bills (from "Load charges"). */
+	stockMovementIds: z.preprocess((value) => value ?? [], z.array(z.string().uuid()).max(500)),
 });
 
 export type InvoiceLineDraft = z.output<typeof InvoiceLineSchema>;
