@@ -89,6 +89,8 @@ const WISE_ACTION_CARDS = [
 	'list_lab_orders',
 	'list_appointments',
 	'list_queue',
+	'list_follow_ups',
+	'list_referrals',
 ] as const;
 
 /** Tools that should NOT be collapsed (important UI elements), per density setting. */

@@ -123,6 +123,10 @@ const describeToolActivity = (part: UIToolPart): string | null => {
 			return 'Reading the appointments';
 		case 'list_queue':
 			return 'Reading the queue';
+		case 'list_follow_ups':
+			return 'Reading the follow-ups';
+		case 'list_referrals':
+			return 'Reading the referrals';
 		case 'propose_appointment':
 			return 'Drafting the booking';
 		case 'propose_reschedule':

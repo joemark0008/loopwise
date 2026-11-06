@@ -37,6 +37,7 @@ import {
 	ProposeAppointmentToolCall,
 	ProposeRescheduleToolCall,
 } from './propose-scheduling';
+import { ListFollowUpsToolCall, ListReferralsToolCall } from './list-follow-ups';
 import { ProposeSkillToolCall } from './propose-skill';
 import { ReportToolCall } from './report-card';
 import { ReportChipToolCall } from './report-chip';
@@ -94,6 +95,8 @@ const toolComponents: Partial<{
 	list_appointments: ListAppointmentsToolCall,
 	list_queue: ListQueueToolCall,
 	propose_appointment: ProposeAppointmentToolCall,
+	list_follow_ups: ListFollowUpsToolCall,
+	list_referrals: ListReferralsToolCall,
 	propose_reschedule: ProposeRescheduleToolCall,
 };
 
