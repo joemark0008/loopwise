@@ -18,6 +18,7 @@ import {
 } from './seed-clinical.js';
 import { seedDiagnostics } from './seed-diagnostics.js';
 import { seedEncounterRecords } from './seed-encounter-record.js';
+import { seedFollowUps } from './seed-follow-ups.js';
 import { seedReference } from './seed-reference.js';
 import { seedScheduling } from './seed-scheduling.js';
 import { seedPanelVitals, seedTrendHistory } from './seed-trends.js';
@@ -62,6 +63,7 @@ async function seed() {
 				await seedBilling(tx);
 				await seedClinicSetup(tx, demo.practitioners);
 				await seedScheduling(tx, demo);
+				await seedFollowUps(tx, demo);
 				return true;
 			},
 			{ timeout: 120_000 },

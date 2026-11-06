@@ -16,6 +16,7 @@
 		"db:seed": "node --import @swc-node/register/esm-register prisma/seed.ts",
 		"db:seed:scheduling": "node --import @swc-node/register/esm-register prisma/run-seed-scheduling.ts",
 		"db:seed:clinic-setup": "node --import @swc-node/register/esm-register prisma/run-seed-clinic-setup.ts",
+		"db:seed:follow-ups": "node --import @swc-node/register/esm-register prisma/run-seed-follow-ups.ts",
 		"db:studio": "prisma studio",
 		"postinstall": "prisma generate"
 	},
