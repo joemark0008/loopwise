@@ -156,7 +156,7 @@ The patient never learns bad news from a machine.
 | `documents`                        | `medical-certificates/`, `referrals/` (written, answered: accept / decline / complete, inbox and outbox, the printed letter)                                                                                                                                                                                                                  |
 | `follow-ups`                       | the follow-up list (visits whose `follow_up_date` is due, computed live), Wise's `list_follow_ups` / `list_referrals` reads (`FOLLOW_UPS_READER`)                                                                                                                                                                                             |
 | `scribe`                           | the AI scribe: recording consent per visit, consent-checked transcription, the read behind `propose_scribe_note` (§7.5)                                                                                                                                                                                                                       |
-| `billing`                          | `service-items/` (the price list invoices use; the catalog and clinic prices of Settings → Services), `invoices/` (with `InvoiceTotalsService`), `payments/`                                                                                                                                                                                  |
+| `billing`                          | `service-items/`, `invoices/` (`InvoiceTotalsService`, print), `charges/` (load charges, `DISPENSED_CHARGES` port), `discounts/`, `invoice-series/`, `payments/`, `cashier-shifts/`, `professional-fees/`, `cashier-desk/` (desk and `list_billing`); §5.6                                                                                    |
 | `inventory`                        | `items/` (the inventory master, its link to the catalog service that sells it), `suppliers/`, `receipts/` (deliveries into lots), `stock/` (`StockLedgerService`, the one writer of the ledger; adjustments, write-offs, consumption, alerts), `dispensing/` (the dispense queue), `billing/` (`InventoryBillingService`, the cashier's hook) |
 | `scheduling`                       | `appointments/` (slots, booking), `queue/` (check-in, lines, board, `VisitFlowService` / `VisitStatusSync`), `availability/` (adapts `PractitionerScheduleService`), `reminders/` (pg-boss job)                                                                                                                                               |
 | `audit`                            | `AuditService`, the one writer of `audit_logs`                                                                                                                                                                                                                                                                                                |
@@ -359,6 +359,60 @@ sequence.
 - **Desks** (`inventory-access.ts`, `@ClinicAccess({ staffRoles })`): dispensing PHARMACIST / PHARMACY_ASSISTANT;
   receiving, adjusting, write-offs, the item master and suppliers INVENTORY_CLERK; reading stock all three; consumption
   also the clinical desks (doctor, nurse, midwife, lab); clinic admins every desk.
+
+### 5.6 Billing and the cashier desk
+
+`apps/api/src/clinical/billing/` (migration `0003_billing`). The visit invoice is a BIR sales invoice (EOPT Act,
+RA 11976); one invoice per visit that is not void.
+
+> **To confirm with the clinic's accountant before real use:** the VAT treatment (VAT-inclusive prices; a non-VAT
+> clinic reports every sale as VAT-exempt), which categories take the SC/PWD discount, the order of discounts, the
+> creditable withholding rates offered, the professional fee EWT rates (10% default, 5% / 15% per BIR rules) and the
+> clinic's share. The rules below are the defaults coded, not tax advice.
+
+- **Charges** ("Load charges", `charges/`): the consultation at the doctor's consult fee at the clinic
+  (`practitioner_clinics.consult_fee`, else their default fee), else the item's clinic price (`clinic_service_prices`),
+  else `service_items.default_price`; each test ordered (not cancelled) at the price of the item that bills it; the
+  medicines dispensed, from the pharmacy through the `DISPENSED_CHARGES` port (`DispensedChargesSource`; a no-op until
+  the pharmacy binds its `InventoryBillingService`). The consultation and PF-shareable items name the doctor and are
+  professional fee lines. Loading keeps hand-added lines and the draft's discounts.
+- **Totals** (`InvoiceTotalsService`, Decimal, pure): per line, rounded half up to the centavo: gross = qty × price;
+  another discount (rate, or an amount spread by gross, the last line taking the centavos left); VAT only at a
+  VAT-registered organization: net = charged ÷ 1.12; SC/PWD on an eligible line (consultation, PF, procedure, lab,
+  imaging, medicine, supply, vaccine): VAT removed, 20% of the net off, the net reported as VAT-exempt (zero-rated
+  stays zero-rated). Then withholding = rate × sales net of VAT; amount due = gross − other − less VAT − SC/PWD −
+  withholding; balance = due − paid. The billing tab previews with `computeInvoiceTotals` (`@loopwise/shared/invoice`,
+  integer centavos); `invoice-totals.parity.spec.ts` keeps the two equal.
+- **Discounts** (`discounts/`): SC/PWD needs the patient's OSCA / PWD ID on file (`patient_identifications`, not
+  expired), stored with the ID link, a snapshot of name and number, and the desk user who checked it
+  (`approved_by_id`). Employee / promo need a clinic admin's approval, special also a doctor's; never combined with
+  SC/PWD (RA 9994 §4).
+- **Series and issuing** (`invoice-series/`): admins register ATP / CAS series (range, permit, validity; overlaps
+  refused). Issuing takes the next number of the first usable series in one locked `UPDATE`; refused when every active
+  series is exhausted (`INVOICE_SERIES_EXHAUSTED`) or past `valid_until` (`INVOICE_SERIES_EXPIRED`). A clinic with no
+  series falls back to its INVOICE document sequence. A void keeps its number, with who, when and why.
+- **Payments** (`payments/`): split tender (CASH with tendered / change, GCASH, MAYA, QR_PH, cards, BANK_TRANSFER,
+  CHECK with bank and date, PHILHEALTH packages), each a payment numbered from the PAYMENT sequence, allocated to the
+  invoice, on the cashier's open shift (none → `NO_OPEN_SHIFT`). POSTED → VOIDED (admin, reason, only while its shift
+  is open; the invoice moves back PAID → PARTIALLY_PAID / ISSUED) or REFUNDED (not offered yet).
+- **Shifts** (`cashier-shifts/`): one open shift per cashier per clinic (partial unique index); the X reading is the
+  summary by method; the Z reading stores expected cash (float + cash), counted cash by denomination and the variance,
+  and closes it.
+- **Professional fees** (`professional-fees/`): created on **issue** (the fee is earned by the service billed, so the
+  PF report matches the issued invoices of a period): gross = the line net of VAT after discounts; clinic share =
+  gross × `practitioner_clinics.clinic_share_rate`; EWT = (gross − share) × `ewt_rate` (10% when unset); net payable =
+  the rest. A void cancels unreleased fees (an invoice with a released fee can't be voided). Admins release with a
+  payout reference. A doctor sees their own fees.
+- **Access**: drafting / issuing: DOCTOR, CASHIER, BILLING_CLERK; payments and shifts: CASHIER, BILLING_CLERK; series,
+  voids and PF release: clinic admins (`@ClinicAdmin()`). Migration 0003 lets clinic admins write invoices and fees of
+  visits whose patient they don't see (`app_encounter_clinic_id()`); the service then reads the visit header as system
+  work, scoped to the admin's clinic.
+- **Printed invoice**: `/print/invoice/:id` (registered and trade name, TIN with branch code, VAT / non-VAT, address,
+  number, date, buyer, lines, the VAT breakdown, SC/PWD name and ID, the ATP / CAS permit and range), audited
+  `invoice.print`.
+- **Visit flow**: billing never moves the visit or the queue ticket (no FOR_BILLING → COMPLETED from a payment); the
+  cashier closes the ticket from the queue's cashier line, and Scheduling keeps the visit in step. The cashier line
+  links each ticket to its visit's billing tab ("Bill").
 
 ## 6. Follow-ups
 

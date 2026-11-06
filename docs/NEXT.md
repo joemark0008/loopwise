@@ -42,8 +42,21 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
   void), referrals (written from a visit; answered and printed, see Follow-ups and referrals).
 - **In-house lab:** catalog, orders, the lab worklist (`/orders`: collect, enter results, release), results inbox
   (`/results`) and the chart's Results tab (`clinical/diagnostics/`).
-- **Cashier:** invoices with SC/PWD discounts and the VAT split, BIR invoice series, payments (incl. PhilHealth package
-  as a PHILHEALTH payment), void; the encounter's Billing tab (`clinical/billing/`).
+- **Cashier (Phase 2, DESIGN.md §5.6):** `clinical/billing/` on `invoices` / `invoice_lines`: "Load charges" from the
+  visit (consult fee, tests ordered, medicines dispensed through the `DISPENSED_CHARGES` port), the BIR tax split in
+  `InvoiceTotalsService` (Decimal; VAT only for a VAT-registered organization), SC/PWD from the patient's OSCA / PWD ID
+  on file on the eligible lines, other discounts with an approver, creditable withholding; BIR invoice series managed
+  by admins (ATP / CAS, range, validity; exhausted / expired refused); split-tender payments on the cashier's open shift
+  (X / Z readings with denominations and variance); payment and invoice voids by admins; professional fees with EWT
+  created on issue, a PF report and release; the printed BIR sales invoice (`/print/invoice/:id`). Pages: `/cashier`
+  (desk, shifts, professional fees, invoice series), the encounter's Billing tab, a "Bill" link on the queue's cashier
+  line. Wise: `list_billing` (collections, open invoices, shift; read only). Migration `0003_billing`.
+  `npm run db:seed:billing -w @loopwise/api` adds the desk demo (OSCA IDs for Jose and Pedro, fee terms, the cashier's
+  open shift, Pedro's visit at the cashier) to a seeded database without a reset. Tests: `test/cashier.e2e-spec.ts`,
+  `test/billing.e2e-spec.ts`, `invoice-totals.service.spec.ts`, `invoice-totals.parity.spec.ts`,
+  `e2e/cashier.spec.ts`. Left: wire the pharmacy's `InventoryBillingService` to `DISPENSED_CHARGES` (see below);
+  refunds (REFUNDED); a settings UI for each doctor's EWT rate and clinic share (columns on `practitioner_clinics`,
+  seeded); corporate / HMO consolidated invoices; buyer TIN and address on the invoice form; a printed X / Z reading.
 - **Appointments and queue (§5.4, Phase 1):** `clinical/scheduling/`: slots from the doctor's schedule minus leaves
   and bookings within `max_patients`; book / reschedule (`rescheduled_from`) / cancel with a reason / confirm /
   no-show; check-in (booking or walk-in) opens the visit (`EncounterService.openForCheckIn`) and issues the queue
@@ -199,8 +212,8 @@ processor of sensitive personal information. Everything is synthetic today; befo
   cost), barcode scanning, and stock linked on the prescription form (`prescription_items.inventory_item_id` is set at
   the first dispense only). The app shell's account menu fails axe `label-content-name-mismatch` for users whose name
   shows next to it (seen as the pharmacist; `e2e/pharmacy.spec.ts` excludes it).
-- **Billing:** cashier shifts (X/Z reading), professional fees with EWT, corporate accounts and consolidated invoices,
-  HMO LOAs and transmittals, PhilHealth claims (`philhealth_claims`, Konsulta enrollment), a printed invoice.
+- **Billing:** corporate accounts and consolidated invoices, HMO LOAs and transmittals, PhilHealth claims
+  (`philhealth_claims`, Konsulta enrollment), refunds.
 - **Follow-ups, next:** the list is built (above). Left: patient reminders for due follow-ups (needs the SMS gateway;
   the list is live, so a job would only send); a Wise card that drafts a referral (the encounter page's Referrals tab writes them; Wise
   has no `propose_referral` yet); a referral's answer
