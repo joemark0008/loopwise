@@ -17,7 +17,8 @@ import { schedulingApi } from '@/lib/scheduling-api';
 /**
  * The doctor's own line (PLAN.md §4.2): the patients triage sent to them, the priority lane first. Calling and
  * starting a patient starts the visit (OPEN → IN_PROGRESS); sending them to the cashier puts the visit up for
- * billing, and Done closes a visit with nothing to bill. Refreshes every 10 seconds.
+ * billing, and Done closes a visit with nothing to bill. A waiting patient's visit opens from the line too: starting the
+ * consult there (or on the AI scribe tab) moves the ticket to the room as well. Refreshes every 10 seconds.
  */
 export function DoctorQueuePage() {
 	const { clinicId } = useSchedulingClinic();
@@ -72,6 +73,19 @@ export function DoctorQueuePage() {
 							<ul className={styles.ticketList} aria-label='Waiting for you'>
 								{waiting.map((ticket) => (
 									<TicketItem key={ticket.id} ticket={ticket}>
+										{ticket.encounter && ticket.patient && (
+											<Button size='sm' variant='ghost-muted' asChild>
+												<Link
+													to='/patients/$patientId/encounters/$encounterId'
+													params={{
+														patientId: ticket.patient.id,
+														encounterId: ticket.encounter.id,
+													}}
+												>
+													Open visit
+												</Link>
+											</Button>
+										)}
 										<Button
 											size='sm'
 											variant='outline'

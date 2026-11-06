@@ -2,6 +2,13 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input AcceptReferralInput {
+  id: ID!
+
+  """e.g. "Seen on Thursday at the IM clinic"."""
+  notes: String
+}
+
 input AddAllergyInput {
   """e.g. "Penicillin", "Shrimp"."""
   allergen: String!
@@ -581,6 +588,13 @@ type ClinicalDocument {
   version: Int!
 }
 
+input CompleteReferralInput {
+  id: ID!
+
+  """What was found or done: the reply to the referring doctor."""
+  responseNotes: String!
+}
+
 input CompleteSetupInput {
   email: String!
   name: String!
@@ -728,6 +742,11 @@ type DatabaseObject {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+input DeclineReferralInput {
+  id: ID!
+  reason: String!
+}
 
 input DeleteSkillInput {
   expectedHash: String!
@@ -1292,6 +1311,66 @@ type ExpiringCredential {
   subjectType: String!
 }
 
+"""
+A visit whose follow-up date is due, overdue or coming up, not yet followed by a visit or booking with its doctor.
+"""
+type FollowUp {
+  clinicId: ID!
+
+  """Days from today to the follow-up date; negative when overdue."""
+  daysFromToday: Int!
+
+  """The primary (else first) diagnosis of the visit."""
+  diagnosis: String
+  disposition: Disposition
+  doctorName: String
+
+  """The visit that set the follow-up."""
+  encounterId: ID!
+  encounterNo: String!
+
+  """YYYY-MM-DD: the date the doctor set (the suggested booking date)."""
+  followUpDate: String!
+  mobileNo: String
+  patientId: ID!
+  patientName: String!
+  patientNo: String!
+
+  """The doctor of the visit: the one to book the follow-up with."""
+  practitionerId: ID
+
+  """The chief complaint of the visit."""
+  reason: String
+  timing: FollowUpTiming!
+
+  """When the visit was."""
+  visitedAt: DateTime!
+}
+
+"""
+The follow-up date against today (Asia/Manila): passed, today, or within the days asked for.
+"""
+enum FollowUpTiming {
+  DUE
+  OVERDUE
+  UPCOMING
+}
+
+input FollowUpsInput {
+  clinicId: ID!
+
+  """How far back overdue ones still show (default 180 days, at most 730)."""
+  overdueDays: Int
+
+  """
+  One doctor's follow-ups (front desk, admins). A doctor always gets their own.
+  """
+  practitionerId: ID
+
+  """Days ahead to include (default 7, at most 60)."""
+  withinDays: Int
+}
+
 input ForkSharedChatInput {
   selection: SelectionInput
   shareId: ID!
@@ -1680,6 +1759,8 @@ input ModifyPasswordInput {
 }
 
 type Mutation {
+  """Accepts a sent referral (SENT → ACCEPTED), with an optional note."""
+  acceptReferral(input: AcceptReferralInput!): Referral!
   addAllergy(input: AddAllergyInput!): PatientAllergy!
   addDiagnosis(input: AddDiagnosisInput!): EncounterDiagnosis!
 
@@ -1732,6 +1813,9 @@ type Mutation {
   """
   completeQueueTicket(ticketId: ID!): QueueTicket!
 
+  """Completes an accepted referral (→ COMPLETED), with the response notes."""
+  completeReferral(input: CompleteReferralInput!): Referral!
+
   """Creates the first admin; needs the setup token from the server log."""
   completeSetup(input: CompleteSetupInput!): Boolean!
 
@@ -1763,6 +1847,9 @@ type Mutation {
 
   """Creates a user and returns the link they set their password with."""
   createUser(input: CreateUserInput!): PasswordLink!
+
+  """Declines a sent referral (SENT → DECLINED), with the reason."""
+  declineReferral(input: DeclineReferralInput!): Referral!
 
   """Deletes every chat that is not starred; returns how many."""
   deleteAllNonStarredChats: Int!
@@ -2642,6 +2729,11 @@ type Query {
   expiringCredentials(withinDays: Int! = 60): [ExpiringCredential!]!
 
   """
+  Follow-ups overdue, due today or within `withinDays` at the clinic: a doctor's own, or the clinic's (front desk, admins).
+  """
+  followUps(input: FollowUpsInput!): [FollowUp!]!
+
+  """
   Whether any user exists yet (when none does, the app sends visitors to the /setup wizard).
   """
   hasUsers: Boolean!
@@ -2741,6 +2833,16 @@ type Query {
 
   """A day's queue at one of your clinics (priority lane first)."""
   queueTickets(input: QueueTicketsInput!): [QueueTicket!]!
+
+  """
+  The referral letter to print (audited as a print); null when not in your care.
+  """
+  referralLetter(id: ID!): ReferralLetter
+
+  """
+  Referrals sent to the user (INBOX), sent by them (OUTBOX), or of a clinic (CLINIC, its admins).
+  """
+  referrals(input: ReferralsInput!): [Referral!]!
 
   """Released results waiting for your review: critical first."""
   resultsToReview: [DiagnosticReport!]!
@@ -3052,8 +3154,13 @@ type RecordingConsent {
 A referral from an encounter: to a practitioner of the organization, or an outside doctor / facility.
 """
 type Referral {
+  """The clinic of the referring visit."""
+  clinicId: ID!
   clinicalSummary: String
   encounterId: ID!
+
+  """The referring visit's number."""
+  encounterNo: String!
 
   """The referring practitioner."""
   fromPractitioner: Practitioner
@@ -3061,7 +3168,16 @@ type Referral {
   """The referring practitioner."""
   fromPractitionerId: ID!
   id: ID!
+
+  """
+  To a practitioner of the organization (answered by them); else outside (marked by the referring side).
+  """
+  isInternal: Boolean!
   patientId: ID!
+
+  """The patient, as the referral lists show them."""
+  patientName: String!
+  patientNo: String!
   reason: String!
   referredAt: DateTime!
   respondedAt: DateTime
@@ -3080,6 +3196,25 @@ type Referral {
 }
 
 """
+INBOX: sent to the user's practitioner; OUTBOX: sent by them; CLINIC: every referral of the clinic (admins).
+"""
+enum ReferralBox {
+  CLINIC
+  INBOX
+  OUTBOX
+}
+
+"""
+A referral as printed: the referral and the referring doctor on the clinic letterhead.
+"""
+type ReferralLetter {
+  referral: Referral!
+
+  """The referring doctor (PRC, PTR) and the clinic's letterhead."""
+  signatory: DocumentSignatory!
+}
+
+"""
 SENT → ACCEPTED → COMPLETED, or DECLINED / CANCELLED (DRAFT unused for now).
 """
 enum ReferralStatus {
@@ -3089,6 +3224,16 @@ enum ReferralStatus {
   DECLINED
   DRAFT
   SENT
+}
+
+input ReferralsInput {
+  box: ReferralBox!
+
+  """Required for CLINIC; for INBOX / OUTBOX, that clinic's visits."""
+  clinicId: ID
+
+  """Default: every status."""
+  statuses: [ReferralStatus!]
 }
 
 input RegisterPatientInput {

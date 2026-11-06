@@ -29,7 +29,9 @@ const CHANNELS = (Object.keys(CHANNEL_LABELS) as BookingChannel[]).filter((chann
 
 /**
  * Books a patient into one of a doctor's open slots, or moves a booking (`rescheduling`) to another slot: the old one
- * is kept as RESCHEDULED. Wise's `propose_appointment` card books the same way.
+ * is kept as RESCHEDULED. Wise's `propose_appointment` card books the same way. The follow-up list opens it with the
+ * patient, the doctor, the suggested day, FOLLOW_UP and the reason filled in (`initialPatient`, `initialVisitType`,
+ * `initialReason`); the desk can change any of them.
  */
 export function BookAppointmentDialog({
 	clinicId,
@@ -37,6 +39,9 @@ export function BookAppointmentDialog({
 	onOpenChange,
 	initialDate,
 	initialDoctorId,
+	initialPatient,
+	initialVisitType,
+	initialReason,
 	rescheduling,
 }: {
 	clinicId: string | null;
@@ -44,16 +49,19 @@ export function BookAppointmentDialog({
 	onOpenChange: (open: boolean) => void;
 	initialDate: string;
 	initialDoctorId?: string;
+	initialPatient?: PatientFieldsFragment | null;
+	initialVisitType?: VisitType;
+	initialReason?: string;
 	rescheduling?: AppointmentFieldsFragment | null;
 }) {
 	const queryClient = useQueryClient();
-	const [patient, setPatient] = useState<PatientFieldsFragment | null>(null);
+	const [patient, setPatient] = useState<PatientFieldsFragment | null>(initialPatient ?? null);
 	const [doctorId, setDoctorId] = useState(rescheduling?.practitionerId ?? initialDoctorId ?? '');
 	const [date, setDate] = useState(initialDate);
 	const [start, setStart] = useState<string | null>(null);
-	const [visitType, setVisitType] = useState<VisitType>(rescheduling?.visitType ?? 'NEW_PATIENT');
+	const [visitType, setVisitType] = useState<VisitType>(rescheduling?.visitType ?? initialVisitType ?? 'NEW_PATIENT');
 	const [channel, setChannel] = useState<BookingChannel>(rescheduling?.channel ?? 'PHONE');
-	const [reason, setReason] = useState(rescheduling?.reason ?? '');
+	const [reason, setReason] = useState(rescheduling?.reason ?? initialReason ?? '');
 	const done = { onSuccess: () => close(false) };
 	const book = useMutation(
 		schedulingApi.book.mutationOptions({
@@ -70,7 +78,7 @@ export function BookAppointmentDialog({
 
 	function close(next: boolean) {
 		if (!next) {
-			setPatient(null);
+			setPatient(initialPatient ?? null);
 			setStart(null);
 			book.reset();
 			reschedule.reset();

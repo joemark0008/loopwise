@@ -25,9 +25,17 @@ import type { displayChart, displayMap } from '@loopwise/shared/tools';
 import type { GroupedChatListResponse, LlmProvider, LlmSelectedModel, UserRole } from '@loopwise/shared/types';
 import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import type {
+	AcceptReferralInput,
 	AddAllergyInput,
 	AddDiagnosisInput,
+	CompleteReferralInput,
 	CreateEncounterInput,
+	DeclineReferralInput,
+	FollowUpFieldsFragment,
+	FollowUpsInput,
+	ReferralLetterQuery,
+	ReferralListFieldsFragment,
+	ReferralsInput,
 	EncounterFieldsFragment,
 	AllergyFieldsFragment,
 	EncounterRecordFieldsFragment,
@@ -709,6 +717,16 @@ interface GraphQLProcedures {
 		skip: Procedure<{ ticketId: string }, QueueTicketFieldsFragment>;
 		requeue: Procedure<{ ticketId: string }, QueueTicketFieldsFragment>;
 		cancelTicket: Procedure<CancelQueueTicketInput, QueueTicketFieldsFragment>;
+	};
+	followUp: {
+		list: Procedure<FollowUpsInput, FollowUpFieldsFragment[]>;
+	};
+	referral: {
+		list: Procedure<ReferralsInput, ReferralListFieldsFragment[]>;
+		letter: Procedure<{ id: string }, ReferralLetterQuery['referralLetter']>;
+		accept: Procedure<AcceptReferralInput, ReferralListFieldsFragment>;
+		decline: Procedure<DeclineReferralInput, ReferralListFieldsFragment>;
+		complete: Procedure<CompleteReferralInput, ReferralListFieldsFragment>;
 	};
 	result: {
 		toReview: Procedure<void, DiagnosticReportFieldsFragment[]>;

@@ -1,0 +1,88 @@
+fragment FollowUpFields on FollowUp {
+	encounterId
+	encounterNo
+	clinicId
+	patientId
+	patientName
+	patientNo
+	mobileNo
+	practitionerId
+	doctorName
+	visitedAt
+	followUpDate
+	disposition
+	reason
+	diagnosis
+	timing
+	daysFromToday
+}
+
+query FollowUps($input: FollowUpsInput!) {
+	followUps(input: $input) {
+		...FollowUpFields
+	}
+}
+
+fragment ReferralListFields on Referral {
+	id
+	encounterId
+	encounterNo
+	clinicId
+	patientId
+	patientName
+	patientNo
+	isInternal
+	status
+	urgency
+	reason
+	specialty
+	clinicalSummary
+	toExternalDoctor
+	toFacility
+	referredAt
+	responseNotes
+	respondedAt
+	fromPractitioner {
+		id
+		displayName
+	}
+	toPractitioner {
+		id
+		displayName
+	}
+}
+
+query Referrals($input: ReferralsInput!) {
+	referrals(input: $input) {
+		...ReferralListFields
+	}
+}
+
+query ReferralLetter($id: ID!) {
+	referralLetter(id: $id) {
+		referral {
+			...ReferralListFields
+		}
+		signatory {
+			...SignatoryFields
+		}
+	}
+}
+
+mutation AcceptReferral($input: AcceptReferralInput!) {
+	acceptReferral(input: $input) {
+		...ReferralListFields
+	}
+}
+
+mutation DeclineReferral($input: DeclineReferralInput!) {
+	declineReferral(input: $input) {
+		...ReferralListFields
+	}
+}
+
+mutation CompleteReferral($input: CompleteReferralInput!) {
+	completeReferral(input: $input) {
+		...ReferralListFields
+	}
+}
