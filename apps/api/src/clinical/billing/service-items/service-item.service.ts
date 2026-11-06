@@ -1,4 +1,4 @@
-import type { InvoiceLineDraft } from '@loopwise/shared/invoice';
+import { type InvoiceLineDraft, isScPwdEligible } from '@loopwise/shared/invoice';
 import { Injectable } from '@nestjs/common';
 
 import { EntityNotFoundError } from '../../../common/errors/domain-error.js';
@@ -15,6 +15,8 @@ export interface BillingClinic {
 /** A draft line resolved against the price list: its item (when any) sets the tax type and the category. */
 export interface ResolvedLine extends PricedLine {
 	item: ServiceItemPrice | null;
+	/** The doctor the line names (from "Load charges"), checked by the invoice service. */
+	practitionerId: string | null;
 }
 
 /**
@@ -64,6 +66,8 @@ export class ServiceItemService {
 				quantity: line.quantity,
 				unitPrice: line.unitPrice,
 				taxType: item?.taxType ?? line.taxType,
+				scPwdEligible: isScPwdEligible(item?.category),
+				practitionerId: line.practitionerId ?? null,
 			};
 		});
 	}

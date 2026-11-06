@@ -6,6 +6,7 @@ import {
 	InvoiceStatus,
 	PaymentMethod,
 	PaymentStatus,
+	PfStatus,
 	ServiceCategory,
 	TaxType,
 } from '../../generated/prisma/enums.js';
@@ -26,6 +27,22 @@ registerEnumType(DiscountType, {
 	description: 'SENIOR_CITIZEN (RA 9994) and PWD (RA 10754): 20% plus VAT exemption.',
 });
 registerEnumType(PaymentMethod, { name: 'PaymentMethod' });
-registerEnumType(PaymentStatus, { name: 'PaymentStatus' });
+registerEnumType(PaymentStatus, {
+	name: 'PaymentStatus',
+	description: 'POSTED (counted), VOIDED (with a reason), REFUNDED.',
+});
+registerEnumType(PfStatus, {
+	name: 'PfStatus',
+	description: "A doctor's fee: UNPAID, FOR_RELEASE, RELEASED (paid out), CANCELLED (its invoice was voided).",
+});
 
-export { DiscountType, InvoiceDocType, InvoiceStatus, PaymentMethod, PaymentStatus, ServiceCategory, TaxType };
+export {
+	DiscountType,
+	InvoiceDocType,
+	InvoiceStatus,
+	PaymentMethod,
+	PaymentStatus,
+	PfStatus,
+	ServiceCategory,
+	TaxType,
+};

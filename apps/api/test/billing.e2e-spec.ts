@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AuthService } from '../src/auth/auth.service.js';
 import { BillingModule } from '../src/clinical/billing/billing.module.js';
 import type { BillingActor } from '../src/clinical/billing/billing-access.js';
+import { CashierShiftService } from '../src/clinical/billing/cashier-shifts/cashier-shift.service.js';
 import { EncounterBillingService } from '../src/clinical/billing/invoices/encounter-billing.service.js';
 import { InvoiceService } from '../src/clinical/billing/invoices/invoice.service.js';
 import { PaymentService } from '../src/clinical/billing/payments/payment.service.js';
@@ -52,6 +53,7 @@ describe('billing (e2e)', () => {
 	let invoices: InvoiceService;
 	let payments: PaymentService;
 	let billing: EncounterBillingService;
+	let shifts: CashierShiftService;
 	let scene: ClinicScene;
 	let doctor: BillingActor;
 	let cashier: BillingActor;
@@ -69,8 +71,11 @@ describe('billing (e2e)', () => {
 		invoices = app.get(InvoiceService);
 		payments = app.get(PaymentService);
 		billing = app.get(EncounterBillingService);
+		shifts = app.get(CashierShiftService);
 
 		scene = await createClinicScene(prisma);
+		// A VAT-registered clinic group: VATable items carry 12% VAT.
+		await prisma.organization.update({ where: { id: scene.organization.id }, data: { vatRegistration: 'VAT' } });
 		const cashierUser = await createUser(prisma, { firstName: 'Carla', lastName: 'Dela Cruz' });
 		await grantClinicRoles(prisma, scene.clinic.id, cashierUser.id, ['CASHIER']);
 		doctor = { userId: scene.doctor.id, clinicId: scene.clinic.id, userRole: 'user', staffRoles: ['DOCTOR'] };
@@ -129,24 +134,28 @@ describe('billing (e2e)', () => {
 	it('starts the visit with the consultation and the tests ordered, at the clinic price', async () => {
 		const view = await billing.get(doctor, scene.encounter.id);
 		expect(view).toMatchObject({ invoices: [], canDraft: true, canCollect: false });
-		expect(view.suggestedLines).toEqual([
+		expect(view.suggestedLines).toMatchObject([
 			{
+				source: 'CONSULTATION',
 				serviceItemId: consultation.id,
 				description: 'Consultation',
 				quantity: 1,
 				unitPrice: 300,
 				taxType: 'VAT_EXEMPT',
+				practitionerId: scene.doctorPractitioner.id,
 			},
 			{
+				source: 'DIAGNOSTIC',
 				serviceItemId: cbg.id,
 				description: 'Capillary blood glucose',
 				quantity: 1,
 				unitPrice: 80,
 				taxType: 'VAT_EXEMPT',
+				practitionerId: null,
 			},
 		]);
 		expect(view.discountIdentifications).toEqual([
-			{ id: seniorIdId, discountType: 'SENIOR_CITIZEN', idNumber: 'OSCA-TAG-0042' },
+			{ id: seniorIdId, discountType: 'SENIOR_CITIZEN', idNumber: 'OSCA-TAG-0042', expiresAt: null },
 		]);
 		expect((await billing.get(cashier, scene.encounter.id)).canCollect).toBe(true);
 	});
@@ -225,7 +234,9 @@ describe('billing (e2e)', () => {
 				amount: 76,
 				identificationId: seniorIdId,
 				beneficiaryName: 'Maria Santos',
-				idNumber: 'osca tag 0042',
+				// The number as on file; the desk user who checked it is recorded.
+				idNumber: 'OSCA-TAG-0042',
+				approvedById: doctor.userId,
 			}),
 		]);
 
@@ -272,6 +283,12 @@ describe('billing (e2e)', () => {
 
 	it('takes the PhilHealth package, then the cash balance with change', async () => {
 		const invoice = (await billing.get(cashier, scene.encounter.id)).invoices[0];
+		expect(
+			await failure(
+				payments.record(cashier, { invoiceId: invoice.id, method: 'CASH', amount: 80, referenceNo: 'OR-1' }),
+			),
+		).toMatchObject({ code: 'CONFLICT', errorCode: 'NO_OPEN_SHIFT' });
+		await shifts.open(cashier, { openingCash: 500 });
 		expect(
 			await failure(
 				payments.record(cashier, { invoiceId: invoice.id, method: 'CASH', amount: 500, referenceNo: 'OR-1' }),
@@ -412,6 +429,7 @@ describe('billing (e2e)', () => {
 
 		const issued = await invoices.issue(admin, { id: draft.id, wiseOrigin: await card('propose_bill_step') });
 		expect(issued.status).toBe('ISSUED');
+		await shifts.open(admin, { openingCash: 0 });
 		const paid = await payments.record(admin, {
 			invoiceId: draft.id,
 			method: 'GCASH',

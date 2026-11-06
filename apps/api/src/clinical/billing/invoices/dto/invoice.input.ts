@@ -44,6 +44,11 @@ export class InvoiceLineInput {
 	@IsOptional()
 	@IsIn(Object.values(TaxType))
 	taxType?: TaxType | null;
+
+	@Field(() => ID, { nullable: true, description: 'Whose fee the line is (a doctor of the clinic).' })
+	@IsOptional()
+	@IsUUID()
+	practitionerId?: string | null;
 }
 
 @InputType()
@@ -64,11 +69,44 @@ export class SaveInvoiceDraftInput {
 	@IsIn(['SENIOR_CITIZEN', 'PWD'])
 	discountType?: DiscountType | null;
 
-	@Field(() => String, { nullable: true, description: 'The OSCA / PWD ID number presented.' })
+	@Field(() => ID, { nullable: true, description: "The patient's OSCA / PWD ID on file that was presented." })
+	@IsOptional()
+	@IsUUID()
+	discountIdentificationId?: string | null;
+
+	@Field(() => String, {
+		nullable: true,
+		description: 'Or its number as presented (matched against the IDs on file).',
+	})
 	@IsOptional()
 	@IsString()
 	@MaxLength(60)
 	discountIdNumber?: string | null;
+
+	@Field(() => DiscountType, { nullable: true, description: 'EMPLOYEE, PROMO or SPECIAL; never with SC/PWD.' })
+	@IsOptional()
+	@IsIn(['EMPLOYEE', 'PROMO', 'SPECIAL'])
+	otherDiscountType?: DiscountType | null;
+
+	@Field(() => Float, { nullable: true, description: 'Percent off (10 = 10%); or give an amount.' })
+	@IsOptional()
+	@IsNumber()
+	otherDiscountPercent?: number | null;
+
+	@Field(() => Float, { nullable: true, description: 'Pesos off; or give a percent.' })
+	@IsOptional()
+	@IsNumber()
+	otherDiscountAmount?: number | null;
+
+	@Field(() => ID, { nullable: true, description: 'Who approved the other discount.' })
+	@IsOptional()
+	@IsUUID()
+	otherDiscountApprovedById?: string | null;
+
+	@Field(() => Float, { nullable: true, description: 'Creditable withholding tax rate (0.02 = 2%, BIR 2307).' })
+	@IsOptional()
+	@IsNumber()
+	withholdingTaxRate?: number | null;
 
 	@Field(() => Int, {
 		nullable: true,
@@ -83,6 +121,18 @@ export class SaveInvoiceDraftInput {
 	@ValidateNested()
 	@Type(() => WiseOriginInput)
 	wiseOrigin?: WiseOriginInput | null;
+}
+
+@InputType()
+export class LoadInvoiceChargesInput {
+	@Field(() => ID)
+	@IsUUID()
+	encounterId: string;
+
+	@Field(() => Int, { nullable: true, description: "The draft's `version` (none when there is no draft yet)." })
+	@IsOptional()
+	@IsInt()
+	expectedVersion?: number | null;
 }
 
 @InputType()

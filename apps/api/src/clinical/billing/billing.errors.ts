@@ -21,11 +21,11 @@ export class InvoiceVoidedError extends DomainError {
 
 /** A payment larger than what is still due (the change is computed from the amount tendered, not overpaid). */
 export class PaymentExceedsBalanceError extends DomainError {
-	constructor(amount: number, balance: number) {
+	constructor(amount: string, balance: string) {
 		super(
 			'BAD_REQUEST',
 			'PAYMENT_EXCEEDS_BALANCE',
-			`The payment (₱${amount.toFixed(2)}) is more than the balance (₱${balance.toFixed(2)}).`,
+			`The payment (₱${amount}) is more than the balance (₱${balance}).`,
 			{ amount, balance },
 		);
 	}
@@ -39,6 +39,126 @@ export class InvoiceSeriesExhaustedError extends DomainError {
 			'INVOICE_SERIES_EXHAUSTED',
 			'The invoice series has no numbers left. Register a new series before issuing.',
 			{ seriesId },
+		);
+	}
+}
+
+/** The clinic's BIR series are all past their validity: a new ATP / CAS permit is needed. */
+export class InvoiceSeriesExpiredError extends DomainError {
+	constructor(seriesId: string) {
+		super(
+			'CONFLICT',
+			'INVOICE_SERIES_EXPIRED',
+			"The invoice series' permit has expired. Register a new series before issuing.",
+			{ seriesId },
+		);
+	}
+}
+
+/** A new series overlaps the numbers of another one of the clinic (same document type and prefix). */
+export class InvoiceSeriesOverlapError extends DomainError {
+	constructor(otherSeriesId: string) {
+		super('CONFLICT', 'INVOICE_SERIES_OVERLAP', 'These numbers overlap another series of this clinic.', {
+			otherSeriesId,
+		});
+	}
+}
+
+/** The SC/PWD discount needs the patient's OSCA / PWD ID on file (RA 9994 / RA 10754). */
+export class DiscountIdNotOnFileError extends DomainError {
+	constructor() {
+		super(
+			'BAD_REQUEST',
+			'DISCOUNT_ID_NOT_ON_FILE',
+			"The senior citizen / PWD ID shown is not on the patient's record. Add it to the patient first.",
+		);
+	}
+}
+
+/** The OSCA / PWD ID on file has expired. */
+export class DiscountIdExpiredError extends DomainError {
+	constructor() {
+		super('BAD_REQUEST', 'DISCOUNT_ID_EXPIRED', 'The senior citizen / PWD ID on file has expired.');
+	}
+}
+
+/** Another discount needs an approver who may approve it at this clinic. */
+export class DiscountApproverInvalidError extends DomainError {
+	constructor() {
+		super(
+			'BAD_REQUEST',
+			'DISCOUNT_APPROVER_INVALID',
+			'The approver must be an admin of this clinic (or, for a special discount, one of its doctors).',
+		);
+	}
+}
+
+/** A line's doctor must practise at the clinic. */
+export class LinePractitionerInvalidError extends DomainError {
+	constructor(practitionerId: string) {
+		super('BAD_REQUEST', 'LINE_PRACTITIONER_INVALID', "The line's doctor does not practise at this clinic.", {
+			practitionerId,
+		});
+	}
+}
+
+/** Payments are taken on an open shift of the cashier (open one first). */
+export class NoOpenShiftError extends DomainError {
+	constructor() {
+		super('CONFLICT', 'NO_OPEN_SHIFT', 'Open your cashier shift before taking payments.');
+	}
+}
+
+/** One open shift per cashier per clinic. */
+export class ShiftAlreadyOpenError extends DomainError {
+	constructor(shiftId: string) {
+		super('CONFLICT', 'SHIFT_ALREADY_OPEN', 'You already have an open shift at this clinic.', { shiftId });
+	}
+}
+
+/** A closed shift (Z reading taken) stays closed. */
+export class ShiftClosedError extends DomainError {
+	constructor(shiftId: string) {
+		super('CONFLICT', 'SHIFT_CLOSED', 'This shift is closed.', { shiftId });
+	}
+}
+
+/** Only the cashier of a shift (or a clinic admin) reads or closes it. */
+export class ShiftNotYoursError extends DomainError {
+	constructor() {
+		super('FORBIDDEN', 'SHIFT_NOT_YOURS', "This is another cashier's shift.");
+	}
+}
+
+/** A payment's status machine (POSTED → VOIDED | REFUNDED) refused a move. */
+export class PaymentNotPostedError extends DomainError {
+	constructor(paymentNo: string, status: string) {
+		super('CONFLICT', 'PAYMENT_NOT_POSTED', `Payment ${paymentNo} is ${status.toLowerCase()}.`, {
+			paymentNo,
+			status,
+		});
+	}
+}
+
+/** A payment counted in a closed shift is not voided (the Z reading stands; refund it instead). */
+export class PaymentInClosedShiftError extends DomainError {
+	constructor(paymentNo: string) {
+		super(
+			'CONFLICT',
+			'PAYMENT_IN_CLOSED_SHIFT',
+			`Payment ${paymentNo} was counted in a closed shift; it can no longer be voided.`,
+			{ paymentNo },
+		);
+	}
+}
+
+/** An invoice whose doctor's fee was already paid out is not voided. */
+export class ProfessionalFeeReleasedError extends DomainError {
+	constructor() {
+		super(
+			'CONFLICT',
+			'PROFESSIONAL_FEE_RELEASED',
+			"A doctor's fee on this invoice was already released; the invoice can't be voided.",
 		);
 	}
 }

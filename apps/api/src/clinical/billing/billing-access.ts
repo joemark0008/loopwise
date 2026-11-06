@@ -7,8 +7,13 @@ import { getRequest } from '../../common/request.js';
 
 /** Who drafts and issues a visit's invoice: the doctor who drafts the charges, and the billing desk. */
 export const INVOICE_DRAFT_ROLES = ['DOCTOR', 'CASHIER', 'BILLING_CLERK'] as const satisfies readonly StaffRole[];
-/** Who takes payments and voids invoices: the cashier and billing desk. */
+/** Who takes payments and works a cashier shift: the cashier and billing desk. */
 export const INVOICE_COLLECT_ROLES = ['CASHIER', 'BILLING_CLERK'] as const satisfies readonly StaffRole[];
+/**
+ * Who manages the invoice series, voids invoices and payments and releases professional fees: the clinic's admins
+ * (`@ClinicAdmin()`; `userRole === 'admin'`).
+ */
+export const BILLING_ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN'] as const satisfies readonly StaffRole[];
 
 /** The user working a billing desk: the clinic `@ClinicAccess()` resolved, and their roles there. */
 export interface BillingActor {
@@ -20,7 +25,15 @@ export interface BillingActor {
 
 /** Clinic admins pass every desk check (as `@ClinicAccess({ staffRoles })` does). */
 export function holdsBillingRole(actor: BillingActor, roles: readonly StaffRole[]): boolean {
-	return actor.userRole === 'admin' || actor.staffRoles.some((role) => roles.includes(role));
+	return isBillingAdmin(actor) || actor.staffRoles.some((role) => roles.includes(role));
+}
+
+/** A clinic admin (`@ClinicAdmin()` lets them through). */
+export function isBillingAdmin(actor: BillingActor): boolean {
+	return (
+		actor.userRole === 'admin' ||
+		actor.staffRoles.some((role) => (BILLING_ADMIN_ROLES as readonly StaffRole[]).includes(role))
+	);
 }
 
 /**

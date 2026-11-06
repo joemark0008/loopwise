@@ -25,6 +25,12 @@ export class ServiceItemPrice {
 
 	@Field(() => ID, { nullable: true, description: 'The lab or imaging test this item bills.' })
 	diagnosticTestId: string | null;
+
+	@Field(() => ID, { nullable: true, description: 'The stock item (medicine, supply) this item bills.' })
+	inventoryItemId: string | null;
+
+	@Field({ description: "A doctor's professional fee (or a share of it): the line names the doctor." })
+	isPfShareable: boolean;
 }
 
 export const SERVICE_ITEM_PRICE_INCLUDE = (clinicId: string) =>
@@ -43,5 +49,7 @@ export function toServiceItemPrice(row: ServiceItemPriceRow): ServiceItemPrice {
 		price: (row.clinicPrices[0]?.price ?? row.defaultPrice).toNumber(),
 		taxType: row.taxType,
 		diagnosticTestId: row.diagnosticTestId,
+		inventoryItemId: row.inventoryItemId,
+		isPfShareable: row.isPfShareable,
 	};
 }

@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { InvalidStatusTransitionError } from '../../../common/errors/domain-error.js';
 import { InvoiceAlreadyIssuedError, InvoiceVoidedError } from '../billing.errors.js';
-import { assertInvoiceEditable, assertInvoiceTransition, canTransitionInvoice } from './invoice-status.js';
+import {
+	assertInvoiceEditable,
+	assertInvoicePaymentReversal,
+	assertInvoiceTransition,
+	canTransitionInvoice,
+} from './invoice-status.js';
 
 describe('invoice status machine', () => {
 	it.each([
@@ -39,6 +44,21 @@ describe('invoice status machine', () => {
 			InvalidStatusTransitionError,
 		);
 		expect(() => assertInvoiceTransition({ status: 'ISSUED', invoiceNo: 'SI-1' }, 'PAID')).not.toThrow();
+	});
+
+	it('moves back when a payment is voided, never from a draft or a void', () => {
+		expect(() =>
+			assertInvoicePaymentReversal({ status: 'PAID', invoiceNo: 'SI-1' }, 'PARTIALLY_PAID'),
+		).not.toThrow();
+		expect(() =>
+			assertInvoicePaymentReversal({ status: 'PARTIALLY_PAID', invoiceNo: 'SI-1' }, 'ISSUED'),
+		).not.toThrow();
+		expect(() => assertInvoicePaymentReversal({ status: 'VOID', invoiceNo: 'SI-1' }, 'ISSUED')).toThrow(
+			InvoiceVoidedError,
+		);
+		expect(() => assertInvoicePaymentReversal({ status: 'DRAFT', invoiceNo: null }, 'ISSUED')).toThrow(
+			InvalidStatusTransitionError,
+		);
 	});
 
 	it('edits drafts only', () => {

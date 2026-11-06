@@ -15,6 +15,29 @@ export const INVOICE_TRANSITIONS: Readonly<Record<InvoiceStatus, readonly Invoic
 	VOID: [],
 };
 
+/** Voiding a payment moves a paid invoice back by what it had paid: to PARTIALLY_PAID, or ISSUED when nothing is left. */
+export const INVOICE_PAYMENT_REVERSALS: Readonly<Record<InvoiceStatus, readonly InvoiceStatus[]>> = {
+	DRAFT: [],
+	ISSUED: [],
+	PARTIALLY_PAID: ['PARTIALLY_PAID', 'ISSUED'],
+	PAID: ['PARTIALLY_PAID', 'ISSUED'],
+	VOID: [],
+};
+
+/** Refuses a payment reversal the machine does not allow. */
+export function assertInvoicePaymentReversal(
+	invoice: { status: InvoiceStatus; invoiceNo: string | null },
+	to: InvoiceStatus,
+): void {
+	if (INVOICE_PAYMENT_REVERSALS[invoice.status].includes(to)) {
+		return;
+	}
+	if (invoice.status === 'VOID') {
+		throw new InvoiceVoidedError(invoice.invoiceNo);
+	}
+	throw new InvalidStatusTransitionError('Invoice', invoice.status, to);
+}
+
 /** The columns the `invoices_lock` trigger lets change after DRAFT (plus `updated_at` and `version`). */
 export const INVOICE_FIELDS_AFTER_ISSUE = [
 	'status',

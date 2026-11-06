@@ -1,16 +1,22 @@
 import { Injectable } from '@nestjs/common';
 
-import type { IdentificationType, InvoiceDocType, Prisma } from '../../../generated/prisma/client.js';
+import type { Prisma } from '../../../generated/prisma/client.js';
 import type { ClinicalTx } from '../../rls/clinical-db.service.js';
 import { INVOICE_INCLUDE, type InvoiceRow } from './models/invoice.model.js';
 
-/** What billing reads of a visit: its clinic, patient and doctor (for the buyer, the numbering and PF lines). */
+/**
+ * What billing reads of a visit: its clinic (and whether its organization is VAT-registered), patient and doctor (for the
+ * buyer, the numbering, VAT and the PF lines).
+ */
 export const BILLING_ENCOUNTER_SELECT = {
 	id: true,
 	clinicId: true,
 	patientId: true,
 	practitionerId: true,
-	clinic: { select: { id: true, code: true, organizationId: true } },
+	type: true,
+	clinic: {
+		select: { id: true, code: true, organizationId: true, organization: { select: { vatRegistration: true } } },
+	},
 	patient: { select: { firstName: true, middleName: true, lastName: true, suffix: true } },
 } satisfies Prisma.EncounterSelect;
 
@@ -115,101 +121,80 @@ export class InvoiceRepository {
 		return count === 0 ? null : this.findById(tx, id);
 	}
 
-	/**
-	 * Takes the next number of the clinic's active BIR series (ATP / CAS permit) for `docType`, valid today, in one
-	 * statement. `null` when the clinic has no active series; `{ exhausted }` when its numbers ran out.
-	 */
-	async takeSeriesNumber(
-		tx: ClinicalTx,
-		clinicId: string,
-		docType: InvoiceDocType,
-	): Promise<{ seriesId: string; invoiceNo: string } | { exhausted: string } | null> {
-		const series = await tx.invoiceSeries.findFirst({
-			where: {
-				clinicId,
-				docType,
-				isActive: true,
-				OR: [{ validUntil: null }, { validUntil: { gte: startOfToday() } }],
+	/** The seller of a clinic's invoices: the organization's registration and the clinic (branch) with its address. */
+	findSeller(tx: ClinicalTx, clinicId: string) {
+		return tx.clinic.findUniqueOrThrow({
+			where: { id: clinicId },
+			select: {
+				name: true,
+				birBranchCode: true,
+				addressLine: true,
+				zipCode: true,
+				contactNo: true,
+				barangay: { select: { name: true } },
+				cityMunicipality: { select: { name: true } },
+				organization: { select: { name: true, tradeName: true, tin: true, vatRegistration: true } },
 			},
-			orderBy: { startNo: 'asc' },
 		});
-		if (!series) {
-			return null;
-		}
-		const [taken] = await tx.$queryRaw<{ number: number }[]>`
-			UPDATE invoice_series SET next_no = next_no + 1
-			WHERE id = ${series.id}::uuid AND next_no <= end_no
-			RETURNING next_no - 1 AS number`;
-		if (!taken) {
-			return { exhausted: series.id };
-		}
-		const digits = String(series.endNo).length;
-		return {
-			seriesId: series.id,
-			invoiceNo: `${series.prefix ?? ''}${String(taken.number).padStart(digits, '0')}`,
-		};
+	}
+
+	findSeries(tx: ClinicalTx, id: string) {
+		return tx.invoiceSeries.findUnique({ where: { id } });
+	}
+
+	/**
+	 * Invoices still to settle at the clinic, oldest first: drafts and issued invoices with a balance (`statuses`), with
+	 * the visit's patient for the link to its billing tab.
+	 */
+	listOpen(
+		tx: ClinicalTx,
+		filter: {
+			clinicId: string;
+			statuses: readonly ('DRAFT' | 'ISSUED' | 'PARTIALLY_PAID')[];
+			patientId?: string;
+			limit: number;
+		},
+	) {
+		return tx.invoice.findMany({
+			where: {
+				clinicId: filter.clinicId,
+				status: { in: [...filter.statuses] },
+				...(filter.patientId ? { encounter: { patientId: filter.patientId } } : {}),
+			},
+			select: {
+				id: true,
+				invoiceNo: true,
+				status: true,
+				buyerName: true,
+				netAmount: true,
+				balance: true,
+				createdAt: true,
+				issuedAt: true,
+				encounterId: true,
+				encounter: { select: { patientId: true, encounterNo: true } },
+			},
+			orderBy: { createdAt: 'asc' },
+			take: filter.limit,
+		});
 	}
 
 	/**
 	 * Voids the posted payments that settle only this invoice (a payment split over several invoices stays).
 	 * Returns their ids.
 	 */
-	async voidPaymentsOf(tx: ClinicalTx, invoiceId: string, voidReason: string): Promise<string[]> {
+	async voidPaymentsOf(
+		tx: ClinicalTx,
+		invoiceId: string,
+		voided: { voidReason: string; voidedById: string; voidedAt: Date },
+	): Promise<string[]> {
 		const payments = await tx.payment.findMany({
 			where: { status: 'POSTED', allocations: { some: { invoiceId }, every: { invoiceId } } },
 			select: { id: true },
 		});
 		const ids = payments.map((payment) => payment.id);
 		if (ids.length > 0) {
-			await tx.payment.updateMany({ where: { id: { in: ids } }, data: { status: 'VOIDED', voidReason } });
+			await tx.payment.updateMany({ where: { id: { in: ids } }, data: { status: 'VOIDED', ...voided } });
 		}
 		return ids;
 	}
-
-	/** The patient's ID of `type` with this number (as presented: spaces and case ignored), when on file. */
-	async findIdentification(
-		tx: ClinicalTx,
-		patientId: string,
-		type: IdentificationType,
-		idNumber: string,
-	): Promise<{ id: string } | null> {
-		const ids = await tx.patientIdentification.findMany({
-			where: { patientId, type },
-			select: { id: true, idNumber: true },
-		});
-		const wanted = normalizeId(idNumber);
-		return ids.find((id) => normalizeId(id.idNumber) === wanted) ?? null;
-	}
-
-	/** The patient's senior citizen (OSCA) and PWD IDs on file. */
-	listDiscountIdentifications(
-		tx: ClinicalTx,
-		patientId: string,
-		types: readonly IdentificationType[],
-	): Promise<{ id: string; type: IdentificationType; idNumber: string }[]> {
-		return tx.patientIdentification.findMany({
-			where: { patientId, type: { in: [...types] } },
-			select: { id: true, type: true, idNumber: true },
-			orderBy: { createdAt: 'asc' },
-		});
-	}
-
-	/** The tests ordered at the visit (not cancelled), to pre-fill the invoice. */
-	listOrderedTests(tx: ClinicalTx, encounterId: string): Promise<{ testId: string; name: string }[]> {
-		return tx.diagnosticOrderItem
-			.findMany({
-				where: { order: { encounterId }, status: { not: 'CANCELLED' } },
-				select: { testId: true, test: { select: { name: true } } },
-				orderBy: { id: 'asc' },
-			})
-			.then((items) => items.map((item) => ({ testId: item.testId, name: item.test.name })));
-	}
-}
-
-const normalizeId = (value: string) => value.replace(/[\s-]/g, '').toUpperCase();
-
-function startOfToday(): Date {
-	const today = new Date();
-	today.setUTCHours(0, 0, 0, 0);
-	return today;
 }
