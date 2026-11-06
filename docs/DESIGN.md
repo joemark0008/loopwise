@@ -373,8 +373,10 @@ RA 11976); one invoice per visit that is not void.
 - **Charges** ("Load charges", `charges/`): the consultation at the doctor's consult fee at the clinic
   (`practitioner_clinics.consult_fee`, else their default fee), else the item's clinic price (`clinic_service_prices`),
   else `service_items.default_price`; each test ordered (not cancelled) at the price of the item that bills it; the
-  medicines dispensed, from the pharmacy through the `DISPENSED_CHARGES` port (`DispensedChargesSource`; a no-op until
-  the pharmacy binds its `InventoryBillingService`). The consultation and PF-shareable items name the doctor and are
+  medicines dispensed, from Pharmacy's `InventoryBillingService` through the `DISPENSED_CHARGES` port
+  (`DispensedChargesSource`). The ledger is append-only, so each line keeps the stock movements it bills
+  (`invoice_lines.stock_movement_ids`), a saved draft keeps them, and loading leaves out movements another invoice of the
+  visit (not void) already bills. The consultation and PF-shareable items name the doctor and are
   professional fee lines. Loading keeps hand-added lines and the draft's discounts.
 - **Totals** (`InvoiceTotalsService`, Decimal, pure): per line, rounded half up to the centavo: gross = qty × price;
   another discount (rate, or an amount spread by gross, the last line taking the centavos left); VAT only at a

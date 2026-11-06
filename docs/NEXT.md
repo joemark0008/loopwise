@@ -43,7 +43,7 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
 - **In-house lab:** catalog, orders, the lab worklist (`/orders`: collect, enter results, release), results inbox
   (`/results`) and the chart's Results tab (`clinical/diagnostics/`).
 - **Cashier (Phase 2, DESIGN.md §5.6):** `clinical/billing/` on `invoices` / `invoice_lines`: "Load charges" from the
-  visit (consult fee, tests ordered, medicines dispensed through the `DISPENSED_CHARGES` port), the BIR tax split in
+  visit (consult fee, tests ordered, medicines dispensed, from Pharmacy's `InventoryBillingService`, billed once by stock movement), the BIR tax split in
   `InvoiceTotalsService` (Decimal; VAT only for a VAT-registered organization), SC/PWD from the patient's OSCA / PWD ID
   on file on the eligible lines, other discounts with an approver, creditable withholding; BIR invoice series managed
   by admins (ATP / CAS, range, validity; exhausted / expired refused); split-tender payments on the cashier's open shift
@@ -54,8 +54,7 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
   `npm run db:seed:billing -w @loopwise/api` adds the desk demo (OSCA IDs for Jose and Pedro, fee terms, the cashier's
   open shift, Pedro's visit at the cashier) to a seeded database without a reset. Tests: `test/cashier.e2e-spec.ts`,
   `test/billing.e2e-spec.ts`, `invoice-totals.service.spec.ts`, `invoice-totals.parity.spec.ts`,
-  `e2e/cashier.spec.ts`. Left: wire the pharmacy's `InventoryBillingService` to `DISPENSED_CHARGES` (see below);
-  refunds (REFUNDED); a settings UI for each doctor's EWT rate and clinic share (columns on `practitioner_clinics`,
+  `e2e/cashier.spec.ts`. Left: refunds (REFUNDED); a settings UI for each doctor's EWT rate and clinic share (columns on `practitioner_clinics`,
   seeded); corporate / HMO consolidated invoices; buyer TIN and address on the invoice form; a printed X / Z reading.
 - **Appointments and queue (§5.4, Phase 1):** `clinical/scheduling/`: slots from the doctor's schedule minus leaves
   and bookings within `max_patients`; book / reschedule (`rescheduled_from`) / cancel with a reason / confirm /
