@@ -25,6 +25,7 @@ import { Route as ProtectedFollowUpsRouteImport } from './routes/_protected/foll
 import { Route as ProtectedMyQueueRouteImport } from './routes/_protected/my-queue'
 import { Route as ProtectedOrdersRouteImport } from './routes/_protected/orders'
 import { Route as ProtectedPatientsRouteImport } from './routes/_protected/patients'
+import { Route as ProtectedPharmacyRouteImport } from './routes/_protected/pharmacy'
 import { Route as ProtectedQueueRouteImport } from './routes/_protected/queue'
 import { Route as ProtectedReferralsRouteImport } from './routes/_protected/referrals'
 import { Route as ProtectedReportsRouteImport } from './routes/_protected/reports'
@@ -38,6 +39,10 @@ import { Route as ProtectedChatLayoutChatIdRouteImport } from './routes/_protect
 import { Route as ProtectedPatientsIndexRouteImport } from './routes/_protected/patients.index'
 import { Route as ProtectedPatientsPatientIdRouteImport } from './routes/_protected/patients.$patientId'
 import { Route as ProtectedPatientsNewRouteImport } from './routes/_protected/patients.new'
+import { Route as ProtectedPharmacyIndexRouteImport } from './routes/_protected/pharmacy.index'
+import { Route as ProtectedPharmacyConsumptionRouteImport } from './routes/_protected/pharmacy.consumption'
+import { Route as ProtectedPharmacyReceiveRouteImport } from './routes/_protected/pharmacy.receive'
+import { Route as ProtectedPharmacySuppliersRouteImport } from './routes/_protected/pharmacy.suppliers'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings.index'
 import { Route as ProtectedSettingsAccountRouteImport } from './routes/_protected/settings.account'
 import { Route as ProtectedSettingsAppearanceRouteImport } from './routes/_protected/settings.appearance'
@@ -54,6 +59,10 @@ import { Route as PrintPrintPrescriptionPrescriptionIdRouteImport } from './rout
 import { Route as PrintPrintReferralReferralIdRouteImport } from './routes/_print/print.referral.$referralId'
 import { Route as ProtectedPatientsPatientIdIndexRouteImport } from './routes/_protected/patients.$patientId.index'
 import { Route as ProtectedPatientsPatientIdResultsRouteImport } from './routes/_protected/patients.$patientId.results'
+import { Route as ProtectedPharmacyDispenseIndexRouteImport } from './routes/_protected/pharmacy.dispense.index'
+import { Route as ProtectedPharmacyDispensePrescriptionIdRouteImport } from './routes/_protected/pharmacy.dispense.$prescriptionId'
+import { Route as ProtectedPharmacyItemsIndexRouteImport } from './routes/_protected/pharmacy.items.index'
+import { Route as ProtectedPharmacyItemsItemIdRouteImport } from './routes/_protected/pharmacy.items.$itemId'
 import { Route as ProtectedSettingsClinicIndexRouteImport } from './routes/_protected/settings.clinic.index'
 import { Route as ProtectedSettingsClinicAgentRouteImport } from './routes/_protected/settings.clinic.agent'
 import { Route as ProtectedSettingsClinicExpiriesRouteImport } from './routes/_protected/settings.clinic.expiries'
@@ -141,6 +150,11 @@ const ProtectedPatientsRoute = ProtectedPatientsRouteImport.update({
   path: '/patients',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedPharmacyRoute = ProtectedPharmacyRouteImport.update({
+  id: '/pharmacy',
+  path: '/pharmacy',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ProtectedQueueRoute = ProtectedQueueRouteImport.update({
   id: '/queue',
   path: '/queue',
@@ -209,6 +223,29 @@ const ProtectedPatientsNewRoute = ProtectedPatientsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => ProtectedPatientsRoute,
 } as any)
+const ProtectedPharmacyIndexRoute = ProtectedPharmacyIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProtectedPharmacyRoute,
+} as any)
+const ProtectedPharmacyConsumptionRoute =
+  ProtectedPharmacyConsumptionRouteImport.update({
+    id: '/consumption',
+    path: '/consumption',
+    getParentRoute: () => ProtectedPharmacyRoute,
+  } as any)
+const ProtectedPharmacyReceiveRoute =
+  ProtectedPharmacyReceiveRouteImport.update({
+    id: '/receive',
+    path: '/receive',
+    getParentRoute: () => ProtectedPharmacyRoute,
+  } as any)
+const ProtectedPharmacySuppliersRoute =
+  ProtectedPharmacySuppliersRouteImport.update({
+    id: '/suppliers',
+    path: '/suppliers',
+    getParentRoute: () => ProtectedPharmacyRoute,
+  } as any)
 const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -300,6 +337,30 @@ const ProtectedPatientsPatientIdResultsRoute =
     path: '/results',
     getParentRoute: () => ProtectedPatientsPatientIdRoute,
   } as any)
+const ProtectedPharmacyDispenseIndexRoute =
+  ProtectedPharmacyDispenseIndexRouteImport.update({
+    id: '/dispense/',
+    path: '/dispense/',
+    getParentRoute: () => ProtectedPharmacyRoute,
+  } as any)
+const ProtectedPharmacyDispensePrescriptionIdRoute =
+  ProtectedPharmacyDispensePrescriptionIdRouteImport.update({
+    id: '/dispense/$prescriptionId',
+    path: '/dispense/$prescriptionId',
+    getParentRoute: () => ProtectedPharmacyRoute,
+  } as any)
+const ProtectedPharmacyItemsIndexRoute =
+  ProtectedPharmacyItemsIndexRouteImport.update({
+    id: '/items/',
+    path: '/items/',
+    getParentRoute: () => ProtectedPharmacyRoute,
+  } as any)
+const ProtectedPharmacyItemsItemIdRoute =
+  ProtectedPharmacyItemsItemIdRouteImport.update({
+    id: '/items/$itemId',
+    path: '/items/$itemId',
+    getParentRoute: () => ProtectedPharmacyRoute,
+  } as any)
 const ProtectedSettingsClinicIndexRoute =
   ProtectedSettingsClinicIndexRouteImport.update({
     id: '/',
@@ -380,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/my-queue': typeof ProtectedMyQueueRoute
   '/orders': typeof ProtectedOrdersRoute
   '/patients': typeof ProtectedPatientsRouteWithChildren
+  '/pharmacy': typeof ProtectedPharmacyRouteWithChildren
   '/queue': typeof ProtectedQueueRoute
   '/referrals': typeof ProtectedReferralsRoute
   '/reports': typeof ProtectedReportsRoute
@@ -391,6 +453,9 @@ export interface FileRoutesByFullPath {
   '/$chatId': typeof ProtectedChatLayoutChatIdRoute
   '/patients/$patientId': typeof ProtectedPatientsPatientIdRouteWithChildren
   '/patients/new': typeof ProtectedPatientsNewRoute
+  '/pharmacy/consumption': typeof ProtectedPharmacyConsumptionRoute
+  '/pharmacy/receive': typeof ProtectedPharmacyReceiveRoute
+  '/pharmacy/suppliers': typeof ProtectedPharmacySuppliersRoute
   '/settings/account': typeof ProtectedSettingsAccountRoute
   '/settings/appearance': typeof ProtectedSettingsAppearanceRoute
   '/settings/clinic': typeof ProtectedSettingsClinicRouteWithChildren
@@ -401,12 +466,15 @@ export interface FileRoutesByFullPath {
   '/settings/wise-tools': typeof ProtectedSettingsWiseToolsRoute
   '/shared-chat/$shareId': typeof ProtectedSharedChatShareIdRoute
   '/patients/': typeof ProtectedPatientsIndexRoute
+  '/pharmacy/': typeof ProtectedPharmacyIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
   '/print/lab-request/$encounterId': typeof PrintPrintLabRequestEncounterIdRoute
   '/print/medical-certificate/$certificateId': typeof PrintPrintMedicalCertificateCertificateIdRoute
   '/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
   '/print/referral/$referralId': typeof PrintPrintReferralReferralIdRoute
   '/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
+  '/pharmacy/dispense/$prescriptionId': typeof ProtectedPharmacyDispensePrescriptionIdRoute
+  '/pharmacy/items/$itemId': typeof ProtectedPharmacyItemsItemIdRoute
   '/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
   '/settings/clinic/expiries': typeof ProtectedSettingsClinicExpiriesRoute
   '/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
@@ -417,6 +485,8 @@ export interface FileRoutesByFullPath {
   '/settings/clinic/skills': typeof ProtectedSettingsClinicSkillsRoute
   '/settings/clinic/staff': typeof ProtectedSettingsClinicStaffRoute
   '/patients/$patientId/': typeof ProtectedPatientsPatientIdIndexRoute
+  '/pharmacy/dispense/': typeof ProtectedPharmacyDispenseIndexRoute
+  '/pharmacy/items/': typeof ProtectedPharmacyItemsIndexRoute
   '/settings/clinic/': typeof ProtectedSettingsClinicIndexRoute
   '/patients/$patientId/encounters/$encounterId': typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
 }
@@ -441,6 +511,9 @@ export interface FileRoutesByTo {
   '/login': typeof PublicLoginRoute
   '/$chatId': typeof ProtectedChatLayoutChatIdRoute
   '/patients/new': typeof ProtectedPatientsNewRoute
+  '/pharmacy/consumption': typeof ProtectedPharmacyConsumptionRoute
+  '/pharmacy/receive': typeof ProtectedPharmacyReceiveRoute
+  '/pharmacy/suppliers': typeof ProtectedPharmacySuppliersRoute
   '/settings/account': typeof ProtectedSettingsAccountRoute
   '/settings/appearance': typeof ProtectedSettingsAppearanceRoute
   '/settings/memory': typeof ProtectedSettingsMemoryRoute
@@ -450,12 +523,15 @@ export interface FileRoutesByTo {
   '/settings/wise-tools': typeof ProtectedSettingsWiseToolsRoute
   '/shared-chat/$shareId': typeof ProtectedSharedChatShareIdRoute
   '/patients': typeof ProtectedPatientsIndexRoute
+  '/pharmacy': typeof ProtectedPharmacyIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
   '/print/lab-request/$encounterId': typeof PrintPrintLabRequestEncounterIdRoute
   '/print/medical-certificate/$certificateId': typeof PrintPrintMedicalCertificateCertificateIdRoute
   '/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
   '/print/referral/$referralId': typeof PrintPrintReferralReferralIdRoute
   '/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
+  '/pharmacy/dispense/$prescriptionId': typeof ProtectedPharmacyDispensePrescriptionIdRoute
+  '/pharmacy/items/$itemId': typeof ProtectedPharmacyItemsItemIdRoute
   '/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
   '/settings/clinic/expiries': typeof ProtectedSettingsClinicExpiriesRoute
   '/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
@@ -466,6 +542,8 @@ export interface FileRoutesByTo {
   '/settings/clinic/skills': typeof ProtectedSettingsClinicSkillsRoute
   '/settings/clinic/staff': typeof ProtectedSettingsClinicStaffRoute
   '/patients/$patientId': typeof ProtectedPatientsPatientIdIndexRoute
+  '/pharmacy/dispense': typeof ProtectedPharmacyDispenseIndexRoute
+  '/pharmacy/items': typeof ProtectedPharmacyItemsIndexRoute
   '/settings/clinic': typeof ProtectedSettingsClinicIndexRoute
   '/patients/$patientId/encounters/$encounterId': typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
 }
@@ -487,6 +565,7 @@ export interface FileRoutesById {
   '/_protected/my-queue': typeof ProtectedMyQueueRoute
   '/_protected/orders': typeof ProtectedOrdersRoute
   '/_protected/patients': typeof ProtectedPatientsRouteWithChildren
+  '/_protected/pharmacy': typeof ProtectedPharmacyRouteWithChildren
   '/_protected/queue': typeof ProtectedQueueRoute
   '/_protected/referrals': typeof ProtectedReferralsRoute
   '/_protected/reports': typeof ProtectedReportsRoute
@@ -498,6 +577,9 @@ export interface FileRoutesById {
   '/_protected/_chat-layout/$chatId': typeof ProtectedChatLayoutChatIdRoute
   '/_protected/patients/$patientId': typeof ProtectedPatientsPatientIdRouteWithChildren
   '/_protected/patients/new': typeof ProtectedPatientsNewRoute
+  '/_protected/pharmacy/consumption': typeof ProtectedPharmacyConsumptionRoute
+  '/_protected/pharmacy/receive': typeof ProtectedPharmacyReceiveRoute
+  '/_protected/pharmacy/suppliers': typeof ProtectedPharmacySuppliersRoute
   '/_protected/settings/account': typeof ProtectedSettingsAccountRoute
   '/_protected/settings/appearance': typeof ProtectedSettingsAppearanceRoute
   '/_protected/settings/clinic': typeof ProtectedSettingsClinicRouteWithChildren
@@ -509,12 +591,15 @@ export interface FileRoutesById {
   '/_protected/shared-chat/$shareId': typeof ProtectedSharedChatShareIdRoute
   '/_protected/_chat-layout/': typeof ProtectedChatLayoutIndexRoute
   '/_protected/patients/': typeof ProtectedPatientsIndexRoute
+  '/_protected/pharmacy/': typeof ProtectedPharmacyIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
   '/_print/print/lab-request/$encounterId': typeof PrintPrintLabRequestEncounterIdRoute
   '/_print/print/medical-certificate/$certificateId': typeof PrintPrintMedicalCertificateCertificateIdRoute
   '/_print/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
   '/_print/print/referral/$referralId': typeof PrintPrintReferralReferralIdRoute
   '/_protected/patients/$patientId/results': typeof ProtectedPatientsPatientIdResultsRoute
+  '/_protected/pharmacy/dispense/$prescriptionId': typeof ProtectedPharmacyDispensePrescriptionIdRoute
+  '/_protected/pharmacy/items/$itemId': typeof ProtectedPharmacyItemsItemIdRoute
   '/_protected/settings/clinic/agent': typeof ProtectedSettingsClinicAgentRoute
   '/_protected/settings/clinic/expiries': typeof ProtectedSettingsClinicExpiriesRoute
   '/_protected/settings/clinic/models': typeof ProtectedSettingsClinicModelsRoute
@@ -525,6 +610,8 @@ export interface FileRoutesById {
   '/_protected/settings/clinic/skills': typeof ProtectedSettingsClinicSkillsRoute
   '/_protected/settings/clinic/staff': typeof ProtectedSettingsClinicStaffRoute
   '/_protected/patients/$patientId/': typeof ProtectedPatientsPatientIdIndexRoute
+  '/_protected/pharmacy/dispense/': typeof ProtectedPharmacyDispenseIndexRoute
+  '/_protected/pharmacy/items/': typeof ProtectedPharmacyItemsIndexRoute
   '/_protected/settings/clinic/': typeof ProtectedSettingsClinicIndexRoute
   '/_protected/patients/$patientId/encounters/$encounterId': typeof ProtectedPatientsPatientIdEncountersEncounterIdRoute
 }
@@ -543,6 +630,7 @@ export interface FileRouteTypes {
     | '/my-queue'
     | '/orders'
     | '/patients'
+    | '/pharmacy'
     | '/queue'
     | '/referrals'
     | '/reports'
@@ -554,6 +642,9 @@ export interface FileRouteTypes {
     | '/$chatId'
     | '/patients/$patientId'
     | '/patients/new'
+    | '/pharmacy/consumption'
+    | '/pharmacy/receive'
+    | '/pharmacy/suppliers'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/clinic'
@@ -564,12 +655,15 @@ export interface FileRouteTypes {
     | '/settings/wise-tools'
     | '/shared-chat/$shareId'
     | '/patients/'
+    | '/pharmacy/'
     | '/settings/'
     | '/print/lab-request/$encounterId'
     | '/print/medical-certificate/$certificateId'
     | '/print/prescription/$prescriptionId'
     | '/print/referral/$referralId'
     | '/patients/$patientId/results'
+    | '/pharmacy/dispense/$prescriptionId'
+    | '/pharmacy/items/$itemId'
     | '/settings/clinic/agent'
     | '/settings/clinic/expiries'
     | '/settings/clinic/models'
@@ -580,6 +674,8 @@ export interface FileRouteTypes {
     | '/settings/clinic/skills'
     | '/settings/clinic/staff'
     | '/patients/$patientId/'
+    | '/pharmacy/dispense/'
+    | '/pharmacy/items/'
     | '/settings/clinic/'
     | '/patients/$patientId/encounters/$encounterId'
   fileRoutesByTo: FileRoutesByTo
@@ -604,6 +700,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/$chatId'
     | '/patients/new'
+    | '/pharmacy/consumption'
+    | '/pharmacy/receive'
+    | '/pharmacy/suppliers'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/memory'
@@ -613,12 +712,15 @@ export interface FileRouteTypes {
     | '/settings/wise-tools'
     | '/shared-chat/$shareId'
     | '/patients'
+    | '/pharmacy'
     | '/settings'
     | '/print/lab-request/$encounterId'
     | '/print/medical-certificate/$certificateId'
     | '/print/prescription/$prescriptionId'
     | '/print/referral/$referralId'
     | '/patients/$patientId/results'
+    | '/pharmacy/dispense/$prescriptionId'
+    | '/pharmacy/items/$itemId'
     | '/settings/clinic/agent'
     | '/settings/clinic/expiries'
     | '/settings/clinic/models'
@@ -629,6 +731,8 @@ export interface FileRouteTypes {
     | '/settings/clinic/skills'
     | '/settings/clinic/staff'
     | '/patients/$patientId'
+    | '/pharmacy/dispense'
+    | '/pharmacy/items'
     | '/settings/clinic'
     | '/patients/$patientId/encounters/$encounterId'
   id:
@@ -649,6 +753,7 @@ export interface FileRouteTypes {
     | '/_protected/my-queue'
     | '/_protected/orders'
     | '/_protected/patients'
+    | '/_protected/pharmacy'
     | '/_protected/queue'
     | '/_protected/referrals'
     | '/_protected/reports'
@@ -660,6 +765,9 @@ export interface FileRouteTypes {
     | '/_protected/_chat-layout/$chatId'
     | '/_protected/patients/$patientId'
     | '/_protected/patients/new'
+    | '/_protected/pharmacy/consumption'
+    | '/_protected/pharmacy/receive'
+    | '/_protected/pharmacy/suppliers'
     | '/_protected/settings/account'
     | '/_protected/settings/appearance'
     | '/_protected/settings/clinic'
@@ -671,12 +779,15 @@ export interface FileRouteTypes {
     | '/_protected/shared-chat/$shareId'
     | '/_protected/_chat-layout/'
     | '/_protected/patients/'
+    | '/_protected/pharmacy/'
     | '/_protected/settings/'
     | '/_print/print/lab-request/$encounterId'
     | '/_print/print/medical-certificate/$certificateId'
     | '/_print/print/prescription/$prescriptionId'
     | '/_print/print/referral/$referralId'
     | '/_protected/patients/$patientId/results'
+    | '/_protected/pharmacy/dispense/$prescriptionId'
+    | '/_protected/pharmacy/items/$itemId'
     | '/_protected/settings/clinic/agent'
     | '/_protected/settings/clinic/expiries'
     | '/_protected/settings/clinic/models'
@@ -687,6 +798,8 @@ export interface FileRouteTypes {
     | '/_protected/settings/clinic/skills'
     | '/_protected/settings/clinic/staff'
     | '/_protected/patients/$patientId/'
+    | '/_protected/pharmacy/dispense/'
+    | '/_protected/pharmacy/items/'
     | '/_protected/settings/clinic/'
     | '/_protected/patients/$patientId/encounters/$encounterId'
   fileRoutesById: FileRoutesById
@@ -816,6 +929,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPatientsRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/pharmacy': {
+      id: '/_protected/pharmacy'
+      path: '/pharmacy'
+      fullPath: '/pharmacy'
+      preLoaderRoute: typeof ProtectedPharmacyRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/queue': {
       id: '/_protected/queue'
       path: '/queue'
@@ -906,6 +1026,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/patients/new'
       preLoaderRoute: typeof ProtectedPatientsNewRouteImport
       parentRoute: typeof ProtectedPatientsRoute
+    }
+    '/_protected/pharmacy/': {
+      id: '/_protected/pharmacy/'
+      path: '/'
+      fullPath: '/pharmacy/'
+      preLoaderRoute: typeof ProtectedPharmacyIndexRouteImport
+      parentRoute: typeof ProtectedPharmacyRoute
+    }
+    '/_protected/pharmacy/consumption': {
+      id: '/_protected/pharmacy/consumption'
+      path: '/consumption'
+      fullPath: '/pharmacy/consumption'
+      preLoaderRoute: typeof ProtectedPharmacyConsumptionRouteImport
+      parentRoute: typeof ProtectedPharmacyRoute
+    }
+    '/_protected/pharmacy/receive': {
+      id: '/_protected/pharmacy/receive'
+      path: '/receive'
+      fullPath: '/pharmacy/receive'
+      preLoaderRoute: typeof ProtectedPharmacyReceiveRouteImport
+      parentRoute: typeof ProtectedPharmacyRoute
+    }
+    '/_protected/pharmacy/suppliers': {
+      id: '/_protected/pharmacy/suppliers'
+      path: '/suppliers'
+      fullPath: '/pharmacy/suppliers'
+      preLoaderRoute: typeof ProtectedPharmacySuppliersRouteImport
+      parentRoute: typeof ProtectedPharmacyRoute
     }
     '/_protected/settings/': {
       id: '/_protected/settings/'
@@ -1018,6 +1166,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/patients/$patientId/results'
       preLoaderRoute: typeof ProtectedPatientsPatientIdResultsRouteImport
       parentRoute: typeof ProtectedPatientsPatientIdRoute
+    }
+    '/_protected/pharmacy/dispense/': {
+      id: '/_protected/pharmacy/dispense/'
+      path: '/dispense'
+      fullPath: '/pharmacy/dispense/'
+      preLoaderRoute: typeof ProtectedPharmacyDispenseIndexRouteImport
+      parentRoute: typeof ProtectedPharmacyRoute
+    }
+    '/_protected/pharmacy/dispense/$prescriptionId': {
+      id: '/_protected/pharmacy/dispense/$prescriptionId'
+      path: '/dispense/$prescriptionId'
+      fullPath: '/pharmacy/dispense/$prescriptionId'
+      preLoaderRoute: typeof ProtectedPharmacyDispensePrescriptionIdRouteImport
+      parentRoute: typeof ProtectedPharmacyRoute
+    }
+    '/_protected/pharmacy/items/': {
+      id: '/_protected/pharmacy/items/'
+      path: '/items'
+      fullPath: '/pharmacy/items/'
+      preLoaderRoute: typeof ProtectedPharmacyItemsIndexRouteImport
+      parentRoute: typeof ProtectedPharmacyRoute
+    }
+    '/_protected/pharmacy/items/$itemId': {
+      id: '/_protected/pharmacy/items/$itemId'
+      path: '/items/$itemId'
+      fullPath: '/pharmacy/items/$itemId'
+      preLoaderRoute: typeof ProtectedPharmacyItemsItemIdRouteImport
+      parentRoute: typeof ProtectedPharmacyRoute
     }
     '/_protected/settings/clinic/': {
       id: '/_protected/settings/clinic/'
@@ -1176,6 +1352,32 @@ const ProtectedPatientsRouteChildren: ProtectedPatientsRouteChildren = {
 const ProtectedPatientsRouteWithChildren =
   ProtectedPatientsRoute._addFileChildren(ProtectedPatientsRouteChildren)
 
+interface ProtectedPharmacyRouteChildren {
+  ProtectedPharmacyConsumptionRoute: typeof ProtectedPharmacyConsumptionRoute
+  ProtectedPharmacyReceiveRoute: typeof ProtectedPharmacyReceiveRoute
+  ProtectedPharmacySuppliersRoute: typeof ProtectedPharmacySuppliersRoute
+  ProtectedPharmacyIndexRoute: typeof ProtectedPharmacyIndexRoute
+  ProtectedPharmacyDispensePrescriptionIdRoute: typeof ProtectedPharmacyDispensePrescriptionIdRoute
+  ProtectedPharmacyItemsItemIdRoute: typeof ProtectedPharmacyItemsItemIdRoute
+  ProtectedPharmacyDispenseIndexRoute: typeof ProtectedPharmacyDispenseIndexRoute
+  ProtectedPharmacyItemsIndexRoute: typeof ProtectedPharmacyItemsIndexRoute
+}
+
+const ProtectedPharmacyRouteChildren: ProtectedPharmacyRouteChildren = {
+  ProtectedPharmacyConsumptionRoute: ProtectedPharmacyConsumptionRoute,
+  ProtectedPharmacyReceiveRoute: ProtectedPharmacyReceiveRoute,
+  ProtectedPharmacySuppliersRoute: ProtectedPharmacySuppliersRoute,
+  ProtectedPharmacyIndexRoute: ProtectedPharmacyIndexRoute,
+  ProtectedPharmacyDispensePrescriptionIdRoute:
+    ProtectedPharmacyDispensePrescriptionIdRoute,
+  ProtectedPharmacyItemsItemIdRoute: ProtectedPharmacyItemsItemIdRoute,
+  ProtectedPharmacyDispenseIndexRoute: ProtectedPharmacyDispenseIndexRoute,
+  ProtectedPharmacyItemsIndexRoute: ProtectedPharmacyItemsIndexRoute,
+}
+
+const ProtectedPharmacyRouteWithChildren =
+  ProtectedPharmacyRoute._addFileChildren(ProtectedPharmacyRouteChildren)
+
 interface ProtectedSettingsClinicRouteChildren {
   ProtectedSettingsClinicAgentRoute: typeof ProtectedSettingsClinicAgentRoute
   ProtectedSettingsClinicExpiriesRoute: typeof ProtectedSettingsClinicExpiriesRoute
@@ -1245,6 +1447,7 @@ interface ProtectedRouteChildren {
   ProtectedMyQueueRoute: typeof ProtectedMyQueueRoute
   ProtectedOrdersRoute: typeof ProtectedOrdersRoute
   ProtectedPatientsRoute: typeof ProtectedPatientsRouteWithChildren
+  ProtectedPharmacyRoute: typeof ProtectedPharmacyRouteWithChildren
   ProtectedQueueRoute: typeof ProtectedQueueRoute
   ProtectedReferralsRoute: typeof ProtectedReferralsRoute
   ProtectedReportsRoute: typeof ProtectedReportsRoute
@@ -1262,6 +1465,7 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedMyQueueRoute: ProtectedMyQueueRoute,
   ProtectedOrdersRoute: ProtectedOrdersRoute,
   ProtectedPatientsRoute: ProtectedPatientsRouteWithChildren,
+  ProtectedPharmacyRoute: ProtectedPharmacyRouteWithChildren,
   ProtectedQueueRoute: ProtectedQueueRoute,
   ProtectedReferralsRoute: ProtectedReferralsRoute,
   ProtectedReportsRoute: ProtectedReportsRoute,

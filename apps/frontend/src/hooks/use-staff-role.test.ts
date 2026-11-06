@@ -13,6 +13,9 @@ describe('staff role', () => {
 		expect(staffRoleOf(['CASHIER'])).toBe('cashier');
 		expect(staffRoleOf(['BILLING_CLERK'])).toBe('cashier');
 		expect(staffRoleOf(['DOCTOR'])).toBe('doctor');
+		expect(staffRoleOf(['PHARMACIST'])).toBe('pharmacy');
+		expect(staffRoleOf(['PHARMACY_ASSISTANT'])).toBe('pharmacy');
+		expect(staffRoleOf(['INVENTORY_CLERK'])).toBe('pharmacy');
 	});
 
 	it('keeps an admin who is a doctor a doctor, who can open every desk', () => {
@@ -30,7 +33,6 @@ describe('staff role', () => {
 	it('falls back to the doctor desk without a desk role', () => {
 		expect(desksOf([])).toEqual(['doctor']);
 		expect(staffRoleOf(['MEMBER'])).toBe('doctor');
-		expect(staffRoleOf(['PHARMACIST'])).toBe('doctor');
 	});
 
 	it("puts the own desk's links first, then the home of each other desk", () => {

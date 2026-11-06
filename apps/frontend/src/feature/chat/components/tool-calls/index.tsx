@@ -8,6 +8,7 @@ import { DisplayMapToolCall } from './display-map';
 import { FindPatientToolCall } from './find-patient';
 import { McpToolCall } from './mcp';
 import { OpenPageToolCall } from './open-page';
+import { FindStockToolCall, ListInventoryAlertsToolCall } from './pharmacy-stock';
 import { ProposeAllergyToolCall, ProposeRemoveAllergyToolCall, ProposeVitalsToolCall } from './propose-action';
 import { ProposeBillStepToolCall, ProposeChargesToolCall } from './propose-billing';
 import {
@@ -98,6 +99,8 @@ const toolComponents: Partial<{
 	list_follow_ups: ListFollowUpsToolCall,
 	list_referrals: ListReferralsToolCall,
 	propose_reschedule: ProposeRescheduleToolCall,
+	find_stock: FindStockToolCall,
+	list_inventory_alerts: ListInventoryAlertsToolCall,
 };
 
 export const dynamicToolComponents = {

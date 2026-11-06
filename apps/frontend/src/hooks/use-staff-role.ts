@@ -15,15 +15,18 @@ const DESK_BY_CLINIC_ROLE: readonly (readonly [ClinicStaffRole, StaffRole])[] = 
 	['RECEPTIONIST', 'front_desk'],
 	['CASHIER', 'cashier'],
 	['BILLING_CLERK', 'cashier'],
+	['PHARMACIST', 'pharmacy'],
+	['PHARMACY_ASSISTANT', 'pharmacy'],
+	['INVENTORY_CLERK', 'pharmacy'],
 ];
 
 /** Every desk, in sidebar order: what a clinic admin can open. */
-export const ALL_DESKS: readonly StaffRole[] = ['doctor', 'nurse', 'lab', 'front_desk', 'cashier'];
+export const ALL_DESKS: readonly StaffRole[] = ['doctor', 'nurse', 'lab', 'front_desk', 'cashier', 'pharmacy'];
 
 /**
  * The desks a user works at from their roles at the clinic (`currentClinic.staffRoles`), own desk first. Admins
- * (SUPER_ADMIN / ADMIN) can open every desk. A user with no desk role (a MEMBER, a pharmacist until the pharmacy desk
- * exists) works as a doctor, as everyone did before the API had roles.
+ * (SUPER_ADMIN / ADMIN) can open every desk. A user with no desk role (a MEMBER) works as a doctor, as everyone did
+ * before the API had roles.
  */
 export function desksOf(staffRoles: readonly string[]): StaffRole[] {
 	const own = DESK_BY_CLINIC_ROLE.filter(([role]) => staffRoles.includes(role)).map(([, desk]) => desk);
@@ -40,7 +43,7 @@ export function staffRoleOf(staffRoles: readonly string[]): StaffRole {
 /**
  * The signed-in user's role in the loop (DESIGN.md §1), which picks their home and sidebar: from their roles at the
  * selected clinic (MEDTECH / RADTECH → lab, NURSE / MIDWIFE → nurse, RECEPTIONIST → front desk, CASHIER /
- * BILLING_CLERK → cashier, DOCTOR → doctor).
+ * BILLING_CLERK → cashier, PHARMACIST / PHARMACY_ASSISTANT / INVENTORY_CLERK → pharmacy, DOCTOR → doctor).
  */
 export function useStaffRole(): StaffRole {
 	return staffRoleOf(useCurrentClinic().data?.staffRoles ?? []);

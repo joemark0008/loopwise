@@ -16,6 +16,7 @@ import {
 	MessageSquare,
 	MessagesSquare,
 	Palette,
+	Pill,
 	ReceiptText,
 	Send,
 	Settings2,
@@ -47,7 +48,7 @@ export interface NavContext {
  * Who the signed-in user is in the loop (DESIGN.md §1): their desk, from their clinic roles (`use-staff-role.ts`).
  * Each desk has its own home and sidebar.
  */
-export type StaffRole = 'doctor' | 'nurse' | 'lab' | 'front_desk' | 'cashier' | 'specialist' | 'program';
+export type StaffRole = 'doctor' | 'nurse' | 'lab' | 'front_desk' | 'cashier' | 'pharmacy' | 'specialist' | 'program';
 
 export interface NavLink {
 	icon: LucideIcon;
@@ -97,6 +98,20 @@ export const navLinks: NavLink[] = [
 		roles: ['doctor', 'specialist'],
 	},
 	{ icon: TestTubes, label: 'Lab worklist', to: '/orders', section: 'workspace', roles: ['lab'] },
+	{
+		icon: Pill,
+		label: 'Pharmacy',
+		to: '/pharmacy',
+		section: 'workspace',
+		roles: ['pharmacy'],
+		tabs: {
+			dispense: 'Dispense',
+			items: 'Items',
+			receive: 'Receive stock',
+			suppliers: 'Suppliers',
+			consumption: 'Supplies used',
+		},
+	},
 	{ icon: CalendarDays, label: 'Appointments', to: '/appointments', section: 'workspace', roles: ['front_desk'] },
 	{ icon: HeartPulse, label: 'Triage', to: '/triage', section: 'workspace', roles: ['nurse'] },
 	{ icon: ListOrdered, label: 'Queue', to: '/queue', section: 'workspace', roles: ['front_desk', 'cashier'] },
@@ -132,7 +147,7 @@ export const navLinks: NavLink[] = [
 		to: '/chats',
 		section: 'workspace',
 		shortcut: 'G W',
-		roles: ['doctor', 'specialist', 'program'],
+		roles: ['doctor', 'specialist', 'program', 'pharmacy'],
 	},
 	{
 		icon: FileText,

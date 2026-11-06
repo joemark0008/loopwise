@@ -1,0 +1,286 @@
+fragment InventoryItemFields on InventoryItemModel {
+	id
+	sku
+	barcode
+	name
+	displayName
+	category
+	genericName
+	brandName
+	strength
+	dosageForm
+	manufacturer
+	fdaCprNo
+	isRxOnly
+	isDangerousDrug
+	isAntimicrobial
+	isPnf
+	storageCondition
+	unitOfMeasure
+	packSize
+	taxType
+	defaultCost
+	sellingPrice
+	reorderLevel
+	isActive
+	serviceItem {
+		id
+		code
+		name
+		price
+	}
+	onHand
+	usableOnHand
+	nearestExpiry
+	isLowStock
+}
+
+fragment InventoryLotFields on InventoryLotModel {
+	id
+	itemId
+	itemName
+	lotNo
+	expiryDate
+	daysToExpiry
+	alert
+	quantityOnHand
+	unitCost
+	supplierName
+	receivedAt
+}
+
+fragment StockMovementFields on StockMovementModel {
+	id
+	itemId
+	itemName
+	type
+	quantity
+	unitCost
+	balanceAfter
+	lotNo
+	expiryDate
+	reason
+	receiptNo
+	rxNo
+	performedByName
+	performedAt
+}
+
+fragment SupplierFields on SupplierModel {
+	id
+	name
+	tin
+	address
+	contactPerson
+	contactNo
+	email
+	fdaLtoNo
+	isActive
+}
+
+fragment StockReceiptFields on StockReceiptModel {
+	id
+	receiptNo
+	supplierId
+	supplierName
+	deliveryReceiptNo
+	supplierInvoiceNo
+	receivedAt
+	receivedByName
+	totalCost
+	remarks
+	lines {
+		id
+		itemId
+		itemName
+		lotNo
+		expiryDate
+		quantity
+		unitCost
+	}
+}
+
+fragment DispenseEntryFields on DispenseQueueEntry {
+	prescriptionId
+	rxNo
+	status
+	issuedAt
+	validUntil
+	isDangerousDrug
+	s2FormSerialNo
+	prescriberName
+	prescriberS2LicenseNo
+	s2Missing
+	encounterId
+	encounterNo
+	patient {
+		id
+		name
+		patientNo
+		birthDate
+		sex
+		allergies
+	}
+	items {
+		id
+		genericName
+		brandName
+		strength
+		dosageForm
+		sig
+		quantity
+		quantityInWords
+		unit
+		dispensedQty
+		remaining
+		inventoryItemId
+		isDangerousDrug
+		candidates {
+			itemId
+			displayName
+			brandName
+			strength
+			dosageForm
+			unitOfMeasure
+			isDangerousDrug
+			isPrescribed
+			usableOnHand
+			lots {
+				...InventoryLotFields
+			}
+		}
+	}
+}
+
+query InventoryItems($search: String, $category: ItemCategory, $includeInactive: Boolean) {
+	inventoryItems(search: $search, category: $category, includeInactive: $includeInactive) {
+		...InventoryItemFields
+	}
+}
+
+query InventoryItem($id: ID!) {
+	inventoryItem(id: $id) {
+		...InventoryItemFields
+	}
+}
+
+query InventoryServiceOptions {
+	inventoryServiceOptions {
+		id
+		code
+		name
+		linkedItemId
+		isActive
+	}
+}
+
+mutation SaveInventoryItem($input: SaveInventoryItemInput!) {
+	saveInventoryItem(input: $input) {
+		...InventoryItemFields
+	}
+}
+
+mutation SetInventoryServiceLink($input: SetInventoryServiceLinkInput!) {
+	setInventoryServiceLink(input: $input) {
+		...InventoryItemFields
+	}
+}
+
+query InventoryLots($itemId: ID!, $includeEmpty: Boolean) {
+	inventoryLots(itemId: $itemId, includeEmpty: $includeEmpty) {
+		...InventoryLotFields
+	}
+}
+
+query StockLedger($itemId: ID!, $limit: Int) {
+	stockLedger(itemId: $itemId, limit: $limit) {
+		...StockMovementFields
+	}
+}
+
+query InventoryAlerts {
+	inventoryAlerts {
+		asOf
+		expiringWithinDays
+		lowStock {
+			itemId
+			sku
+			itemName
+			unitOfMeasure
+			usableOnHand
+			reorderLevel
+		}
+		expiring {
+			...InventoryLotFields
+		}
+		expired {
+			...InventoryLotFields
+		}
+	}
+}
+
+query Suppliers($includeInactive: Boolean) {
+	suppliers(includeInactive: $includeInactive) {
+		...SupplierFields
+	}
+}
+
+mutation SaveSupplier($input: SaveSupplierInput!) {
+	saveSupplier(input: $input) {
+		...SupplierFields
+	}
+}
+
+query StockReceipts($limit: Int) {
+	stockReceipts(limit: $limit) {
+		...StockReceiptFields
+	}
+}
+
+mutation ReceiveStock($input: ReceiveStockInput!) {
+	receiveStock(input: $input) {
+		...StockReceiptFields
+	}
+}
+
+mutation AdjustStock($input: AdjustStockInput!) {
+	adjustStock(input: $input) {
+		...StockMovementFields
+	}
+}
+
+mutation DisposeExpiredStock($input: DisposeExpiredStockInput!) {
+	disposeExpiredStock(input: $input) {
+		...StockMovementFields
+	}
+}
+
+mutation RecordDamagedStock($input: RecordDamagedStockInput!) {
+	recordDamagedStock(input: $input) {
+		...StockMovementFields
+	}
+}
+
+mutation RecordStockConsumption($input: RecordConsumptionInput!) {
+	recordStockConsumption(input: $input) {
+		...StockMovementFields
+	}
+}
+
+query DispenseQueue($includeDone: Boolean) {
+	dispenseQueue(includeDone: $includeDone) {
+		...DispenseEntryFields
+	}
+}
+
+query PrescriptionToDispense($prescriptionId: ID!) {
+	prescriptionToDispense(prescriptionId: $prescriptionId) {
+		...DispenseEntryFields
+	}
+}
+
+mutation DispensePrescription($input: DispensePrescriptionInput!) {
+	dispensePrescription(input: $input) {
+		...DispenseEntryFields
+	}
+}
