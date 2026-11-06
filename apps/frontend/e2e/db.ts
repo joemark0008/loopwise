@@ -26,3 +26,24 @@ export async function withDatabase<T>(run: (client: pg.Client) => Promise<T>): P
 		await client.end();
 	}
 }
+
+/**
+ * Runs `run` in a transaction as the user with `email`, as `ClinicalDbService.asUser` does: `app.user_id` set and the
+ * role switched to `loopwise_app`, so row-level security shows only the rows that user may see. Rolled back at the end.
+ */
+export async function asUser<T>(email: string, run: (client: pg.Client) => Promise<T>): Promise<T> {
+	return withDatabase(async (client) => {
+		const { rows } = await client.query<{ id: string }>('SELECT id FROM users WHERE email = $1', [email]);
+		if (rows.length === 0) {
+			throw new Error(`No user ${email} in the database under test`);
+		}
+		await client.query('BEGIN');
+		try {
+			await client.query("SELECT set_config('app.user_id', $1, true)", [rows[0].id]);
+			await client.query('SET LOCAL ROLE loopwise_app');
+			return await run(client);
+		} finally {
+			await client.query('ROLLBACK');
+		}
+	});
+}

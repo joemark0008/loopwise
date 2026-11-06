@@ -1,13 +1,22 @@
 import { expect, test } from '@playwright/test';
-import { logIn, trackErrors } from './helpers';
+import { asUser } from './db';
+import { logIn, trackErrors, USER } from './helpers';
 
 /**
  * Wise analytics (DESIGN.md §7.2): "how many patients do I have" is answered from a certified metric run as the user,
- * and the card shows the query on request. The seed gives the demo user 7 patients. Real LLM call.
+ * and the card shows the query on request. The expected count is read from the database as the same user (row-level
+ * security, as the metric runs), so the test holds on a database that earlier runs added patients to. Real LLM call.
  */
 test('Wise counts my patients from a certified metric and shows the query (real LLM call)', async ({ page }) => {
 	test.setTimeout(180_000);
 	const errors = trackErrors(page);
+	// The certified `panel_size` metric: `analytics.patients` is the user's patients that aren't deleted.
+	const expected = await asUser(USER.email, async (client) => {
+		const { rows } = await client.query<{ count: number }>(
+			'SELECT count(*)::int AS count FROM patients WHERE deleted_at IS NULL',
+		);
+		return rows[0].count;
+	});
 	await logIn(page, '/');
 	await page.locator('[contenteditable]').first().click();
 	await page.keyboard.type('How many patients do I have?');
@@ -15,7 +24,7 @@ test('Wise counts my patients from a certified metric and shows the query (real 
 
 	const card = page.getByTestId('analytics-result').first();
 	await expect(card).toBeVisible({ timeout: 120_000 });
-	await expect(card).toContainText('7');
+	await expect(card).toContainText(new RegExp(`\\b${expected}\\b`));
 	await card.getByRole('button', { name: 'View query' }).click();
 	await expect(card).toContainText(/FROM patients/i);
 	expect(errors).toEqual([]);
