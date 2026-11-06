@@ -26,6 +26,30 @@ export class S2LicenseRequiredError extends DomainError {
 	}
 }
 
+/** Only an issued prescription that is still active (or partly dispensed) is dispensed. */
+export class PrescriptionNotDispensableError extends DomainError {
+	constructor(rxNo: string, status: string) {
+		super(
+			'CONFLICT',
+			'PRESCRIPTION_NOT_DISPENSABLE',
+			`Prescription ${rxNo} can't be dispensed (${status.toLowerCase().replace('_', ' ')}).`,
+			{ rxNo, status },
+		);
+	}
+}
+
+/** A dispense of nothing, or of more than is left to dispense on the item. */
+export class DispenseQuantityError extends DomainError {
+	constructor(genericName: string, remaining: number) {
+		super(
+			'BAD_REQUEST',
+			'DISPENSE_QUANTITY_INVALID',
+			`${genericName}: dispense more than 0 and at most what is left on the prescription (${remaining}).`,
+			{ genericName, remaining },
+		);
+	}
+}
+
 /** The shared rules (`PrescriptionDraftSchema`) refused the draft. */
 export class InvalidPrescriptionDraftError extends DomainError {
 	constructor(message: string) {

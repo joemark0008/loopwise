@@ -19,6 +19,7 @@ import { DocumentsModule } from './clinical/documents/documents.module.js';
 import { EncountersModule } from './clinical/encounters/encounters.module.js';
 import { FollowUpsModule } from './clinical/follow-ups/follow-ups.module.js';
 import { InsightsModule } from './clinical/insights/insights.module.js';
+import { InventoryModule } from './clinical/inventory/inventory.module.js';
 import { PatientsModule } from './clinical/patients/patients.module.js';
 import { PractitionersModule } from './clinical/practitioners/practitioners.module.js';
 import { PrescriptionsModule } from './clinical/prescriptions/prescriptions.module.js';
@@ -103,6 +104,7 @@ export const SCHEMA_FILE = path.join(import.meta.dirname, '..', 'schema.gql');
 		BillingModule,
 		SchedulingModule,
 		FollowUpsModule,
+		InventoryModule,
 		SkillsModule,
 		MemoryModule,
 		SetupModule,

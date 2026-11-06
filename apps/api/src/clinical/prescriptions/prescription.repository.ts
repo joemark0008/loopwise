@@ -59,6 +59,23 @@ export class PrescriptionRepository {
 		return this.findById(tx, id);
 	}
 
+	/**
+	 * Adds `quantity` to an issued item's dispensed quantity and links the stock item when it had none (the only line
+	 * columns the `prescription_items_lock` trigger lets move after issue; a check keeps it within the prescribed
+	 * quantity).
+	 */
+	async addDispensed(
+		tx: ClinicalTx,
+		itemId: string,
+		quantity: number,
+		inventoryItemId: string | null,
+	): Promise<void> {
+		await tx.prescriptionItem.update({
+			where: { id: itemId },
+			data: { dispensedQty: { increment: quantity }, ...(inventoryItemId ? { inventoryItemId } : {}) },
+		});
+	}
+
 	update(tx: ClinicalTx, id: string, data: Prisma.PrescriptionUncheckedUpdateInput): Promise<PrescriptionRow> {
 		return tx.prescription.update({ where: { id }, data, include: PRESCRIPTION_INCLUDE });
 	}

@@ -26,9 +26,19 @@ import { assertCardPatient, WiseProposalService } from '../wise-proposals/wise-p
 import type { SavePrescriptionInput } from './dto/prescription.input.js';
 import { type Prescription, type PrescriptionRow, toPrescription } from './models/prescription.model.js';
 import { type PrescriptionItemData, PrescriptionRepository } from './prescription.repository.js';
-import { AllergyWarningError, InvalidPrescriptionDraftError, S2LicenseRequiredError } from './prescriptions.errors.js';
+import { dispensingStatus } from './prescription-dispense-status.js';
+import {
+	AllergyWarningError,
+	DispenseQuantityError,
+	InvalidPrescriptionDraftError,
+	PrescriptionNotDispensableError,
+	S2LicenseRequiredError,
+} from './prescriptions.errors.js';
 
 const LABEL = 'prescription';
+
+/** The statuses a pharmacy still dispenses against. */
+const DISPENSABLE = new Set<string>(['ACTIVE', 'PARTIALLY_DISPENSED']);
 
 /**
  * Prescriptions (DESIGN.md §5). A draft gets its Rx number (DocumentSequence `RX`) and verification code when it is
@@ -254,6 +264,60 @@ export class PrescriptionService {
 			});
 			return toPrescription(row);
 		});
+	}
+
+	/**
+	 * Records what the pharmacy dispensed against an issued prescription, on the caller's transaction (the pharmacy's
+	 * `DispensingService`, which writes the DISPENSE stock movements and the audit row): adds each quantity to its
+	 * item's `dispensed_qty` (refused beyond the prescribed quantity), links the stock item where the item had none, and
+	 * moves the status to PARTIALLY_DISPENSED or DISPENSED. Only an issued, unvoided prescription is dispensed.
+	 */
+	async recordDispensed(
+		tx: ClinicalTx,
+		prescriptionId: string,
+		lines: readonly { prescriptionItemId: string; quantity: number; inventoryItemId: string | null }[],
+	): Promise<Prescription> {
+		const current = await this.prescriptions.findById(tx, prescriptionId);
+		if (!current) {
+			throw new EntityNotFoundError('Prescription', prescriptionId);
+		}
+		if (current.documentStatus !== 'ISSUED' || current.voidedAt || !DISPENSABLE.has(current.status)) {
+			throw new PrescriptionNotDispensableError(current.rxNo, current.status);
+		}
+		const byId = new Map(current.items.map((item) => [item.id, item]));
+		const dispensed = new Map(current.items.map((item) => [item.id, item.dispensedQty.toNumber()]));
+		for (const line of lines) {
+			const item = byId.get(line.prescriptionItemId);
+			if (!item) {
+				throw new EntityNotFoundError('PrescriptionItem', line.prescriptionItemId);
+			}
+			const after = (dispensed.get(item.id) ?? 0) + line.quantity;
+			if (line.quantity <= 0 || after > item.quantity.toNumber()) {
+				throw new DispenseQuantityError(
+					item.genericName,
+					item.quantity.toNumber() - (dispensed.get(item.id) ?? 0),
+				);
+			}
+			dispensed.set(item.id, after);
+			await this.prescriptions.addDispensed(
+				tx,
+				item.id,
+				line.quantity,
+				item.inventoryItemId ? null : line.inventoryItemId,
+			);
+		}
+		const status = dispensingStatus(
+			current.status,
+			current.items.map((item) => ({
+				quantity: item.quantity.toNumber(),
+				dispensedQty: dispensed.get(item.id) ?? 0,
+			})),
+		);
+		const row =
+			status === current.status
+				? await this.prescriptions.findById(tx, prescriptionId)
+				: await this.prescriptions.update(tx, prescriptionId, { status });
+		return toPrescription(row ?? current);
 	}
 
 	/** A `propose_prescription` card, checked against the visit's organization and patient. */
