@@ -80,6 +80,22 @@ export class StockRepository {
 		});
 	}
 
+	/** A visit of the clinic by its number: only its ids (system work; the caller audits it). */
+	findEncounterAtClinic(
+		tx: ClinicalTx,
+		clinicId: string,
+		encounterNo: string,
+	): Promise<{ id: string; patientId: string; encounterNo: string } | null> {
+		return tx.encounter.findFirst({
+			where: { clinicId, encounterNo },
+			select: { id: true, patientId: true, encounterNo: true },
+		});
+	}
+
+	async clinicName(tx: ClinicalTx, clinicId: string): Promise<string> {
+		return (await tx.clinic.findUnique({ where: { id: clinicId }, select: { name: true } }))?.name ?? '';
+	}
+
 	/** Display names of the staff who made movements. */
 	async userNames(tx: ClinicalTx, ids: readonly string[]): Promise<Map<string, string>> {
 		const unique = [...new Set(ids)];

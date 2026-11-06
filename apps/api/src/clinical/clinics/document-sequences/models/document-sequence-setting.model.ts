@@ -11,11 +11,12 @@ export const DOCUMENT_SEQUENCE_LABELS: Record<DocumentSequenceKey, string> = {
 	MED_CERT: 'Medical certificate number',
 	INVOICE: 'Invoice number (without a BIR series)',
 	PAYMENT: 'Payment number',
+	STOCK_RECEIPT: 'Stock receiving number',
 };
 
 @ObjectType({ description: 'How the clinic numbers one kind of document this year (Philippine calendar year).' })
 export class DocumentSequenceSetting {
-	@Field({ description: 'PATIENT, ENCOUNTER, LAB_ORDER, RX, MED_CERT, INVOICE or PAYMENT.' })
+	@Field({ description: 'PATIENT, ENCOUNTER, LAB_ORDER, RX, MED_CERT, INVOICE, PAYMENT or STOCK_RECEIPT.' })
 	key: string;
 
 	@Field()

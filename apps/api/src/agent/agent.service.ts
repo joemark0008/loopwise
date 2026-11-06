@@ -16,6 +16,7 @@ import { DIAGNOSTICS_READER } from '../clinical/diagnostics/diagnostics-reader.t
 import { ENCOUNTER_NOTE_READER } from '../clinical/encounters/encounter-note-reader.token.js';
 import { FOLLOW_UPS_READER } from '../clinical/follow-ups/follow-ups-reader.token.js';
 import { INSIGHTS_READER } from '../clinical/insights/insights-reader.token.js';
+import { INVENTORY_READER } from '../clinical/inventory/inventory-reader.token.js';
 import { PATIENT_READER } from '../clinical/patients/patient-reader.token.js';
 import { REPORTS_READER } from '../clinical/reports/reports-reader.token.js';
 import { SCHEDULING_READER } from '../clinical/scheduling/scheduling-reader.token.js';
@@ -98,6 +99,7 @@ export class AgentService {
 		@Inject(DIAGNOSTICS_READER) private readonly diagnostics: AgentToolServices['diagnostics'],
 		@Inject(SCHEDULING_READER) private readonly scheduling: AgentToolServices['scheduling'],
 		@Inject(FOLLOW_UPS_READER) private readonly followUps: AgentToolServices['followUps'],
+		@Inject(INVENTORY_READER) private readonly inventory: AgentToolServices['inventory'],
 		@Inject(SCRIBE_READER) private readonly scribe: AgentToolServices['scribe'],
 		private readonly toolSettings: WiseToolSettingsService,
 		private readonly attachments: AttachmentsService,
@@ -340,6 +342,7 @@ export class AgentService {
 					diagnostics: this.diagnostics,
 					scheduling: this.scheduling,
 					followUps: this.followUps,
+					inventory: this.inventory,
 					attachments: this.attachments,
 					scribe: this.scribe,
 				}),

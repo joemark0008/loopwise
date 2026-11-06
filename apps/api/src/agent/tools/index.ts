@@ -30,9 +30,11 @@ import describeAnalytics from './describe-analytics.js';
 import displayChart from './display-chart.js';
 import { createDisplayMapTool } from './display-map.js';
 import findPatient from './find-patient.js';
+import findStock from './find-stock.js';
 import getMetric from './get-metric.js';
 import listAppointments from './list-appointments.js';
 import listFollowUps from './list-follow-ups.js';
+import listInventoryAlerts from './list-inventory-alerts.js';
 import listLabOrders from './list-lab-orders.js';
 import listQueue from './list-queue.js';
 import listReferrals from './list-referrals.js';
@@ -112,6 +114,8 @@ export const tools = {
 	propose_reschedule: createActionTool(proposeReschedule),
 	list_follow_ups: listFollowUps,
 	list_referrals: listReferrals,
+	find_stock: findStock,
+	list_inventory_alerts: listInventoryAlerts,
 };
 
 export const uiToolset = { ...tools, display_map: createDisplayMapTool() };

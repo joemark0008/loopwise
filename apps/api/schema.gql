@@ -64,6 +64,13 @@ input AddPractitionerLeaveInput {
   startTime: String
 }
 
+input AdjustStockInput {
+  direction: StockAdjustmentDirection!
+  lotId: ID!
+  quantity: Float!
+  reason: String!
+}
+
 enum AllergyType {
   DRUG
   ENVIRONMENTAL
@@ -602,6 +609,12 @@ input CompleteSetupInput {
   token: String!
 }
 
+input ConsumptionLineInput {
+  itemId: ID!
+  lotId: ID
+  quantity: Float!
+}
+
 type ContextUsage {
   contextWindow: Int
   tokensUsed: Int!
@@ -1042,6 +1055,129 @@ enum DiscountType {
   SPECIAL
 }
 
+"""
+A stock item that can fill a prescribed medicine: the same generic (RA 6675).
+"""
+type DispenseCandidate {
+  brandName: String
+
+  """Generic name first, brand after it."""
+  displayName: String!
+  dosageForm: String
+  isDangerousDrug: Boolean!
+
+  """
+  The item prescribed (linked or the brand written); else giving it is a substitution.
+  """
+  isPrescribed: Boolean!
+  itemId: ID!
+
+  """Unexpired lots with stock, first expiry first out."""
+  lots: [InventoryLotModel!]!
+  strength: String
+  unitOfMeasure: String!
+  usableOnHand: Float!
+}
+
+"""One medicine of a prescription at the pharmacy."""
+type DispenseItem {
+  brandName: String
+
+  """Filled by `prescriptionToDispense` only."""
+  candidates: [DispenseCandidate!]!
+  dispensedQty: Float!
+  dosageForm: String
+  genericName: String!
+
+  """The prescription item."""
+  id: ID!
+
+  """The stock item linked to the line, when any."""
+  inventoryItemId: ID
+
+  """The Rx or a matching stock item is a dangerous drug (RA 9165)."""
+  isDangerousDrug: Boolean!
+  quantity: Float!
+  quantityInWords: String
+  remaining: Float!
+  sig: String!
+  strength: String
+  unit: String
+}
+
+input DispenseLineInput {
+  """The stock item given: the prescribed one or an equivalent generic."""
+  itemId: ID!
+
+  """The lot taken from; default first expiry first out."""
+  lotId: ID
+  prescriptionItemId: ID!
+
+  """Units handed over now (at most what is left on the Rx)."""
+  quantity: Float!
+
+  """Why another product of the generic was given."""
+  substitutionReason: String
+}
+
+"""
+The patient as the pharmacy sees them: who to hand the medicines to, and allergies.
+"""
+type DispensePatient {
+  """Active allergies: "Penicillin (rash)"."""
+  allergies: [String!]!
+
+  """YYYY-MM-DD."""
+  birthDate: String!
+  id: ID!
+  name: String!
+  patientNo: String!
+  sex: String!
+}
+
+input DispensePrescriptionInput {
+  lines: [DispenseLineInput!]!
+  prescriptionId: ID!
+}
+
+"""An issued prescription in the clinic's dispense queue."""
+type DispenseQueueEntry {
+  encounterId: ID!
+  encounterNo: String!
+
+  """A dangerous-drug (S2 / yellow) prescription."""
+  isDangerousDrug: Boolean!
+  issuedAt: DateTime!
+  items: [DispenseItem!]!
+  patient: DispensePatient!
+  prescriberName: String
+
+  """The prescriber's PDEA S2 license, as printed."""
+  prescriberS2LicenseNo: String
+  prescriptionId: ID!
+  rxNo: String!
+
+  """DOH dangerous-drugs prescription form serial."""
+  s2FormSerialNo: String
+
+  """
+  What a dangerous drug on this Rx still needs before it is dispensed (RA 9165); null when complete.
+  """
+  s2Missing: String
+  status: PrescriptionStatus!
+  validUntil: String
+}
+
+input DisposeExpiredStockInput {
+  lotId: ID!
+
+  """Default: everything left in the lot."""
+  quantity: Float
+
+  """e.g. "Returned to the FDA-accredited disposal service"."""
+  reason: String
+}
+
 enum Disposition {
   ADMITTED
   EXPIRED
@@ -1060,7 +1196,9 @@ type DocumentSequenceSetting {
   """
   isStarted: Boolean!
 
-  """PATIENT, ENCOUNTER, LAB_ORDER, RX, MED_CERT, INVOICE or PAYMENT."""
+  """
+  PATIENT, ENCOUNTER, LAB_ORDER, RX, MED_CERT, INVOICE, PAYMENT or STOCK_RECEIPT.
+  """
   key: String!
   label: String!
 
@@ -1408,6 +1546,140 @@ enum IdentificationType {
   VOTERS_ID
 }
 
+enum InventoryAlertKind {
+  EXPIRED
+  EXPIRING
+  LOW_STOCK
+}
+
+"""The pharmacy dashboard's alerts at the selected clinic."""
+type InventoryAlertsModel {
+  """YYYY-MM-DD in Manila the alerts are computed for."""
+  asOf: String!
+
+  """Lots past expiry that still hold stock: dispose of them."""
+  expired: [InventoryLotModel!]!
+
+  """Lots with stock expiring within the window, soonest first."""
+  expiring: [InventoryLotModel!]!
+
+  """Days ahead a lot counts as expiring."""
+  expiringWithinDays: Int!
+  lowStock: [LowStockItemModel!]!
+}
+
+"""
+An item of the organization's inventory master (`inventory_items`), with its stock here.
+"""
+type InventoryItemModel {
+  barcode: String
+  brandName: String
+  category: ItemCategory!
+  defaultCost: Float
+
+  """
+  The name with the brand after it: "Amoxicillin 500 mg capsule (Amoxil)".
+  """
+  displayName: String!
+  dosageForm: String
+
+  """FDA Certificate of Product Registration."""
+  fdaCprNo: String
+  genericName: String
+  id: ID!
+  isActive: Boolean!
+
+  """Reported for antimicrobial stewardship."""
+  isAntimicrobial: Boolean!
+
+  """A dangerous drug (RA 9165): dispensed only against an S2 prescription."""
+  isDangerousDrug: Boolean!
+
+  """Unexpired stock at or below the reorder level."""
+  isLowStock: Boolean!
+
+  """Listed in the Philippine National Formulary."""
+  isPnf: Boolean!
+  isRxOnly: Boolean!
+  manufacturer: String
+
+  """Display name, generic name first (RA 6675)."""
+  name: String!
+
+  """The earliest expiry of an unexpired lot in stock."""
+  nearestExpiry: String
+
+  """Stock on hand at the selected clinic, every lot."""
+  onHand: Float!
+
+  """Units per box."""
+  packSize: Int
+  reorderLevel: Float
+  sellingPrice: Float
+  serviceItem: InventoryServiceLink
+  sku: String!
+
+  """e.g. "2–8°C", "Store below 30°C"."""
+  storageCondition: String
+  strength: String
+  taxType: TaxType!
+
+  """tab, cap, vial, bottle, pc …"""
+  unitOfMeasure: String!
+
+  """
+  Unexpired stock on hand at the selected clinic (what can be dispensed).
+  """
+  usableOnHand: Float!
+}
+
+"""Stock of one lot of an item at a clinic (`inventory_lots`)."""
+type InventoryLotModel {
+  """EXPIRED or EXPIRING (within 90 days)."""
+  alert: InventoryAlertKind
+
+  """Days to expiry from today (Manila); negative once past."""
+  daysToExpiry: Int
+
+  """YYYY-MM-DD."""
+  expiryDate: String
+  id: ID!
+  itemId: ID!
+
+  """The item, generic name first (RA 6675)."""
+  itemName: String!
+  lotNo: String!
+  quantityOnHand: Float!
+  receivedAt: DateTime!
+  supplierName: String
+  unitCost: Float
+}
+
+"""
+The catalog service that sells an inventory item (Settings → Services owns it).
+"""
+type InventoryServiceLink {
+  code: String!
+  id: ID!
+  name: String!
+
+  """The selected clinic's price, else the default price."""
+  price: Float!
+}
+
+"""
+A medicine, supply or vaccine service of the catalog an inventory item can be sold as.
+"""
+type InventoryServiceOption {
+  code: String!
+  id: ID!
+  isActive: Boolean!
+
+  """The item the service sells now, when any."""
+  linkedItemId: ID
+  name: String!
+}
+
 """A sales invoice (BIR, RA 11976). Amounts in pesos."""
 type Invoice {
   amountPaid: Float!
@@ -1554,6 +1826,16 @@ input IssueInvoiceInput {
   wiseOrigin: WiseOriginInput
 }
 
+enum ItemCategory {
+  DENTAL_SUPPLY
+  LAB_REAGENT
+  MEDICAL_SUPPLY
+  MEDICINE
+  OFFICE_SUPPLY
+  OTHER
+  VACCINE
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -1622,6 +1904,16 @@ input LinkExistingPatientInput {
 
   """Set by the Wise card (`propose_patient_registration`)."""
   wiseOrigin: WiseOriginInput
+}
+
+"""An item whose unexpired stock is at or below its reorder level."""
+type LowStockItemModel {
+  itemId: ID!
+  itemName: String!
+  reorderLevel: Float!
+  sku: String!
+  unitOfMeasure: String!
+  usableOnHand: Float!
 }
 
 """A member of the organization, as the admin users page lists them."""
@@ -1770,6 +2062,9 @@ type Mutation {
   """Adds a leave of a practitioner who holds clinic here."""
   addPractitionerLeave(input: AddPractitionerLeaveInput!): PractitionerLeave!
 
+  """Corrects the count of a lot, in or out, with the reason."""
+  adjustStock(input: AdjustStockInput!): StockMovementModel!
+
   """A quick question about a shared chat, kept out of the chat history."""
   askSharedChat(input: ForkSharedChatInput!): ChatIdResult!
 
@@ -1864,6 +2159,14 @@ type Mutation {
   deleteSavedUsagePeriod(clinicId: ID!, id: ID!): DeletedSavedUsagePeriod!
   deleteSharedChat(shareId: ID!): Boolean!
   deleteSkill(input: DeleteSkillInput!): Boolean!
+
+  """
+  Dispenses medicines of an issued prescription (DISPENSE movements, audited).
+  """
+  dispensePrescription(input: DispensePrescriptionInput!): DispenseQueueEntry!
+
+  """Disposes of an expired lot (EXPIRED_DISPOSAL)."""
+  disposeExpiredStock(input: DisposeExpiredStockInput!): StockMovementModel!
   editMemory(input: EditMemoryInput!): Memory!
 
   """
@@ -1903,6 +2206,14 @@ type Mutation {
   markSpecimenCollected(input: MarkSpecimenCollectedInput!): LabWorklistItem!
   modifyPassword(input: ModifyPasswordInput!): Boolean!
 
+  """
+  Receives a delivery: creates or adds to each lot and writes RECEIPT movements (audited).
+  """
+  receiveStock(input: ReceiveStockInput!): StockReceiptModel!
+
+  """Writes off damaged stock of a lot (DAMAGED)."""
+  recordDamagedStock(input: RecordDamagedStockInput!): StockMovementModel!
+
   """Records a payment against an issued invoice; returns the invoice."""
   recordPayment(input: RecordPaymentInput!): Invoice!
 
@@ -1910,6 +2221,11 @@ type Mutation {
   Records the patient's answer to recording this visit (granted, refused or withdrawn).
   """
   recordScribeConsent(input: RecordScribeConsentInput!): RecordingConsent!
+
+  """
+  Supplies used on a visit (CONSUMPTION, first expiry first out unless a lot is chosen).
+  """
+  recordStockConsumption(input: RecordConsumptionInput!): [StockMovementModel!]!
   recordVitals(input: RecordVitalsInput!): VitalSigns!
 
   """
@@ -1940,6 +2256,9 @@ type Mutation {
   """Marks a released result reviewed (audited, with the note)."""
   reviewResult(input: ReviewResultInput!): DiagnosticReport!
 
+  """Adds or changes an inventory item (audited)."""
+  saveInventoryItem(input: SaveInventoryItemInput!): InventoryItemModel!
+
   """Creates or replaces the visit's draft invoice."""
   saveInvoiceDraft(input: SaveInvoiceDraftInput!): Invoice!
 
@@ -1966,6 +2285,9 @@ type Mutation {
   """Adds or changes a service of the catalog (audited)."""
   saveServiceItem(input: SaveServiceItemInput!): ServiceCatalogItem!
 
+  """Adds or changes a supplier (audited)."""
+  saveSupplier(input: SaveSupplierInput!): SupplierModel!
+
   """Sends the patient on: triage → the doctor, the doctor → the cashier."""
   sendQueueTicket(input: SendQueueTicketInput!): QueueTicket!
   setChatStarred(chatId: ID!, isStarred: Boolean!): Boolean!
@@ -1975,6 +2297,9 @@ type Mutation {
 
   """Sets a document's prefix and padding (audited)."""
   setDocumentSequence(input: SetDocumentSequenceInput!): DocumentSequenceSetting!
+
+  """Links the item to the catalog service that sells it (audited)."""
+  setInventoryServiceLink(input: SetInventoryServiceLinkInput!): InventoryItemModel!
   setMemoryEnabled(memoryEnabled: Boolean!): MemorySettings!
 
   """
@@ -2705,6 +3030,14 @@ type Query {
   """
   diagnosticTests(includeInactive: Boolean): [DiagnosticTest!]!
 
+  """
+  The selected clinic's issued prescriptions still to dispense, oldest first.
+  """
+  dispenseQueue(
+    """Also those dispensed in the last 7 days."""
+    includeDone: Boolean! = false
+  ): [DispenseQueueEntry!]!
+
   """Upstream `clinic.getDisplaySettings`: the date format."""
   displaySettings: JSON!
 
@@ -2737,6 +3070,23 @@ type Query {
   Whether any user exists yet (when none does, the app sends visitors to the /setup wizard).
   """
   hasUsers: Boolean!
+
+  """Low stock, expiring (90 days) and expired lots."""
+  inventoryAlerts: InventoryAlertsModel!
+
+  """One inventory item with its stock at the selected clinic."""
+  inventoryItem(id: ID!): InventoryItemModel!
+
+  """
+  The organization's inventory items (generic name first) with their stock at the selected clinic.
+  """
+  inventoryItems(category: ItemCategory, includeInactive: Boolean! = false, search: String): [InventoryItemModel!]!
+
+  """An item's lots at the selected clinic, earliest expiry first."""
+  inventoryLots(includeEmpty: Boolean! = false, itemId: ID!): [InventoryLotModel!]!
+
+  """The catalog services an inventory item can be sold as."""
+  inventoryServiceOptions: [InventoryServiceOption!]!
 
   """Models known per provider (upstream `clinic.getKnownModels`)."""
   knownModels: JSON!
@@ -2823,6 +3173,9 @@ type Query {
 
   """For printing (audited); null when not in your care."""
   prescription(id: ID!): Prescription
+
+  """An issued prescription with the stock that can fill it."""
+  prescriptionToDispense(prescriptionId: ID!): DispenseQueueEntry!
   publicConfig: PublicConfig!
 
   """Upstream `chat.getQueryRows`."""
@@ -2883,6 +3236,12 @@ type Query {
   """The clinic skills the signed-in user may use (the `/` picker)."""
   skills: [Skill!]!
 
+  """An item's stock ledger at the selected clinic, newest first."""
+  stockLedger(itemId: ID!, limit: Int! = 100): [StockMovementModel!]!
+
+  """The selected clinic's latest deliveries, newest first."""
+  stockReceipts(limit: Int! = 20): [StockReceiptModel!]!
+
   """Upstream `storage.getConfig`: the storage backend, secrets masked."""
   storageConfig: JSON!
 
@@ -2894,6 +3253,9 @@ type Query {
 
   """Upstream `storage.getUsage`."""
   storageUsage: JSON!
+
+  """The organization's suppliers."""
+  suppliers(includeInactive: Boolean! = false): [SupplierModel!]!
 
   """Messages, tokens and cost per user and chart bucket."""
   usageByUser(filter: UsageFilterInput!): [UsageByUserRecord!]!
@@ -3063,6 +3425,47 @@ type QuickQuestionChat {
   chatId: ID!
   title: String!
   updatedAt: DateTime!
+}
+
+input ReceiveStockInput {
+  """The supplier's delivery receipt (DR) number."""
+  deliveryReceiptNo: String
+  lines: [ReceiveStockLineInput!]!
+  remarks: String
+  supplierId: ID!
+
+  """The supplier's sales invoice number."""
+  supplierInvoiceNo: String
+}
+
+input ReceiveStockLineInput {
+  """YYYY-MM-DD; required for medicines and vaccines."""
+  expiryDate: String
+  itemId: ID!
+
+  """The lot (batch) number on the box."""
+  lotNo: String!
+
+  """Units received (in the item unit, not boxes)."""
+  quantity: Float!
+
+  """Pesos per unit."""
+  unitCost: Float!
+}
+
+input RecordConsumptionInput {
+  """The visit number, e.g. TAG-ENC-2026-000012."""
+  encounterNo: String!
+  lines: [ConsumptionLineInput!]!
+
+  """e.g. "Wound dressing", "CBC run"."""
+  reason: String
+}
+
+input RecordDamagedStockInput {
+  lotId: ID!
+  quantity: Float!
+  reason: String!
 }
 
 input RecordPaymentInput {
@@ -3362,6 +3765,44 @@ input ReviewResultInput {
   wiseOrigin: WiseOriginInput
 }
 
+input SaveInventoryItemInput {
+  barcode: String
+  brandName: String
+  category: ItemCategory!
+  defaultCost: Float
+  dosageForm: String
+  fdaCprNo: String
+
+  """Required for a medicine or vaccine (RA 6675)."""
+  genericName: String
+  id: ID
+  isActive: Boolean!
+  isAntimicrobial: Boolean!
+  isDangerousDrug: Boolean!
+  isPnf: Boolean!
+  isRxOnly: Boolean!
+  manufacturer: String
+
+  """Display name, generic name first: "Amoxicillin 500 mg capsule"."""
+  name: String!
+  packSize: Int
+
+  """Alert when unexpired stock is at or below this."""
+  reorderLevel: Float
+
+  """Pesos per unit (VAT included when VATABLE)."""
+  sellingPrice: Float
+
+  """
+  Unique in the organization: capital letters, digits and '-', e.g. MED-AMOX-500.
+  """
+  sku: String!
+  storageCondition: String
+  strength: String
+  taxType: TaxType!
+  unitOfMeasure: String!
+}
+
 input SaveInvoiceDraftInput {
   """The OSCA / PWD ID number presented."""
   discountIdNumber: String
@@ -3564,6 +4005,22 @@ input SaveServiceItemInput {
   taxType: TaxType!
 }
 
+input SaveSupplierInput {
+  address: String
+  contactNo: String
+  contactPerson: String
+  email: String
+
+  """FDA License to Operate of the distributor."""
+  fdaLtoNo: String
+  id: ID
+  isActive: Boolean!
+  name: String!
+
+  """BIR TIN, e.g. 123-456-789-000."""
+  tin: String
+}
+
 type SavedPrompt {
   createdAt: DateTime!
   id: ID!
@@ -3745,6 +4202,11 @@ input SetDocumentSequenceInput {
   prefix: String!
 }
 
+input SetInventoryServiceLinkInput {
+  itemId: ID!
+  serviceItemId: ID
+}
+
 input SetPasswordWithLinkInput {
   password: String!
   token: String!
@@ -3869,6 +4331,90 @@ enum StaffRole {
   VIEWER
 }
 
+enum StockAdjustmentDirection {
+  IN
+  OUT
+}
+
+"""
+One row of the stock ledger (`stock_movements`): signed quantity, balance after.
+"""
+type StockMovementModel {
+  """
+  The item's stock on hand at the clinic (every lot) right after this row.
+  """
+  balanceAfter: Float
+  encounterId: ID
+  expiryDate: String
+  id: ID!
+  itemId: ID!
+  itemName: String!
+  lotId: ID
+  lotNo: String
+  performedAt: DateTime!
+  performedByName: String
+  prescriptionItemId: ID
+
+  """Signed: + into stock, − out of it."""
+  quantity: Float!
+  reason: String
+
+  """The delivery it came with (RECEIPT)."""
+  receiptNo: String
+
+  """The prescription it was dispensed against, when visible."""
+  rxNo: String
+  stockReceiptId: ID
+  type: StockMovementType!
+  unitCost: Float
+}
+
+"""
+RECEIPT, DISPENSE, CONSUMPTION, ADJUSTMENT_IN / ADJUSTMENT_OUT, EXPIRED_DISPOSAL, DAMAGED (and the transfer and return types of the reference).
+"""
+enum StockMovementType {
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+  CONSUMPTION
+  DAMAGED
+  DISPENSE
+  EXPIRED_DISPOSAL
+  RECEIPT
+  RETURN_FROM_PATIENT
+  RETURN_TO_SUPPLIER
+  TRANSFER_IN
+  TRANSFER_OUT
+}
+
+"""One lot received with a delivery."""
+type StockReceiptLineModel {
+  expiryDate: String
+  id: ID!
+  itemId: ID!
+  itemName: String!
+  lotId: ID
+  lotNo: String!
+  quantity: Float!
+  unitCost: Float!
+}
+
+"""A delivery received from a supplier (`stock_receipts`)."""
+type StockReceiptModel {
+  deliveryReceiptNo: String
+  id: ID!
+  lines: [StockReceiptLineModel!]!
+
+  """The clinic's receiving number, e.g. TAG-RR-2026-000001."""
+  receiptNo: String!
+  receivedAt: DateTime!
+  receivedByName: String
+  remarks: String
+  supplierId: ID!
+  supplierInvoiceNo: String
+  supplierName: String!
+  totalCost: Float!
+}
+
 """
 A line to start a new invoice with: the consultation and the tests ordered.
 """
@@ -3880,6 +4426,21 @@ type SuggestedInvoiceLine {
 
   """The clinic price; 0 for a test missing from the price list."""
   unitPrice: Float!
+}
+
+"""A supplier of the organization's medicines and supplies (`suppliers`)."""
+type SupplierModel {
+  address: String
+  contactNo: String
+  contactPerson: String
+  email: String
+
+  """FDA License to Operate (drug distributor)."""
+  fdaLtoNo: String
+  id: ID!
+  isActive: Boolean!
+  name: String!
+  tin: String
 }
 
 """VATABLE (12% VAT included in the price), VAT_EXEMPT, ZERO_RATED."""

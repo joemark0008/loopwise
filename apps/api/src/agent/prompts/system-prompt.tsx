@@ -142,6 +142,17 @@ export function SystemPrompt({
 					</Span>
 				</Block>
 			)}
+			{(hasTool('find_stock') || hasTool('list_inventory_alerts')) && (
+				<Block>
+					<Title level={2}>Pharmacy stock</Title>
+					<Span>
+						For the clinic's pharmacy and stock room: call find_stock for how much of a medicine or supply
+						is on hand, lot by lot (first expiry first), and list_inventory_alerts for low stock, lots
+						expiring soon (for "this month", pass the days left in the month) and expired lots. Receiving,
+						adjusting, disposing and dispensing are done on the Pharmacy pages, never from chat.
+					</Span>
+				</Block>
+			)}
 			{hasTool('read_attachment') && (
 				<Block>
 					<Title level={2}>Attached files</Title>

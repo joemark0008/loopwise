@@ -9,9 +9,11 @@ import type {
 	displayMap,
 	executeSql,
 	findPatient,
+	findStock,
 	getMetric,
 	listAppointments,
 	listFollowUps,
+	listInventoryAlerts,
 	listLabOrders,
 	listQueue,
 	listReferrals,
@@ -218,6 +220,22 @@ export interface AgentToolServices {
 	 * (`list_appointments`) and the queue (`list_queue`). Booking and moving appointments are the user's mutations, from
 	 * the cards.
 	 */
+	/**
+	 * `InventoryWiseReader` reads, as the user at the chat's clinic (pharmacy and stock-room staff) and audited: an
+	 * item's stock lot by lot (`find_stock`) and the stock alerts (`list_inventory_alerts`). Stock never moves from chat.
+	 */
+	inventory: {
+		stockForWise(
+			userId: string,
+			clinicId: string | null,
+			input: findStock.Input & { limit: number },
+		): Promise<Omit<findStock.Output, '_version'>>;
+		alertsForWise(
+			userId: string,
+			clinicId: string | null,
+			input: listInventoryAlerts.Input & { limit: number },
+		): Promise<Omit<listInventoryAlerts.Output, '_version'>>;
+	};
 	scheduling: {
 		appointmentsForWise(
 			userId: string,

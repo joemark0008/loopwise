@@ -25,6 +25,7 @@ export const WISE_TOOL_CATEGORIES = [
 	'results',
 	'documents',
 	'billing',
+	'pharmacy',
 	'reports',
 	'analytics',
 	'assistant',
@@ -39,6 +40,7 @@ export const WISE_TOOL_CATEGORY_LABELS: Record<WiseToolCategory, string> = {
 	results: 'Results',
 	documents: 'Prescriptions and certificates',
 	billing: 'Billing',
+	pharmacy: 'Pharmacy and inventory',
 	reports: 'Charts and reports',
 	analytics: 'Analytics',
 	assistant: 'Assistant',
@@ -328,6 +330,23 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 		kind: 'propose',
 		category: 'billing',
 		defaultOn: CARE,
+	},
+	// Pharmacy and inventory
+	{
+		name: 'find_stock',
+		label: 'Look up stock',
+		summary: 'Shows how much of a medicine or supply the clinic has, lot by lot, first expiry first.',
+		kind: 'read',
+		category: 'pharmacy',
+		defaultOn: ALL,
+	},
+	{
+		name: 'list_inventory_alerts',
+		label: 'Stock alerts',
+		summary: 'Lists low-stock items and lots expiring soon or already expired.',
+		kind: 'read',
+		category: 'pharmacy',
+		defaultOn: ALL,
 	},
 	// Charts and reports
 	{

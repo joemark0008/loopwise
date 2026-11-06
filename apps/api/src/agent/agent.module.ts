@@ -8,6 +8,7 @@ import { DiagnosticsModule } from '../clinical/diagnostics/diagnostics.module.js
 import { EncountersModule } from '../clinical/encounters/encounters.module.js';
 import { FollowUpsModule } from '../clinical/follow-ups/follow-ups.module.js';
 import { InsightsModule } from '../clinical/insights/insights.module.js';
+import { InventoryModule } from '../clinical/inventory/inventory.module.js';
 import { PatientsModule } from '../clinical/patients/patients.module.js';
 import { ReportsModule } from '../clinical/reports/reports.module.js';
 import { SchedulingModule } from '../clinical/scheduling/scheduling.module.js';
@@ -37,6 +38,7 @@ import { CompactionService } from './services/compaction.js';
 		EncountersModule,
 		SchedulingModule,
 		FollowUpsModule,
+		InventoryModule,
 		ScribeModule,
 		WiseToolsModule,
 	],

@@ -15,6 +15,7 @@ export const DOCUMENT_SEQUENCE_KEYS = {
 	MED_CERT: 'MC',
 	INVOICE: 'SI',
 	PAYMENT: 'PAY',
+	STOCK_RECEIPT: 'RR',
 } as const;
 
 export type DocumentSequenceKey = keyof typeof DOCUMENT_SEQUENCE_KEYS;

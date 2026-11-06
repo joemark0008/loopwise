@@ -66,6 +66,8 @@ describe('agent tool registry', () => {
 			propose_reschedule: 'propose',
 			list_follow_ups: 'read',
 			list_referrals: 'read',
+			find_stock: 'read',
+			list_inventory_alerts: 'read',
 			web_search: 'read',
 			web_fetch: 'read',
 		});
@@ -104,6 +106,7 @@ describe('agent tool registry', () => {
 			diagnostics: { ...readMocks(TOOL_SERVICE_READS.diagnostics), review: write, release: write },
 			scheduling: { ...readMocks(TOOL_SERVICE_READS.scheduling), book: write, checkIn: write },
 			followUps: { ...readMocks(TOOL_SERVICE_READS.followUps), list: write },
+			inventory: { ...readMocks(TOOL_SERVICE_READS.inventory), dispense: write },
 			attachments: { ...readMocks(TOOL_SERVICE_READS.attachments), upload: write },
 			scribe: { ...readMocks(TOOL_SERVICE_READS.scribe), recordConsent: write },
 		} as never);
@@ -120,6 +123,7 @@ describe('agent tool registry', () => {
 			diagnostics: ['labWorklistForWise', 'resultsToReviewForWise'],
 			scheduling: ['appointmentsForWise', 'queueForWise'],
 			followUps: ['followUpsForWise', 'referralsForWise'],
+			inventory: ['stockForWise', 'alertsForWise'],
 			attachments: ['readTextForWise'],
 			scribe: ['draftForWise'],
 		});
