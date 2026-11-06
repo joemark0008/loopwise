@@ -47,7 +47,9 @@ The flow Loopwise supports end to end. Built parts are marked; the rest is plann
 6. **Cashier.** The visit's invoice: lines, SC/PWD discount with the ID shown, VAT split, PhilHealth package, issue
    with the BIR invoice number, split-tender payment, void (built). HMO LOAs and cashier shifts: schema ready.
 7. **Follow-up.** The doctor sets the encounter's follow-up date and disposition, or refers the patient (to a
-   colleague or an outside doctor or facility); reminders come with appointments (§6).
+   colleague or an outside doctor or facility). The front desk books the due follow-ups from the follow-up list; the
+   receiving doctor accepts, declines or completes a referral, and the referring doctor prints its letter (built, §6).
+   Reminders that message the patient: planned.
 
 Exceptions that matter:
 
@@ -56,7 +58,7 @@ Exceptions that matter:
 | Critical value (e.g. K⁺ 6.5, HbA1c 12%)       | Top of the results inbox for the ordering doctor; no automated patient message; reviewing it from a Wise card needs a note |
 | A released result needs correcting            | The medtech re-enters it: the item goes back to in progress, the release and the review are cleared                        |
 | An issued Rx, certificate or invoice is wrong | It is voided with a reason (a trigger refuses any other change); a new one is drafted                                      |
-| Patient misses the follow-up date             | Shows on the follow-up list from `encounters.follow_up_date` (reminders: planned)                                          |
+| Patient misses the follow-up date             | Shows as overdue on the follow-up list until booked or seen again by that doctor (reminders: planned)                      |
 
 ## 3. Patient communication principles
 
@@ -151,10 +153,11 @@ The patient never learns bad news from a machine.
 | `encounters`                       | the visit and its status, the SOAP note, vitals, diagnoses, the encounter record                                                                                                                                                                          |
 | `diagnostics`                      | `catalog/`, `orders/`, `worklist/` (the lab desk), `results/` (the doctor's inbox)                                                                                                                                                                        |
 | `prescriptions`                    | prescriptions and items (RA 6675, RA 9165)                                                                                                                                                                                                                |
-| `documents`                        | `medical-certificates/`, `referrals/`                                                                                                                                                                                                                     |
+| `documents`                        | `medical-certificates/`, `referrals/` (written, answered: accept / decline / complete, inbox and outbox, the printed letter)                                                                                                                              |
+| `follow-ups`                       | the follow-up list (visits whose `follow_up_date` is due, computed live), Wise's `list_follow_ups` / `list_referrals` reads (`FOLLOW_UPS_READER`)                                                                                                         |
 | `scribe`                           | the AI scribe: recording consent per visit, consent-checked transcription, the read behind `propose_scribe_note` (§7.5)                                                                                                                                   |
 | `billing`                          | `service-items/` (the price list invoices use; the catalog and clinic prices of Settings → Services), `invoices/` (with `InvoiceTotalsService`), `payments/`                                                                                              |
-| `scheduling`                       | `appointments/` (slots, booking), `queue/` (check-in, lines, board), `availability/` (adapts `PractitionerScheduleService`), `reminders/` (pg-boss job)                                                                                                   |
+| `scheduling`                       | `appointments/` (slots, booking), `queue/` (check-in, lines, board, `VisitFlowService` / `VisitStatusSync`), `availability/` (adapts `PractitionerScheduleService`), `reminders/` (pg-boss job)                                                           |
 | `audit`                            | `AuditService`, the one writer of `audit_logs`                                                                                                                                                                                                            |
 | `wise-proposals`                   | settling Wise cards once (§7.1)                                                                                                                                                                                                                           |
 | `insights`, `reports`, `analytics` | Wise's charts, summary reports and SQL analytics                                                                                                                                                                                                          |
@@ -169,7 +172,9 @@ service call. Services hold the rules and every status flow, each through one tr
 (`encounter-status.ts`, `diagnostic-order-status.ts` mirroring the database trigger, `invoice-status.ts`). Repositories
 are the only Prisma users and run inside `ClinicalDbService.asUser` (row-level security as the user) or `asSystem`.
 Every multi-step write is one transaction, with its audit row. Modules use each other only through exported services
-(or a reader token for Wise); there are no circular imports. Errors are domain errors (`DomainError` subclasses such as
+(or a reader token for Wise); there are no circular imports. Where a module must react to another's change without
+importing it back, the changing module publishes a domain event on its transaction (`EncounterStatusEvents`: scheduling
+listens, encounters never imports scheduling). Errors are domain errors (`DomainError` subclasses such as
 `InvoiceAlreadyIssuedError`) with a stable `extensions.errorCode`; Postgres refusals map to stable codes too
 (`ROW_SECURITY_DENIED`, `CHECK_VIOLATION`, `FOREIGN_KEY_VIOLATION`, `INVALID_ID`).
 
@@ -291,8 +296,19 @@ sequence.
 - **Kept in step** (`VisitFlowService`): starting a ticket at the doctor's room moves the visit OPEN → IN_PROGRESS and
   the booking → IN_PROGRESS; the doctor sending it to the cashier moves the visit → FOR_BILLING and the booking →
   COMPLETED; Done at the doctor (nothing to bill) → COMPLETED; cancelling a ticket before the doctor cancels the visit and
-  the booking with the reason. The visit moves through `EncounterService.transition` first; a visit already moved from
-  the chart is left as it is.
+  the booking with the reason. The visit moves through `EncounterService.transition` first (with `trigger: 'queue'`);
+  a visit already moved from the chart is left as it is.
+- **The other way round** (`VisitStatusSync`): a visit moved anywhere else (the encounter page's Start consult, Send to
+  billing, Complete visit, Cancel visit, Wise, billing completing a paid visit) moves its open ticket and its booking
+  too. `EncounterService.transition` publishes `EncounterStatusChanged` (`encounters/encounter-status-events.ts`) on
+  the transaction that moved the visit, after its audit row; scheduling subscribes on start-up, so encounters never
+  imports scheduling (no circular module import) and the visit, ticket and booking commit or roll back together.
+  `followVisit` (`queue-status.ts`) walks the ticket through its own status machine to where the visit's status puts
+  it: IN_PROGRESS → SERVING at the doctor's room (from triage, or back from the cashier on a reopen), FOR_BILLING →
+  WAITING at the cashier, COMPLETED → DONE, CANCELLED → CANCELLED; the booking goes IN_PROGRESS / COMPLETED /
+  CANCELLED when its machine allows (a COMPLETED booking stays so on a reopen). Each change is audited
+  (`queue.follow_visit_<status>`) with the user who moved the visit; a ticket another desk moved meanwhile is left as
+  it is. Queue-page moves pass `trigger: 'queue'` and are skipped by the listener.
 - **Desks** (`SchedulingAccess`): booking, check-in and cancelling: RECEPTIONIST; triage: NURSE / MIDWIFE; the doctor's
   room: that doctor; the cashier line: CASHIER / BILLING_CLERK; clinic admins every desk. Reads: any staff of the clinic,
   with row-level security on the patients (a doctor sees the bookings of patients in their care). The board reads numbers
@@ -307,11 +323,36 @@ The follow-up (care-case) engine of the original screening-loop design is remove
 tasks or evidence. A follow-up is now part of the visit:
 
 - **`encounters.follow_up_date` and `disposition`** (sent home, for follow-up, referred, admitted, transferred to the
-  ER, expired) record what the doctor decided. A follow-up list and reminders come with appointments (Phase 1): the
-  reminder books an `Appointment`, which becomes the next encounter on check-in (`encounters.appointment_id`, 1:1).
+  ER, expired) record what the doctor decided.
+- **The follow-up list** (`apps/api/src/clinical/follow-ups/`, `/follow-ups`): the visits at the clinic whose follow-up
+  date is overdue (up to 180 days back by default), due today or within `withinDays` (default 7, at most 60), not
+  cancelled, with their disposition and primary diagnosis. A follow-up is **done** once the patient has a later visit
+  with the same doctor, or a later booking with that doctor that still stands (cancelled, no-show and rescheduled ones
+  don't count, nor the visit's own booking). Computed live on every read by one query (`FollowUpRepository.listDue`,
+  `$queryRaw` under row-level security), so there is **no pg-boss job** and no stored list that could go stale; a
+  morning list for the desk is the same query. Access: a doctor sees their own follow-ups (as the user); the front desk
+  (RECEPTIONIST) the clinic's, optionally one doctor's (as the user: desk roles see the patients with a visit at the
+  clinic); a clinic admin the clinic's every follow-up, read as system work after the admin check (admins hold no care
+  relationship of their own); others are refused (`FOLLOW_UPS_ACCESS`). Each list is audited (`follow_up.list`).
+  **Book follow-up** opens Scheduling's booking dialog with the patient, the visit's doctor, the follow-up date (today
+  when passed), a FOLLOW_UP visit and the reason; it books through `bookAppointment`, and the booking takes the row off
+  the list. Nothing messages the patient.
 - **Referrals** are written from a visit (`referrals.encounter_id` required): to a practitioner of the organization
   (who then gets a `REFERRAL` care relationship) or to an outside doctor or facility, with specialty, clinical summary
-  and urgency. Statuses: DRAFT, SENT, ACCEPTED, COMPLETED, DECLINED, CANCELLED.
+  and urgency. Statuses (`referral-status.ts`): SENT → ACCEPTED | DECLINED | CANCELLED, ACCEPTED → COMPLETED |
+  CANCELLED; DRAFT unused. **Answers** (`ReferralResponseService`): `acceptReferral` (a note optional),
+  `declineReferral` (the reason), `completeReferral` (the response notes), each one transition that stamps
+  `responded_at`, writes `response_notes` and its audit row (`referral.accept` / `.decline` / `.complete`); two
+  answers at once get `REFERRAL_MOVED`. An **internal** referral is answered by the practitioner it was sent to
+  (`NOT_REFERRAL_RECIPIENT` otherwise); an **external** one is marked by the referring side (staff of the referring
+  visit's clinic). The check runs as the user; the write is system work, so a receiving doctor at another clinic of the
+  organization can still answer. **Lists** (`referrals(input: { box })`): INBOX (sent to the user's practitioner),
+  OUTBOX (sent by them), CLINIC (every referral of the clinic, its admins, read as system work and audited). Page
+  `/referrals` with the response dialog.
+- **Referral letter** (`referralLetter(id)`, `/print/referral/:id`, browser print): the clinic letterhead and the
+  referring doctor's name, PRC and PTR (`PractitionerService.signatory`), the patient, who it is to, the reason, the
+  urgency, the clinical summary, and the visit's current diagnoses and issued medicines (from the encounter record).
+  Audited as a print (`referral.print`).
 - **Results** are reviewed by the doctor in the results inbox; abnormal and critical flags come from the lab. Critical
   values reach the doctor first and never get an automated patient message.
 
@@ -449,6 +490,11 @@ its mutation, the card's body.
 | `propose_patient_update` | `updatePatient`                                                                                            | contact details only; clinic or hospital staff                   |
 | `propose_appointment`    | `bookAppointment` (the front desk picks the slot in the card)                                              | create / standard; chart chat; never messages the patient        |
 | `propose_reschedule`     | `rescheduleAppointment` (subject: the appointment from `list_appointments`)                                | update / standard; the old booking is kept as RESCHEDULED        |
+
+Read tools for follow-ups (§6): `list_follow_ups` (the follow-ups due within `withinDays`, default 7, a doctor's own or
+the clinic's by doctor; in a chart chat, that patient's) and `list_referrals` (inbox or outbox, pending by default),
+both through `FOLLOW_UPS_READER` as the user and audited. Booking a due follow-up reuses `propose_appointment` in the
+patient's chart chat (the follow-up's doctor, its date, FOLLOW_UP); answering a referral stays on the Referrals page.
 
 `updatePatient` changes contact details only (mobile no., preferred language, address and barangay); names, birth
 date, sex and IDs drive the duplicate match and stay with registration. Never from chat: users, passwords, roles, LLM

@@ -39,7 +39,7 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
   `availability.spec.ts`, `credential-expiry.spec.ts`, `e2e/clinic-setup.spec.ts` (incl. axe).
 - **Encounters (§5.1):** visit number, type, status transitions, SOAP note, vitals, ICD-10 diagnoses, the chart and
   the encounter page with tabs, print views; prescriptions (RA 6675, RA 9165) and medical certificates (draft, issue,
-  void), referrals (API only).
+  void), referrals (written from a visit; answered and printed, see Follow-ups and referrals).
 - **In-house lab:** catalog, orders, the lab worklist (`/orders`: collect, enter results, release), results inbox
   (`/results`) and the chart's Results tab (`clinical/diagnostics/`).
 - **Cashier:** invoices with SC/PWD discounts and the VAT split, BIR invoice series, payments (incl. PhilHealth package
@@ -51,10 +51,29 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
   triage → the doctor's line → the cashier, kept in step with the visit and the booking; the waiting-room board;
   next-day reminders (pg-boss job, stub notifier). Pages: `/appointments` (day / week, per doctor), `/queue`,
   `/triage`, `/my-queue`, `/board` (full screen, no names). Wise: `list_appointments`, `list_queue`,
-  `propose_appointment`, `propose_reschedule`. Seed: clinic hours for Dr. Reyes (daily), Dr. Cruz (MWF) and the admin
+  `propose_appointment`, `propose_reschedule`, `list_follow_ups`, `list_referrals`. Seed: clinic hours for Dr. Reyes (daily), Dr. Cruz (MWF) and the admin
   doctor (06:00–23:30, for same-day e2e bookings), bookings today and tomorrow, today's queue (A-001 Ramon and A-002
   Liza at triage, P-001 Jose with Dr. Reyes). `npm run db:seed:scheduling -w @loopwise/api` adds it to a database
   seeded before (no reset).
+- **Follow-ups and referrals (§6, Phase 2, visit flow session):** the queue ticket and the booking now follow a visit
+  moved from the encounter page (Start consult, Send to billing, Complete, Cancel) as well as from the queue pages:
+  `EncounterService.transition` publishes `EncounterStatusChanged` on its own transaction
+  (`encounters/encounter-status-events.ts`) and scheduling's `VisitStatusSync` moves the ticket (`followVisit` in
+  `queue-status.ts`) and the booking, audited `queue.follow_visit_<status>`; queue-page moves pass `trigger: 'queue'`
+  (DESIGN.md §5.4). `clinical/follow-ups/`: `followUps(input)` lists visits whose `follow_up_date` is overdue, due or
+  within N days until a later visit or standing booking with the same doctor, computed live (no pg-boss job): a doctor's
+  own, the front desk's clinic list by doctor, a clinic admin's (system read after the admin check). Referral answers
+  `acceptReferral` / `declineReferral` (reason) / `completeReferral` (response notes), `referrals(input: { box: INBOX |
+OUTBOX | CLINIC })` and `referralLetter(id)` (`clinical/documents/referrals/`). Wise: `list_follow_ups`,
+  `list_referrals` (read, audited, `FOLLOW_UPS_READER`); booking a due follow-up is `propose_appointment` in the chart
+  chat. Pages: `/follow-ups` (Book follow-up opens Scheduling's booking dialog pre-filled: patient, doctor, suggested
+  day, FOLLOW_UP), `/referrals` (inbox, sent, whole clinic for admins; response dialog), `/print/referral/:id`; the
+  doctor's line opens a waiting patient's visit. No migration (the RLS policies on `encounters`, `appointments` and
+  `referrals` cover it). Seed: Teresita Cabahug (overdue, Dr. Reyes, external referral SENT), Roberto Lim (in 3 days,
+  internal referral to Dr. Cruz SENT), Carmen with Dr. Cruz (due today); `npm run db:seed:follow-ups -w @loopwise/api`
+  adds them to a seeded database (once, resets nothing). Tests: `test/follow-ups.e2e-spec.ts`,
+  `test/referral-responses.e2e-spec.ts`, the "ticket follows the visit" block of `test/scheduling.e2e-spec.ts`,
+  `follow-up-window.spec.ts`, `queue-status.spec.ts` (`followVisit`), `e2e/follow-ups.spec.ts`.
 - **AI scribe (§7.5, Phase 1):** the encounter page's **AI scribe** tab: recording consent per visit
   (`patient_consents`, PHOTO_VIDEO, with `encounter_id`; recording refused without it, typing always works), record /
   stop through `POST /api/scribe/transcribe` (audio not kept; like the chat's dictation, refused with
@@ -114,9 +133,8 @@ running its own frontend next to main's also needs `TANSTACK_DEVTOOLS_PORT` (mai
 - **Clinic setup:** built (see What's built). Left: a Wise read tool ("which doctors are in today") on
   `PractitionerScheduleService`; a logo / signature upload instead of a URL; HMO rates aren't used by invoices yet.
 - **Appointments and queue** (`scheduling`): built (above); slots come from clinic setup's `PractitionerScheduleService`
-  (`availability/practitioner-schedule-availability.ts`). Left: the ticket follows the visit only when it
-  moves from the queue pages (a visit started or ended from the encounter page leaves the ticket where it is: an
-  encounter status event, or a call from `EncounterService.transition`, would close that); the 2-hour reminder,
+  (`availability/practitioner-schedule-availability.ts`). The ticket and booking follow the visit both ways now
+  (`VisitStatusSync`). Left: the 2-hour reminder,
   automatic no-show marking and a waitlist (PLAN.md §4.2); a real SMS notifier; a doctor sees only the bookings of
   patients already in their care (a new patient shows in their line at check-in).
 - **AI scribe:** built (above, DESIGN.md §7.5). To check on a stack with an LLM key: the real-LLM Playwright test
@@ -156,14 +174,20 @@ processor of sensitive personal information. Everything is synthetic today; befo
 
 - **AI scribe, next:** dose ranges by age and weight and interaction checks on the drafted Rx (only the allergy match
   is built); a setting to keep audio (it is never kept today); speech-to-text tuned for Taglish and Cebuano; a printed
-  patient handout from the saved summary; the scribe on a visit opened from the queue (Scheduling's check-in).
+  patient handout from the saved summary. The scribe on a visit opened at check-in (OPEN, booked doctor) works: the
+  tab shows (`canEdit`), consent and `propose_scribe_note` accept the visit (`requireWritable`), and the doctor's line
+  links to the waiting patient's visit (`e2e/follow-ups.spec.ts` checks the tab).
 
 - **Pharmacy and inventory** (`inventory`): items (FDA CPR, dangerous drugs), lots (FEFO), receipts, the dispense queue
   writing `stock_movements` and `prescription_items.dispensed_qty` (the issued-Rx lock already allows those columns).
 - **Billing:** cashier shifts (X/Z reading), professional fees with EWT, corporate accounts and consolidated invoices,
   HMO LOAs and transmittals, PhilHealth claims (`philhealth_claims`, Konsulta enrollment), a printed invoice.
-- **Follow-ups:** a list from `encounters.follow_up_date` / `disposition`, reminders that book appointments; referral
-  responses (accept / decline / complete) and a referral letter print (the API creates and cancels referrals only).
+- **Follow-ups, next:** the list is built (above). Left: patient reminders for due follow-ups (needs the SMS gateway;
+  the list is live, so a job would only send); a referral form on the encounter page (referrals are written through
+  `createReferral`, from the API or Wise, today; the encounter page has no Refer button yet); a referral's answer
+  doesn't notify the referring doctor beyond the Sent tab; a PDF of the letter (browser print only); clinic admins read
+  the follow-up and clinic referral lists as system work because `app_can_see_patient` gives ADMIN no path of its own
+  (a policy for admins would let them open those charts too).
 - **Patient master UI:** contacts, problems, history, documents (schema ready; registration captures address and IDs).
 - **Immunizations** (`immunizations`), **procedures** (`encounter_procedures` with RVS).
 - **Reference data:** load the full PSGC, ICD-10 (WHO) and PhilHealth RVS / case rates; ICD-10 search from
