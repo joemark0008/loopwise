@@ -20,6 +20,7 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as DisplayBoardRouteImport } from './routes/_display/board'
 import { Route as ProtectedChatLayoutRouteImport } from './routes/_protected/_chat-layout'
 import { Route as ProtectedAppointmentsRouteImport } from './routes/_protected/appointments'
+import { Route as ProtectedCashierRouteImport } from './routes/_protected/cashier'
 import { Route as ProtectedChatsRouteImport } from './routes/_protected/chats'
 import { Route as ProtectedFollowUpsRouteImport } from './routes/_protected/follow-ups'
 import { Route as ProtectedMyQueueRouteImport } from './routes/_protected/my-queue'
@@ -53,6 +54,7 @@ import { Route as ProtectedSettingsUsageRouteImport } from './routes/_protected/
 import { Route as ProtectedSettingsUsersRouteImport } from './routes/_protected/settings.users'
 import { Route as ProtectedSettingsWiseToolsRouteImport } from './routes/_protected/settings.wise-tools'
 import { Route as ProtectedSharedChatShareIdRouteImport } from './routes/_protected/shared-chat.$shareId'
+import { Route as PrintPrintInvoiceInvoiceIdRouteImport } from './routes/_print/print.invoice.$invoiceId'
 import { Route as PrintPrintLabRequestEncounterIdRouteImport } from './routes/_print/print.lab-request.$encounterId'
 import { Route as PrintPrintMedicalCertificateCertificateIdRouteImport } from './routes/_print/print.medical-certificate.$certificateId'
 import { Route as PrintPrintPrescriptionPrescriptionIdRouteImport } from './routes/_print/print.prescription.$prescriptionId'
@@ -123,6 +125,11 @@ const ProtectedChatLayoutRoute = ProtectedChatLayoutRouteImport.update({
 const ProtectedAppointmentsRoute = ProtectedAppointmentsRouteImport.update({
   id: '/appointments',
   path: '/appointments',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedCashierRoute = ProtectedCashierRouteImport.update({
+  id: '/cashier',
+  path: '/cashier',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedChatsRoute = ProtectedChatsRouteImport.update({
@@ -301,6 +308,12 @@ const ProtectedSharedChatShareIdRoute =
     path: '/shared-chat/$shareId',
     getParentRoute: () => ProtectedRoute,
   } as any)
+const PrintPrintInvoiceInvoiceIdRoute =
+  PrintPrintInvoiceInvoiceIdRouteImport.update({
+    id: '/print/invoice/$invoiceId',
+    path: '/print/invoice/$invoiceId',
+    getParentRoute: () => PrintRoute,
+  } as any)
 const PrintPrintLabRequestEncounterIdRoute =
   PrintPrintLabRequestEncounterIdRouteImport.update({
     id: '/print/lab-request/$encounterId',
@@ -436,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/board': typeof DisplayBoardRoute
   '/appointments': typeof ProtectedAppointmentsRoute
+  '/cashier': typeof ProtectedCashierRoute
   '/chats': typeof ProtectedChatsRoute
   '/follow-ups': typeof ProtectedFollowUpsRoute
   '/my-queue': typeof ProtectedMyQueueRoute
@@ -468,6 +482,7 @@ export interface FileRoutesByFullPath {
   '/patients/': typeof ProtectedPatientsIndexRoute
   '/pharmacy/': typeof ProtectedPharmacyIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
+  '/print/invoice/$invoiceId': typeof PrintPrintInvoiceInvoiceIdRoute
   '/print/lab-request/$encounterId': typeof PrintPrintLabRequestEncounterIdRoute
   '/print/medical-certificate/$certificateId': typeof PrintPrintMedicalCertificateCertificateIdRoute
   '/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
@@ -498,6 +513,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/board': typeof DisplayBoardRoute
   '/appointments': typeof ProtectedAppointmentsRoute
+  '/cashier': typeof ProtectedCashierRoute
   '/chats': typeof ProtectedChatsRoute
   '/follow-ups': typeof ProtectedFollowUpsRoute
   '/my-queue': typeof ProtectedMyQueueRoute
@@ -525,6 +541,7 @@ export interface FileRoutesByTo {
   '/patients': typeof ProtectedPatientsIndexRoute
   '/pharmacy': typeof ProtectedPharmacyIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
+  '/print/invoice/$invoiceId': typeof PrintPrintInvoiceInvoiceIdRoute
   '/print/lab-request/$encounterId': typeof PrintPrintLabRequestEncounterIdRoute
   '/print/medical-certificate/$certificateId': typeof PrintPrintMedicalCertificateCertificateIdRoute
   '/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
@@ -560,6 +577,7 @@ export interface FileRoutesById {
   '/_display/board': typeof DisplayBoardRoute
   '/_protected/_chat-layout': typeof ProtectedChatLayoutRouteWithChildren
   '/_protected/appointments': typeof ProtectedAppointmentsRoute
+  '/_protected/cashier': typeof ProtectedCashierRoute
   '/_protected/chats': typeof ProtectedChatsRoute
   '/_protected/follow-ups': typeof ProtectedFollowUpsRoute
   '/_protected/my-queue': typeof ProtectedMyQueueRoute
@@ -593,6 +611,7 @@ export interface FileRoutesById {
   '/_protected/patients/': typeof ProtectedPatientsIndexRoute
   '/_protected/pharmacy/': typeof ProtectedPharmacyIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
+  '/_print/print/invoice/$invoiceId': typeof PrintPrintInvoiceInvoiceIdRoute
   '/_print/print/lab-request/$encounterId': typeof PrintPrintLabRequestEncounterIdRoute
   '/_print/print/medical-certificate/$certificateId': typeof PrintPrintMedicalCertificateCertificateIdRoute
   '/_print/print/prescription/$prescriptionId': typeof PrintPrintPrescriptionPrescriptionIdRoute
@@ -625,6 +644,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/board'
     | '/appointments'
+    | '/cashier'
     | '/chats'
     | '/follow-ups'
     | '/my-queue'
@@ -657,6 +677,7 @@ export interface FileRouteTypes {
     | '/patients/'
     | '/pharmacy/'
     | '/settings/'
+    | '/print/invoice/$invoiceId'
     | '/print/lab-request/$encounterId'
     | '/print/medical-certificate/$certificateId'
     | '/print/prescription/$prescriptionId'
@@ -687,6 +708,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/board'
     | '/appointments'
+    | '/cashier'
     | '/chats'
     | '/follow-ups'
     | '/my-queue'
@@ -714,6 +736,7 @@ export interface FileRouteTypes {
     | '/patients'
     | '/pharmacy'
     | '/settings'
+    | '/print/invoice/$invoiceId'
     | '/print/lab-request/$encounterId'
     | '/print/medical-certificate/$certificateId'
     | '/print/prescription/$prescriptionId'
@@ -748,6 +771,7 @@ export interface FileRouteTypes {
     | '/_display/board'
     | '/_protected/_chat-layout'
     | '/_protected/appointments'
+    | '/_protected/cashier'
     | '/_protected/chats'
     | '/_protected/follow-ups'
     | '/_protected/my-queue'
@@ -781,6 +805,7 @@ export interface FileRouteTypes {
     | '/_protected/patients/'
     | '/_protected/pharmacy/'
     | '/_protected/settings/'
+    | '/_print/print/invoice/$invoiceId'
     | '/_print/print/lab-request/$encounterId'
     | '/_print/print/medical-certificate/$certificateId'
     | '/_print/print/prescription/$prescriptionId'
@@ -892,6 +917,13 @@ declare module '@tanstack/react-router' {
       path: '/appointments'
       fullPath: '/appointments'
       preLoaderRoute: typeof ProtectedAppointmentsRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/cashier': {
+      id: '/_protected/cashier'
+      path: '/cashier'
+      fullPath: '/cashier'
+      preLoaderRoute: typeof ProtectedCashierRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/chats': {
@@ -1125,6 +1157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSharedChatShareIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_print/print/invoice/$invoiceId': {
+      id: '/_print/print/invoice/$invoiceId'
+      path: '/print/invoice/$invoiceId'
+      fullPath: '/print/invoice/$invoiceId'
+      preLoaderRoute: typeof PrintPrintInvoiceInvoiceIdRouteImport
+      parentRoute: typeof PrintRoute
+    }
     '/_print/print/lab-request/$encounterId': {
       id: '/_print/print/lab-request/$encounterId'
       path: '/print/lab-request/$encounterId'
@@ -1287,6 +1326,7 @@ const DisplayRouteWithChildren =
   DisplayRoute._addFileChildren(DisplayRouteChildren)
 
 interface PrintRouteChildren {
+  PrintPrintInvoiceInvoiceIdRoute: typeof PrintPrintInvoiceInvoiceIdRoute
   PrintPrintLabRequestEncounterIdRoute: typeof PrintPrintLabRequestEncounterIdRoute
   PrintPrintMedicalCertificateCertificateIdRoute: typeof PrintPrintMedicalCertificateCertificateIdRoute
   PrintPrintPrescriptionPrescriptionIdRoute: typeof PrintPrintPrescriptionPrescriptionIdRoute
@@ -1294,6 +1334,7 @@ interface PrintRouteChildren {
 }
 
 const PrintRouteChildren: PrintRouteChildren = {
+  PrintPrintInvoiceInvoiceIdRoute: PrintPrintInvoiceInvoiceIdRoute,
   PrintPrintLabRequestEncounterIdRoute: PrintPrintLabRequestEncounterIdRoute,
   PrintPrintMedicalCertificateCertificateIdRoute:
     PrintPrintMedicalCertificateCertificateIdRoute,
@@ -1442,6 +1483,7 @@ const ProtectedSettingsRouteWithChildren =
 interface ProtectedRouteChildren {
   ProtectedChatLayoutRoute: typeof ProtectedChatLayoutRouteWithChildren
   ProtectedAppointmentsRoute: typeof ProtectedAppointmentsRoute
+  ProtectedCashierRoute: typeof ProtectedCashierRoute
   ProtectedChatsRoute: typeof ProtectedChatsRoute
   ProtectedFollowUpsRoute: typeof ProtectedFollowUpsRoute
   ProtectedMyQueueRoute: typeof ProtectedMyQueueRoute
@@ -1460,6 +1502,7 @@ interface ProtectedRouteChildren {
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedChatLayoutRoute: ProtectedChatLayoutRouteWithChildren,
   ProtectedAppointmentsRoute: ProtectedAppointmentsRoute,
+  ProtectedCashierRoute: ProtectedCashierRoute,
   ProtectedChatsRoute: ProtectedChatsRoute,
   ProtectedFollowUpsRoute: ProtectedFollowUpsRoute,
   ProtectedMyQueueRoute: ProtectedMyQueueRoute,

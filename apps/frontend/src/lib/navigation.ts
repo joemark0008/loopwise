@@ -1,4 +1,5 @@
 import {
+	Banknote,
 	BookOpen,
 	Boxes,
 	Building2,
@@ -115,6 +116,7 @@ export const navLinks: NavLink[] = [
 	{ icon: CalendarDays, label: 'Appointments', to: '/appointments', section: 'workspace', roles: ['front_desk'] },
 	{ icon: HeartPulse, label: 'Triage', to: '/triage', section: 'workspace', roles: ['nurse'] },
 	{ icon: ListOrdered, label: 'Queue', to: '/queue', section: 'workspace', roles: ['front_desk', 'cashier'] },
+	{ icon: Banknote, label: 'Cashier', to: '/cashier', section: 'workspace', roles: ['cashier'] },
 	{ icon: ListOrdered, label: 'My queue', to: '/my-queue', section: 'workspace', roles: ['doctor'] },
 	{
 		icon: CalendarCheck,

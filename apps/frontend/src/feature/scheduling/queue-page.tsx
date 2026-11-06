@@ -120,6 +120,23 @@ export function QueuePage() {
 											)}
 											{isCashier &&
 												ticket.station === 'CASHIER' &&
+												ticket.patient &&
+												ticket.encounter && (
+													<Button size='sm' variant='outline' asChild>
+														<Link
+															to='/patients/$patientId/encounters/$encounterId'
+															params={{
+																patientId: ticket.patient.id,
+																encounterId: ticket.encounter.id,
+															}}
+															search={{ tab: 'billing' }}
+														>
+															Bill
+														</Link>
+													</Button>
+												)}
+											{isCashier &&
+												ticket.station === 'CASHIER' &&
 												ticket.status !== 'SERVING' && (
 													<Button
 														size='sm'

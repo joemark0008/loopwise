@@ -1,0 +1,45 @@
+/* The printed sales invoice, on the print shell's sheet (feature/encounters/print/print.module.css). */
+
+.titleRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.lines,
+.totals {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+	font-variant-numeric: tabular-nums;
+}
+.lines th,
+.lines td {
+	padding: 0.25rem 0.375rem;
+	border-bottom: 1px solid var(--app-line);
+	text-align: left;
+}
+.lines th {
+	border-bottom: 1px solid var(--app-line-strong);
+	font-size: 0.75rem;
+	color: var(--app-muted);
+}
+.totals {
+	width: auto;
+	min-width: 60%;
+	margin-left: auto;
+}
+.totals td {
+	padding: 0.125rem 0.375rem;
+}
+.amount {
+	text-align: right;
+	white-space: nowrap;
+}
+.scPwd {
+	margin: 0;
+	padding: 0.5rem;
+	border: 1px solid var(--app-line-strong);
+	font-size: 0.8125rem;
+}
