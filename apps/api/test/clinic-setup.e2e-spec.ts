@@ -139,7 +139,18 @@ describe('clinic setup (e2e)', () => {
 		it('lists every numbered document and sets a format that carries into the next year', async () => {
 			const list = await call(admin, '{ documentSequences { key prefix padLength preview isStarted } }');
 			expect(list.body.errors).toBeUndefined();
-			expect(list.body.data.documentSequences).toHaveLength(7);
+			expect(list.body.data.documentSequences.map((s: { key: string }) => s.key)).toEqual(
+				expect.arrayContaining([
+					'PATIENT',
+					'ENCOUNTER',
+					'LAB_ORDER',
+					'RX',
+					'MED_CERT',
+					'INVOICE',
+					'PAYMENT',
+					'STOCK_RECEIPT',
+				]),
+			);
 			expect(list.body.data.documentSequences.find((s: { key: string }) => s.key === 'RX')).toMatchObject({
 				prefix: `TAGX-RX-${year}-`,
 				padLength: 6,
