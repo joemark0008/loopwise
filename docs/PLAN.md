@@ -177,7 +177,8 @@ dashboard as a headline, MicroK8s/ArgoCD as a requirement for the first pilot.
 ## 8. Open questions
 
 - Product name: keep **Loopwise**, or rename for the clinic market?
-- Pricing: per doctor per month, per branch, or per visit?
+- Pricing: per doctor per month, per branch, or per visit? Proposed: a base fee per clinic + a fee per doctor seat + an
+  AI allowance with overage (see [NEXT.md](NEXT.md), "Last: SaaS — self sign-up and tenant billing").
 - SMS provider (Semaphore, Twilio, M360 …) and whether Messenger is in Phase 3 or 5.
 - LLM hosting for patient data: cloud provider with a DPA, or a local model option from day one?
 - Speech-to-text quality for Taglish / Cebuano — which provider, and do we need a local fallback?

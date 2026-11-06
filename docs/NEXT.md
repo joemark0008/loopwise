@@ -197,6 +197,40 @@ processor of sensitive personal information. Everything is synthetic today; befo
 - **Paperwork (not code):** the clinic's DPO, a privacy impact assessment covering the AI processing, NPC registration
   where the thresholds apply, and a review by counsel familiar with the Data Privacy Act and NPC guidance.
 
+## Last: SaaS — self sign-up and tenant billing
+
+Planned for the final part, after the clinical features. Loopwise bills each tenant (organization); this is separate
+from the cashier desk, which bills the clinic's patients.
+
+- **Organizations vs clinics:** a different owner or business is a different organization (its own TIN, patients,
+  prices, staff, invoices and stock, kept apart by row-level security); a branch of the same business is a clinic
+  inside it. A doctor who joins an existing practice is added as staff; one person can belong to several
+  organizations (an organization switcher). Today an organization can only be made by the first-run setup wizard
+  (`disableSignUp: true`, no `createOrganization`), so ACEmc is a branch of the Tagbilaran organization.
+- **Self sign-up with approval:** a public sign-up (name, email, password, terms and privacy notice), email
+  verification, then a wizard for the business (name, trade name, TIN, VAT status), the first clinic (PSGC address,
+  DOH license) and the owner's practitioner profile (PRC license). The owner becomes SUPER_ADMIN of the new
+  organization, which stays **pending** until the platform operator approves it (clinical features locked while
+  pending). Captcha or rate limits on sign-up; archive inactive organizations.
+- **Pricing (to decide):** a base fee per clinic + a fee per active doctor seat (staff seats free) + an AI allowance per
+  doctor with overage blocks; a 14–30 day free trial. Set the numbers after measuring real AI cost per visit from
+  `llm_inferences`.
+- **AI cost:** Loopwise-provided AI by default (one business API with a DPA and zero retention, billed through the
+  allowance), the clinic's own key (BYOK, today's setup) as an option.
+- **Payments:** a PH gateway (PayMongo or Xendit: cards, GCash, Maya, QR Ph, bank transfer); card auto-renewal, a
+  monthly pay link for e-wallets; monthly or annual cycles, invoiced on the 1st (seats and clinics counted that day,
+  last month's AI overage). Loopwise's own company issues BIR invoices to the clinics (VAT if registered; confirm
+  with an accountant).
+- **Dunning:** reminders at 0 / +7 / +14 days, **read-only** at +30 days (no new visits or invoices; records stay
+  viewable and exportable), then suspension with data kept per the retention policy. Never block or delete patient
+  records for non-payment.
+- **To build:** platform-level tables outside tenant RLS (plans, subscriptions with trial / active / past_due /
+  read_only / cancelled, usage per organization per month, subscription invoices and payments, gateway webhooks);
+  a platform admin console (organizations, approvals, subscriptions, revenue, past due, credits); Settings →
+  Subscription for the owner (plan, seats, AI used, invoices, payment method).
+- **Rollout:** a demo version first (sign-up with approval, trial, pricing page, simulated billing, admin console),
+  then the real gateway, BIR invoicing and dunning, then annual plans, promo codes and partner pricing.
+
 ## Later
 
 - **AI scribe, next:** dose ranges by age and weight and interaction checks on the drafted Rx (only the allergy match
