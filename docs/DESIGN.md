@@ -144,26 +144,27 @@ The patient never learns bad news from a machine.
 
 **Module map.** One NestJS module per schema domain under `apps/api/src/clinical/` (the reference's file names):
 
-| Module                             | Covers                                                                                                                                                                                                                                                    |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `clinics`                          | `clinics/` (Wise workspaces, `ClinicDirectoryService`), `organizations/`, `document-sequences/` (numbering and its settings), `profile/` (legal details, BIR / DOH / PhilHealth, PSGC address), `expiries/` (licenses expiring soon); `ClinicSetupModule` |
-| `reference`                        | ICD-10 search and validation, PSGC cities / municipalities and barangays                                                                                                                                                                                  |
-| `practitioners`                    | the practitioner profile (PRC, PTR, S2, PhilHealth PAN), the signatory printed on documents; `setup/` (admins: profiles, room and fee); `schedules/` (weekly hours and leaves; `PractitionerScheduleService` reads availability for booking)              |
-| `patients`                         | registration (MRN, consent, duplicates), the chart, contact updates, allergies, identifications                                                                                                                                                           |
-| `encounters`                       | the visit and its status, the SOAP note, vitals, diagnoses, the encounter record                                                                                                                                                                          |
-| `diagnostics`                      | `catalog/`, `orders/`, `worklist/` (the lab desk), `results/` (the doctor's inbox)                                                                                                                                                                        |
-| `prescriptions`                    | prescriptions and items (RA 6675, RA 9165)                                                                                                                                                                                                                |
-| `documents`                        | `medical-certificates/`, `referrals/` (written, answered: accept / decline / complete, inbox and outbox, the printed letter)                                                                                                                              |
-| `follow-ups`                       | the follow-up list (visits whose `follow_up_date` is due, computed live), Wise's `list_follow_ups` / `list_referrals` reads (`FOLLOW_UPS_READER`)                                                                                                         |
-| `scribe`                           | the AI scribe: recording consent per visit, consent-checked transcription, the read behind `propose_scribe_note` (§7.5)                                                                                                                                   |
-| `billing`                          | `service-items/` (the price list invoices use; the catalog and clinic prices of Settings → Services), `invoices/` (with `InvoiceTotalsService`), `payments/`                                                                                              |
-| `scheduling`                       | `appointments/` (slots, booking), `queue/` (check-in, lines, board, `VisitFlowService` / `VisitStatusSync`), `availability/` (adapts `PractitionerScheduleService`), `reminders/` (pg-boss job)                                                           |
-| `audit`                            | `AuditService`, the one writer of `audit_logs`                                                                                                                                                                                                            |
-| `wise-proposals`                   | settling Wise cards once (§7.1)                                                                                                                                                                                                                           |
-| `insights`, `reports`, `analytics` | Wise's charts, summary reports and SQL analytics                                                                                                                                                                                                          |
-| `rls`                              | `ClinicalDbService` (`asUser` / `asSystem`)                                                                                                                                                                                                               |
+| Module                             | Covers                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clinics`                          | `clinics/` (Wise workspaces, `ClinicDirectoryService`), `organizations/`, `document-sequences/` (numbering and its settings), `profile/` (legal details, BIR / DOH / PhilHealth, PSGC address), `expiries/` (licenses expiring soon); `ClinicSetupModule`                                                                                     |
+| `reference`                        | ICD-10 search and validation, PSGC cities / municipalities and barangays                                                                                                                                                                                                                                                                      |
+| `practitioners`                    | the practitioner profile (PRC, PTR, S2, PhilHealth PAN), the signatory printed on documents; `setup/` (admins: profiles, room and fee); `schedules/` (weekly hours and leaves; `PractitionerScheduleService` reads availability for booking)                                                                                                  |
+| `patients`                         | registration (MRN, consent, duplicates), the chart, contact updates, allergies, identifications                                                                                                                                                                                                                                               |
+| `encounters`                       | the visit and its status, the SOAP note, vitals, diagnoses, the encounter record                                                                                                                                                                                                                                                              |
+| `diagnostics`                      | `catalog/`, `orders/`, `worklist/` (the lab desk), `results/` (the doctor's inbox)                                                                                                                                                                                                                                                            |
+| `prescriptions`                    | prescriptions and items (RA 6675, RA 9165)                                                                                                                                                                                                                                                                                                    |
+| `documents`                        | `medical-certificates/`, `referrals/` (written, answered: accept / decline / complete, inbox and outbox, the printed letter)                                                                                                                                                                                                                  |
+| `follow-ups`                       | the follow-up list (visits whose `follow_up_date` is due, computed live), Wise's `list_follow_ups` / `list_referrals` reads (`FOLLOW_UPS_READER`)                                                                                                                                                                                             |
+| `scribe`                           | the AI scribe: recording consent per visit, consent-checked transcription, the read behind `propose_scribe_note` (§7.5)                                                                                                                                                                                                                       |
+| `billing`                          | `service-items/` (the price list invoices use; the catalog and clinic prices of Settings → Services), `invoices/` (with `InvoiceTotalsService`), `payments/`                                                                                                                                                                                  |
+| `inventory`                        | `items/` (the inventory master, its link to the catalog service that sells it), `suppliers/`, `receipts/` (deliveries into lots), `stock/` (`StockLedgerService`, the one writer of the ledger; adjustments, write-offs, consumption, alerts), `dispensing/` (the dispense queue), `billing/` (`InventoryBillingService`, the cashier's hook) |
+| `scheduling`                       | `appointments/` (slots, booking), `queue/` (check-in, lines, board, `VisitFlowService` / `VisitStatusSync`), `availability/` (adapts `PractitionerScheduleService`), `reminders/` (pg-boss job)                                                                                                                                               |
+| `audit`                            | `AuditService`, the one writer of `audit_logs`                                                                                                                                                                                                                                                                                                |
+| `wise-proposals`                   | settling Wise cards once (§7.1)                                                                                                                                                                                                                                                                                                               |
+| `insights`, `reports`, `analytics` | Wise's charts, summary reports and SQL analytics                                                                                                                                                                                                                                                                                              |
+| `rls`                              | `ClinicalDbService` (`asUser` / `asSystem`)                                                                                                                                                                                                                                                                                                   |
 
-Domains of the schema without a feature yet (immunizations, PhilHealth, HMO, inventory) get their module
+Domains of the schema without a feature yet (immunizations, PhilHealth, HMO) get their module
 when the feature is built.
 
 **Layering.** Resolver (or REST controller) → service → repository → Prisma. Resolvers parse arguments (class-validator
@@ -247,7 +248,7 @@ agent / display / map settings, default models); on User the better-auth and bas
 
 **Numbering.** `DocumentSequenceService.next(tx, clinic, key)` issues per-clinic numbers that restart yearly (Asia/
 Manila) and carry the clinic code: `TAG-PT-2026-000001` (patient no.), `TAG-ENC-…`, `TAG-LAB-…`, `TAG-RX-…`, `TAG-MC-…`,
-`TAG-PAY-…`. Invoice numbers come from the clinic's active BIR `InvoiceSeries` (ATP / CAS range), else the `INVOICE`
+`TAG-PAY-…`, `TAG-RR-…` (stock receiving). Invoice numbers come from the clinic's active BIR `InvoiceSeries` (ATP / CAS range), else the `INVOICE`
 sequence.
 
 ### 5.3 Rules the database enforces
@@ -266,7 +267,9 @@ sequence.
   `apps/api/src/clinical/diagnostics/orders/diagnostic-order-status.ts`; the order's status follows its items.
 - **Checks:** one primary diagnosis per encounter (partial unique index); a referral names a target; a practitioner's
   day of week is 0–6; a queue number is positive; a pain score is 0–10; message parts carry the fields their type
-  needs; a local Wise workspace has a path; a Wise tool setting belongs to an organization or a user, not both.
+  needs; a local Wise workspace has a path; a Wise tool setting belongs to an organization or a user, not both; a lot
+  never goes below zero, a ledger row moves stock (quantity ≠ 0), a received quantity is positive and an Rx item's
+  `dispensed_qty` stays between 0 and its quantity (`0002_inventory`).
 
 ### 5.4 Appointments and the queue
 
@@ -316,6 +319,46 @@ sequence.
 - **Reminders**: `scheduling.appointment-reminders` (pg-boss, 09:00 and 17:00 Manila) sends tomorrow's bookings through
   the `APPOINTMENT_NOTIFIER` stub (no SMS gateway yet; an invitation only, never clinical content) and sets
   `reminder_sent_at`, audited with the job as origin.
+
+### 5.5 Pharmacy and inventory
+
+`apps/api/src/clinical/inventory/` (`items/`, `suppliers/`, `receipts/`, `stock/`, `dispensing/`, `billing/`); UI in
+`apps/frontend/src/feature/pharmacy/` under `/pharmacy`.
+
+- **Item master** (organization): SKU, barcode, generic / brand name, strength, dosage form, manufacturer, FDA CPR
+  no., Rx-only, dangerous drug (RA 9165), antimicrobial, PNF, storage, unit, pack size, tax type, cost, selling price,
+  reorder level. A medicine or vaccine needs its generic name (RA 6675). An item is sold through the catalog service
+  that names it (`service_items.inventory_item_id`); the pharmacy sets only that link, Settings → Services owns the
+  service and its price. Suppliers carry their FDA License to Operate.
+- **Stock ledger.** `stock_movements` is append-only; every quantity change is one signed row (`+` in, `−` out) with
+  `balance_after` = the item's stock on hand at the clinic, every lot, right after it, and the lot's
+  `quantity_on_hand` moves in the same transaction. `StockLedgerService` is the only writer: a transaction-scoped
+  advisory lock per clinic and item serializes changes, a lot never goes below zero, DISPENSE and CONSUMPTION never
+  touch an expired lot (expired from its expiry date on, Manila days). Explicit functions: receiving (RECEIPT),
+  dispensing (DISPENSE, linked to the visit and `prescription_item_id`), supplies used on a visit (CONSUMPTION, by visit
+  number), count adjustments in / out with a reason, disposing of an expired lot (EXPIRED_DISPOSAL) and damage
+  (DAMAGED). A mistake is corrected by another movement. Transfers between clinics are not built.
+- **Receiving.** A delivery (DR / supplier invoice nos.) gets the clinic's `STOCK_RECEIPT` number; each line creates its
+  lot (lot no., expiry, unit cost) or adds to the same lot on file (another expiry for the same lot no. is refused; an
+  expired lot is refused).
+- **FEFO.** Without a chosen lot, stock is taken from the unexpired lots with the earliest expiry first (lots without
+  an expiry last, then the oldest delivery), split across lots when needed (`stock/stock-rules.ts`).
+- **Dispensing.** Issued, unvoided prescriptions of the clinic (ACTIVE, PARTIALLY_DISPENSED) form the queue, oldest
+  first. Per line the pharmacist gives the prescribed product or an equivalent generic of the same strength (another
+  product is a substitution, written on the movement's reason and the audit row), the lot (FEFO by default) and the
+  quantity (at most what is left; the rest later). A dangerous drug needs the S2 form serial, the prescriber's S2
+  license and each quantity in words on the Rx. `PrescriptionService.recordDispensed` adds to `dispensed_qty`, links the
+  stock item and moves the status to PARTIALLY_DISPENSED / DISPENSED (the issued-Rx lock allows exactly those columns).
+  An expired prescription (`valid_until` past) is refused.
+- **Billing hook.** `InventoryBillingService.dispensedChargesFor(tx, encounterId)` returns the visit's dispensed items
+  (net of patient returns) as lines: item, linked service, quantity, the clinic's service price (else its default,
+  else the item's selling price) and tax type, with the ledger rows behind each. Read-only; the cashier decides what
+  goes on the invoice.
+- **Alerts** (the pharmacy overview, `list_inventory_alerts`): low stock (unexpired stock at or below the reorder
+  level), lots with stock expiring within 90 days, expired lots still on the shelf.
+- **Desks** (`inventory-access.ts`, `@ClinicAccess({ staffRoles })`): dispensing PHARMACIST / PHARMACY_ASSISTANT;
+  receiving, adjusting, write-offs, the item master and suppliers INVENTORY_CLERK; reading stock all three; consumption
+  also the clinical desks (doctor, nurse, midwife, lab); clinic admins every desk.
 
 ## 6. Follow-ups
 
@@ -414,12 +457,12 @@ How it is enforced:
 
 Built:
 
-| Kind     | Tools                                                                                                                                                                                                                                                 |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| read     | `find_patient`, `list_results_to_review`, `list_lab_orders`, `list_appointments`, `list_queue`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search`                           |
-| navigate | `open_page`                                                                                                                                                                                                                                           |
-| display  | `report`, `clarification`, `suggest_follow_ups`                                                                                                                                                                                                       |
-| propose  | `propose_patient_registration`, `propose_patient_update`, `propose_encounter`, `propose_encounter_note`, `propose_prescription`, `propose_medical_certificate`, `propose_charges`, `propose_scribe_note` (§7.5), the actions of §7.3, `propose_skill` |
+| Kind     | Tools                                                                                                                                                                                                                                                              |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| read     | `find_patient`, `list_results_to_review`, `list_lab_orders`, `list_appointments`, `list_queue`, `find_stock`, `list_inventory_alerts`, `describe_analytics`, `run_analytics_sql`, `get_metric`, `chart_patient_trend`, `create_report`, `load_skill`, `web_search` |
+| navigate | `open_page`                                                                                                                                                                                                                                                        |
+| display  | `report`, `clarification`, `suggest_follow_ups`                                                                                                                                                                                                                    |
+| propose  | `propose_patient_registration`, `propose_patient_update`, `propose_encounter`, `propose_encounter_note`, `propose_prescription`, `propose_medical_certificate`, `propose_charges`, `propose_scribe_note` (§7.5), the actions of §7.3, `propose_skill`              |
 
 Planned with the clinic modules: `propose_dispense`, `propose_referral`, `propose_patient_message`, `get_patient_timeline`.
 
@@ -566,7 +609,11 @@ kept), speech-to-text tuned for Taglish and Cebuano.
       `BREAK_GLASS` row with a note and an expiry);
     - a desk role at a clinic where the patient has a visit (`RECEPTIONIST`, `NURSE`, `MIDWIFE`, `CASHIER`,
       `BILLING_CLERK`) or an appointment (front desk, nurses, midwives);
-    - a lab role (`MEDTECH`, `RADTECH`) at a clinic where the patient has a diagnostic order.
+    - a lab role (`MEDTECH`, `RADTECH`) at a clinic where the patient has a diagnostic order;
+    - a pharmacy role (`PHARMACIST`, `PHARMACY_ASSISTANT`, or the clinic's `ADMIN` / `SUPER_ADMIN`) at a clinic where
+      the patient has an issued prescription: read-only, and only the patient row, allergies, that visit and its issued
+      prescriptions (which dispensing updates). Added in `0002_inventory` as separate permissive policies
+      (`app_pharmacy_can_see_patient()` / `app_pharmacy_can_see_encounter()`), leaving `app_can_see_patient()` as is.
 2. **Postgres row-level security** (migration `0001_rls_and_triggers`, `apps/api/src/clinical/rls/`). `asUser` sets
    `app.user_id` and switches to role `loopwise_app` for the transaction. `SECURITY DEFINER` helpers back the policies:
    `app_user_id()`, `app_org_ids()`, `app_clinic_ids()`, `app_clinic_ids_with_role(roles)`, `app_can_see_patient()`,

@@ -75,6 +75,20 @@ OUTBOX | CLINIC })` and `referralLetter(id)` (`clinical/documents/referrals/`). 
   adds them to a seeded database (once, resets nothing). Tests: `test/follow-ups.e2e-spec.ts`,
   `test/referral-responses.e2e-spec.ts`, the "ticket follows the visit" block of `test/scheduling.e2e-spec.ts`,
   `follow-up-window.spec.ts`, `queue-status.spec.ts` (`followVisit`), `e2e/follow-ups.spec.ts`.
+- **Pharmacy and inventory (§5.5, Phase 2 session 1):** `clinical/inventory/` (`items/`, `suppliers/`, `receipts/`,
+  `stock/`, `dispensing/`, `billing/`) and `/pharmacy` (overview with alerts, dispense queue and dispensing,
+  items with lots and the stock ledger, receive stock, suppliers, supplies used). A new **pharmacy desk**
+  (PHARMACIST, PHARMACY_ASSISTANT, INVENTORY_CLERK) opens on `/pharmacy`. Migration `0002_inventory` (the pharmacy's
+  RLS path to issued prescriptions, their visit, patient and allergies; ledger checks). Numbering key
+  `STOCK_RECEIPT` (`TAG-RR-…`). Billing hook for the cashier:
+  `InventoryBillingService.dispensedChargesFor(tx: ClinicalTx, encounterId: string): Promise<DispensedCharge[]>`
+  (exported by `InventoryModule`). `PrescriptionService.recordDispensed(tx, prescriptionId, lines)` moves
+  `dispensed_qty` and the dispensing status. Wise: `find_stock`, `list_inventory_alerts` (read, audited). Seed: two
+  suppliers, nine items linked to the price list, lots (AMX-2505 expiring in ~40 days, PCM-2504 expired, metformin
+  low), the inventory clerk `stock.villanueva@loopwise.test`, Ramon's and Pedro's (tramadol, S2) prescriptions waiting.
+  `npm run db:seed:inventory -w @loopwise/api` adds it to a seeded database (only what is missing). Tests:
+  `test/inventory.e2e-spec.ts`, `stock-rules.spec.ts`, `dispense-rules.spec.ts`, `inventory-billing.service.spec.ts`,
+  `e2e/pharmacy.spec.ts`.
 - **AI scribe (§7.5, Phase 1):** the encounter page's **AI scribe** tab: recording consent per visit
   (`patient_consents`, PHOTO_VIDEO, with `encounter_id`; recording refused without it, typing always works), record /
   stop through `POST /api/scribe/transcribe` (audio not kept; like the chat's dictation, refused with
@@ -179,8 +193,12 @@ processor of sensitive personal information. Everything is synthetic today; befo
   tab shows (`canEdit`), consent and `propose_scribe_note` accept the visit (`requireWritable`), and the doctor's line
   links to the waiting patient's visit (`e2e/follow-ups.spec.ts` checks the tab).
 
-- **Pharmacy and inventory** (`inventory`): items (FDA CPR, dangerous drugs), lots (FEFO), receipts, the dispense queue
-  writing `stock_movements` and `prescription_items.dispensed_qty` (the issued-Rx lock already allows those columns).
+- **Pharmacy, next:** transfers between clinics (TRANSFER_OUT / TRANSFER_IN with `transfer_ref`), returns to the
+  supplier and from patients (the billing hook already nets RETURN_FROM_PATIENT), a printed dangerous-drugs logbook and
+  AMR report, Wise proposal cards for a receipt or an adjustment, a weighted-average unit cost (a lot keeps the latest
+  cost), barcode scanning, and stock linked on the prescription form (`prescription_items.inventory_item_id` is set at
+  the first dispense only). The app shell's account menu fails axe `label-content-name-mismatch` for users whose name
+  shows next to it (seen as the pharmacist; `e2e/pharmacy.spec.ts` excludes it).
 - **Billing:** cashier shifts (X/Z reading), professional fees with EWT, corporate accounts and consolidated invoices,
   HMO LOAs and transmittals, PhilHealth claims (`philhealth_claims`, Konsulta enrollment), a printed invoice.
 - **Follow-ups, next:** the list is built (above). Left: patient reminders for due follow-ups (needs the SMS gateway;
