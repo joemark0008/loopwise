@@ -139,6 +139,22 @@ export const WISE_TOOL_CATALOG: readonly WiseToolEntry[] = [
 		category: 'scheduling',
 		defaultOn: ALL,
 	},
+	{
+		name: 'list_follow_ups',
+		label: 'Follow-ups due',
+		summary: 'Lists the follow-ups overdue, due today or this week, with the disposition; a doctor sees their own.',
+		kind: 'read',
+		category: 'scheduling',
+		defaultOn: ALL,
+	},
+	{
+		name: 'list_referrals',
+		label: 'My referrals',
+		summary: 'Lists the referrals sent to you or by you, the pending ones first.',
+		kind: 'read',
+		category: 'scheduling',
+		defaultOn: ALL,
+	},
 	// Encounters
 	{
 		name: 'propose_encounter',

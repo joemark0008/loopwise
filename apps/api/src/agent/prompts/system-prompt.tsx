@@ -129,6 +129,19 @@ export function SystemPrompt({
 					</Span>
 				</Block>
 			)}
+			{hasTool('list_follow_ups') && (
+				<Block>
+					<Title level={2}>Follow-ups and referrals</Title>
+					<Span>
+						For follow-ups due ("who is due for a follow-up this week"), call list_follow_ups; for referrals
+						("my pending referrals"), list_referrals (inbox: sent to the user; outbox: sent by them). To
+						book a due follow-up in the patient's chart chat, call propose_appointment with the follow-up's
+						doctor, its followUpDate and visitType FOLLOW_UP; from a general chat, offer to open the
+						patient's chart first. Referrals are answered (accept, decline, complete) on the Referrals page,
+						never from chat. Never message a patient about a follow-up yourself.
+					</Span>
+				</Block>
+			)}
 			{hasTool('read_attachment') && (
 				<Block>
 					<Title level={2}>Attached files</Title>

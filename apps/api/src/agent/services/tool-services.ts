@@ -10,6 +10,7 @@ type ReadSources = {
 	reports: AgentToolServices['reports'];
 	diagnostics: AgentToolServices['diagnostics'];
 	scheduling: AgentToolServices['scheduling'];
+	followUps: AgentToolServices['followUps'];
 	attachments: AgentToolServices['attachments'];
 	scribe: AgentToolServices['scribe'];
 };
@@ -28,6 +29,7 @@ export const TOOL_SERVICE_READS = {
 	reports: ['toolOutputs', 'versions'],
 	diagnostics: ['labWorklistForWise', 'resultsToReviewForWise'],
 	scheduling: ['appointmentsForWise', 'queueForWise'],
+	followUps: ['followUpsForWise', 'referralsForWise'],
 	attachments: ['readTextForWise'],
 	scribe: ['draftForWise'],
 } as const satisfies { [K in keyof ReadSources]: readonly (keyof ReadSources[K])[] };

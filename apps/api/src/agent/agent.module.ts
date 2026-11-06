@@ -6,6 +6,7 @@ import { AnalyticsModule } from '../clinical/analytics/analytics.module.js';
 import { ClinicsCoreModule } from '../clinical/clinics/clinics/clinics-core.module.js';
 import { DiagnosticsModule } from '../clinical/diagnostics/diagnostics.module.js';
 import { EncountersModule } from '../clinical/encounters/encounters.module.js';
+import { FollowUpsModule } from '../clinical/follow-ups/follow-ups.module.js';
 import { InsightsModule } from '../clinical/insights/insights.module.js';
 import { PatientsModule } from '../clinical/patients/patients.module.js';
 import { ReportsModule } from '../clinical/reports/reports.module.js';
@@ -35,6 +36,7 @@ import { CompactionService } from './services/compaction.js';
 		DiagnosticsModule,
 		EncountersModule,
 		SchedulingModule,
+		FollowUpsModule,
 		ScribeModule,
 		WiseToolsModule,
 	],

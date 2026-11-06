@@ -11,8 +11,10 @@ import type {
 	findPatient,
 	getMetric,
 	listAppointments,
+	listFollowUps,
 	listLabOrders,
 	listQueue,
+	listReferrals,
 	listResultsToReview,
 	proposeEncounterNote,
 	proposePatientRegistration,
@@ -227,6 +229,22 @@ export interface AgentToolServices {
 			clinicId: string | null,
 			input: listQueue.Input,
 		): Promise<Omit<listQueue.Output, '_version'>>;
+	};
+	/**
+	 * `FollowUpWiseReader` reads, as the user and audited: the follow-ups due (`list_follow_ups`) and the user's
+	 * referrals (`list_referrals`). Booking a follow-up is the `propose_appointment` card; answering a referral is the
+	 * Referrals page.
+	 */
+	followUps: {
+		followUpsForWise(
+			userId: string,
+			clinicId: string | null,
+			input: listFollowUps.Input & { patientId?: string | null; limit: number },
+		): Promise<Omit<listFollowUps.Output, '_version'>>;
+		referralsForWise(
+			userId: string,
+			input: listReferrals.Input & { limit: number },
+		): Promise<Omit<listReferrals.Output, '_version'>>;
 	};
 }
 

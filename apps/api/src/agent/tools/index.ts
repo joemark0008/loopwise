@@ -32,8 +32,10 @@ import { createDisplayMapTool } from './display-map.js';
 import findPatient from './find-patient.js';
 import getMetric from './get-metric.js';
 import listAppointments from './list-appointments.js';
+import listFollowUps from './list-follow-ups.js';
 import listLabOrders from './list-lab-orders.js';
 import listQueue from './list-queue.js';
+import listReferrals from './list-referrals.js';
 import listResultsToReview from './list-results-to-review.js';
 import loadSkill from './load-skill.js';
 import openPage from './open-page.js';
@@ -108,6 +110,8 @@ export const tools = {
 	list_queue: listQueue,
 	propose_appointment: createActionTool(proposeAppointment),
 	propose_reschedule: createActionTool(proposeReschedule),
+	list_follow_ups: listFollowUps,
+	list_referrals: listReferrals,
 };
 
 export const uiToolset = { ...tools, display_map: createDisplayMapTool() };

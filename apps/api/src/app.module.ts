@@ -17,6 +17,7 @@ import { ClinicsModule } from './clinical/clinics/clinics/clinics.module.js';
 import { DiagnosticsModule } from './clinical/diagnostics/diagnostics.module.js';
 import { DocumentsModule } from './clinical/documents/documents.module.js';
 import { EncountersModule } from './clinical/encounters/encounters.module.js';
+import { FollowUpsModule } from './clinical/follow-ups/follow-ups.module.js';
 import { InsightsModule } from './clinical/insights/insights.module.js';
 import { PatientsModule } from './clinical/patients/patients.module.js';
 import { PractitionersModule } from './clinical/practitioners/practitioners.module.js';
@@ -101,6 +102,7 @@ export const SCHEMA_FILE = path.join(import.meta.dirname, '..', 'schema.gql');
 		WiseProposalsModule,
 		BillingModule,
 		SchedulingModule,
+		FollowUpsModule,
 		SkillsModule,
 		MemoryModule,
 		SetupModule,
