@@ -68,7 +68,8 @@ OUTBOX | CLINIC })` and `referralLetter(id)` (`clinical/documents/referrals/`). 
   `list_referrals` (read, audited, `FOLLOW_UPS_READER`); booking a due follow-up is `propose_appointment` in the chart
   chat. Pages: `/follow-ups` (Book follow-up opens Scheduling's booking dialog pre-filled: patient, doctor, suggested
   day, FOLLOW_UP), `/referrals` (inbox, sent, whole clinic for admins; response dialog), `/print/referral/:id`; the
-  doctor's line opens a waiting patient's visit. No migration (the RLS policies on `encounters`, `appointments` and
+  doctor's line opens a waiting patient's visit; the encounter page's **Referrals** tab lists the visit's referrals
+  (letter, cancel) and writes new ones (Refer). No migration (the RLS policies on `encounters`, `appointments` and
   `referrals` cover it). Seed: Teresita Cabahug (overdue, Dr. Reyes, external referral SENT), Roberto Lim (in 3 days,
   internal referral to Dr. Cruz SENT), Carmen with Dr. Cruz (due today); `npm run db:seed:follow-ups -w @loopwise/api`
   adds them to a seeded database (once, resets nothing). Tests: `test/follow-ups.e2e-spec.ts`,
@@ -183,8 +184,8 @@ processor of sensitive personal information. Everything is synthetic today; befo
 - **Billing:** cashier shifts (X/Z reading), professional fees with EWT, corporate accounts and consolidated invoices,
   HMO LOAs and transmittals, PhilHealth claims (`philhealth_claims`, Konsulta enrollment), a printed invoice.
 - **Follow-ups, next:** the list is built (above). Left: patient reminders for due follow-ups (needs the SMS gateway;
-  the list is live, so a job would only send); a referral form on the encounter page (referrals are written through
-  `createReferral`, from the API or Wise, today; the encounter page has no Refer button yet); a referral's answer
+  the list is live, so a job would only send); a Wise card that drafts a referral (the encounter page's Referrals tab writes them; Wise
+  has no `propose_referral` yet); a referral's answer
   doesn't notify the referring doctor beyond the Sent tab; a PDF of the letter (browser print only); clinic admins read
   the follow-up and clinic referral lists as system work because `app_can_see_patient` gives ADMIN no path of its own
   (a policy for admins would let them open those charts too).

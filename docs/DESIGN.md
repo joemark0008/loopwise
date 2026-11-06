@@ -337,7 +337,7 @@ tasks or evidence. A follow-up is now part of the visit:
   **Book follow-up** opens Scheduling's booking dialog with the patient, the visit's doctor, the follow-up date (today
   when passed), a FOLLOW_UP visit and the reason; it books through `bookAppointment`, and the booking takes the row off
   the list. Nothing messages the patient.
-- **Referrals** are written from a visit (`referrals.encounter_id` required): to a practitioner of the organization
+- **Referrals** are written from a visit (`referrals.encounter_id` required; the encounter page's Referrals tab): to a practitioner of the organization
   (who then gets a `REFERRAL` care relationship) or to an outside doctor or facility, with specialty, clinical summary
   and urgency. Statuses (`referral-status.ts`): SENT → ACCEPTED | DECLINED | CANCELLED, ACCEPTED → COMPLETED |
   CANCELLED; DRAFT unused. **Answers** (`ReferralResponseService`): `acceptReferral` (a note optional),
