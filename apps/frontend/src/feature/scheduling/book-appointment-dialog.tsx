@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import styles from './scheduling.module.css';
 import { CHANNEL_LABELS, dayLabel, manilaDate, manilaTime, VISIT_TYPE_LABELS } from './scheduling-format';
-import { DoctorSelect, PatientPicker, SlotPicker } from './scheduling-parts';
+import { DoctorSelect, PatientPicker, SlotPicker, useClinicDoctors } from './scheduling-parts';
 import type {
 	AppointmentFieldsFragment,
 	BookingChannel,
@@ -117,10 +116,14 @@ export function BookAppointmentDialog({
 		}
 	};
 
+	const doctors = useClinicDoctors(clinicId);
+	const doctorName = doctors.data?.find((doctor) => doctor.id === doctorId)?.name;
+	const who = rescheduling?.patient.name ?? (patient ? `${patient.givenName} ${patient.familyName}` : null);
+
 	return (
 		<Dialog open={open} onOpenChange={close}>
-			<DialogContent>
-				<form onSubmit={submit} noValidate className={styles.form}>
+			<DialogContent className='sm:max-w-3xl'>
+				<form onSubmit={submit} noValidate className='flex flex-col gap-5'>
 					<DialogHeader>
 						<DialogTitle>{rescheduling ? 'Reschedule' : 'Book an appointment'}</DialogTitle>
 						<DialogDescription>
@@ -129,109 +132,126 @@ export function BookAppointmentDialog({
 								: "Pick the patient, the doctor and one of the doctor's open slots."}
 						</DialogDescription>
 					</DialogHeader>
-					{!rescheduling && (
-						<FormField label='Patient'>
-							{() => <PatientPicker value={patient} onChange={setPatient} />}
-						</FormField>
-					)}
-					<div className={styles.fields}>
-						<FormField label='Doctor'>
-							{() => (
-								<DoctorSelect
+					<div className='grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'>
+						<div className='flex min-w-0 flex-col gap-4'>
+							{!rescheduling && (
+								<FormField label='Patient'>
+									{() => <PatientPicker value={patient} onChange={setPatient} />}
+								</FormField>
+							)}
+							<FormField label='Doctor'>
+								{() => (
+									<DoctorSelect
+										clinicId={clinicId}
+										value={doctorId}
+										className='sm:w-full'
+										onChange={(value) => {
+											setDoctorId(value);
+											setStart(null);
+										}}
+									/>
+								)}
+							</FormField>
+							{!rescheduling && (
+								<div className='grid gap-4 sm:grid-cols-2'>
+									<FormField label='Visit'>
+										{() => (
+											<Select
+												value={visitType}
+												onValueChange={(value) => setVisitType(value as VisitType)}
+											>
+												<SelectTrigger aria-label='Visit' className='w-full'>
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{VISIT_TYPES.map((type) => (
+														<SelectItem key={type} value={type}>
+															{VISIT_TYPE_LABELS[type]}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										)}
+									</FormField>
+									<FormField label='Booked by'>
+										{() => (
+											<Select
+												value={channel}
+												onValueChange={(value) => setChannel(value as BookingChannel)}
+											>
+												<SelectTrigger aria-label='Booked by' className='w-full'>
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{CHANNELS.map((option) => (
+														<SelectItem key={option} value={option}>
+															{CHANNEL_LABELS[option]}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										)}
+									</FormField>
+								</div>
+							)}
+							<FormField label={rescheduling ? 'Why' : 'Reason for the visit'}>
+								{(id) => (
+									<Input
+										id={id}
+										value={reason}
+										placeholder={rescheduling ? 'Patient asked to move it' : 'BP follow-up'}
+										onChange={(event) => setReason(event.target.value)}
+									/>
+								)}
+							</FormField>
+						</div>
+						<div className='flex min-w-0 flex-col gap-2 md:border-l md:pl-6'>
+							<FormField label='Day'>
+								{(id) => (
+									<Input
+										id={id}
+										type='date'
+										value={date}
+										onChange={(event) => {
+											setDate(event.target.value);
+											setStart(null);
+										}}
+									/>
+								)}
+							</FormField>
+							<p className='mt-2 text-sm font-medium text-foreground'>Time</p>
+							<div className='md:max-h-80 md:overflow-y-auto md:pr-1'>
+								<SlotPicker
 									clinicId={clinicId}
-									value={doctorId}
-									onChange={(value) => {
-										setDoctorId(value);
-										setStart(null);
-									}}
+									practitionerId={doctorId}
+									date={date}
+									value={start}
+									onChange={setStart}
 								/>
-							)}
-						</FormField>
-						<FormField label='Day'>
-							{(id) => (
-								<Input
-									id={id}
-									type='date'
-									value={date}
-									onChange={(event) => {
-										setDate(event.target.value);
-										setStart(null);
-									}}
-								/>
-							)}
-						</FormField>
-						{!rescheduling && (
-							<>
-								<FormField label='Visit'>
-									{() => (
-										<Select
-											value={visitType}
-											onValueChange={(value) => setVisitType(value as VisitType)}
-										>
-											<SelectTrigger aria-label='Visit'>
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												{VISIT_TYPES.map((type) => (
-													<SelectItem key={type} value={type}>
-														{VISIT_TYPE_LABELS[type]}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-									)}
-								</FormField>
-								<FormField label='Booked by'>
-									{() => (
-										<Select
-											value={channel}
-											onValueChange={(value) => setChannel(value as BookingChannel)}
-										>
-											<SelectTrigger aria-label='Booked by'>
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												{CHANNELS.map((option) => (
-													<SelectItem key={option} value={option}>
-														{CHANNEL_LABELS[option]}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-									)}
-								</FormField>
-							</>
-						)}
+							</div>
+						</div>
 					</div>
-					<FormField label='Time'>
-						{() => (
-							<SlotPicker
-								clinicId={clinicId}
-								practitionerId={doctorId}
-								date={date}
-								value={start}
-								onChange={setStart}
-							/>
-						)}
-					</FormField>
-					<FormField label={rescheduling ? 'Why' : 'Reason for the visit'}>
-						{(id) => (
-							<Input
-								id={id}
-								value={reason}
-								placeholder={rescheduling ? 'Patient asked to move it' : 'BP follow-up'}
-								onChange={(event) => setReason(event.target.value)}
-							/>
-						)}
-					</FormField>
 					{error && <ErrorMessage message={error.message} />}
-					<DialogFooter>
-						<Button type='button' variant='ghost-muted' onClick={() => close(false)}>
-							Cancel
-						</Button>
-						<Button type='submit' disabled={pending || !start || (!rescheduling && !patient)}>
-							{rescheduling ? 'Move booking' : 'Book'}
-						</Button>
+					<DialogFooter className='flex-col sm:items-center sm:justify-between'>
+						<p className='text-sm text-muted-foreground' aria-live='polite'>
+							{start && who && doctorName ? (
+								<>
+									<span className='font-medium text-foreground'>{who}</span> with {doctorName},{' '}
+									{dayLabel(date)} at{' '}
+									<span className='font-medium text-foreground'>{manilaTime(start)}</span>
+								</>
+							) : (
+								'Choose a time to book.'
+							)}
+						</p>
+						<div className='flex justify-end gap-2'>
+							<Button type='button' variant='ghost-muted' onClick={() => close(false)}>
+								Cancel
+							</Button>
+							<Button type='submit' disabled={pending || !start || (!rescheduling && !patient)}>
+								{rescheduling ? 'Move booking' : 'Book'}
+							</Button>
+						</div>
 					</DialogFooter>
 				</form>
 			</DialogContent>

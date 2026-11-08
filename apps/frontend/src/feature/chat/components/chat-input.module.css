@@ -27,7 +27,7 @@
 	@media (width < 48rem) {
 		border-radius: calc(var(--app-radius) + 16px);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: var(--app-surface);
 	}
 }
@@ -85,7 +85,7 @@
 	--fx-font-weight: 500;
 	font-weight: 500;
 	color: var(--app-amber-700);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-amber-300);
 	}
 }

@@ -1,129 +1,60 @@
+import { Command as CommandPrimitive } from 'cmdk';
 import { SearchIcon } from 'lucide-react';
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import styles from './overlay.module.css';
-import type { ComponentProps, KeyboardEvent, ReactNode } from 'react';
+import type { ComponentProps } from 'react';
 
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
-interface CommandContextValue {
-	search: string;
-	setSearch: (search: string) => void;
-	shouldFilter: boolean;
-	selected: string | null;
-	setSelected: (value: string) => void;
-	hasItems: boolean;
-}
-
-const CommandContext = createContext<CommandContextValue | null>(null);
-
-function useCommandContext() {
-	const context = useContext(CommandContext);
-	if (!context) {
-		throw new Error('Command parts must be used within a Command');
+/** A plain substring match on the value and keywords: predictable for patient names and clinic codes. */
+function substringFilter(value: string, search: string, keywords?: string[]) {
+	const query = search.trim().toLowerCase();
+	if (!query) {
+		return 1;
 	}
-	return context;
+	return [value, ...(keywords ?? [])].join(' ').toLowerCase().includes(query) ? 1 : 0;
 }
 
-const ITEM_SELECTOR = '[data-command-item]:not([data-disabled="true"])';
-
-function Command({
-	className,
-	shouldFilter = true,
-	loop = false,
-	children,
-	onKeyDown,
-	...props
-}: ComponentProps<'div'> & { shouldFilter?: boolean; loop?: boolean }) {
-	const [search, setSearch] = useState('');
-	const [selected, setSelected] = useState<string | null>(null);
-	const [hasItems, setHasItems] = useState(true);
-	const rootRef = useRef<HTMLDivElement>(null);
-
-	const items = () => [...(rootRef.current?.querySelectorAll<HTMLElement>(ITEM_SELECTOR) ?? [])];
-
-	// The list changes with the search and with the caller's data, so keep the selection on an item that exists.
-	useLayoutEffect(() => {
-		const current = items();
-		setHasItems(current.length > 0);
-		if (!current.some((item) => item.dataset.value === selected)) {
-			setSelected(current[0]?.dataset.value ?? null);
-		}
-	}, [children, search, selected]);
-
-	const move = (delta: 1 | -1) => {
-		const current = items();
-		if (current.length === 0) {
-			return;
-		}
-		const index = current.findIndex((item) => item.dataset.value === selected);
-		let next = index + delta;
-		if (loop) {
-			next = (next + current.length) % current.length;
-		} else {
-			next = Math.min(Math.max(next, 0), current.length - 1);
-		}
-		const item = current[next];
-		setSelected(item.dataset.value ?? null);
-		item.scrollIntoView?.({ block: 'nearest' });
-	};
-
-	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-		onKeyDown?.(event);
-		if (event.defaultPrevented) {
-			return;
-		}
-		if (event.key === 'ArrowDown') {
-			event.preventDefault();
-			move(1);
-		} else if (event.key === 'ArrowUp') {
-			event.preventDefault();
-			move(-1);
-		} else if (event.key === 'Enter') {
-			event.preventDefault();
-			items()
-				.find((item) => item.dataset.value === selected)
-				?.click();
-		}
-	};
-
-	const value = useMemo(
-		() => ({ search, setSearch, shouldFilter, selected, setSelected, hasItems }),
-		[search, shouldFilter, selected, hasItems],
-	);
-
+function Command({ className, filter = substringFilter, ...props }: ComponentProps<typeof CommandPrimitive>) {
 	return (
-		<CommandContext.Provider value={value}>
-			<div
-				ref={rootRef}
-				data-slot='command'
-				className={cn(styles.command, className)}
-				onKeyDown={handleKeyDown}
-				{...props}
-			>
-				{children}
-			</div>
-		</CommandContext.Provider>
+		<CommandPrimitive
+			data-slot='command'
+			filter={filter}
+			className={cn(
+				'flex size-full flex-col overflow-hidden rounded-xl bg-popover p-1 text-popover-foreground',
+				className,
+			)}
+			{...props}
+		/>
 	);
 }
 
 function CommandDialog({
+	title = 'Command menu',
+	description = 'Find a patient, a page or an action.',
 	children,
+	className,
+	showCloseButton = false,
 	shouldFilter,
 	loop,
-	open,
-	onOpenChange,
-}: {
-	children?: ReactNode;
+	...props
+}: ComponentProps<typeof Dialog> & {
+	title?: string;
+	description?: string;
+	className?: string;
+	showCloseButton?: boolean;
 	shouldFilter?: boolean;
 	loop?: boolean;
-	open?: boolean;
-	onOpenChange?: (open: boolean) => void;
 }) {
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className={styles.commandDialog} showCloseButton={false}>
-				<DialogTitle className='sr-only'>Command Menu</DialogTitle>
+		<Dialog {...props}>
+			<DialogContent
+				className={cn('top-1/3 translate-y-0 overflow-hidden rounded-xl p-0 sm:max-w-xl', className)}
+				showCloseButton={showCloseButton}
+			>
+				<DialogHeader className='sr-only'>
+					<DialogTitle>{title}</DialogTitle>
+					<DialogDescription>{description}</DialogDescription>
+				</DialogHeader>
 				<Command shouldFilter={shouldFilter} loop={loop}>
 					{children}
 				</Command>
@@ -132,120 +63,95 @@ function CommandDialog({
 	);
 }
 
-function CommandInput({
-	className,
-	value,
-	onValueChange,
-	...props
-}: Omit<ComponentProps<'input'>, 'value' | 'onChange'> & { value?: string; onValueChange?: (value: string) => void }) {
-	const { search, setSearch } = useCommandContext();
-	const inputRef = useRef<HTMLInputElement>(null);
-
-	useEffect(() => {
-		inputRef.current?.focus();
-	}, []);
-
+function CommandInput({ className, ...props }: ComponentProps<typeof CommandPrimitive.Input>) {
 	return (
-		<div data-slot='command-input-wrapper' className={styles.commandInputRow}>
-			<SearchIcon />
-			<input
-				ref={inputRef}
-				data-slot='command-input'
-				autoComplete='off'
-				className={cn(styles.commandInput, className)}
-				value={value ?? search}
-				onChange={(event) => {
-					setSearch(event.target.value);
-					onValueChange?.(event.target.value);
-				}}
-				{...props}
-			/>
+		<div data-slot='command-input-wrapper' className='p-1 pb-0'>
+			<div className='flex h-9 items-center gap-2 rounded-lg border border-input/30 bg-input/30 px-2.5'>
+				<SearchIcon className='size-4 shrink-0 opacity-50' />
+				<CommandPrimitive.Input
+					data-slot='command-input'
+					autoFocus
+					className={cn(
+						'w-full bg-transparent text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+						className,
+					)}
+					{...props}
+				/>
+			</div>
 		</div>
 	);
 }
 
-function CommandList({ className, ...props }: ComponentProps<'div'>) {
-	return <div role='listbox' data-slot='command-list' className={cn(styles.commandList, className)} {...props} />;
-}
-
-function CommandEmpty({ className, ...props }: ComponentProps<'div'>) {
-	const { hasItems, shouldFilter } = useCommandContext();
-	if (shouldFilter && hasItems) {
-		return null;
-	}
-	return <div data-slot='command-empty' className={cn(styles.commandEmpty, className)} {...props} />;
-}
-
-function CommandGroup({
-	className,
-	heading,
-	children,
-	...props
-}: Omit<ComponentProps<'div'>, 'heading'> & { heading?: ReactNode }) {
+function CommandList({ className, ...props }: ComponentProps<typeof CommandPrimitive.List>) {
 	return (
-		<div role='group' data-slot='command-group' className={cn(styles.commandGroup, className)} {...props}>
-			{heading && <div className={styles.commandHeading}>{heading}</div>}
-			{children}
-		</div>
-	);
-}
-
-function CommandSeparator({ className, ...props }: ComponentProps<'div'>) {
-	return (
-		<div
-			role='separator'
-			data-slot='command-separator'
-			className={cn(styles.commandSeparator, className)}
+		<CommandPrimitive.List
+			data-slot='command-list'
+			className={cn(
+				'no-scrollbar max-h-80 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none',
+				className,
+			)}
 			{...props}
 		/>
 	);
 }
 
-function CommandItem({
-	className,
-	value,
-	keywords,
-	disabled,
-	onSelect,
-	children,
-	...props
-}: Omit<ComponentProps<'div'>, 'onSelect'> & {
-	value: string;
-	keywords?: string[];
-	disabled?: boolean;
-	onSelect?: (value: string) => void;
-}) {
-	const { search, shouldFilter, selected, setSelected } = useCommandContext();
-	const handleSelect = useCallback(() => onSelect?.(value), [onSelect, value]);
-
-	if (shouldFilter && search.trim()) {
-		const haystack = [value, ...(keywords ?? [])].join(' ').toLowerCase();
-		if (!haystack.includes(search.trim().toLowerCase())) {
-			return null;
-		}
-	}
-
+function CommandEmpty({ className, ...props }: ComponentProps<typeof CommandPrimitive.Empty>) {
 	return (
-		<div
-			role='option'
-			aria-selected={selected === value}
-			data-command-item
-			data-slot='command-item'
-			data-value={value}
-			data-selected={selected === value}
-			data-disabled={disabled ? 'true' : undefined}
-			className={cn(styles.commandItem, className)}
-			onMouseMove={() => setSelected(value)}
-			onClick={handleSelect}
+		<CommandPrimitive.Empty
+			data-slot='command-empty'
+			className={cn('py-6 text-center text-sm text-muted-foreground', className)}
 			{...props}
-		>
-			{children}
-		</div>
+		/>
+	);
+}
+
+function CommandGroup({ className, ...props }: ComponentProps<typeof CommandPrimitive.Group>) {
+	return (
+		<CommandPrimitive.Group
+			data-slot='command-group'
+			className={cn(
+				'overflow-hidden p-1 text-foreground **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground',
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
+
+function CommandSeparator({ className, ...props }: ComponentProps<typeof CommandPrimitive.Separator>) {
+	return (
+		<CommandPrimitive.Separator
+			data-slot='command-separator'
+			className={cn('-mx-1 h-px bg-border', className)}
+			{...props}
+		/>
+	);
+}
+
+function CommandItem({ className, ...props }: ComponentProps<typeof CommandPrimitive.Item>) {
+	return (
+		<CommandPrimitive.Item
+			data-slot='command-item'
+			className={cn(
+				"group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-[selected=true]:bg-muted data-[selected=true]:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				className,
+			)}
+			{...props}
+		/>
 	);
 }
 
 function CommandShortcut({ className, ...props }: ComponentProps<'span'>) {
-	return <span data-slot='command-shortcut' className={cn(styles.commandShortcut, className)} {...props} />;
+	return (
+		<span
+			data-slot='command-shortcut'
+			className={cn(
+				'ml-auto text-xs tracking-widest text-muted-foreground group-data-[selected=true]/command-item:text-foreground',
+				className,
+			)}
+			{...props}
+		/>
+	);
 }
 
 export {

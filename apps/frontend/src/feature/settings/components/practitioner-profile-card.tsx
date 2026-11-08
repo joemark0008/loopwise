@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { SettingsCard } from '@/components/ui/settings-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { encounterRecordApi } from '@/lib/encounter-record-api';
+import { cn } from '@/lib/utils';
 
 const FIELDS = [
 	{ key: 'title', label: 'Title', placeholder: 'Dr. / Dra.' },
@@ -28,6 +29,19 @@ const FIELDS = [
 	type?: string;
 	required?: boolean;
 }[];
+
+/** Four fields a row on a wide screen; the fields of a short last row share its full width. */
+const COLUMNS = 4;
+const LAST_ROW_SPAN: Record<number, string> = { 1: 'lg:col-span-4', 2: 'lg:col-span-2' };
+
+function lastRowSpan(index: number): string | undefined {
+	const remainder = FIELDS.length % COLUMNS;
+	if (remainder === 0 || index < FIELDS.length - remainder) {
+		return undefined;
+	}
+	// Three left over: the last one takes the fourth column too.
+	return remainder === 3 ? (index === FIELDS.length - 1 ? 'lg:col-span-2' : undefined) : LAST_ROW_SPAN[remainder];
+}
 
 type Values = Record<(typeof FIELDS)[number]['key'], string>;
 
@@ -97,21 +111,23 @@ function PractitionerProfileForm({ practitioner }: { practitioner: MyPractitione
 				}
 			}}
 		>
-			<div className={styles.fields}>
-				{FIELDS.map((field) => (
-					<FormField key={field.key} label={'required' in field ? `${field.label} *` : field.label}>
-						{(id) => (
-							<Input
-								id={id}
-								type={'type' in field ? field.type : 'text'}
-								value={values[field.key]}
-								placeholder={'placeholder' in field ? field.placeholder : undefined}
-								onChange={(event) => setValues({ ...values, [field.key]: event.target.value })}
-								disabled={save.isPending}
-								aria-required={'required' in field || undefined}
-							/>
-						)}
-					</FormField>
+			<div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+				{FIELDS.map((field, index) => (
+					<div key={field.key} className={cn('min-w-0', lastRowSpan(index))}>
+						<FormField label={'required' in field ? `${field.label} *` : field.label}>
+							{(id) => (
+								<Input
+									id={id}
+									type={'type' in field ? field.type : 'text'}
+									value={values[field.key]}
+									placeholder={'placeholder' in field ? field.placeholder : undefined}
+									onChange={(event) => setValues({ ...values, [field.key]: event.target.value })}
+									disabled={save.isPending}
+									aria-required={'required' in field || undefined}
+								/>
+							)}
+						</FormField>
+					</div>
 				))}
 			</div>
 			{save.error && <ErrorMessage message={save.error.message} />}

@@ -46,7 +46,7 @@
 	width: 0.875rem;
 	height: 0.875rem;
 	color: var(--app-green-600);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-green-400);
 	}
 }
@@ -54,7 +54,7 @@
 	width: 0.875rem;
 	height: 0.875rem;
 	color: var(--app-red-500);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-red-400);
 	}
 }

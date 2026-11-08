@@ -15,11 +15,11 @@
 			color: var(--app-amber-600);
 		}
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-amber-400);
 	}
 	@media (hover: hover) {
-		&:is(:root[data-mantine-color-scheme='dark'] *):hover {
+		&:is(:root.dark *):hover {
 			color: var(--app-amber-300);
 		}
 	}

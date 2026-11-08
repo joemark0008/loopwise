@@ -2,12 +2,7 @@ import { expect, test } from '@playwright/test';
 import { logIn, trackErrors, USER } from './helpers';
 import type { Page } from '@playwright/test';
 
-const isDark = (page: Page) =>
-	page.evaluate(
-		() =>
-			document.documentElement.classList.contains('dark') ||
-			document.documentElement.getAttribute('data-mantine-color-scheme') === 'dark',
-	);
+const isDark = (page: Page) => page.evaluate(() => document.documentElement.classList.contains('dark'));
 
 test.describe('signed out', () => {
 	test('a wrong password shows an error and stays on login', async ({ page }) => {

@@ -1,10 +1,10 @@
-import { MantineProvider } from '@mantine/core';
 import { createElement } from 'react';
 import { vi } from 'vitest';
 import type * as TestingLibrary from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
-/** Mantine reads these on mount; jsdom has neither. */
+/** Radix and the layout hooks read these on mount; jsdom has neither. */
 if (typeof window !== 'undefined') {
 	window.matchMedia ??= ((query: string) => ({
 		matches: false,
@@ -29,11 +29,7 @@ vi.mock('@testing-library/react', async (importOriginal) => {
 	const wrapIn = (Inner?: React.ComponentType<{ children: ReactNode }>) =>
 		function TestProviders({ children }: { children: ReactNode }) {
 			const content = Inner ? createElement(Inner, null, children) : children;
-			return createElement(
-				MantineProvider,
-				{ env: 'test', withCssVariables: false, withGlobalClasses: false },
-				content,
-			);
+			return createElement(TooltipProvider, { delayDuration: 0, children: content });
 		};
 	return {
 		...actual,

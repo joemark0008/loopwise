@@ -6,7 +6,7 @@
 	border-style: var(--fx-border-style);
 	border-width: 1px;
 	background-color: var(--app-surface);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: var(--app-surface);
 	}
 }
@@ -36,7 +36,7 @@
 	overflow: hidden;
 	border-radius: var(--app-radius);
 	background-color: var(--app-surface);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: var(--app-surface);
 	}
 }
@@ -82,7 +82,7 @@
 			opacity: 100%;
 		}
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		--fx-gradient-from: color-mix(in oklab, var(--app-surface) 95%, transparent);
 		--fx-gradient-stops: var(
 			--fx-gradient-via-stops,
@@ -91,7 +91,7 @@
 			var(--fx-gradient-to) var(--fx-gradient-to-position)
 		);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		--fx-gradient-via: color-mix(in oklab, var(--app-surface) 75%, transparent);
 		--fx-gradient-via-stops:
 			var(--fx-gradient-position), var(--fx-gradient-from) var(--fx-gradient-from-position),
@@ -220,13 +220,13 @@
 	box-shadow:
 		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
 		var(--fx-shadow);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		border-color: var(--app-amber-700);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: var(--app-amber-950);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-amber-300);
 	}
 }

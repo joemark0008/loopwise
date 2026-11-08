@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { FileText } from 'lucide-react';
@@ -43,7 +42,7 @@ const ORIGIN = { chatId: 'chat-1', toolCallId: 'call_1', toolName: 'propose_thin
 
 const renderCard = (props: Partial<Props> = {}) =>
 	render(
-		<MantineProvider>
+		<>
 			<QueryClientProvider client={new QueryClient()}>
 				<ProposalCard
 					toolCallId='call_1'
@@ -59,7 +58,7 @@ const renderCard = (props: Partial<Props> = {}) =>
 					<p>Draft body</p>
 				</ProposalCard>
 			</QueryClientProvider>
-		</MantineProvider>,
+		</>,
 	);
 
 const button = (name: RegExp | string) => screen.getByRole('button', { name });
@@ -93,7 +92,7 @@ describe('ProposalCard', () => {
 		const onConfirm = vi.fn();
 		const { rerender } = renderCard({ onConfirm });
 		rerender(
-			<MantineProvider>
+			<>
 				<QueryClientProvider client={new QueryClient()}>
 					<ProposalCard
 						toolCallId='call_1'
@@ -106,7 +105,7 @@ describe('ProposalCard', () => {
 						isConfirmedAnswer={() => false}
 					/>
 				</QueryClientProvider>
-			</MantineProvider>,
+			</>,
 		);
 		expect(onConfirm).not.toHaveBeenCalled();
 	});

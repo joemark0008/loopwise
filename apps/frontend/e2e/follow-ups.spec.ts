@@ -188,7 +188,8 @@ test.describe('visit flow, follow-ups and referrals', () => {
 		// Cancel the booking (a cancelled booking doesn't count), and she is due again.
 		await page.goto(`/appointments?date=${day}`);
 		const booking = page.getByTestId('appointment-row').filter({ hasText: marker });
-		await booking.getByRole('button', { name: /^Cancel/ }).click();
+		await booking.getByRole('button', { name: /^More actions/ }).click();
+		await page.getByRole('menuitem', { name: 'Cancel booking' }).click();
 		await page.getByRole('dialog').getByLabel('Reason').fill('E2E clean-up');
 		await page
 			.getByRole('dialog')

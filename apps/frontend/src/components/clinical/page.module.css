@@ -1,19 +1,53 @@
-/* The page frame of the clinical screens: a header with the title and actions, then sections. */
+/*
+ * The page frame of the clinical screens, after the shadcn kit's dashboard: 1.5rem content padding, 1rem between
+ * blocks (1.5rem from 64rem), centred at 80rem (the kit's "centered" layout). Each block rises into place on arrival.
+ */
 
 .page {
 	display: flex;
 	flex-direction: column;
-	gap: 1.5rem;
+	gap: 1rem;
 	width: 100%;
 	max-width: 80rem;
 	margin: 0 auto;
-	padding: 1.5rem 1rem 2rem;
+	padding: 1rem 1rem 2rem;
 	overflow-y: auto;
+
+	/* The page scrolls, so its blocks keep their height (a card clips its content and would shrink). */
+	& > * {
+		flex-shrink: 0;
+		animation: page-block-in 320ms var(--app-ease) both;
+	}
+
+	& > :nth-child(2) {
+		animation-delay: 40ms;
+	}
+
+	& > :nth-child(3) {
+		animation-delay: 80ms;
+	}
+
+	& > :nth-child(n + 4) {
+		animation-delay: 120ms;
+	}
+}
+
+/* Movement only: text keeps full contrast from the first frame. */
+@keyframes page-block-in {
+	from {
+		transform: translateY(0.375rem);
+	}
 }
 
 @media (min-width: 48rem) {
 	.page {
-		padding-inline: 1.5rem;
+		padding: 1.5rem;
+	}
+}
+
+@media (min-width: 64rem) {
+	.page {
+		gap: 1.5rem;
 	}
 }
 
@@ -29,7 +63,8 @@
 	margin: 0;
 	font-family: var(--app-font-heading);
 	font-size: var(--app-text-2xl);
-	font-weight: 600;
+	font-weight: 700;
+	letter-spacing: -0.025em;
 	color: var(--app-text);
 }
 
@@ -45,15 +80,17 @@
 	gap: 0.5rem;
 }
 
+/* The kit's card for screens that build their own section markup. */
 .section {
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
 	padding: 1rem;
-	border: 1px solid var(--app-line);
-	border-radius: 0.75rem;
+	border-radius: calc(var(--app-radius) + 4px);
 	background-color: var(--app-surface);
-	box-shadow: var(--app-shadow-1);
+	box-shadow:
+		0 0 0 1px color-mix(in oklab, var(--app-text) 10%, transparent),
+		var(--app-shadow-1);
 }
 
 .sectionHeader {
@@ -76,7 +113,7 @@
 	color: var(--app-muted);
 }
 
-/* Clinical tables: 40px rows on a mouse, 48px on touch, hairline rows, numbers right-aligned. */
+/* Clinical tables, as the kit's data table: 40px rows (48px on touch), hairline rows, a row hover, numbers right. */
 .tableScroll {
 	overflow-x: auto;
 }
@@ -89,11 +126,12 @@
 	& th {
 		position: sticky;
 		top: 0;
-		padding: 0.5rem 0.75rem;
-		border-bottom: 1px solid var(--app-line-strong);
+		height: 2.5rem;
+		padding: 0 0.5rem;
+		border-bottom: 1px solid var(--app-line);
 		background-color: var(--app-surface);
-		font-size: var(--app-text-xs);
-		font-weight: 600;
+		font-size: var(--app-text-sm);
+		font-weight: 500;
 		text-align: left;
 		color: var(--app-muted);
 		white-space: nowrap;
@@ -101,10 +139,18 @@
 
 	& td {
 		height: var(--app-row-height);
-		padding: 0.375rem 0.75rem;
+		padding: 0.5rem;
 		border-bottom: 1px solid var(--app-line);
 		color: var(--app-body);
 		vertical-align: middle;
+	}
+
+	& tbody tr {
+		transition: background-color 150ms var(--app-ease);
+	}
+
+	& tbody tr:hover {
+		background-color: color-mix(in oklab, var(--app-fill) 50%, transparent);
 	}
 
 	& tr:last-child td {

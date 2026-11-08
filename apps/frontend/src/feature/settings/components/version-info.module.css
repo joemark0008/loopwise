@@ -17,6 +17,6 @@
 	color: var(--app-muted);
 }
 .settingsVersionInfoSpan2 {
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 	color: var(--app-text);
 }

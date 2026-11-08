@@ -5,7 +5,7 @@ import path from 'node:path';
 
 const SRC = path.resolve(import.meta.dirname, '../src');
 /** Generated or token files, plus stylesheets that style third-party markup at its own scale. */
-const EXEMPT = /theme\/(tokens|palette|streamdown|reset|global|animations)\.css$/;
+const EXEMPT = /theme\/(tokens|palette|reset|global|animations|index|shadcn)\.css$/;
 /** px stays for hairlines, shadows, outlines, transforms and media queries. */
 const PX_ALLOWED_PROP =
 	/^(border|box-shadow|outline|transform|translate|text-decoration|stroke-width|filter|backdrop-filter|--fx-|--popover-)/;

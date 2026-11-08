@@ -33,7 +33,7 @@
 }
 .modelSelectFieldSpan {
 	color: var(--app-amber-600);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-amber-500);
 	}
 }

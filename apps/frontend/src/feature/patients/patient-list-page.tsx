@@ -1,4 +1,3 @@
-import { useDebouncedValue } from '@mantine/hooks';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { CircleCheck, Search, SearchX, UserPlus, Users, X } from 'lucide-react';
@@ -6,6 +5,7 @@ import { useState } from 'react';
 import { ageLabel, identificationNumbers, languageLabel, patientInitials, patientName } from './patient-format';
 import styles from './patient-list.module.css';
 import type { PatientFieldsFragment } from '@/graphql/generated/graphql';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import pageStyles from '@/components/clinical/page.module.css';
 import { EmptyState } from '@/components/clinical/empty-state';
 import { formatDate, formatDay } from '@/feature/encounters/encounter-format';
@@ -20,7 +20,7 @@ const SKELETON_ROWS = 8;
 /** The patients the clinician may see (row-level security), searchable by name or identifier. Fills the content area. */
 export function PatientListPage() {
 	const [search, setSearch] = useState('');
-	const [query] = useDebouncedValue(search.trim(), 250);
+	const query = useDebouncedValue(search.trim(), 250);
 	const patients = useQuery(
 		patientApi.patient.search.queryOptions({ query: query || null }, { placeholderData: keepPreviousData }),
 	);

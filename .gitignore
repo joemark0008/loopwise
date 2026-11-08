@@ -20,3 +20,9 @@ test-results/
 
 # Skills an interrupted e2e run may leave in the seeded clinic folder (apps/api)
 apps/api/agent/skills/e2e-skill-*.md
+
+# Hallmark design-run records (screenshots, before/after logs)
+.hallmark/
+
+# Knowledge graph output of graphify (generated, rebuilt with /graphify)
+graphify-out/

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import styles from './scheduling.module.css';
-import { manilaTime } from './scheduling-format';
+import { ArrowRight } from 'lucide-react';
+import { dayLabel, manilaDate, manilaTime } from './scheduling-format';
 import { useSchedulingClinic } from './scheduling-parts';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,61 +25,120 @@ export function QueueBoardPage() {
 	);
 	const now = useClock();
 
+	const today = manilaDate(now);
+	const waitingCount = board.data?.waiting.length ?? 0;
+
 	return (
-		<main className={styles.board} data-testid='queue-board'>
-			<header className={styles.boardHeader}>
-				<h1 className={styles.boardTitle}>{board.data?.clinicName ?? 'Queue'}</h1>
-				<span className={styles.boardClock} aria-label='Time now'>
-					{manilaTime(now)}
-				</span>
+		<main
+			className='flex min-h-dvh flex-col gap-6 bg-background p-6 text-foreground lg:p-10'
+			data-testid='queue-board'
+		>
+			<header className='flex flex-wrap items-end justify-between gap-4 border-b pb-5'>
+				<div className='flex flex-col gap-1'>
+					<h1 className='font-display text-3xl font-semibold lg:text-4xl'>
+						{board.data?.clinicName ?? 'Queue'}
+					</h1>
+					<p className='text-lg text-muted-foreground'>Please wait for your number.</p>
+				</div>
+				<div className='flex flex-col items-end'>
+					<span
+						className='font-display text-4xl font-semibold tabular-nums lg:text-5xl'
+						aria-label='Time now'
+					>
+						{manilaTime(now)}
+					</span>
+					<span className='text-lg text-muted-foreground'>{dayLabel(today)}</span>
+				</div>
 			</header>
 			{isPending || board.isPending ? (
-				<Skeleton />
+				<div className='grid flex-1 gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'>
+					<Skeleton className='rounded-2xl' />
+					<Skeleton className='rounded-2xl' />
+				</div>
 			) : board.error ? (
 				<ErrorMessage message={board.error.message} />
 			) : (
-				<div className={styles.boardColumns}>
-					<section className={styles.boardPanel} aria-labelledby='board-now'>
-						<h2 id='board-now' className={styles.boardPanelTitle}>
+				<div className='grid flex-1 items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'>
+					<section className='flex flex-col gap-4' aria-labelledby='board-now'>
+						<h2 id='board-now' className='text-2xl font-semibold'>
 							Now serving
 						</h2>
-						<ul className={styles.ticketList} aria-live='polite'>
-							{board.data.nowServing.map((ticket) => (
-								<li
-									key={ticket.id}
-									className={cn(styles.boardRow, ticket.status === 'CALLED' && styles.boardRowCalled)}
-									data-testid='board-now'
-								>
-									<span className={cn(styles.boardCode, ticket.isPriority && styles.priorityCode)}>
-										{ticket.code}
-									</span>
-									<span className={styles.boardStation}>
-										{ticket.status === 'CALLED' ? 'Please go to ' : ''}
-										{ticket.stationLabel}
-									</span>
-								</li>
-							))}
+						<ul className='flex flex-col gap-3' aria-live='polite'>
+							{board.data.nowServing.map((ticket) => {
+								const called = ticket.status === 'CALLED';
+								return (
+									<li
+										key={ticket.id}
+										className={cn(
+											'flex flex-col items-start gap-2 rounded-2xl border px-6 py-5 sm:flex-row sm:items-center sm:gap-8 lg:px-8 lg:py-8',
+											called ? 'border-abnormal-line bg-abnormal-bg' : 'bg-card',
+										)}
+										data-testid='board-now'
+									>
+										<span
+											className={cn(
+												'font-display text-6xl font-bold tabular-nums lg:text-8xl',
+												ticket.isPriority && 'text-critical',
+											)}
+										>
+											{ticket.code}
+										</span>
+										<span className='flex min-w-0 items-center gap-3 sm:flex-1 sm:justify-end sm:text-right'>
+											<ArrowRight className='size-8 shrink-0 text-muted-foreground' aria-hidden />
+											<span className='flex flex-col'>
+												{called && (
+													<span className='text-lg font-medium text-abnormal'>
+														Please go to
+													</span>
+												)}
+												<span className='text-2xl font-semibold lg:text-3xl'>
+													{ticket.stationLabel}
+												</span>
+											</span>
+										</span>
+									</li>
+								);
+							})}
 							{board.data.nowServing.length === 0 && (
-								<li className={styles.boardNote}>No one called yet.</li>
+								<li className='rounded-2xl border border-dashed px-6 py-10 text-center text-xl text-muted-foreground'>
+									No one called yet.
+								</li>
 							)}
 						</ul>
 					</section>
-					<section className={styles.boardPanel} aria-labelledby='board-waiting'>
-						<h2 id='board-waiting' className={styles.boardPanelTitle}>
+					<section className='flex flex-col gap-4' aria-labelledby='board-waiting'>
+						<h2 id='board-waiting' className='flex items-baseline gap-3 text-2xl font-semibold'>
 							Waiting
+							<span className='text-lg font-normal text-muted-foreground tabular-nums'>
+								{waitingCount}
+							</span>
 						</h2>
-						<ul className={styles.boardWaiting}>
-							{board.data.waiting.map((ticket) => (
-								<li
-									key={ticket.id}
-									className={cn(styles.boardWaitingCode, ticket.isPriority && styles.priorityCode)}
-									data-testid='board-waiting'
-								>
-									{ticket.code}
-								</li>
-							))}
-						</ul>
-						<p className={styles.boardNote}>
+						{waitingCount === 0 ? (
+							<p className='rounded-2xl border border-dashed px-6 py-10 text-center text-xl text-muted-foreground'>
+								No one waiting.
+							</p>
+						) : (
+							<ul className='grid grid-cols-2 gap-3'>
+								{board.data.waiting.map((ticket) => (
+									<li
+										key={ticket.id}
+										className={cn(
+											'rounded-xl px-3 py-5 text-center font-display text-4xl font-semibold whitespace-nowrap tabular-nums lg:py-8 lg:text-6xl',
+											ticket.isPriority
+												? 'bg-critical-bg text-critical'
+												: 'bg-muted text-foreground',
+										)}
+										data-testid='board-waiting'
+									>
+										{ticket.code}
+									</li>
+								))}
+							</ul>
+						)}
+						<p className='flex items-start gap-3 text-base text-muted-foreground'>
+							<span className='shrink-0 rounded-md bg-critical-bg px-2 py-0.5 font-display font-semibold text-critical'>
+								P
+							</span>
 							P numbers are the priority lane: seniors, PWDs, pregnant women, those with an infant, and
 							emergencies.
 						</p>

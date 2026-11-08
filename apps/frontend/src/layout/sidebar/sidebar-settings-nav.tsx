@@ -1,14 +1,18 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowUpRight, Search, X } from 'lucide-react';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import styles from './sidebar-settings-nav.module.css';
 import type { NavContext } from '@/lib/navigation';
 import { getVisibleSettingsNavGroups } from '@/lib/navigation';
 import { useSettingsSearch } from '@/hooks/use-settings-search';
-import { cn, hideIf } from '@/lib/utils';
-
-const navRowClassName = styles.navRowClassName;
+import {
+	SidebarGroup,
+	SidebarGroupLabel,
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 
 interface SidebarSettingsNavProps {
 	isCollapsed: boolean;
@@ -83,17 +87,18 @@ export function SidebarSettingsNav({
 	};
 
 	return (
-		<div className={cn(styles.sidebarSettingsNavDiv, hideIf(isCollapsed))}>
+		<div className={cn('flex min-h-0 flex-1 flex-col', isCollapsed && 'hidden')}>
 			{!isViewer && (
-				<div className={styles.sidebarSettingsNavDiv2}>
-					<div className={styles.sidebarSettingsNavDiv3}>
-						<Search className={styles.sidebarSettingsNavSearch} />
+				<div className='px-2 pt-1 pb-2'>
+					<div className='relative flex items-center'>
+						<Search className='pointer-events-none absolute left-2.5 size-4 text-muted-foreground' />
 						<input
 							ref={inputRef}
 							type='text'
 							name='settings-search'
 							autoComplete='off'
 							placeholder='Search settings...'
+							aria-label='Search settings'
 							value={query}
 							readOnly={!isSearchFocused}
 							onPointerDown={handlePointerDown}
@@ -101,116 +106,102 @@ export function SidebarSettingsNav({
 							onBlur={() => setIsSearchFocused(false)}
 							onChange={(e) => setQuery(e.target.value)}
 							onKeyDown={handleKeyDown}
-							className={cn(
-								styles.sidebarSettingsNavInput,
-								styles.sidebarSettingsNavInput2,
-								styles.sidebarSettingsNavInput3,
-							)}
+							className='h-8 w-full rounded-md border border-sidebar-border bg-background pr-8 pl-8 text-sm shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring'
 						/>
 						{query ? (
 							<button
 								type='button'
+								aria-label='Clear search'
 								onClick={() => {
 									setQuery('');
 									inputRef.current?.focus();
 								}}
-								className={styles.sidebarSettingsNavButton}
+								className='absolute right-2 flex cursor-pointer items-center text-muted-foreground hover:text-foreground'
 							>
-								<X className={styles.sidebarSettingsNavX} />
+								<X className='size-3.5' />
 							</button>
 						) : (
-							<kbd className={styles.sidebarSettingsNavKbd}>/</kbd>
+							<kbd className='pointer-events-none absolute right-2 inline-flex h-5 min-w-5 items-center justify-center rounded-sm bg-muted px-1 font-sans text-xs text-muted-foreground'>
+								/
+							</kbd>
 						)}
 					</div>
 				</div>
 			)}
 
-			<div className={styles.sidebarSettingsNavDiv4}>
-				{isSearching && !isViewer ? (
-					<div className={styles.sidebarSettingsNavDiv5}>
+			{isSearching && !isViewer ? (
+				<SidebarGroup>
+					<SidebarMenu>
 						{results.length === 0 ? (
-							<div className={styles.sidebarSettingsNavDiv6}>No results found</div>
+							<div className='px-2 py-1.5 text-sm text-muted-foreground'>No results found</div>
 						) : (
 							results.map((result) => (
-								<Link
-									key={result.page + result.title}
-									to={result.page}
-									search={result.search}
-									onClick={() => setQuery('')}
-									className={cn(styles.sidebarSettingsNavLink, styles.sidebarSettingsNavLink2)}
-								>
-									<span className={styles.sidebarSettingsNavSpan}>{result.title}</span>
-									<span className={styles.sidebarSettingsNavSpan2}>
-										{result.pageLabel}
-										{result.section ? ` · ${result.section}` : ''}
-									</span>
-								</Link>
+								<SidebarMenuItem key={result.page + result.title}>
+									<SidebarMenuButton asChild className='h-auto flex-col items-start gap-0.5 py-1.5'>
+										<Link to={result.page} search={result.search} onClick={() => setQuery('')}>
+											<span className='truncate font-medium'>{result.title}</span>
+											<span className='truncate text-xs text-muted-foreground'>
+												{result.pageLabel}
+												{result.section ? ` · ${result.section}` : ''}
+											</span>
+										</Link>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
 							))
 						)}
-					</div>
-				) : (
-					<nav className={styles.sidebarSettingsNavNav}>
-						{navGroups.map((group) => (
-							<Fragment key={group.label}>
-								<div className={styles.sidebarSettingsNavDiv7}>{group.label}</div>
+					</SidebarMenu>
+				</SidebarGroup>
+			) : (
+				<nav aria-label='Settings'>
+					{navGroups.map((group) => (
+						<SidebarGroup key={group.label} className='py-1'>
+							<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+							<SidebarMenu>
 								{group.items.map((item) => {
 									const leavesSettingsIndicator = item.leavesSettings ? (
 										<>
 											<ArrowUpRight
 												aria-hidden='true'
-												className={cn(
-													styles.leavesSettingsIndicatorArrowUpRight,
-													styles.leavesSettingsIndicatorArrowUpRight2,
-												)}
+												className='ml-auto size-3.5! text-muted-foreground'
 											/>
 											<span className='sr-only'>Opens a chat outside settings</span>
 										</>
 									) : null;
 
 									return (
-										<div key={`${item.to}-${item.label}`} className={styles.sidebarSettingsNavDiv8}>
-											{item.search ? (
-												<Link
-													to='/'
-													search={item.search}
-													activeOptions={item.exact ? { exact: true } : undefined}
-													className={navRowClassName}
-													activeProps={{
-														className: cn(styles.sidebarSettingsNavClassName),
-													}}
-													inactiveProps={{
-														className: cn(styles.sidebarSettingsNavLink2),
-													}}
-												>
-													<item.icon className={styles.navIcon} />
-													<span>{item.label}</span>
-													{leavesSettingsIndicator}
-												</Link>
-											) : (
-												<Link
-													to={item.to}
-													activeOptions={item.exact ? { exact: true } : undefined}
-													className={navRowClassName}
-													activeProps={{
-														className: cn(styles.sidebarSettingsNavClassName),
-													}}
-													inactiveProps={{
-														className: cn(styles.sidebarSettingsNavLink2),
-													}}
-												>
-													<item.icon className={styles.navIcon} />
-													<span>{item.label}</span>
-													{leavesSettingsIndicator}
-												</Link>
-											)}
-										</div>
+										<SidebarMenuItem key={`${item.to}-${item.label}`}>
+											<SidebarMenuButton asChild>
+												{item.search ? (
+													<Link
+														to='/'
+														search={item.search}
+														activeOptions={item.exact ? { exact: true } : undefined}
+														activeProps={{ 'aria-current': 'page' }}
+													>
+														<item.icon />
+														<span>{item.label}</span>
+														{leavesSettingsIndicator}
+													</Link>
+												) : (
+													<Link
+														to={item.to}
+														activeOptions={item.exact ? { exact: true } : undefined}
+														activeProps={{ 'aria-current': 'page' }}
+													>
+														<item.icon />
+														<span>{item.label}</span>
+														{leavesSettingsIndicator}
+													</Link>
+												)}
+											</SidebarMenuButton>
+										</SidebarMenuItem>
 									);
 								})}
-							</Fragment>
-						))}
-					</nav>
-				)}
-			</div>
+							</SidebarMenu>
+						</SidebarGroup>
+					))}
+				</nav>
+			)}
 		</div>
 	);
 }

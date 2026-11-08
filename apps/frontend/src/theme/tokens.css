@@ -1,12 +1,20 @@
-/* All design tokens. Components read these, never hex. Dark values follow Mantine's color scheme attribute. */
+/*
+ * All design tokens. Components read these, never hex.
+ *
+ * The values follow the shadcn UI kit (the "radix-nova" dashboard): its neutral greys, 0.625rem radius, DM Sans,
+ * the light inset sidebar and ring-edged cards, with Loopwise care blue as the primary. The shadcn names
+ * (--background, --primary, --sidebar …) at the bottom of :root point at these, so Tailwind utilities
+ * (`bg-card`, `text-muted-foreground`) and the CSS Modules read the same values. Dark values sit on `.dark`.
+ */
 :root {
 	color-scheme: light;
 
-	/* Poppins matches the wordmark; Inter carries body text and tabular clinical numbers. Both are self-hosted. */
-	--app-font-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-	--app-font-body: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+	/* DM Sans is the kit's typeface, for text, headings and tabular clinical numbers. Self-hosted. */
+	--app-font-heading:
+		'DM Sans Variable', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+	--app-font-body: 'DM Sans Variable', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 	--app-font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, 'Courier New', monospace;
-	--app-radius: 0.5rem;
+	--app-radius: 0.625rem;
 
 	/* Type scale (docs/design-system.md): 12 is the floor, for metadata only; 14 for dense tables and labels. */
 	--app-text-xs: 0.75rem;
@@ -17,30 +25,31 @@
 	--app-text-2xl: 1.5rem;
 	--app-text-3xl: 1.875rem;
 
-	/* Controls are 40px on a mouse and 44px on touch (the skill's 44px target), see the coarse-pointer block. */
-	--app-control-height: 2.5rem;
-	--app-control-height-sm: 2.25rem;
+	/* The kit's controls are 32–36px on a mouse; touch keeps the 44px target, see the coarse-pointer block. */
+	--app-control-height: 2.25rem;
+	--app-control-height-sm: 2rem;
 	--app-row-height: 2.5rem;
 	--app-banner-height: 0rem;
 	--app-white: #fff;
 	--app-black: #000;
 
-	--app-bg: #f4f7fb;
+	/* Neutral scale of the kit (oklch 1 / 0.985 / 0.97 / 0.922 / 0.87 / 0.145). */
+	--app-bg: #ffffff;
 	--app-surface: #ffffff;
-	--app-fill: #ebf0f6;
-	--app-inset: #f8fafc;
-	--app-line: #dde3eb;
-	--app-line-strong: #c3ccd8;
+	--app-fill: #f5f5f5;
+	--app-inset: #fafafa;
+	--app-line: #e5e5e5;
+	--app-line-strong: #d4d4d4;
 	/* Input and control borders: 3:1 against the surface (WCAG non-text contrast). */
-	--app-control-line: #7d8a9f;
-	--app-text: #0f1b2d;
-	--app-body: #1f2b3d;
-	--app-muted: #526075;
+	--app-control-line: #8c8c8c;
+	--app-text: #0a0a0a;
+	--app-body: #171717;
+	--app-muted: #6b6b6b;
 
 	/* Loopwise care blue and coral (brand/README.md) */
 	--app-accent: #1f5fae;
 	--app-accent-text: #1f5fae;
-	--app-tint: color-mix(in oklab, #1f5fae 10%, transparent);
+	--app-tint: color-mix(in oklab, #1f5fae 8%, transparent);
 	--app-primary-bg: #1f5fae;
 	--app-primary-hover: #174a8a;
 	--app-primary-fg: #ffffff;
@@ -71,31 +80,34 @@
 	--app-danger: var(--app-critical);
 	--app-ok: var(--app-done);
 	--app-warn: var(--app-abnormal);
-	--app-shadow: rgba(19, 35, 58, 0.18);
-	--app-shadow-1: 0 1px 2px rgba(19, 35, 58, 0.06);
-	--app-shadow-2: 0 4px 12px rgba(19, 35, 58, 0.1), 0 1px 3px rgba(19, 35, 58, 0.06);
-	--app-shadow-3: 0 12px 32px rgba(19, 35, 58, 0.16), 0 2px 6px rgba(19, 35, 58, 0.08);
+	/* The kit lifts surfaces with a hairline ring and Tailwind's small shadows, not deep drop shadows. */
+	--app-shadow: rgba(0, 0, 0, 0.1);
+	--app-shadow-1: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	--app-shadow-2: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+	--app-shadow-3: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 
 	--app-z-sticky: 20;
 	--app-z-dock: 40;
 	--app-z-overlay: 100;
 
-	--app-gradient-brand: linear-gradient(180deg, #1f5fae 0%, #2e6cc0 100%);
-	--app-gradient-brand-hover: linear-gradient(180deg, #2e6cc0 0%, #3b7bd0 100%);
-	--app-gradient-brand-border: linear-gradient(180deg, #1f5fae 0%, #174a8a 50.48%, #8cb8f0 100%);
+	/* The kit's primary is flat: the "gradient" tokens stay for the components that name them. */
+	--app-gradient-brand: linear-gradient(var(--app-primary-bg), var(--app-primary-bg));
+	--app-gradient-brand-hover: linear-gradient(var(--app-primary-hover), var(--app-primary-hover));
+	--app-gradient-brand-border: linear-gradient(var(--app-primary-bg), var(--app-primary-bg));
 
-	/* Sidebar: the same in both themes. Ink carries the logo's dark variant; blue marks the active row. */
-	--app-nav-bg: #13233a;
-	--app-nav-line: rgba(244, 247, 251, 0.12);
-	--app-nav-text: #c9d3e2;
-	--app-nav-strong: #f4f7fb;
-	--app-nav-muted: #8fa0b8;
-	--app-nav-hover: rgba(244, 247, 251, 0.08);
-	--app-nav-active: rgba(244, 247, 251, 0.14);
-	--app-nav-accent: #6fa8f0;
+	/* Sidebar: the kit's light inset rail; the active row is a grey pill with strong text. */
+	--app-nav-bg: #f7f6f6;
+	--app-nav-line: #e5e5e5;
+	--app-nav-text: #5c5c5c;
+	--app-nav-strong: #0a0a0a;
+	--app-nav-muted: #646464;
+	--app-nav-hover: #ebebeb;
+	--app-nav-active: #e1e1e1;
+	--app-nav-accent: #1f5fae;
 
-	--chart-1: oklch(0.398 0.07 227.392);
-	--chart-2: oklch(0.646 0.222 41.116);
+	/* Charts: care blue first, then distinct hues so long series stay readable. */
+	--chart-1: oklch(0.5 0.13 255);
+	--chart-2: oklch(0.7 0.12 245);
 	--chart-3: oklch(0.6 0.118 184.704);
 	--chart-4: oklch(0.828 0.189 84.429);
 	--chart-5: oklch(0.769 0.188 70.08);
@@ -109,51 +121,71 @@
 	--app-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
 	/*
-	 * Names apps/shared reads, in the host and in sandboxed stories alike. The sandbox defines its own values
-	 * (story-document.ts); the host points them at the tokens above.
+	 * shadcn names, read by Tailwind (theme/index.css) and by apps/shared in the host and in sandboxed stories alike.
+	 * The sandbox defines its own values (story-document.ts); the host points them at the tokens above.
 	 */
-	--background: var(--app-surface);
-	--panel: var(--app-bg);
+	--radius: var(--app-radius);
+	--background: var(--app-bg);
+	--panel: var(--app-inset);
 	--foreground: var(--app-text);
 	--card: var(--app-surface);
 	--card-foreground: var(--app-text);
 	--popover: var(--app-surface);
 	--popover-foreground: var(--app-text);
 	--primary: var(--app-primary-bg);
+	--primary-muted: var(--app-primary-muted);
 	--primary-foreground: var(--app-primary-fg);
+	--secondary: var(--app-fill);
+	--secondary-foreground: var(--app-body);
 	--muted: var(--app-fill);
 	--muted-foreground: var(--app-muted);
 	--accent: var(--app-fill);
+	--accent-foreground: var(--app-body);
+	--destructive: var(--app-critical);
 	--border: var(--app-line);
+	--input: var(--app-line);
+	--ring: color-mix(in oklab, var(--app-accent) 60%, transparent);
+	--violet: var(--app-violet);
+	--gradient-brand: var(--app-gradient-brand);
+	--gradient-brand-hover: var(--app-gradient-brand-hover);
+	--gradient-brand-border: var(--app-gradient-brand-border);
+	--sidebar: var(--app-nav-bg);
+	--sidebar-foreground: var(--app-nav-text);
+	--sidebar-primary: var(--app-nav-accent);
+	--sidebar-primary-foreground: var(--app-primary-fg);
+	--sidebar-accent: var(--app-nav-active);
+	--sidebar-accent-foreground: var(--app-nav-strong);
+	--sidebar-border: var(--app-nav-line);
+	--sidebar-ring: var(--ring);
 	--color-border: var(--app-line);
 	--font-sans: var(--app-font-body);
 	--font-heading: var(--app-font-heading);
-	--radius-sm: calc(var(--app-radius) - 0.25rem);
-	--radius-md: calc(var(--app-radius) - 0.125rem);
+	--display-weight: 700;
 }
 
-:root[data-mantine-color-scheme='dark'] {
+:root.dark {
 	color-scheme: dark;
 
-	--app-bg: #0b1424;
-	--app-surface: #111c2e;
-	--app-fill: #1a2740;
-	--app-inset: #0e1828;
-	--app-line: #25324a;
-	--app-line-strong: #34445f;
-	--app-control-line: #6b7c97;
-	--app-text: #f4f7fb;
-	--app-body: #dce3ec;
-	--app-muted: #a3b0c2;
+	/* Neutral scale of the kit (oklch 0.145 / 0.205 / 0.269 …). */
+	--app-bg: #0a0a0a;
+	--app-surface: #171717;
+	--app-fill: #262626;
+	--app-inset: #121212;
+	--app-line: #2e2e2e;
+	--app-line-strong: #404040;
+	--app-control-line: #737373;
+	--app-text: #fafafa;
+	--app-body: #e5e5e5;
+	--app-muted: #a1a1a1;
 
 	--app-accent: #6fa8f0;
 	--app-accent-text: #9cc4f5;
-	--app-tint: color-mix(in oklab, #6fa8f0 18%, transparent);
+	--app-tint: color-mix(in oklab, #6fa8f0 16%, transparent);
 	--app-primary-bg: #6fa8f0;
 	--app-primary-hover: #9cc4f5;
 	/* White fails contrast on #6fa8f0, so primary controls carry dark text here. */
 	--app-coral: #f2937d;
-	--app-primary-fg: #0b1424;
+	--app-primary-fg: #0a0a0a;
 	--app-primary-muted: #6fa8f0;
 
 	--app-wise: #f2937d;
@@ -172,12 +204,21 @@
 	--app-done-bg: #10291c;
 
 	--app-shadow: rgba(0, 0, 0, 0.4);
-	--app-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
-	--app-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35);
-	--app-shadow-3: 0 12px 32px rgba(0, 0, 0, 0.45);
+	--app-shadow-1: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+	--app-shadow-2: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+	--app-shadow-3: 0 10px 15px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -4px rgba(0, 0, 0, 0.45);
 
-	--chart-1: oklch(0.62 0.14 227.392);
-	--chart-2: oklch(0.72 0.2 41.116);
+	--app-nav-bg: #171717;
+	--app-nav-line: #262626;
+	--app-nav-text: #b0b0b0;
+	--app-nav-strong: #fafafa;
+	--app-nav-muted: #a1a1a1;
+	--app-nav-hover: #222222;
+	--app-nav-active: #2c2c2c;
+	--app-nav-accent: #6fa8f0;
+
+	--chart-1: oklch(0.7 0.13 255);
+	--chart-2: oklch(0.82 0.09 245);
 	--chart-3: oklch(0.7 0.14 184.704);
 	--chart-4: oklch(0.88 0.18 84.429);
 	--chart-5: oklch(0.82 0.18 70.08);
@@ -187,6 +228,9 @@
 	--chart-9: oklch(0.72 0.18 145);
 	--chart-10: oklch(0.74 0.18 335);
 	--chart-11: oklch(0.78 0.14 210);
+
+	--input: color-mix(in oklab, #ffffff 15%, transparent);
+	--destructive: var(--app-critical);
 }
 
 @media (pointer: coarse) {
@@ -197,32 +241,36 @@
 	}
 }
 
-body {
-	background-color: var(--app-bg);
-	color: var(--app-text);
-	font-size: var(--app-text-md);
-	line-height: 1.5;
-}
+/* Element defaults sit in the base layer, so Tailwind utilities on a component can override them. */
+@layer base {
+	body {
+		background-color: var(--app-bg);
+		color: var(--app-text);
+		font-family: var(--app-font-body);
+		font-size: var(--app-text-md);
+		line-height: 1.5;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
 
-h1,
-h2,
-h3,
-h4 {
-	line-height: 1.25;
-}
+	h1,
+	h2,
+	h3,
+	h4 {
+		line-height: 1.25;
+	}
 
-/* Clinical numbers line up in columns. */
-table,
-.app-numeric {
-	font-variant-numeric: tabular-nums;
-}
+	/* Clinical numbers line up in columns. */
+	table,
+	.app-numeric {
+		font-variant-numeric: tabular-nums;
+	}
 
-.mantine-focus-auto:focus-visible,
-.mantine-focus-always:focus,
-a:focus-visible,
-button:focus-visible {
-	outline: 2px solid var(--app-accent);
-	outline-offset: 2px;
+	a:focus-visible,
+	button:focus-visible {
+		outline: 2px solid var(--app-accent);
+		outline-offset: 2px;
+	}
 }
 
 .app-page {

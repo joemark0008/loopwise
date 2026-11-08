@@ -948,7 +948,7 @@ function useIsDark() {
 	useEffect(() => {
 		const root = document.documentElement;
 		const observer = new MutationObserver(() => setIsDark(isDarkColorScheme(root)));
-		observer.observe(root, { attributes: true, attributeFilter: ['data-mantine-color-scheme'] });
+		observer.observe(root, { attributes: true, attributeFilter: ['class'] });
 		return () => observer.disconnect();
 	}, []);
 

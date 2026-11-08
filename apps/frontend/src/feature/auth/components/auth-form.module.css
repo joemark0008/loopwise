@@ -3,8 +3,9 @@
 	font-family: var(--app-font-heading);
 	font-size: 1.5rem;
 	line-height: var(--fx-leading, calc(2 / 1.5));
-	--fx-font-weight: 500;
-	font-weight: 500;
+	--fx-font-weight: 700;
+	font-weight: 700;
+	letter-spacing: -0.025em;
 }
 .formTextFieldDiv {
 	display: grid;
@@ -53,7 +54,7 @@
 }
 .authFormLoopwiseLogo {
 	height: auto;
-	width: 5rem;
+	width: 7.5rem;
 	color: var(--app-text);
 }
 .authFormDiv7 {
@@ -121,7 +122,6 @@
 }
 .authFormButton2 {
 	width: 100%;
-	border-radius: calc(infinity * 1px);
 }
 .authFormButton3 {
 	height: 2.5rem;
@@ -132,8 +132,7 @@
 	height: 2.75rem;
 }
 .authFormButton5 {
-	background-color: color-mix(in oklab, var(--app-muted) 20%, transparent);
-	color: var(--app-text);
+	opacity: 0.5;
 }
 .authFormP2 {
 	text-align: center;
@@ -229,10 +228,10 @@
 		var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
 		var(--fx-shadow);
 	--fx-ring-color: color-mix(in oklab, var(--app-fill) 50%, transparent);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: var(--app-fill);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		--fx-ring-color: color-mix(in oklab, var(--app-fill) 50%, transparent);
 	}
 }
@@ -271,7 +270,7 @@
 	}
 }
 .authSidePanelInputGroup5 {
-	&:is(:root[data-mantine-color-scheme='dark'] *)::before {
+	&:is(:root.dark *)::before {
 		content: var(--fx-content);
 		background: linear-gradient(
 			135deg,

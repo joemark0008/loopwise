@@ -8,6 +8,7 @@ export type SeriesTake =
 	| { kind: 'taken'; seriesId: string; prefix: string | null; endNo: number; number: number }
 	| { kind: 'exhausted'; seriesId: string }
 	| { kind: 'expired'; seriesId: string }
+	| { kind: 'inactive'; seriesId: string }
 	| { kind: 'none' };
 
 /** `invoice_series` (BIR ATP / CAS permits). Runs inside the caller's (RLS) transaction: the clinic is the boundary. */
@@ -53,7 +54,8 @@ export class InvoiceSeriesRepository {
 	/**
 	 * Takes the next number of the clinic's first usable series of `docType` (active, valid today in Manila, numbers
 	 * left) in one statement; the row lock makes concurrent issues wait, so no number is given twice. When none is
-	 * usable, says why: every active series is exhausted, or past its validity, or the clinic has none.
+	 * usable, says why: every active series is exhausted, or past its validity, or every series is turned off, or the
+	 * clinic has registered none.
 	 */
 	async take(tx: ClinicalTx, clinicId: string, docType: InvoiceDocType): Promise<SeriesTake> {
 		const [taken] = await tx.$queryRaw<{ id: string; prefix: string | null; end_no: number; number: number }[]>`
@@ -84,7 +86,12 @@ export class InvoiceSeriesRepository {
 			ORDER BY (valid_until IS NULL OR valid_until >= (now() AT TIME ZONE 'Asia/Manila')::date) DESC, start_no
 			LIMIT 1`;
 		if (!active) {
-			return { kind: 'none' };
+			const [registered] = await tx.$queryRaw<{ id: string }[]>`
+				SELECT id FROM invoice_series
+				WHERE clinic_id = ${clinicId}::uuid AND doc_type = ${docType}::invoice_doc_type
+				ORDER BY start_no
+				LIMIT 1`;
+			return registered ? { kind: 'inactive', seriesId: registered.id } : { kind: 'none' };
 		}
 		return active.usable_date
 			? { kind: 'exhausted', seriesId: active.id }

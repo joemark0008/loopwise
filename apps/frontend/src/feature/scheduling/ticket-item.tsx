@@ -1,30 +1,67 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import styles from './scheduling.module.css';
-import { PRIORITY_REASON_LABELS, waited } from './scheduling-format';
-import { QueueStatusBadge, TicketCode } from './scheduling-parts';
+import { Children, useState } from 'react';
+import { PRIORITY_REASON_LABELS } from './scheduling-format';
+import { QueueStatusBadge, TicketCode, WaitTime } from './scheduling-parts';
 import type { QueueTicketFieldsFragment } from '@/graphql/generated/graphql';
 import type { ReactNode } from 'react';
+import { ClinicalFlag } from '@/components/clinical/clinical-flag';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Button } from '@/components/ui/button';
 import { VoidDialog } from '@/feature/encounters/void-dialog';
 import { schedulingApi } from '@/lib/scheduling-api';
+import { cn } from '@/lib/utils';
 
-/** One ticket in a line: number, patient (when the user may see them), reason, waiting time and the desk's actions. */
-export function TicketItem({ ticket, children }: { ticket: QueueTicketFieldsFragment; children?: ReactNode }) {
+/**
+ * One ticket in a line, as a card: the number tile, the patient (when the user may see them), the reason, the priority
+ * reason and how long they have waited, the status, then the desk's actions. `compact` for the day's done list.
+ */
+export function TicketItem({
+	ticket,
+	children,
+	compact,
+}: {
+	ticket: QueueTicketFieldsFragment;
+	children?: ReactNode;
+	compact?: boolean;
+}) {
+	// Conditional actions render as `false`: only a real one gets the action bar.
+	const hasActions = Children.toArray(children).length > 0;
 	return (
-		<li className={styles.ticket} data-testid='queue-ticket' data-code={ticket.code} data-status={ticket.status}>
-			<TicketCode ticket={ticket} />
-			<div className={styles.ticketBody}>
-				<div className={styles.main}>{ticket.patient?.name ?? 'Patient'}</div>
-				<div className={styles.muted}>
-					{ticket.encounter?.reason ?? 'No reason given'}
-					{ticket.priorityReason && ` · ${PRIORITY_REASON_LABELS[ticket.priorityReason]}`}
-					{ticket.status === 'WAITING' && ` · waiting ${waited(ticket.issuedAt)}`}
+		<li
+			className={cn(
+				'flex flex-col rounded-xl border bg-card text-card-foreground',
+				compact ? 'px-3 py-2.5' : 'p-3 shadow-xs',
+				ticket.status === 'CALLED' && 'border-abnormal-line',
+				ticket.status === 'SERVING' && 'border-info/40',
+			)}
+			data-testid='queue-ticket'
+			data-code={ticket.code}
+			data-status={ticket.status}
+		>
+			<div className='flex items-start gap-3'>
+				<TicketCode ticket={ticket} />
+				<div className='flex min-w-0 flex-1 flex-col gap-0.5'>
+					<p className='truncate font-semibold text-foreground'>{ticket.patient?.name ?? 'Patient'}</p>
+					<p className={cn('text-xs text-muted-foreground', compact ? 'truncate' : 'line-clamp-2')}>
+						{ticket.encounter?.reason ?? 'No reason given'}
+					</p>
 				</div>
+				{compact && <QueueStatusBadge status={ticket.status} />}
 			</div>
-			<QueueStatusBadge status={ticket.status} />
-			{children && <div className={styles.actions}>{children}</div>}
+			{!compact && (
+				<div className='mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-2'>
+					<QueueStatusBadge status={ticket.status} />
+					{ticket.priorityReason && (
+						<ClinicalFlag tone='critical' icon={null}>
+							{PRIORITY_REASON_LABELS[ticket.priorityReason]}
+						</ClinicalFlag>
+					)}
+					{ticket.status === 'WAITING' && <WaitTime since={ticket.issuedAt} />}
+					{hasActions && (
+						<div className='ml-auto flex flex-wrap items-center justify-end gap-1.5'>{children}</div>
+					)}
+				</div>
+			)}
 		</li>
 	);
 }

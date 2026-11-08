@@ -37,7 +37,7 @@
 }
 .emailVerifiedAuthForm {
 	color: var(--app-emerald-600);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-emerald-400);
 	}
 }

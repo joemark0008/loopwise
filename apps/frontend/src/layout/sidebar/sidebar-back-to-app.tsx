@@ -1,11 +1,10 @@
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 
-import styles from './sidebar-back-to-app.module.css';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBackToApp } from '@/hooks/use-last-app-location';
-import { cn, hideIf } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 const BACK_TO_APP_LABEL = 'Back to app';
 
@@ -27,16 +26,15 @@ export function SidebarBackToApp({ isCollapsed }: { isCollapsed: boolean }) {
 				<Button
 					asChild
 					variant='ghost'
+					size='sm'
 					className={cn(
-						`${styles.sidebarBackToAppButton} group`,
-						isCollapsed ? styles.sidebarBackToAppButton2 : '',
+						'group/back h-8 w-full justify-start gap-2 px-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+						isCollapsed && 'size-8 justify-center p-0',
 					)}
 				>
 					<a href={href} onClick={handleClick} aria-label={BACK_TO_APP_LABEL}>
-						<ArrowLeft className={styles.sidebarBackToAppArrowLeft} />
-						<span className={cn(styles.sidebarBackToAppSpan, hideIf(isCollapsed))}>
-							{BACK_TO_APP_LABEL}
-						</span>
+						<ArrowLeft className='size-4 transition-transform group-hover/back:-translate-x-0.5' />
+						<span className={cn('truncate', isCollapsed && 'sr-only')}>{BACK_TO_APP_LABEL}</span>
 					</a>
 				</Button>
 			</TooltipTrigger>

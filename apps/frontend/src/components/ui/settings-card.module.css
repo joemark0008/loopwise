@@ -73,11 +73,11 @@
 	padding-inline: 1.5rem;
 }
 .settingsPageWrapperDiv3 {
-	max-width: 72rem;
+	max-width: 88rem;
 	gap: 1.5rem;
 }
 .settingsPageWrapperDiv4 {
-	max-width: 56rem;
+	max-width: 76rem;
 	gap: 2rem;
 	@media (width >= 48rem) {
 		gap: 3rem;

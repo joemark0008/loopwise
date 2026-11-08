@@ -47,7 +47,7 @@
 	margin-top: 0.25rem;
 	display: flex;
 	justify-content: space-between;
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 	--fx-numeric-spacing: tabular-nums;
 	font-variant-numeric: var(--fx-ordinal,) var(--fx-slashed-zero,) var(--fx-numeric-figure,)
 		var(--fx-numeric-spacing,) var(--fx-numeric-fraction,);
@@ -90,7 +90,7 @@
 	border-radius: calc(infinity * 1px);
 }
 .bubbleLegendSpan2 {
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 	--fx-numeric-spacing: tabular-nums;
 	font-variant-numeric: var(--fx-ordinal,) var(--fx-slashed-zero,) var(--fx-numeric-figure,)
 		var(--fx-numeric-spacing,) var(--fx-numeric-fraction,);
@@ -103,7 +103,7 @@
 }
 .state101 {
 	text-align: right;
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 	--fx-font-weight: 500;
 	font-weight: 500;
 	--fx-numeric-spacing: tabular-nums;

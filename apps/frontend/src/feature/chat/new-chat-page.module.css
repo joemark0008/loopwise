@@ -29,7 +29,7 @@
 	gap: 0.5rem;
 	background-color: var(--app-nav-bg);
 	color: color-mix(in oklab, var(--app-muted) 50%, transparent);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: var(--app-surface);
 	}
 }

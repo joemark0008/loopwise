@@ -12,7 +12,7 @@
 }
 .commandBlockSpan {
 	flex-shrink: 0;
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 	font-size: 0.875rem;
 	line-height: var(--fx-leading, calc(1.25 / 0.875));
 	color: var(--app-muted);
@@ -25,7 +25,7 @@
 	background-color: transparent !important;
 	padding: 0px !important;
 	text-align: left;
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 	font-size: 0.875rem;
 	line-height: var(--fx-leading, calc(1.25 / 0.875));
 	--fx-leading: 1.625;

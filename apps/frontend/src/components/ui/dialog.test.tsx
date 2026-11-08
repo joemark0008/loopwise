@@ -64,7 +64,10 @@ describe('DialogContent', () => {
 	it('still closes on a press outside the dialog', async () => {
 		const onOpenChange = await renderDialogWithSplitPanels();
 
-		fireEvent.click(document.querySelector('.mantine-Modal-overlay') as HTMLElement);
+		// Radix defers an outside press to the click that follows it, as a real press does.
+		const overlay = document.querySelector('[data-slot="dialog-overlay"]') as HTMLElement;
+		fireEvent.pointerDown(overlay, POINTER);
+		fireEvent.click(overlay, POINTER);
 
 		expect(onOpenChange).toHaveBeenCalledWith(false);
 	});

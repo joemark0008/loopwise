@@ -16,7 +16,7 @@ function readBlock(selector: string): Record<string, string> {
 }
 
 const light = readBlock(':root');
-const dark = { ...light, ...readBlock(":root[data-mantine-color-scheme='dark']") };
+const dark = { ...light, ...readBlock(':root.dark') };
 
 function hex(scheme: Record<string, string>, name: string): string {
 	let value = scheme[name];

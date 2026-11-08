@@ -95,13 +95,13 @@
 	border-color: var(--app-green-200);
 	background-color: var(--app-green-50);
 	color: var(--app-green-800);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		border-color: var(--app-green-800);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: var(--app-green-950);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-green-200);
 	}
 }

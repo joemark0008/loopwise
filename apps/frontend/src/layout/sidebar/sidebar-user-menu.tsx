@@ -1,65 +1,46 @@
 import { Link } from '@tanstack/react-router';
 import { SlidersVertical } from 'lucide-react';
-import styles from './sidebar-user-menu.module.css';
 import { Avatar } from '@/components/ui/avatar';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { useCurrentUser } from '@/hooks/use-current-user';
-import { cn, hideIf } from '@/lib/utils';
 
 interface SidebarUserMenuProps {
 	isCollapsed: boolean;
 	isInSettings: boolean;
 }
 
+/** The kit's nav-user row: avatar, name and email, opening the user's settings. */
 export function SidebarUserMenu({ isCollapsed, isInSettings }: SidebarUserMenuProps) {
 	const { data: user } = useCurrentUser();
-	const username = user?.name;
-	const email = user?.email;
+	const username = user?.name ?? '';
 
 	if (isInSettings && isCollapsed) {
 		return null;
 	}
 
 	return (
-		<div className={styles.sidebarUserMenuDiv}>
-			<div
-				className={cn(
-					`${styles.sidebarUserMenuDiv2} group/user`,
-					styles.sidebarUserMenuDiv3,
-					isCollapsed ? styles.sidebarUserMenuDiv4 : styles.sidebarUserMenuDiv5,
-				)}
-			>
-				{/* On the rail the name is hidden, so only the settings button (named) remains. */}
-				{!isCollapsed && (
-					<Link
-						to='/settings'
-						inactiveProps={{ className: styles.sidebarUserMenuClassName }}
-						activeProps={{ className: styles.sidebarUserMenuClassName }}
-						className={styles.sidebarUserMenuLink}
-					>
-						<div className={cn(styles.sidebarUserMenuDiv6, hideIf(isCollapsed))}>
-							{!isCollapsed && username && (
-								<Avatar username={username} className={styles.sidebarUserMenuAvatar} />
-							)}
-							<span className={cn(styles.sidebarUserMenuSpan, hideIf(isCollapsed))}>
-								<span className={styles.sidebarUserMenuSpan2}>{username}</span>
-								<span className={styles.sidebarUserMenuSpan3}>{email}</span>
-							</span>
-						</div>
-					</Link>
-				)}
-				{!isInSettings && (
-					<div
-						className={cn(
-							styles.sidebarUserMenuDiv7,
-							isCollapsed ? styles.sidebarUserMenuDiv5 : styles.sidebarUserMenuDiv8,
+		<SidebarMenu>
+			<SidebarMenuItem>
+				<SidebarMenuButton
+					asChild
+					size='lg'
+					tooltip='Settings'
+					className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
+				>
+					<Link to='/settings' aria-label={isCollapsed ? 'Settings' : undefined}>
+						{username && (
+							<Avatar username={username} size='sm' decorative className='shrink-0 rounded-lg' />
 						)}
-					>
-						<Link to='/settings' className={styles.sidebarUserMenuLink2} aria-label='Settings'>
-							<SlidersVertical className={styles.sidebarUserMenuSlidersVertical} aria-hidden />
-						</Link>
-					</div>
-				)}
-			</div>
-		</div>
+						<span className='grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden'>
+							<span className='truncate font-medium text-sidebar-accent-foreground'>{username}</span>
+							<span className='truncate text-xs text-sidebar-foreground'>{user?.email}</span>
+						</span>
+						{!isInSettings && (
+							<SlidersVertical className='ml-auto size-4 text-muted-foreground' aria-hidden />
+						)}
+					</Link>
+				</SidebarMenuButton>
+			</SidebarMenuItem>
+		</SidebarMenu>
 	);
 }

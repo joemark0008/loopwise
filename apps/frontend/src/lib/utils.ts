@@ -1,9 +1,11 @@
 import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import styles from './utils.module.css';
 import type { ClassValue } from 'clsx';
 
+/** Joins class names; later Tailwind utilities replace conflicting earlier ones (shadcn's `cn`). */
 export function cn(...inputs: Array<ClassValue>) {
-	return clsx(inputs);
+	return twMerge(clsx(inputs));
 }
 
 /** Hide/show an element based on a condition by changing the opacity and visibility */

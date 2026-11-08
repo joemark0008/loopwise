@@ -1,93 +1,49 @@
-import { createContext, useContext } from 'react';
-import styles from './overlay.module.css';
+import { Accordion as AccordionPrimitive } from 'radix-ui';
 import type { ComponentProps } from 'react';
 
 import { cn } from '@/lib/utils';
 
-const AccordionContext = createContext<{
-	isOpen: (item: string) => boolean;
-	toggle: (item: string) => void;
-	disabled?: boolean;
-}>({ isOpen: () => false, toggle: () => undefined });
-const AccordionItemContext = createContext('');
-
-type AccordionProps = Omit<ComponentProps<'div'>, 'defaultValue'> & { disabled?: boolean } & (
-		| { type?: 'single'; collapsible?: boolean; value?: string; onValueChange?: (value: string) => void }
-		| { type: 'multiple'; collapsible?: boolean; value?: string[]; onValueChange?: (value: string[]) => void }
-	);
-
-function Accordion({
-	type = 'single',
-	value,
-	onValueChange,
-	disabled,
-	collapsible: _collapsible,
-	...props
-}: AccordionProps) {
-	const open = Array.isArray(value) ? value : value ? [value] : [];
-	const toggle = (item: string) => {
-		const isOpen = open.includes(item);
-		if (type === 'multiple') {
-			(onValueChange as ((next: string[]) => void) | undefined)?.(
-				isOpen ? open.filter((entry) => entry !== item) : [...open, item],
-			);
-			return;
-		}
-		(onValueChange as ((next: string) => void) | undefined)?.(isOpen ? '' : item);
-	};
+function Accordion({ className, ...props }: ComponentProps<typeof AccordionPrimitive.Root>) {
 	return (
-		<AccordionContext.Provider value={{ isOpen: (item) => open.includes(item), toggle, disabled }}>
-			<div data-slot='accordion' {...props} />
-		</AccordionContext.Provider>
+		<AccordionPrimitive.Root data-slot='accordion' className={cn('flex w-full flex-col', className)} {...props} />
 	);
 }
 
-function AccordionItem({ className, value, ...props }: ComponentProps<'div'> & { value: string }) {
+function AccordionItem({ className, ...props }: ComponentProps<typeof AccordionPrimitive.Item>) {
 	return (
-		<AccordionItemContext.Provider value={value}>
-			<div data-slot='accordion-item' className={cn(styles.accordionItem, className)} {...props} />
-		</AccordionItemContext.Provider>
+		<AccordionPrimitive.Item data-slot='accordion-item' className={cn('not-last:border-b', className)} {...props} />
 	);
 }
 
+/** The trigger carries no chevron of its own: callers place the icon that fits their row. */
 function AccordionTrigger({
 	className,
 	headerClassName,
-	onClick,
 	...props
-}: ComponentProps<'button'> & { headerClassName?: string }) {
-	const accordion = useContext(AccordionContext);
-	const itemValue = useContext(AccordionItemContext);
-	const isOpen = accordion.isOpen(itemValue);
+}: ComponentProps<typeof AccordionPrimitive.Trigger> & { headerClassName?: string }) {
 	return (
-		<h3 className={cn(styles.accordionHeader, headerClassName ?? styles.accordionHeaderFull)}>
-			<button
-				type='button'
+		<AccordionPrimitive.Header className={cn('flex w-full min-w-0 overflow-hidden', headerClassName)}>
+			<AccordionPrimitive.Trigger
 				data-slot='accordion-trigger'
-				data-state={isOpen ? 'open' : 'closed'}
-				aria-expanded={isOpen}
-				disabled={accordion.disabled}
-				className={cn(styles.accordionTrigger, className)}
-				onClick={(event) => {
-					onClick?.(event);
-					accordion.toggle(itemValue);
-				}}
+				className={cn(
+					'group/accordion-trigger flex min-w-0 flex-1 items-start gap-4 overflow-hidden rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
+					className,
+				)}
 				{...props}
 			/>
-		</h3>
+		</AccordionPrimitive.Header>
 	);
 }
 
-function AccordionContent({ className, children, ...props }: ComponentProps<'div'>) {
-	const accordion = useContext(AccordionContext);
-	const itemValue = useContext(AccordionItemContext);
-	if (!accordion.isOpen(itemValue)) {
-		return <div data-slot='accordion-content' data-state='closed' hidden {...props} />;
-	}
+function AccordionContent({ className, children, ...props }: ComponentProps<typeof AccordionPrimitive.Content>) {
 	return (
-		<div data-slot='accordion-content' data-state='open' className={styles.accordionContent} {...props}>
-			<div className={cn(styles.accordionContentInner, className)}>{children}</div>
-		</div>
+		<AccordionPrimitive.Content
+			data-slot='accordion-content'
+			className='overflow-hidden text-sm data-open:animate-accordion-down data-closed:animate-accordion-up'
+			{...props}
+		>
+			<div className={cn('pb-4', className)}>{children}</div>
+		</AccordionPrimitive.Content>
 	);
 }
 

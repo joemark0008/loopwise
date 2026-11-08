@@ -1,6 +1,6 @@
 .selectionCitationExcerptP {
 	margin-bottom: 0.375rem;
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 	font-size: 0.75rem;
 	--fx-tracking: -0.025em;
 	letter-spacing: -0.025em;
