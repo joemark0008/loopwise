@@ -42,7 +42,7 @@
 	font-size: 0.75rem;
 	line-height: var(--fx-leading, calc(1 / 0.75));
 	color: var(--app-amber-700);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-amber-400);
 	}
 }

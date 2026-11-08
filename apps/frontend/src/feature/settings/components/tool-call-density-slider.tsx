@@ -1,6 +1,6 @@
-import { Slider } from '@mantine/core';
 import styles from './tool-call-density-slider.module.css';
 import type { ToolCallDensity } from '@loopwise/shared/types';
+import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 
 const densityOptions: { value: ToolCallDensity; label: string }[] = [
@@ -22,14 +22,12 @@ export const ToolCallDensitySlider = ({
 	return (
 		<div className={styles.toolCallDensitySliderDiv}>
 			<Slider
-				value={selectedIndex}
-				onChange={(index) => onValueChange(densityOptions[index].value)}
+				value={[selectedIndex]}
+				onValueChange={([index]) => onValueChange(densityOptions[index].value)}
 				min={0}
 				max={densityOptions.length - 1}
 				step={1}
 				disabled={disabled}
-				label={null}
-				size='sm'
 				thumbLabel='Tool call density'
 			/>
 			<div className={styles.toolCallDensitySliderDiv2}>

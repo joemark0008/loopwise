@@ -16,7 +16,7 @@
 	background-color: var(--app-fill);
 	padding-inline: 1rem;
 	padding-block: 0.875rem;
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 	font-size: 0.9375rem;
 	word-break: break-all;
 	color: var(--app-text);

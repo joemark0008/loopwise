@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -83,11 +82,11 @@ const renderCard = (output: object = {}, input: object = DRAFT) => {
 		output: { success: true, clinics: CLINICS, duplicates: [], ...output },
 	} as unknown as ToolCallComponentProps<'propose_patient_registration'>['toolPart'];
 	return render(
-		<MantineProvider>
+		<>
 			<QueryClientProvider client={new QueryClient()}>
 				<ProposePatientRegistrationToolCall toolPart={toolPart} />
 			</QueryClientProvider>
-		</MantineProvider>,
+		</>,
 	);
 };
 

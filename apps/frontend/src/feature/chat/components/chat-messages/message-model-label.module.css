@@ -12,5 +12,5 @@
 	height: 0.75rem;
 }
 .messageModelDetailsSpan {
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 }

@@ -50,7 +50,8 @@ function renderMenu() {
 	);
 }
 
+/** Radix opens a menu on pointer-down or Enter, not on a bare click event. */
 async function selectMenuItem(label: string) {
-	fireEvent.click(screen.getByRole('button', { name: 'Export' }));
+	fireEvent.keyDown(screen.getByRole('button', { name: 'Export' }), { key: 'Enter' });
 	fireEvent.click(await screen.findByText(label));
 }

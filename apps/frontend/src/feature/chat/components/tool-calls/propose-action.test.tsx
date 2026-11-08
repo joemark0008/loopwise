@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -91,7 +90,7 @@ const origin = (toolName: string) => ({ chatId: 'chat-1', toolCallId: 'call_1', 
 
 const renderCard = (Card: React.ComponentType<any>, type: string, input: object, output: object = {}) =>
 	render(
-		<MantineProvider>
+		<>
 			<QueryClientProvider client={new QueryClient()}>
 				<Card
 					toolPart={{
@@ -103,7 +102,7 @@ const renderCard = (Card: React.ComponentType<any>, type: string, input: object,
 					}}
 				/>
 			</QueryClientProvider>
-		</MantineProvider>,
+		</>,
 	);
 
 const click = (name: RegExp) => fireEvent.click(screen.getByRole('button', { name }));

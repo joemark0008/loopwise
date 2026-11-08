@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -169,11 +168,11 @@ const withDraft = () => {
 
 const renderPanel = () =>
 	render(
-		<MantineProvider>
+		<>
 			<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
 				<ScribePanel record={record as never} />
 			</QueryClientProvider>
-		</MantineProvider>,
+		</>,
 	);
 
 const card = (part: string) => screen.getByTestId(`scribe-part-${part}`);

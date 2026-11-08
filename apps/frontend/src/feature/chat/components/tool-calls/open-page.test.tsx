@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { MantineProvider } from '@mantine/core';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -51,9 +50,9 @@ const part = (state: string, autoNavigate = true, toolCallId = `call_${++toolCal
 
 const renderPart = (toolPart: ToolCallComponentProps<'open_page'>['toolPart']) =>
 	render(
-		<MantineProvider>
+		<>
 			<OpenPageToolCall toolPart={toolPart} />
-		</MantineProvider>,
+		</>,
 	);
 
 /** Streams a part live: input, then output while the run goes on, then the run ends. */
@@ -62,16 +61,16 @@ const streamLive = (autoNavigate = true) => {
 	mocks.agent.isRunning = true;
 	const view = renderPart(part('input-available', autoNavigate, toolCallId));
 	view.rerender(
-		<MantineProvider>
+		<>
 			<OpenPageToolCall toolPart={part('output-available', autoNavigate, toolCallId)} />
-		</MantineProvider>,
+		</>,
 	);
 	expect(mocks.navigate).not.toHaveBeenCalled();
 	mocks.agent.isRunning = false;
 	view.rerender(
-		<MantineProvider>
+		<>
 			<OpenPageToolCall toolPart={{ ...part('output-available', autoNavigate, toolCallId) }} />
-		</MantineProvider>,
+		</>,
 	);
 	return { view, toolCallId };
 };
@@ -105,9 +104,9 @@ describe('OpenPageToolCall', () => {
 		const again = renderPart(part('input-available', true, toolCallId));
 		mocks.agent.isRunning = false;
 		again.rerender(
-			<MantineProvider>
+			<>
 				<OpenPageToolCall toolPart={part('output-available', true, toolCallId)} />
-			</MantineProvider>,
+			</>,
 		);
 		expect(mocks.navigate).toHaveBeenCalledTimes(1);
 	});

@@ -1,5 +1,0 @@
-.skeletonDiv {
-	animation: var(--animate-pulse);
-	border-radius: var(--app-radius);
-	background-color: var(--app-fill);
-}

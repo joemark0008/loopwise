@@ -1,89 +1,36 @@
-import { Modal } from '@mantine/core';
 import { XIcon } from 'lucide-react';
-import { cloneElement, createContext, isValidElement, useContext, useState } from 'react';
-import styles from './overlay.module.css';
-import type { ComponentProps, ReactElement, ReactNode } from 'react';
+import { Dialog as DialogPrimitive } from 'radix-ui';
+import type { ComponentProps } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-interface DialogContextValue {
-	open: boolean;
-	setOpen: (open: boolean) => void;
+function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
+	return <DialogPrimitive.Root data-slot='dialog' {...props} />;
 }
 
-const DialogContext = createContext<DialogContextValue | null>(null);
-
-function useDialogContext() {
-	const context = useContext(DialogContext);
-	if (!context) {
-		throw new Error('Dialog parts must be used within a Dialog');
-	}
-	return context;
+function DialogTrigger(props: ComponentProps<typeof DialogPrimitive.Trigger>) {
+	return <DialogPrimitive.Trigger data-slot='dialog-trigger' {...props} />;
 }
 
-function Dialog({
-	open,
-	defaultOpen = false,
-	onOpenChange,
-	children,
-}: {
-	open?: boolean;
-	defaultOpen?: boolean;
-	onOpenChange?: (open: boolean) => void;
-	children?: ReactNode;
-}) {
-	const [internalOpen, setInternalOpen] = useState(defaultOpen);
-	const isOpen = open ?? internalOpen;
-	const setOpen = (next: boolean) => {
-		setInternalOpen(next);
-		onOpenChange?.(next);
-	};
-	return <DialogContext.Provider value={{ open: isOpen, setOpen }}>{children}</DialogContext.Provider>;
+function DialogPortal(props: ComponentProps<typeof DialogPrimitive.Portal>) {
+	return <DialogPrimitive.Portal data-slot='dialog-portal' {...props} />;
 }
 
-function DialogTrigger({ asChild, onClick, children, ...props }: ComponentProps<'button'> & { asChild?: boolean }) {
-	const { setOpen } = useDialogContext();
-	const open: ComponentProps<'button'>['onClick'] = (event) => {
-		onClick?.(event);
-		setOpen(true);
-	};
-	if (asChild && isValidElement(children)) {
-		const child = children as ReactElement<ComponentProps<'button'>>;
-		return cloneElement(child, {
-			...props,
-			onClick: (event) => {
-				child.props.onClick?.(event);
-				open(event);
-			},
-		});
-	}
+function DialogClose(props: ComponentProps<typeof DialogPrimitive.Close>) {
+	return <DialogPrimitive.Close data-slot='dialog-close' {...props} />;
+}
+
+function DialogOverlay({ className, ...props }: ComponentProps<typeof DialogPrimitive.Overlay>) {
 	return (
-		<button type='button' onClick={open} {...props}>
-			{children}
-		</button>
-	);
-}
-
-function DialogClose({ asChild, onClick, children, ...props }: ComponentProps<'button'> & { asChild?: boolean }) {
-	const { setOpen } = useDialogContext();
-	const close: ComponentProps<'button'>['onClick'] = (event) => {
-		onClick?.(event);
-		setOpen(false);
-	};
-	if (asChild && isValidElement(children)) {
-		const child = children as ReactElement<ComponentProps<'button'>>;
-		return cloneElement(child, {
-			...props,
-			onClick: (event) => {
-				child.props.onClick?.(event);
-				close(event);
-			},
-		});
-	}
-	return (
-		<button type='button' onClick={close} {...props}>
-			{children}
-		</button>
+		<DialogPrimitive.Overlay
+			data-slot='dialog-overlay'
+			className={cn(
+				'fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+				className,
+			)}
+			{...props}
+		/>
 	);
 }
 
@@ -92,46 +39,70 @@ function DialogContent({
 	children,
 	showCloseButton = true,
 	...props
-}: ComponentProps<'div'> & { showCloseButton?: boolean }) {
-	const { open, setOpen } = useDialogContext();
+}: ComponentProps<typeof DialogPrimitive.Content> & { showCloseButton?: boolean }) {
 	return (
-		<Modal.Root
-			opened={open}
-			onClose={() => setOpen(false)}
-			centered
-			size='auto'
-			classNames={{ content: cn(styles.dialog, className) }}
-		>
-			<Modal.Overlay className={styles.overlay} />
-			<Modal.Content data-slot='dialog-content' {...(props as object)}>
+		<DialogPortal>
+			<DialogOverlay />
+			<DialogPrimitive.Content
+				data-slot='dialog-content'
+				className={cn(
+					'fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 shadow-lg duration-100 outline-none sm:max-w-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+					className,
+				)}
+				{...props}
+			>
 				{children}
 				{showCloseButton && (
-					<button type='button' className={styles.dialogClose} onClick={() => setOpen(false)}>
-						<XIcon />
-						<span className='sr-only'>Close</span>
-					</button>
+					<DialogPrimitive.Close data-slot='dialog-close' asChild>
+						<Button variant='ghost' className='absolute top-2 right-2' size='icon-sm'>
+							<XIcon />
+							<span className='sr-only'>Close</span>
+						</Button>
+					</DialogPrimitive.Close>
 				)}
-			</Modal.Content>
-		</Modal.Root>
+			</DialogPrimitive.Content>
+		</DialogPortal>
 	);
 }
 
 function DialogHeader({ className, ...props }: ComponentProps<'div'>) {
-	return <div data-slot='dialog-header' className={cn(styles.dialogHeader, className)} {...props} />;
+	return <div data-slot='dialog-header' className={cn('flex flex-col gap-2 pr-6', className)} {...props} />;
 }
 
 function DialogFooter({ className, ...props }: ComponentProps<'div'>) {
-	return <div data-slot='dialog-footer' className={cn(styles.dialogFooter, className)} {...props} />;
-}
-
-function DialogTitle({ className, ...props }: ComponentProps<'h2'>) {
 	return (
-		<Modal.Title data-slot='dialog-title' className={cn(styles.dialogTitle, className)} {...(props as object)} />
+		<div
+			data-slot='dialog-footer'
+			className={cn(
+				'-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:flex-wrap sm:justify-end',
+				className,
+			)}
+			{...props}
+		/>
 	);
 }
 
-function DialogDescription({ className, ...props }: ComponentProps<'p'>) {
-	return <p data-slot='dialog-description' className={cn(styles.dialogDescription, className)} {...props} />;
+function DialogTitle({ className, ...props }: ComponentProps<typeof DialogPrimitive.Title>) {
+	return (
+		<DialogPrimitive.Title
+			data-slot='dialog-title'
+			className={cn('font-heading text-base leading-none font-semibold', className)}
+			{...props}
+		/>
+	);
+}
+
+function DialogDescription({ className, ...props }: ComponentProps<typeof DialogPrimitive.Description>) {
+	return (
+		<DialogPrimitive.Description
+			data-slot='dialog-description'
+			className={cn(
+				'text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground',
+				className,
+			)}
+			{...props}
+		/>
+	);
 }
 
 export {
@@ -141,6 +112,8 @@ export {
 	DialogDescription,
 	DialogFooter,
 	DialogHeader,
+	DialogOverlay,
+	DialogPortal,
 	DialogTitle,
 	DialogTrigger,
 };

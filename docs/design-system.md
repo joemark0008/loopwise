@@ -9,25 +9,34 @@ animation → forms → navigation → charts) plus our own judgement for a clin
 data-dense, trust-first, calm. Flat surfaces, one accent (care blue), semantic status colour that never stands alone,
 coral reserved for the assistant.
 
+**Visual language (8 Nov 2026).** The look follows the shadcn UI kit dashboard (`shadcn-templates/shadcn-ui-kit-dashboard`,
+its "radix-nova" style): neutral greys, DM Sans, a 0.625rem radius, the light inset sidebar collapsing to an icon rail,
+a sticky blurred header, ring-edged cards with a header band over an inset panel, and the kit's Hospital Management
+dashboard as the model for Today. Loopwise keeps its own primary (care blue), coral for Wise and the clinical tones.
+Components are shadcn/ui on Radix and Tailwind v4 (`components/ui/`); feature CSS Modules read the same tokens.
+
 ## 1. Tokens (`apps/frontend/src/theme/tokens.css`)
 
-Components read `--app-*` tokens, never hex (`scripts/check-styles.mjs` fails on hex and px in CSS Modules).
-`src/theme/contrast.test.ts` checks every text pair below in light and dark.
+Components read `--app-*` tokens, never hex (`scripts/check-styles.mjs` fails on hex and px in CSS Modules). The
+shadcn names (`--background`, `--primary`, `--sidebar` …) at the end of `:root` point at them, and `theme/index.css`
+maps those to Tailwind colours (`bg-card`, `text-muted-foreground`, plus `text-critical`, `bg-wise-bg` …). Dark values
+sit on `:root.dark` (the `dark` class, set by `lib/color-scheme.ts`). `src/theme/contrast.test.ts` checks every text
+pair below in light and dark.
 
 ### Colour
 
 | Token                                              | Light                             | Dark                              | Use                                      |
 | -------------------------------------------------- | --------------------------------- | --------------------------------- | ---------------------------------------- |
-| `--app-bg`                                         | `#f4f7fb`                         | `#0b1424`                         | Page background (brand paper)            |
-| `--app-surface`                                    | `#ffffff`                         | `#111c2e`                         | Cards, panels, the banner                |
-| `--app-fill`                                       | `#ebf0f6`                         | `#1a2740`                         | Subtle fills, hover                      |
-| `--app-line` / `--app-line-strong`                 | `#dde3eb` / `#c3ccd8`             | `#25324a` / `#34445f`             | Dividers, card borders                   |
-| `--app-control-line`                               | `#7d8a9f`                         | `#6b7c97`                         | Input and control borders (3:1)          |
-| `--app-text` / `--app-body`                        | `#0f1b2d` / `#1f2b3d`             | `#f4f7fb` / `#dce3ec`             | Headings / body text                     |
-| `--app-muted`                                      | `#526075`                         | `#a3b0c2`                         | Labels, meta (≥4.5:1 on surface and bg)  |
-| `--app-primary-bg` / `--app-accent`                | `#1f5fae`                         | `#6fa8f0`                         | Primary button, focus, active nav        |
-| `--app-primary-fg`                                 | `#ffffff`                         | `#0b1424`                         | Text on primary (dark text in dark mode) |
-| `--app-nav-bg`                                     | `#13233a`                         | `#13233a`                         | Sidebar (ink, both themes)               |
+| `--app-bg`                                         | `#ffffff`                         | `#0a0a0a`                         | The page inset (the kit's background)    |
+| `--app-surface`                                    | `#ffffff`                         | `#171717`                         | Cards, panels, the banner                |
+| `--app-fill`                                       | `#f5f5f5`                         | `#262626`                         | Subtle fills, hover, card header bands   |
+| `--app-line` / `--app-line-strong`                 | `#e5e5e5` / `#d4d4d4`             | `#2e2e2e` / `#404040`             | Dividers, card borders                   |
+| `--app-control-line`                               | `#8c8c8c`                         | `#737373`                         | Input and control borders (3:1)          |
+| `--app-text` / `--app-body`                        | `#0a0a0a` / `#171717`             | `#fafafa` / `#e5e5e5`             | Headings / body text                     |
+| `--app-muted`                                      | `#6b6b6b`                         | `#a1a1a1`                         | Labels, meta (≥4.5:1 on surface and bg)  |
+| `--app-primary-bg` / `--app-accent`                | `#1f5fae`                         | `#6fa8f0`                         | Primary button, focus, links             |
+| `--app-primary-fg`                                 | `#ffffff`                         | `#0a0a0a`                         | Text on primary (dark text in dark mode) |
+| `--app-nav-bg`                                     | `#f7f6f6`                         | `#171717`                         | Sidebar (the kit's light inset rail)     |
 | `--app-wise` / `--app-wise-bg` / `--app-wise-line` | `#b5452a` / `#fdf1ec` / `#f0997b` | `#f2937d` / `#3a1a10` / `#993c1d` | Wise only                                |
 
 **Coral means Wise.** The Ask Wise bar, the Wise dock and (phase 3) draft cards. Never errors, never a user's
@@ -54,8 +63,9 @@ allergies" assertion yet).
 
 ### Typography
 
-- Headings: **Poppins** 600 (matches the wordmark). Body: **Inter** (variable), 400 body, 500 labels, 600 emphasis.
-  Both self-hosted through `@fontsource` (`main.tsx`); no font CDN, so sovereign deployments make no third-party call.
+- **DM Sans** (variable), the kit's typeface, for headings, body and numbers: 400 body, 500 labels, 600 titles, 700
+  page headings and stats (`font-display`). Self-hosted through `@fontsource-variable/dm-sans` (`main.tsx`); no font
+  CDN, so sovereign deployments make no third-party call. Poppins stays in the wordmark artwork only.
 - Scale (`--app-text-*`): 12 · 14 · 16 · 18 · 20 · 24 · 30. **12px is the floor** and only for metadata and chips;
   dense tables and labels are 14; body is 16 with line-height 1.5, headings 1.25.
 - Tables and `.app-numeric` use tabular figures.
@@ -65,11 +75,14 @@ allergies" assertion yet).
 ### Spacing, radius, elevation, motion
 
 - 4pt grid: 4 · 8 · 12 · 16 · 24 · 32 · 48 (rem). Sections step 16 / 24 / 32.
-- Radius: 6 chips · 8 controls · 12 cards and the banner · 16 dialogs and sheets.
-- Elevation (`--app-shadow-1..3`, tinted ink): 1 cards and banner · 2 popovers · 3 dialogs, sheets, the Wise overlay.
+- Radius (`--radius` 0.625rem): pills for badges · 8 controls · 12 cards, dialogs and the inset · 14 the Wise dock.
+- Elevation: a hairline ring (`ring-foreground/10`) plus Tailwind's small shadows (`--app-shadow-1..3`): 1 cards ·
+  2 popovers and menus · 3 dialogs, sheets, the Wise dock.
 - Z-index: `--app-z-sticky` 20 (banner) · `--app-z-dock` 40 · `--app-z-overlay` 100 (Wise over the page).
-- Motion: 120ms feedback, 200ms enter, 140ms exit, ease-out; transform and opacity only. The global
-  `prefers-reduced-motion` reset stays.
+- Motion (the kit's, from `tw-animate-css` and `motion`): overlays fade and zoom in from 95% over 100ms and slide
+  2 units from their side; the sidebar eases its width over 200ms; a page fades in and its blocks rise 6px in a 40ms
+  stagger (`page.module.css`); stats count up (`components/ui/count-animation.tsx`). Transform and opacity only; the
+  global `prefers-reduced-motion` reset stays and the count-up shows the number at once.
 
 ## 2. Components
 
@@ -122,12 +135,15 @@ Visible labels (never placeholder-only), a required marker, errors under the fie
 
 ### Shell (`layout/`)
 
-- **Sidebar** (ink): the role's links from `lib/navigation.ts` (`roleNavLinks`), active row marked with
-  `aria-current` and a blue rule. Settings at the bottom through the user menu. The chat history and the clinic
+- **Sidebar** (the kit's inset sidebar, `components/ui/sidebar.tsx`): brand, a "Desk" group with the role's links from
+  `lib/navigation.ts` (`roleNavLinks`), the active row a grey pill with `aria-current`, the user row at the bottom
+  opening Settings. It collapses to an icon rail (tooltips name the links; `[` or ⌘B, or the header button) and is a
+  sheet on a phone. The page sits beside it in a rounded, shadowed inset. The chat history and the clinic
   switcher left the sidebar: chats live on **Wise chats** (`/chats`); the clinic switcher is admin-only in Settings.
 - **Phone (<768px):** a bottom bar with the role's first five links, each with icon and label.
-- **Top bar:** breadcrumbs as a list with links (`Patients › Maria Santos › Encounter 22 Oct 2026`, names read from
-  the pages' cached queries, never fetched again: the reads are audited), ⌘K "Find a patient or chat", account menu.
+- **Top bar** (the kit's site header: sticky, blurred, 56px): sidebar toggle, breadcrumbs as a list with links
+  (`Patients › Maria Santos › Encounter 22 Oct 2026`, names read from the pages' cached queries, never fetched again:
+  the reads are audited), ⌘K "Find a patient or chat", Ask Wise (coral), the light/dark switch and the account menu.
 - Skip link to `#main`; focus moves to the new page's h1 on every route change.
 - The clinic, agent, skills, usage and storage settings are admin-only.
 

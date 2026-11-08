@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { MantineProvider } from '@mantine/core';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,7 +15,7 @@ vi.mock('@/contexts/agent.provider', () => ({ useAgentContext: () => ({ chatId: 
 
 const renderPart = (output: object, input: object = { query: 'Santos' }) =>
 	render(
-		<MantineProvider>
+		<>
 			<FindPatientToolCall
 				toolPart={
 					{
@@ -28,7 +27,7 @@ const renderPart = (output: object, input: object = { query: 'Santos' }) =>
 					} as unknown as ToolCallComponentProps<'find_patient'>['toolPart']
 				}
 			/>
-		</MantineProvider>,
+		</>,
 	);
 
 afterEach(cleanup);

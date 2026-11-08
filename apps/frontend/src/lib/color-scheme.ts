@@ -1,10 +1,12 @@
-const COLOR_SCHEME_ATTRIBUTE = 'data-mantine-color-scheme';
+/** Dark mode is the `dark` class on the root (Tailwind's and shadcn's convention); tokens follow it. */
+const DARK_CLASS = 'dark';
 
 export function isDarkColorScheme(root: HTMLElement = document.documentElement): boolean {
-	return root.getAttribute(COLOR_SCHEME_ATTRIBUTE) === 'dark';
+	return root.classList.contains(DARK_CLASS);
 }
 
-/** Tokens follow this attribute, so setting it repaints every surface under `root`. */
+/** Tokens follow this class, so setting it repaints every surface under `root`. */
 export function setColorSchemeAttribute(dark: boolean, root: HTMLElement = document.documentElement) {
-	root.setAttribute(COLOR_SCHEME_ATTRIBUTE, dark ? 'dark' : 'light');
+	root.classList.toggle(DARK_CLASS, dark);
+	root.style.colorScheme = dark ? 'dark' : 'light';
 }

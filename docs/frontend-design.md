@@ -19,16 +19,16 @@ A reusable frontend pattern for a signed-in web application: folder structure, r
 
 ## 1. Stack
 
-| Concern     | Sample choice                                                         | Can it change?                        |
-| ----------- | --------------------------------------------------------------------- | ------------------------------------- |
-| Build       | Vite                                                                  | Yes                                   |
-| UI          | React + TypeScript                                                    | The code samples assume it            |
-| Routing     | TanStack Router, file-based                                           | The code samples assume it            |
-| Components  | Mantine, with `@mantine/hooks`, `modals`, `notifications`, and `form` | The theme and shell samples assume it |
-| Icons       | `@tabler/icons-react`                                                 | Yes                                   |
-| Styling     | CSS Modules + CSS variables + `postcss-preset-mantine`                | Keep the CSS variables                |
-| Data client | Any: REST, GraphQL, or a query library                                | Yes                                   |
-| Auth        | Any, exposed through `fetchSession()`                                 | Yes                                   |
+| Concern     | Sample choice                                                            | Can it change?                        |
+| ----------- | ------------------------------------------------------------------------ | ------------------------------------- |
+| Build       | Vite                                                                     | Yes                                   |
+| UI          | React + TypeScript                                                       | The code samples assume it            |
+| Routing     | TanStack Router, file-based                                              | The code samples assume it            |
+| Components  | shadcn/ui (Radix primitives, `cva`, `cmdk`, `motion`) in `components/ui` | The theme and shell samples assume it |
+| Icons       | `@tabler/icons-react`                                                    | Yes                                   |
+| Styling     | Tailwind v4 (`@tailwindcss/vite`) + CSS Modules + CSS variables          | Keep the CSS variables                |
+| Data client | Any: REST, GraphQL, or a query library                                   | Yes                                   |
+| Auth        | Any, exposed through `fetchSession()`                                    | Yes                                   |
 
 The pattern touches the backend in only two places: `fetchAppConfig()` and `fetchSession()`.
 
@@ -68,7 +68,7 @@ src/
 ├── context/             Router context type
 ├── lib/                 Non-visual: config, session, navigation, appearance
 └── theme/
-    ├── index.ts         Mantine theme + variable mapping
+    ├── index.css        Tailwind, the shadcn variants, and the token → colour mapping
     ├── tokens.css       All design tokens
     └── ui.module.css    Shared UI classes
 ```
@@ -107,19 +107,18 @@ declare module '@tanstack/react-router' {
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
-		<MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver} defaultColorScheme='auto'>
-			<ModalsProvider>
-				<Notifications position='top-right' />
+		<ThemeProvider>
+			<TooltipProvider>
 				<RouterProvider router={router} />
-			</ModalsProvider>
-		</MantineProvider>
+			</TooltipProvider>
+		</ThemeProvider>
 	</StrictMode>,
 );
 ```
 
-Keep `MantineProvider` **above** the router. The root route's pending and error components replace its normal component, so a provider inside that route would be missing when they render.
+Keep the providers **above** the router. The root route's pending and error components replace its normal component, so a provider inside that route would be missing when they render. Radix needs no theme provider: the theme is CSS variables and the `dark` class on `<html>`.
 
-Import global CSS in this order so tokens win on equal specificity: Mantine's styles, then `theme/tokens.css`.
+Import global CSS in this order: `theme/reset.css` (its layer comes first), `theme/index.css` (Tailwind, `tw-animate-css`, the shadcn variants), then `theme/tokens.css` and the other theme files. Utilities live in Tailwind's layers and CSS Modules are unlayered, so a module class passed as `className` wins over a component's utilities.
 
 ## 5. Routes
 
@@ -437,24 +436,23 @@ From top to bottom, the sidebar contains:
 | Count badge            | `0.625rem` pill with accent fill                                          |
 | Rail item with a count | Small dot instead of a number                                             |
 
-Reassign Mantine's semantic variables on the sidebar root, so child components follow the dark surface without per-component styling. Menus render in a portal and escape these variables, so give sidebar dropdowns their own dark styles.
+Build the sidebar from shadcn's `Sidebar` parts (`SidebarHeader`, `SidebarGroup`, `SidebarMenuButton` …) in the `inset` variant with `collapsible='icon'`. The `--sidebar-*` variables point at the `--app-nav-*` tokens, so the rail, the active pill and the borders follow the theme without per-component styling. On a phone the same tree renders in a `Sheet`.
 
-```css
-.navbar {
-	--mantine-color-text: var(--app-nav-text);
-	--mantine-color-dimmed: var(--app-nav-muted);
-	--mantine-color-default: transparent;
-	--mantine-color-default-hover: var(--app-nav-hover);
-	--mantine-color-default-color: var(--app-nav-text);
-	--mantine-color-default-border: var(--app-nav-line);
-
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	color: var(--app-nav-text);
-	background-color: var(--app-nav-bg);
-	border-right: 1px solid var(--app-nav-line);
-}
+```tsx
+<SidebarWrapper>
+	<Sidebar variant='inset' collapsible='icon'>
+		<SidebarHeader>{/* logo */}</SidebarHeader>
+		<SidebarContent>
+			<SidebarGroup>
+				<SidebarGroupLabel>Desk</SidebarGroupLabel>
+				<SidebarMenu>{/* SidebarMenuItem > SidebarMenuButton asChild tooltip={label} > Link */}</SidebarMenu>
+			</SidebarGroup>
+		</SidebarContent>
+		<SidebarFooter>{/* user row */}</SidebarFooter>
+		<SidebarRail />
+	</Sidebar>
+	<SidebarInset>{/* header + page */}</SidebarInset>
+</SidebarWrapper>
 ```
 
 ### Top bar
@@ -633,11 +631,11 @@ export function PermissionGate({ children }: { children: ReactNode }) {
 ### How tokens connect
 
 ```
-theme/tokens.css                 --app-* values: light on :root, dark on
-       ↓                         :root[data-mantine-color-scheme="dark"]
-cssVariablesResolver             --mantine-color-body → var(--app-surface), etc.
+theme/tokens.css                 --app-* values: light on :root, dark on :root.dark;
+       ↓                         shadcn names (--background, --primary …) point at them
+theme/index.css (@theme inline)  --color-card → var(--card), etc.
        ↓
-Stock components + CSS Modules   Follow the tokens with no per-component styling
+shadcn components + CSS Modules  Tailwind utilities and modules follow the tokens
 ```
 
 ### Sample tokens
@@ -681,7 +679,7 @@ guards them: [design-system.md §1](design-system.md#1-tokens-appsfrontendsrcthe
 	--app-nav-active: #1e293b;
 }
 
-:root[data-mantine-color-scheme='dark'] {
+:root.dark {
 	--app-bg: #0b1120;
 	--app-surface: #111827;
 	--app-fill: #1f2937;
@@ -707,8 +705,6 @@ body {
 	background-color: var(--app-bg);
 }
 
-.mantine-focus-auto:focus-visible,
-.mantine-focus-always:focus,
 a:focus-visible,
 button:focus-visible {
 	outline: 3px solid var(--app-accent);
@@ -722,122 +718,63 @@ button:focus-visible {
 
 Check contrast whenever you change colours, especially text on the accent. If white fails on your accent, use dark text on it. Tint shadows with your darkest brand colour rather than pure black.
 
-### Mantine theme
+### Tailwind mapping
 
-```ts
-// src/theme/index.ts
-const brand: MantineColorsTuple = [
-	'#eff6ff',
-	'#dbeafe',
-	'#bfdbfe',
-	'#93c5fd',
-	'#60a5fa',
-	'#3b82f6',
-	'#2563eb',
-	'#1d4ed8',
-	'#1e40af',
-	'#1e3a8a',
-];
+```css
+/* src/theme/index.css */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './shadcn.css'; /* data-open, data-closed … variants and accordion keyframes */
 
-// Stock components read dark-* directly, so rebuild it on your dark tokens.
-const dark: MantineColorsTuple = [
-	'#e2e8f0',
-	'#cbd5e1',
-	'#94a3b8',
-	'#64748b',
-	'#273244',
-	'#374357',
-	'#1f2937',
-	'#111827',
-	'#0b1120',
-	'#060a14',
-];
+@custom-variant dark (&:is(.dark *));
 
-export const theme = createTheme({
-	primaryColor: 'brand',
-	defaultRadius: 'md',
-	colors: { brand, dark },
-	fontFamily: 'var(--app-font-body)',
-	headings: { fontFamily: 'var(--app-font-heading)' },
-	components: {
-		Button: Button.extend({
-			defaultProps: { size: 'sm' },
-			// Only the default filled button takes the primary colours.
-			vars: (_theme, props) =>
-				props.color === undefined && (props.variant === undefined || props.variant === 'filled')
-					? {
-							root: {
-								'--button-bg': 'var(--app-primary-bg)',
-								'--button-hover': 'var(--app-primary-hover)',
-								'--button-color': 'var(--app-primary-fg)',
-							},
-						}
-					: { root: {} },
-		}),
-		TextInput: { defaultProps: { size: 'sm' } },
-		Select: { defaultProps: { size: 'sm' } },
-		Modal: {
-			defaultProps: {
-				radius: 'lg',
-				transitionProps: { transition: 'pop', duration: 180, timingFunction: 'cubic-bezier(.2,.8,.2,1)' },
-			},
-		},
-	},
-});
-
-const tokenVariables = {
-	'--mantine-color-body': 'var(--app-surface)',
-	'--mantine-color-text': 'var(--app-body)',
-	'--mantine-color-dimmed': 'var(--app-muted)',
-	'--mantine-color-default': 'var(--app-surface)',
-	'--mantine-color-default-hover': 'var(--app-fill)',
-	'--mantine-color-default-color': 'var(--app-body)',
-	'--mantine-color-default-border': 'var(--app-line)',
-	'--mantine-color-anchor': 'var(--app-accent-text)',
-	'--mantine-color-error': 'var(--app-danger)',
-};
-
-export const cssVariablesResolver: CSSVariablesResolver = () => ({
-	variables: {},
-	light: tokenVariables,
-	dark: tokenVariables,
-});
+@theme inline {
+	--radius-lg: var(--radius);
+	--color-background: var(--background);
+	--color-card: var(--card);
+	--color-primary: var(--primary);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-sidebar: var(--sidebar);
+	/* … one line per shadcn variable, plus your own status colours */
+	--font-sans: var(--app-font-body);
+}
 ```
 
-Mantine paints `Paper`, `Card`, `Modal`, and `AppShell` with `--mantine-color-body`, so it maps to the surface. The page background is set separately on `body`.
+shadcn components (`components/ui/*.tsx`) are copied into the repo and owned there: Radix for behaviour, `cva` for variants, Tailwind for appearance. Keep each component's exported API stable, so features never import Radix directly.
 
 ### Typography
 
-| Role            | Font      | Size        | Weight    | Notes                                |
-| --------------- | --------- | ----------- | --------- | ------------------------------------ |
-| Page title      | Heading   | `1.625rem`  | 800       | Tracking `-0.02em`                   |
-| Dialog title    | Heading   | `1.375rem`  | 800       |                                      |
-| Section title   | Heading   | `0.9375rem` | 700       | Tracking `0.03em`                    |
-| Uppercase label | Heading   | `0.6875rem` | 600       | Tracking `0.14em`                    |
-| Body            | Body      | `0.8125rem` | 400–500   |                                      |
-| Numbers         | Inherited | Inherited   | Inherited | `font-variant-numeric: tabular-nums` |
+| Role         | Font      | Size       | Weight    | Notes                                        |
+| ------------ | --------- | ---------- | --------- | -------------------------------------------- |
+| Page title   | Heading   | `1.5rem`   | 700       | `1.25rem` below `64rem`, tracking `-0.025em` |
+| Dialog title | Heading   | `1rem`     | 600       |                                              |
+| Card title   | Heading   | `0.875rem` | 600       |                                              |
+| Group label  | Body      | `0.75rem`  | 500       | Muted, sentence case                         |
+| Body         | Body      | `0.875rem` | 400–500   |                                              |
+| Stat         | Display   | `1.875rem` | 700       | Counts up on arrival                         |
+| Numbers      | Inherited | Inherited  | Inherited | `font-variant-numeric: tabular-nums`         |
 
-### Shared UI classes
+### Shared UI components
 
-Keep these in `theme/ui.module.css`, not inside a feature. Mantine handles behaviour such as inputs, modals, and focus, and these classes handle appearance on dense screens.
+Keep these in `components/ui`, not inside a feature. Radix handles behaviour such as menus, dialogs and focus; the classes handle appearance on dense screens.
 
-| Class                                                    | What it is                          |
-| -------------------------------------------------------- | ----------------------------------- |
-| `.panel`                                                 | Surface, 1 px line, radius 10 px    |
-| `.inset`                                                 | Box inside a panel                  |
-| `.title`, `.sectionTitle`, `.label`, `.muted`, `.number` | Typography roles                    |
-| `.btn`, `.btnSmall`, `.btnPrimary`                       | Button: `2.25rem` tall, radius 8 px |
-| `.chip` + `.chipAccent` / `.chipDanger` / `.chipOk`      | Status pill                         |
-| `.field`, `.input`                                       | Label above input; input            |
+| Component                                           | What it is                                                |
+| --------------------------------------------------- | --------------------------------------------------------- |
+| `Card` + `CardHeader` / `CardTitle` / `CardContent` | A muted card with a header band over an inset white panel |
+| `Button`, `Badge`                                   | `cva` variants; `--app-control-height` tall, radius 8 px  |
+| `Dialog`, `AlertDialog`, `Sheet`                    | Fade and zoom from 95%, a muted footer band               |
+| `DropdownMenu`, `Popover`, `Select`, `Tooltip`      | Portalled, slide 2 units from their side                  |
+| `Input`, `Textarea`, `Checkbox`, `Switch`, `Slider` | Form controls with a 3:1 border and a 3px focus ring      |
+| `Sidebar`, `Breadcrumb`, `Separator`, `Skeleton`    | The shell and page furniture                              |
 
 ### Sizing and spacing
 
-| Do                                                                  | Don't                                |
-| ------------------------------------------------------------------- | ------------------------------------ |
-| `fontSize: '0.8125rem'`                                             | `fontSize: 13` (React makes this px) |
-| `w="13rem"`                                                         | `w={208}` (Mantine reads this as px) |
-| `calc(0.75rem * var(--app-density, 1))` for spacing outside Mantine | A fixed gap that ignores density     |
-| `var(--app-muted)`                                                  | A hex value in a component           |
+| Do                                                                | Don't                                |
+| ----------------------------------------------------------------- | ------------------------------------ |
+| `fontSize: '0.8125rem'`                                           | `fontSize: 13` (React makes this px) |
+| `className='w-52'` or `w-[13rem]`                                 | `style={{ width: 208 }}`             |
+| `calc(0.75rem * var(--app-density, 1))` for density-aware spacing | A fixed gap that ignores density     |
+| `var(--app-muted)`                                                | A hex value in a component           |
 
 `1px` hairlines, borders, shadows, outlines, transforms, and media queries may stay in px. Add a build script that fails on other px lengths, because this rule is easy to break unnoticed.
 
@@ -854,7 +791,9 @@ Keep these in `theme/ui.module.css`, not inside a feature. Mantine handles behav
 ```
 
 ```tsx
-<SimpleGrid type="container" cols={{ base: 1, '29rem': 2, '56rem': 3 }}>
+<div className='@container/main'>
+	<div className='grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-3'>{/* cards */}</div>
+</div>
 ```
 
 | Size | Window | Container equivalent |
@@ -865,25 +804,7 @@ Keep these in `theme/ui.module.css`, not inside a feature. Mantine handles behav
 | `lg` | `75em` | `56rem`              |
 | `xl` | `88em` | `69rem`              |
 
-Use window media queries only for the shell. In CSS Modules, use `@mixin smaller-than $mantine-breakpoint-sm`, which needs this PostCSS config. Without it, the mixins are silently dropped.
-
-```js
-// postcss.config.cjs
-module.exports = {
-	plugins: {
-		'postcss-preset-mantine': {},
-		'postcss-simple-vars': {
-			variables: {
-				'mantine-breakpoint-xs': '36em',
-				'mantine-breakpoint-sm': '48em',
-				'mantine-breakpoint-md': '62em',
-				'mantine-breakpoint-lg': '75em',
-				'mantine-breakpoint-xl': '88em',
-			},
-		},
-	},
-};
-```
+Use window media queries only for the shell. In Tailwind, use the `sm:`/`md:`/`lg:` variants (48rem is `md`); in CSS Modules, write the media query in rem (`@media (max-width: 47.99em)`).
 
 Tables scroll inside their own wrapper, never the whole page.
 
@@ -915,35 +836,27 @@ Motion confirms actions and is never required to understand them. Always honour 
 
 Write settings to `<html>` and style them in `tokens.css`. Store them on the server, and keep a copy in localStorage so the first paint is correct.
 
-| Setting        | Mechanism                                                                     |
-| -------------- | ----------------------------------------------------------------------------- |
-| Theme          | Mantine color scheme                                                          |
-| Text size      | Root `font-size`; the whole UI scales                                         |
-| Density        | `data-density="compact"` sets `--app-density: 0.7` and scales Mantine spacing |
-| High contrast  | `data-contrast="high"` overrides line and muted tokens                        |
-| Reduced motion | `data-motion="reduce"` sets all durations to zero                             |
+| Setting        | Mechanism                                                                 |
+| -------------- | ------------------------------------------------------------------------- |
+| Theme          | The `dark` class on `<html>` (light, dark or follow the system)           |
+| Text size      | Root `font-size`; the whole UI scales                                     |
+| Density        | `data-density="compact"` sets `--app-density: 0.7` and scales `--spacing` |
+| High contrast  | `data-contrast="high"` overrides line and muted tokens                    |
+| Reduced motion | `data-motion="reduce"` sets all durations to zero                         |
 
 ### Optional runtime branding
 
-For a white-label system, serve an accent colour and logo in the app config. Set `--app-brand-accent` on `<html>`, and have tokens read `var(--app-brand-accent, #2563eb)`. The router loads the config below `MantineProvider`, so publish branding to a small store and have a wrapper around the provider subscribe with `useSyncExternalStore`.
+For a white-label system, serve an accent colour and logo in the app config. Set `--app-brand-accent` on `<html>`, and have tokens read `var(--app-brand-accent, #2563eb)`. The router loads the config below the theme provider, so publish branding to a small store and have a wrapper around the provider subscribe with `useSyncExternalStore`.
 
 ## 9. Page patterns
 
 ### List page
 
 ```tsx
-<Stack gap='lg'>
-	<PageHeader>
-		<Stack gap={2}>
-			<Title order={1}>Customers</Title>
-			<Text size='sm' c='dimmed'>
-				One-line description.
-			</Text>
-		</Stack>
-		<Group gap='xs'>{/* View toggle and permitted actions */}</Group>
-	</PageHeader>
-	{/* Filters → bulk bar when selected → table → pagination */}
-</Stack>
+<div className='space-y-4 lg:space-y-6'>
+	<PageHeader title='Customers' subtitle='One-line description.' actions={/* view toggle, permitted actions */} />
+	{/* Summary cards → filters → bulk bar when selected → table card → pagination */}
+</div>
 ```
 
 ```css
@@ -953,7 +866,7 @@ For a white-label system, serve an accent colour and logo in the app config. Set
 	align-items: flex-start;
 	justify-content: space-between;
 	flex-wrap: wrap;
-	gap: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+	gap: 0.75rem 1rem;
 }
 ```
 
@@ -1022,7 +935,7 @@ Create it at the top level of `routes/`, outside `_public` and `_protected`, wit
 
 ## 11. Applying this to a new system
 
-1. Scaffold Vite, Mantine, the router plugin, PostCSS, and the dev proxy.
+1. Scaffold Vite, Tailwind v4, the shadcn components you need, the router plugin, and the dev proxy.
 2. List your system's domains, then map them to routes and menu sections.
 3. Replace the token values and fonts, then confirm light and dark mode work on stock components.
 4. Implement `fetchAppConfig()` and `fetchSession()` against your backend.

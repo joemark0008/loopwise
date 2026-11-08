@@ -153,36 +153,6 @@
 	}
 }
 
-.emptyState {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.5rem;
-	padding: 2rem 1rem;
-	border: 1px dashed var(--app-line-strong);
-	border-radius: 0.75rem;
-	text-align: center;
-	color: var(--app-muted);
-
-	& svg {
-		width: 1.5rem;
-		height: 1.5rem;
-	}
-}
-
-.emptyTitle {
-	margin: 0;
-	font-size: var(--app-text-md);
-	font-weight: 600;
-	color: var(--app-text);
-}
-
-.emptyBody {
-	margin: 0;
-	max-width: 32rem;
-	font-size: var(--app-text-sm);
-}
-
 .actionBar {
 	display: flex;
 	flex-wrap: wrap;

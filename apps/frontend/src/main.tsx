@@ -1,33 +1,24 @@
-import '@fontsource-variable/inter';
-import '@fontsource/poppins/500.css';
-import '@fontsource/poppins/600.css';
+import '@fontsource-variable/dm-sans';
 import './theme/reset.css';
-import '@mantine/core/styles.layer.css';
-import '@mantine/notifications/styles.layer.css';
+import './theme/index.css';
 import './theme/tokens.css';
 import './theme/palette.css';
 import './theme/animations.css';
 import './theme/global.css';
 import './theme/shared-surfaces.css';
-import './theme/streamdown.css';
 import 'katex/dist/katex.min.css';
 import { StrictMode } from 'react';
-import { MantineProvider } from '@mantine/core';
-import { ModalsProvider } from '@mantine/modals';
-import { Notifications } from '@mantine/notifications';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import ReactDOM from 'react-dom/client';
 import { ApolloProvider } from '@apollo/client/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider, useIsDarkMode } from './contexts/theme.provider';
+import { ThemeProvider } from './contexts/theme.provider';
 import { McpProvider } from './contexts/mcp';
 import { TooltipProvider } from './components/ui/tooltip';
 import { subscribeToExternalActiveClinicChanges } from './lib/active-clinic';
 import { apolloClient } from './lib/apollo-client';
 import { routeTree } from './routeTree.gen';
-import { cssVariablesResolver, theme } from './theme';
 import reportWebVitals from './reportWebVitals';
-import type { ReactNode } from 'react';
 
 // Register the router instance for type safety
 declare module '@tanstack/react-router' {
@@ -68,20 +59,6 @@ subscribeToExternalActiveClinicChanges(() => {
 	void router.invalidate();
 });
 
-/** The saved theme setting is the one source of the color scheme. */
-function AppMantineProvider({ children }: { children: ReactNode }) {
-	const isDark = useIsDarkMode();
-	return (
-		<MantineProvider
-			theme={theme}
-			cssVariablesResolver={cssVariablesResolver}
-			forceColorScheme={isDark ? 'dark' : 'light'}
-		>
-			{children}
-		</MantineProvider>
-	);
-}
-
 // Render the app
 const rootElement = document.getElementById('app')!;
 if (!rootElement.innerHTML) {
@@ -89,20 +66,15 @@ if (!rootElement.innerHTML) {
 	root.render(
 		<StrictMode>
 			<ThemeProvider>
-				<AppMantineProvider>
-					<ModalsProvider>
-						<Notifications position='top-right' />
-						<ApolloProvider client={apolloClient}>
-							<QueryClientProvider client={queryClient}>
-								<McpProvider>
-									<TooltipProvider>
-										<RouterProvider router={router} />
-									</TooltipProvider>
-								</McpProvider>
-							</QueryClientProvider>
-						</ApolloProvider>
-					</ModalsProvider>
-				</AppMantineProvider>
+				<ApolloProvider client={apolloClient}>
+					<QueryClientProvider client={queryClient}>
+						<McpProvider>
+							<TooltipProvider>
+								<RouterProvider router={router} />
+							</TooltipProvider>
+						</McpProvider>
+					</QueryClientProvider>
+				</ApolloProvider>
 			</ThemeProvider>
 		</StrictMode>,
 	);

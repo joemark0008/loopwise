@@ -1,116 +1,56 @@
-import { Popover as MantinePopover } from '@mantine/core';
-import { cloneElement, createContext, isValidElement, useContext, useRef, useState } from 'react';
+import { Popover as PopoverPrimitive } from 'radix-ui';
+import type { ComponentProps, CSSProperties } from 'react';
 
-import styles from './overlay.module.css';
-import { findPart, toFloatingPosition } from './floating';
-import type { ComponentProps, MouseEvent, ReactElement, ReactNode } from 'react';
-import type { FloatingAlign, FloatingSide } from './floating';
 import { usePortalContainer } from '@/contexts/portal-container';
 import { cn } from '@/lib/utils';
 
-const PopoverContext = createContext<{
-	open: boolean;
-	setOpen: (open: boolean) => void;
-	targetWidth?: number;
-	setTargetWidth: (width?: number) => void;
-}>({ open: false, setOpen: () => undefined, setTargetWidth: () => undefined });
-
-type PopoverContentProps = ComponentProps<'div'> & {
-	align?: FloatingAlign;
-	side?: FloatingSide;
-	sideOffset?: number;
-};
-
-function Popover({
-	open,
-	defaultOpen = false,
-	onOpenChange,
-	children,
-}: {
-	open?: boolean;
-	defaultOpen?: boolean;
-	onOpenChange?: (open: boolean) => void;
-	children?: ReactNode;
-}) {
-	const [internalOpen, setInternalOpen] = useState(defaultOpen);
-	const [targetWidth, setTargetWidth] = useState<number>();
-	const isOpen = open ?? internalOpen;
-	const content = findPart<PopoverContentProps>(children, PopoverContent);
-	const portalTarget = usePortalContainer();
-	const setOpen = (next: boolean) => {
-		setInternalOpen(next);
-		onOpenChange?.(next);
-	};
-
-	return (
-		<PopoverContext.Provider value={{ open: isOpen, setOpen, targetWidth, setTargetWidth }}>
-			<MantinePopover
-				opened={isOpen}
-				onChange={setOpen}
-				position={toFloatingPosition(content?.side, content?.align)}
-				offset={content?.sideOffset ?? 4}
-				withinPortal
-				portalProps={portalTarget ? { target: portalTarget } : undefined}
-				transitionProps={{ duration: 160, transition: 'pop' }}
-			>
-				{children}
-			</MantinePopover>
-		</PopoverContext.Provider>
-	);
+function Popover(props: ComponentProps<typeof PopoverPrimitive.Root>) {
+	return <PopoverPrimitive.Root data-slot='popover' {...props} />;
 }
 
-function PopoverTrigger({ asChild, children, ...props }: ComponentProps<'button'> & { asChild?: boolean }) {
-	const { open, setOpen, setTargetWidth } = useContext(PopoverContext);
-	const ref = useRef<HTMLElement>(null);
-	const toggle = (event: MouseEvent<HTMLElement>) => {
-		setTargetWidth(event.currentTarget.offsetWidth);
-		setOpen(!open);
-	};
-	if (asChild && isValidElement(children)) {
-		const child = children as ReactElement<ComponentProps<'button'>>;
-		return (
-			<MantinePopover.Target ref={ref as never}>
-				{cloneElement(child, {
-					...props,
-					'data-state': open ? 'open' : 'closed',
-					onClick: (event: MouseEvent<HTMLButtonElement>) => {
-						child.props.onClick?.(event);
-						toggle(event);
-					},
-				} as ComponentProps<'button'>)}
-			</MantinePopover.Target>
-		);
-	}
-	return (
-		<MantinePopover.Target>
-			<button type='button' data-state={open ? 'open' : 'closed'} onClick={toggle} {...props}>
-				{children}
-			</button>
-		</MantinePopover.Target>
-	);
+function PopoverTrigger(props: ComponentProps<typeof PopoverPrimitive.Trigger>) {
+	return <PopoverPrimitive.Trigger data-slot='popover-trigger' {...props} />;
 }
 
-function PopoverAnchor({ children }: { asChild?: boolean; children?: ReactNode }) {
-	return <MantinePopover.Target>{children as ReactElement}</MantinePopover.Target>;
+function PopoverAnchor(props: ComponentProps<typeof PopoverPrimitive.Anchor>) {
+	return <PopoverPrimitive.Anchor data-slot='popover-anchor' {...props} />;
 }
 
 function PopoverContent({
 	className,
+	align = 'center',
+	sideOffset = 4,
 	style,
-	align: _align,
-	side: _side,
-	sideOffset: _sideOffset,
 	...props
-}: PopoverContentProps) {
-	const { targetWidth } = useContext(PopoverContext);
+}: ComponentProps<typeof PopoverPrimitive.Content>) {
+	const container = usePortalContainer();
 	return (
-		<MantinePopover.Dropdown
-			data-slot='popover-content'
-			className={cn(styles.floating, styles.popover, className)}
-			style={{ ...style, ['--popover-trigger-width' as string]: targetWidth ? `${targetWidth}px` : undefined }}
-			{...(props as object)}
-		/>
+		<PopoverPrimitive.Portal container={container}>
+			<PopoverPrimitive.Content
+				data-slot='popover-content'
+				align={align}
+				sideOffset={sideOffset}
+				style={{ '--popover-trigger-width': 'var(--radix-popover-trigger-width)', ...style } as CSSProperties}
+				className={cn(
+					'z-50 flex w-72 origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 rounded-lg bg-popover p-2.5 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+					className,
+				)}
+				{...props}
+			/>
+		</PopoverPrimitive.Portal>
 	);
 }
 
-export { Popover, PopoverAnchor, PopoverContent, PopoverTrigger };
+function PopoverHeader({ className, ...props }: ComponentProps<'div'>) {
+	return <div data-slot='popover-header' className={cn('flex flex-col gap-0.5 text-sm', className)} {...props} />;
+}
+
+function PopoverTitle({ className, ...props }: ComponentProps<'div'>) {
+	return <div data-slot='popover-title' className={cn('font-medium', className)} {...props} />;
+}
+
+function PopoverDescription({ className, ...props }: ComponentProps<'p'>) {
+	return <p data-slot='popover-description' className={cn('text-muted-foreground', className)} {...props} />;
+}
+
+export { Popover, PopoverAnchor, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger };

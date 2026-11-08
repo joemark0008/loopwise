@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -55,11 +54,11 @@ const renderCard = (overrides: object = {}) => {
 		...overrides,
 	} as unknown as ToolCallComponentProps<'propose_skill'>['toolPart'];
 	return render(
-		<MantineProvider>
+		<>
 			<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
 				<ProposeSkillToolCall toolPart={toolPart} />
 			</QueryClientProvider>
-		</MantineProvider>,
+		</>,
 	);
 };
 
@@ -93,11 +92,11 @@ describe('ProposeSkillToolCall', () => {
 				input: { ...DRAFT, body },
 			}) as unknown as ToolCallComponentProps<'propose_skill'>['toolPart'];
 		const card = (body: string, state: string) => (
-			<MantineProvider>
+			<>
 				<QueryClientProvider client={client}>
 					<ProposeSkillToolCall toolPart={part(body, state)} />
 				</QueryClientProvider>
-			</MantineProvider>
+			</>
 		);
 		const client = new QueryClient();
 		const { rerender } = render(card('#', 'input-streaming'));

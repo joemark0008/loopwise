@@ -34,7 +34,7 @@ and the current state in [docs/NEXT.md](docs/NEXT.md).
 | Auth           | better-auth (email and password, sessions)                                        |
 | Background job | pg-boss (SLA timers, escalations, reminders)                                      |
 | AI             | Vercel AI SDK 6 (`ai`, `@ai-sdk/*` providers)                                     |
-| Frontend       | React 19, Vite 7, TanStack Router, Mantine 9, CSS Modules                         |
+| Frontend       | React 19, Vite 7, TanStack Router, shadcn/ui (Radix, Tailwind v4), CSS Modules    |
 | Data fetching  | Apollo Client 4 + GraphQL Code Generator                                          |
 | Testing        | Vitest (unit and e2e), Playwright (browser)                                       |
 | Deployment     | Docker (a single image: the API also serves the built frontend)                   |

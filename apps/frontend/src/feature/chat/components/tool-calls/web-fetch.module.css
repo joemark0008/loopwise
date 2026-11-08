@@ -46,7 +46,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-family: 'Geist Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: var(--app-font-mono);
 	font-size: 0.75rem;
 	line-height: var(--fx-leading, calc(1 / 0.75));
 	color: color-mix(in oklab, var(--app-text) 40%, transparent);

@@ -19,7 +19,7 @@
 	transition-duration: var(--fx-duration, 150ms);
 	--fx-outline-style: none;
 	outline-style: none;
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: color-mix(in oklab, var(--app-line-strong) 30%, transparent);
 	}
 }
@@ -77,7 +77,7 @@
 	&:has(:is([data-slot][aria-invalid='true'])) {
 		--fx-ring-color: color-mix(in oklab, var(--app-danger) 20%, transparent);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *):has(:is([data-slot][aria-invalid='true'])) {
+	&:is(:root.dark *):has(:is([data-slot][aria-invalid='true'])) {
 		--fx-ring-color: color-mix(in oklab, var(--app-danger) 40%, transparent);
 	}
 }
@@ -234,7 +234,7 @@
 			var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
 			var(--fx-shadow);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: transparent;
 	}
 }
@@ -260,7 +260,7 @@
 			var(--fx-inset-shadow), var(--fx-inset-ring-shadow), var(--fx-ring-offset-shadow), var(--fx-ring-shadow),
 			var(--fx-shadow);
 	}
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background-color: transparent;
 	}
 }

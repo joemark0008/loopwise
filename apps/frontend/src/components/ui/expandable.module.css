@@ -140,7 +140,7 @@
 	background:
 		radial-gradient(circle at center, rgba(255, 255, 255, 0.8), transparent) -200% 50% / 200% 100% no-repeat,
 		var(--app-muted);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		background:
 			radial-gradient(circle at center, rgb(0 0 0 / 80), transparent) -200% 50% / 200% 100% no-repeat,
 			var(--app-muted);

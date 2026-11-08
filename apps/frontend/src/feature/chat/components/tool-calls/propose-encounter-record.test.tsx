@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -92,11 +91,11 @@ const renderCard = (Card: React.ComponentType<any>, type: string, input: object)
 		output: { success: true, patientId: 'p1', encounterId: 'e1' },
 	};
 	return render(
-		<MantineProvider>
+		<>
 			<QueryClientProvider client={new QueryClient()}>
 				<Card toolPart={toolPart} />
 			</QueryClientProvider>
-		</MantineProvider>,
+		</>,
 	);
 };
 

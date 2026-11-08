@@ -1,6 +1,6 @@
-import { useMediaQuery } from '@mantine/hooks';
 import { useRouterState } from '@tanstack/react-router';
 import { createContext, useContext, useCallback, useState } from 'react';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { useMemoObject } from '@/hooks/useMemoObject';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { createLocalStorage } from '@/lib/local-storage';

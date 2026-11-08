@@ -53,7 +53,7 @@
 	height: 0.875rem;
 	flex-shrink: 0;
 	color: var(--app-emerald-600);
-	&:is(:root[data-mantine-color-scheme='dark'] *) {
+	&:is(:root.dark *) {
 		color: var(--app-emerald-400);
 	}
 }

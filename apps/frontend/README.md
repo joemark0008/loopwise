@@ -1,6 +1,6 @@
 # @loopwise/frontend
 
-The Loopwise web app: React 19, Vite, TanStack Router (file-based routes in `src/routes`), Mantine with CSS Modules,
+The Loopwise web app: React 19, Vite, TanStack Router (file-based routes in `src/routes`), shadcn/ui (Radix + Tailwind v4) with CSS Modules,
 and Apollo Client with GraphQL Code Generator. Design rules: [docs/frontend-design.md](../../docs/frontend-design.md)
 and [docs/design-system.md](../../docs/design-system.md).
 

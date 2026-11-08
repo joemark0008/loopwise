@@ -4,12 +4,12 @@ import { HeartPulse, Megaphone } from 'lucide-react';
 import { useState } from 'react';
 import styles from './scheduling.module.css';
 import { manilaDate, PRIORITY_REASON_LABELS } from './scheduling-format';
-import { TicketCode, useSchedulingClinic } from './scheduling-parts';
+import { QueueSection, TicketCode, useSchedulingClinic } from './scheduling-parts';
 import { CancelTicketButton, MoveError, TicketItem, useTicketMoves } from './ticket-item';
 import type { VitalsFormValues } from '@/feature/encounters/encounter-form-values';
 import type { QueueTicketFieldsFragment } from '@/graphql/generated/graphql';
 import { EmptyState } from '@/components/clinical/empty-state';
-import { PageHeader, PageSection } from '@/components/clinical/page-header';
+import { PageHeader } from '@/components/clinical/page-header';
 import pageStyles from '@/components/clinical/page.module.css';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/ui/error-message';
@@ -106,7 +106,7 @@ export function TriagePage() {
 							</section>
 						),
 					)}
-					<PageSection title='Waiting for triage' meta={String(waiting.length)}>
+					<QueueSection id='triage-waiting' title='Waiting for triage' count={waiting.length}>
 						{waiting.length === 0 ? (
 							<EmptyState icon={HeartPulse} title='Nobody waiting'>
 								Patients checked in at the front desk appear here, the priority lane first.
@@ -115,6 +115,7 @@ export function TriagePage() {
 							<ul className={styles.ticketList} aria-label='Waiting for triage'>
 								{waiting.map((ticket) => (
 									<TicketItem key={ticket.id} ticket={ticket}>
+										<CancelTicketButton ticket={ticket} />
 										<Button
 											size='sm'
 											variant='outline'
@@ -123,14 +124,13 @@ export function TriagePage() {
 										>
 											Call
 										</Button>
-										<CancelTicketButton ticket={ticket} />
 									</TicketItem>
 								))}
 							</ul>
 						)}
-					</PageSection>
+					</QueueSection>
 					{skipped.length > 0 && (
-						<PageSection title='Not here when called' meta={String(skipped.length)}>
+						<QueueSection id='triage-skipped' title='Not here when called' count={skipped.length}>
 							<ul className={styles.ticketList}>
 								{skipped.map((ticket) => (
 									<TicketItem key={ticket.id} ticket={ticket}>
@@ -145,7 +145,7 @@ export function TriagePage() {
 									</TicketItem>
 								))}
 							</ul>
-						</PageSection>
+						</QueueSection>
 					)}
 				</>
 			)}
