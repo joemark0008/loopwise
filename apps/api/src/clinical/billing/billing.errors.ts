@@ -55,6 +55,21 @@ export class InvoiceSeriesExpiredError extends DomainError {
 	}
 }
 
+/**
+ * The clinic registered BIR series but has turned every one off. Issuing is refused rather than falling back to the
+ * internal INVOICE sequence, which would print a number outside any registered (ATP / CAS) range.
+ */
+export class InvoiceSeriesInactiveError extends DomainError {
+	constructor(seriesId: string) {
+		super(
+			'CONFLICT',
+			'INVOICE_SERIES_INACTIVE',
+			'Every invoice series of this clinic is turned off. Turn one on or register a new series before issuing.',
+			{ seriesId },
+		);
+	}
+}
+
 /** A new series overlaps the numbers of another one of the clinic (same document type and prefix). */
 export class InvoiceSeriesOverlapError extends DomainError {
 	constructor(otherSeriesId: string) {

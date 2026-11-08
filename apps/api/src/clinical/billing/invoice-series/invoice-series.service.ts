@@ -10,6 +10,7 @@ import {
 	InvalidBillingInputError,
 	InvoiceSeriesExhaustedError,
 	InvoiceSeriesExpiredError,
+	InvoiceSeriesInactiveError,
 	InvoiceSeriesOverlapError,
 } from '../billing.errors.js';
 import type { BillingActor } from '../billing-access.js';
@@ -105,7 +106,8 @@ export class InvoiceSeriesService {
 
 	/**
 	 * The number an invoice takes on issue, inside the issue's transaction (a rollback gives the number back): the
-	 * clinic's series, else its INVOICE document sequence when it has registered none.
+	 * clinic's series, else its INVOICE document sequence when it has registered none. A clinic whose series are all
+	 * turned off is refused, not given an internal number.
 	 */
 	async takeNumber(
 		tx: ClinicalTx,
@@ -122,6 +124,9 @@ export class InvoiceSeriesService {
 			case 'expired':
 				this.logger.warn(`Invoice series ${taken.seriesId} has expired`);
 				throw new InvoiceSeriesExpiredError(taken.seriesId);
+			case 'inactive':
+				this.logger.warn(`Every invoice series of clinic ${clinic.id} is turned off`);
+				throw new InvoiceSeriesInactiveError(taken.seriesId);
 			case 'none':
 				return { invoiceNo: await this.sequences.next(tx, clinic, 'INVOICE'), seriesId: null };
 		}

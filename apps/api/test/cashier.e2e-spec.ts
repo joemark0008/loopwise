@@ -613,6 +613,17 @@ describe('cashier desk (e2e)', () => {
 		expect(await failure(invoices.issue(cashier, { id: next.id }))).toMatchObject({
 			errorCode: 'INVOICE_SERIES_EXHAUSTED',
 		});
+		// With every series turned off, issuing is refused, not given an internal (unregistered) number.
+		const registered = await series.list(billingAdmin);
+		for (const each of registered) {
+			await series.update(billingAdmin, { id: each.id, isActive: false });
+		}
+		expect(await failure(invoices.issue(cashier, { id: next.id }))).toMatchObject({
+			errorCode: 'INVOICE_SERIES_INACTIVE',
+		});
+		for (const each of registered) {
+			await series.update(billingAdmin, { id: each.id, isActive: each.isActive });
+		}
 		// A doctor outside the clinic's practitioners can't be named on a line.
 		const stranger = await createPractitioner(prisma, {});
 		expect(

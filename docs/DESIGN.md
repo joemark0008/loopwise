@@ -87,7 +87,9 @@ The patient never learns bad news from a machine.
   has its BIR branch code, DOH license and PhilHealth accreditation, its document numbering, its visits, invoices and
   stock, and it is also the staff's Wise workspace (chats, LLM settings, saved prompts, user groups). Staff hold
   **roles per clinic** (`user_clinic_roles`: doctor, nurse, medtech, cashier, …) and optionally an organization role
-  (`organization_members`: admin, member, viewer).
+  (`organization_members`: admin, member, viewer). A staff account's status is derived (`toManagedUser`): INVITED
+  (created by an admin, no sign-in account yet: the set-password link not used), ACTIVE, or DEACTIVATED
+  (`users.is_active` off, which takes precedence: a deactivated invitee shows as DEACTIVATED).
 - **Everything in-house.** The lab is the clinic's own: tests come from the organization's catalog and results are
   entered on the lab worklist. A send-out test is flagged (`diagnostic_tests.is_outsourced`,
   `diagnostic_orders.is_external`); a walk-in with an outside doctor's request is a `LAB_ONLY` encounter with
@@ -390,9 +392,13 @@ RA 11976); one invoice per visit that is not void.
   (`approved_by_id`). Employee / promo need a clinic admin's approval, special also a doctor's; never combined with
   SC/PWD (RA 9994 §4).
 - **Series and issuing** (`invoice-series/`): admins register ATP / CAS series (range, permit, validity; overlaps
-  refused). Issuing takes the next number of the first usable series in one locked `UPDATE`; refused when every active
-  series is exhausted (`INVOICE_SERIES_EXHAUSTED`) or past `valid_until` (`INVOICE_SERIES_EXPIRED`). A clinic with no
-  series falls back to its INVOICE document sequence. A void keeps its number, with who, when and why.
+  refused) and can turn one off (`is_active`). A series' state is derived, never stored: INACTIVE (turned off), else
+  EXPIRED (past `valid_until`, Manila date), else EXHAUSTED (`next_no` past `end_no`), else ACTIVE. Issuing takes the
+  next number of the first usable series in one locked `UPDATE`; refused when every active series is exhausted
+  (`INVOICE_SERIES_EXHAUSTED`) or past `valid_until` (`INVOICE_SERIES_EXPIRED`), or when the clinic has series but has
+  turned all of them off (`INVOICE_SERIES_INACTIVE`): an internal number outside every registered range is never
+  printed. Only a clinic that has registered no series falls back to its INVOICE document sequence. A void keeps its
+  number, with who, when and why.
 - **Payments** (`payments/`): split tender (CASH with tendered / change, GCASH, MAYA, QR_PH, cards, BANK_TRANSFER,
   CHECK with bank and date, PHILHEALTH packages), each a payment numbered from the PAYMENT sequence, allocated to the
   invoice, on the cashier's open shift (none → `NO_OPEN_SHIFT`). POSTED → VOIDED (admin, reason, only while its shift
