@@ -1,6 +1,19 @@
-# Loopwise
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="brand/svg/loopwise-logo-dark.svg">
+    <img src="brand/svg/loopwise-logo-light.svg" alt="Loopwise" width="360">
+  </picture>
+</p>
 
-> **Run the whole clinic, with an assistant that drafts and a clinician who decides.**
+<p align="center">
+  <b>Run the whole clinic, with an assistant that drafts and a clinician who decides.</b><br>
+  An open-source clinic management system powered by AI, for Philippine outpatient clinics.
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-1F5FAE" alt="License: Apache-2.0"></a>
+  <img src="https://img.shields.io/badge/status-pre--1.0-E8735A" alt="Status: pre-1.0">
+</p>
 
 **Loopwise is an open-source clinic management system powered by AI**, built for outpatient clinics in the
 Philippines. It runs the whole patient visit in one place: booking and check-in, triage, the doctor's consult, lab
