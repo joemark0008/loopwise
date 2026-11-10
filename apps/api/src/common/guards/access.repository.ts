@@ -74,15 +74,11 @@ export class AccessRepository {
 
 	/**
 	 * Organizations the user belongs to (a member row or a role at one of its clinics), oldest membership first;
-	 * only `organizationId` / the organization of `clinicId` when given.
+	 * only the organization of `clinicId` when given.
 	 */
-	async listOrganizationGrants(
-		userId: string,
-		filter: { organizationId?: string; clinicId?: string } = {},
-	): Promise<OrganizationGrant[]> {
+	async listOrganizationGrants(userId: string, filter: { clinicId?: string } = {}): Promise<OrganizationGrant[]> {
 		const organizations = await this.prisma.organization.findMany({
 			where: {
-				...(filter.organizationId ? { id: filter.organizationId } : {}),
 				...(filter.clinicId ? { clinics: { some: { id: filter.clinicId } } } : {}),
 				OR: [{ members: { some: { userId } } }, { clinics: { some: { userRoles: { some: { userId } } } } }],
 			},

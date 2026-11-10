@@ -1,7 +1,7 @@
 import type { UserRole } from './types';
 
 /**
- * A user's roles at a clinic (`user_clinic_roles.role`, the Prisma enum `StaffRole`): the reference schema's staff roles
+ * A user's roles at a clinic (`user_clinic_roles.role`, the Prisma enum `StaffRole`): the base schema's staff roles
  * plus Loopwise's MEMBER (staff without a specific desk), VIEWER (read-only) and CONTEXT_ADMIN (manages Wise's context
  * files). A user holds one row per role, e.g. SUPER_ADMIN + ADMIN + DOCTOR.
  */

@@ -24,7 +24,7 @@ export interface UserProfile {
 	image: string | null;
 }
 
-/** A new user: the reference's `firstName` / `lastName` are derived from `name` when left out. */
+/** A new user: the base schema's `firstName` / `lastName` are derived from `name` when left out. */
 export type NewUser = Omit<Prisma.UserCreateInput, 'messagingProviderCode' | 'firstName' | 'lastName'> & {
 	firstName?: string;
 	lastName?: string;

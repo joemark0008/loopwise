@@ -4002,9 +4002,7 @@ type RecordingConsent {
   """Who answered: the patient, or a guardian for a minor."""
   signedBy: String
 
-  """
-  The consent type of the reference schema used for recording (PHOTO_VIDEO).
-  """
+  """The consent type of the base schema used for recording (PHOTO_VIDEO)."""
   type: String!
 
   """The version of the consent text read to the patient."""

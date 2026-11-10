@@ -66,7 +66,7 @@ test.describe('signed in', () => {
 		await page.goto('/settings/account');
 		for (const [label, path, heading] of [
 			['Clinic Settings', '/settings/clinic', null],
-			['Agent', '/settings/clinic/agent', 'Agent'],
+			['AI and models', '/settings/clinic/agent', 'AI and models'],
 			['Skills', '/settings/clinic/skills', null],
 			['Wise tools', '/settings/wise-tools', null],
 			['Appearance', '/settings/appearance', 'Appearance'],

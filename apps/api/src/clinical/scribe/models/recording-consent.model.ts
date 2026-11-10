@@ -13,7 +13,7 @@ export class RecordingConsent {
 	@Field(() => ID)
 	encounterId: string;
 
-	@Field({ description: 'The consent type of the reference schema used for recording (PHOTO_VIDEO).' })
+	@Field({ description: 'The consent type of the base schema used for recording (PHOTO_VIDEO).' })
 	type: string;
 
 	@Field({ description: 'The version of the consent text read to the patient.' })

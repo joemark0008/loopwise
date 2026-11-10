@@ -222,16 +222,25 @@ describe('foundation (e2e)', () => {
 
 		it('resolves organization membership from members and clinic roles', async () => {
 			const access = app.get(AccessService);
-			expect(await access.resolveOrganizationMembership(scene.admin.id, null, null)).toMatchObject({
+			expect(await access.resolveOrganizationMembership(scene.admin.id, null)).toMatchObject({
 				organization: { id: scene.organization.id },
 				role: 'ADMIN',
 			});
-			expect(await access.resolveOrganizationMembership(scene.doctor.id, scene.clinic.id, null)).toMatchObject({
+			expect(await access.resolveOrganizationMembership(scene.doctor.id, scene.clinic.id)).toMatchObject({
 				organization: { id: scene.organization.id },
 				role: 'MEMBER',
 			});
+			// A clinic id the database doesn't have (remembered from another database) falls back to the membership.
+			const staleClinicId = '01933b2a-0000-7000-8000-00000000dead';
+			expect(await access.resolveOrganizationMembership(scene.admin.id, staleClinicId)).toMatchObject({
+				organization: { id: scene.organization.id },
+				role: 'ADMIN',
+			});
 			const outsider = await createUser(prisma);
-			await expect(access.resolveOrganizationMembership(outsider.id, null, null)).rejects.toMatchObject({
+			await expect(access.resolveOrganizationMembership(outsider.id, null)).rejects.toMatchObject({
+				codeMessage: 'NOT_FOUND',
+			});
+			await expect(access.resolveOrganizationMembership(outsider.id, staleClinicId)).rejects.toMatchObject({
 				codeMessage: 'NOT_FOUND',
 			});
 		});

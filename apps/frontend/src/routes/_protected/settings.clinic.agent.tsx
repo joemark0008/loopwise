@@ -5,7 +5,7 @@ import { ClinicAgentPage, isAgentTab } from '@/feature/settings/agent-page';
 
 export const Route = createFileRoute('/_protected/settings/clinic/agent')({
 	staticData: {
-		title: 'Agent',
+		title: 'AI and models',
 	},
 	validateSearch: (search: Record<string, unknown>): AgentSearch => ({
 		tab: search.tab === 'memory' ? 'tools' : isAgentTab(search.tab) ? search.tab : 'models',

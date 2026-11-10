@@ -89,25 +89,20 @@ export class AccessService {
 	}
 
 	/**
-	 * The organization a request works on (`resolveOrganizationMembership`): the selected organization, else the
-	 * selected clinic's, else the user's oldest membership.
+	 * The organization a request works on (`resolveOrganizationMembership`): the selected clinic's, else the user's
+	 * oldest membership. A deployment runs one organization (the business) with any number of clinic locations.
 	 */
 	async resolveOrganizationMembership(
 		userId: string,
 		selectedClinicId: string | null,
-		selectedOrganizationId: string | null,
 	): Promise<OrganizationMembership> {
-		if (selectedOrganizationId) {
-			const [grant] = isUuid(selectedOrganizationId)
-				? await this.access.listOrganizationGrants(userId, { organizationId: selectedOrganizationId })
-				: [];
-			return toMembership(grant, 'You are not a member of any organization');
-		}
-		if (selectedClinicId) {
-			const [grant] = isUuid(selectedClinicId)
-				? await this.access.listOrganizationGrants(userId, { clinicId: selectedClinicId })
-				: [];
-			return toMembership(grant, 'Selected clinic organization was not found');
+		if (selectedClinicId && isUuid(selectedClinicId)) {
+			const [grant] = await this.access.listOrganizationGrants(userId, { clinicId: selectedClinicId });
+			if (grant) {
+				return toMembership(grant, 'You are not a member of any organization');
+			}
+			// A stale selection (a deleted clinic, or one remembered from another database) is only a hint: with one
+			// organization per install, fall back to the user's own membership.
 		}
 		const [grant] = await this.access.listOrganizationGrants(userId);
 		return toMembership(grant, 'You are not a member of any organization');

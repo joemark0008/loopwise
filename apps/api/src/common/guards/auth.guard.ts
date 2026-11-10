@@ -11,7 +11,6 @@ import { convertHeaders } from '../utils/auth-utils.js';
 import { AccessService } from './access.service.js';
 
 const CLINIC_HEADER = 'x-loopwise-clinic-id';
-const ORGANIZATION_HEADER = 'x-loopwise-organization-id';
 
 /** One session lookup per request: GraphQL runs the guard once per resolver, possibly in parallel. */
 const sessionLookups = new WeakMap<object, Promise<void>>();
@@ -71,11 +70,7 @@ export class AuthGuard implements CanActivate {
 			return true;
 		}
 
-		const membership = await this.access.resolveOrganizationMembership(
-			req.user.id,
-			selectedClinicId,
-			readHeader(req.headers[ORGANIZATION_HEADER]),
-		);
+		const membership = await this.access.resolveOrganizationMembership(req.user.id, selectedClinicId);
 		if (requirement.adminOnly && membership.role !== 'ADMIN') {
 			throw new HandlerError('FORBIDDEN', 'Only organization admins can perform this action');
 		}

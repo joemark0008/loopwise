@@ -82,7 +82,7 @@ export const SCRIBE_LANGUAGE_LABELS: Record<ScribeLanguage, string> = {
 export const SCRIBE_TRANSCRIPT_MAX_LENGTH = 20_000;
 
 /**
- * Recording consent (DESIGN.md §8.7): a visit-specific `patient_consents` row. The reference's consent types have no
+ * Recording consent (DESIGN.md §8.7): a visit-specific `patient_consents` row. The base schema's consent types have no
  * "recording" value; PHOTO_VIDEO is the one about capturing the patient on media, so a recorded consult uses it, tied
  * to the encounter. TELEMEDICINE is about remote care, not recording, and a recorded in-clinic consult isn't one.
  */

@@ -133,7 +133,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	// ── Clinic > Agent > Models ─────────────────────────────
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Models',
 		search: { tab: 'models' },
 		title: 'LLM Configuration',
@@ -164,7 +164,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	},
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Models',
 		search: { tab: 'models' },
 		title: 'Model parameters',
@@ -187,7 +187,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	},
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Models',
 		search: { tab: 'models' },
 		title: 'Default models',
@@ -218,7 +218,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	},
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Models',
 		search: { tab: 'models' },
 		title: 'Transcription',
@@ -229,7 +229,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	// ── Clinic > Agent ──────────────────────────────────────
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
 		title: 'Clinic memory',
@@ -239,7 +239,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	},
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
 		title: 'Web search',
@@ -248,7 +248,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	},
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
 		title: 'Saved Prompts',
@@ -257,7 +257,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	},
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
 		title: 'Maps',
@@ -267,7 +267,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 	},
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Capabilities',
 		search: { tab: 'tools' },
 		title: 'GeoJSON Boundary Library',
@@ -278,7 +278,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
 
 	{
 		page: '/settings/clinic/agent',
-		pageLabel: 'Agent',
+		pageLabel: 'AI and models',
 		section: 'Display map',
 		search: { tab: 'tools' },
 		title: 'Display map',

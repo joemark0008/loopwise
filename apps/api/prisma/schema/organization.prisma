@@ -1,7 +1,6 @@
 // =============================================================================
-//  ORGANIZATION, CLINICS (the reference's branches), USERS
+//  ORGANIZATION, CLINICS (the base schema's branches), USERS
 //
-//  Reference: docs/schema-reference/clinic-prisma-schema/prisma/schema/organization.prisma.
 //  Loopwise additions are marked "Loopwise:" — the Wise workspace settings on a clinic, organization membership and
 //  SSO settings, and the better-auth columns on users.
 // =============================================================================

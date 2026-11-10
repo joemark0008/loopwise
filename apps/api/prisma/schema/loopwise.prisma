@@ -1,5 +1,5 @@
 // =============================================================================
-//  Loopwise additions to the reference schema: the access rule (care relationships), Wise's saved reports, the
+//  Loopwise additions to the base schema: the access rule (care relationships), Wise's saved reports, the
 //  outcome of each Wise proposal card, and Wise tool settings. Row-level security and the append-only triggers are in
 //  migration 0001_rls_and_triggers.
 // =============================================================================

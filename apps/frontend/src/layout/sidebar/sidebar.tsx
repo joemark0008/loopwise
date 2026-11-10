@@ -114,19 +114,18 @@ export function Sidebar() {
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
-				{isInSettings && (
-					<div className='flex flex-col gap-2'>
-						<SidebarBackToApp isCollapsed={effectiveIsCollapsed} />
-						{!effectiveIsCollapsed && isAdmin && (
-							<ClinicSwitcher
-								clinics={clinics.data ?? []}
-								currentClinicId={clinic.data?.id}
-								onChange={handleClinicChange}
-								variant='sidebar'
-							/>
-						)}
-					</div>
+				{/* The clinic you are working in, under the logo on every page. New clinic is for admins, and for anyone
+				    while no clinic exists yet (a clean install has no clinic admin); the API checks the organization role. */}
+				{!effectiveIsCollapsed && clinic.data !== undefined && (
+					<ClinicSwitcher
+						clinics={clinics.data ?? []}
+						currentClinicId={clinic.data?.id}
+						onChange={handleClinicChange}
+						variant='sidebar'
+						canCreate={isAdmin || clinic.data === null}
+					/>
 				)}
+				{isInSettings && <SidebarBackToApp isCollapsed={effectiveIsCollapsed} />}
 			</SidebarHeader>
 
 			<SidebarContent className='scroll-fade-y'>

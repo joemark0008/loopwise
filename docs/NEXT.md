@@ -10,8 +10,8 @@ All on `main`. Section numbers refer to [DESIGN.md](DESIGN.md).
 
 - **Local stack:** `docker compose up -d --wait` → `loopwise_postgres` on :5435, databases `loopwise` /
   `loopwise_test`. `npm run db:deploy -w @loopwise/api` then `npm run db:seed -w @loopwise/api`.
-- **Data model (§5):** the PH clinic reference schema (`docs/schema-reference/clinic-prisma-schema/`, verbatim),
-  adopted nearly as-is in Phase 0 (below). Migrations `0000_init` + `0001_rls_and_triggers`.
+- **Data model (§5):** an encounter-centric schema for Philippine practice (`apps/api/prisma/schema/`),
+  set up in Phase 0 (below). Migrations `0000_init` + `0001_rls_and_triggers`.
 - **API structure (§4.5):** one module per domain under `apps/api/src/clinical/`, domain errors with stable codes,
   `AuditService`, request correlation ids, `DocumentSequenceService`.
 - **Access (§8):** row-level security through care relationships, desk and lab roles per clinic
@@ -121,10 +121,10 @@ OUTBOX | CLINIC })` and `referralLetter(id)` (`clinical/documents/referrals/`). 
 
 ## Phase 0: the clinic schema (5 Nov 2026)
 
-The database now follows the PH clinic reference schema. What changed, for anyone reading older code or notes:
+The database now follows the PH clinic base schema. What changed, for anyone reading older code or notes:
 
 - **Conventions:** plural snake_case tables, UPPERCASE enum values, UUIDv7 ids everywhere (better-auth generates
-  UUIDv7; the web client generates UUID chat message ids), `timestamptz(3)`. The reference's Branch is `Clinic`.
+  UUIDv7; the web client generates UUID chat message ids), `timestamptz(3)`. The base schema's Branch is `Clinic`.
 - **Organization and clinics:** an organization (clinic group) owns its patients and catalogs; a clinic (branch) has its
   code, BIR / DOH / PhilHealth details and numbering, and is also the Wise workspace. Staff hold roles per clinic
   (`StaffRole`, plus MEMBER / VIEWER / CONTEXT_ADMIN for access) and optionally an organization role (`OrgRole`). The
@@ -175,7 +175,7 @@ chats (a fresh seed has none).
       `part`; `WiseProposalOutcome` has `edited`. `TranscribeModule` exports `TranscribeService` (and imports only the
       agent core); `DiagnosticsModule` exports `DiagnosticTestService` (`listActiveOn`).
     - `updateEncounterNote` takes `reviewOfSystems`, `subjective`, `objective`; left out, they are kept.
-    - No migration: the scribe uses the reference's `patient_consents` and `encounters` columns as they are.
+    - No migration: the scribe uses the base schema's `patient_consents` and `encounters` columns as they are.
 
 ## Before real patients: privacy hardening (RA 10173)
 
@@ -196,40 +196,6 @@ processor of sensitive personal information. Everything is synthetic today; befo
   recording consent for the scribe; let a patient opt out of AI drafting for their record.
 - **Paperwork (not code):** the clinic's DPO, a privacy impact assessment covering the AI processing, NPC registration
   where the thresholds apply, and a review by counsel familiar with the Data Privacy Act and NPC guidance.
-
-## Last: SaaS — self sign-up and tenant billing
-
-Planned for the final part, after the clinical features. Loopwise bills each tenant (organization); this is separate
-from the cashier desk, which bills the clinic's patients.
-
-- **Organizations vs clinics:** a different owner or business is a different organization (its own TIN, patients,
-  prices, staff, invoices and stock, kept apart by row-level security); a branch of the same business is a clinic
-  inside it. A doctor who joins an existing practice is added as staff; one person can belong to several
-  organizations (an organization switcher). Today an organization can only be made by the first-run setup wizard
-  (`disableSignUp: true`, no `createOrganization`), so ACEmc is a branch of the Tagbilaran organization.
-- **Self sign-up with approval:** a public sign-up (name, email, password, terms and privacy notice), email
-  verification, then a wizard for the business (name, trade name, TIN, VAT status), the first clinic (PSGC address,
-  DOH license) and the owner's practitioner profile (PRC license). The owner becomes SUPER_ADMIN of the new
-  organization, which stays **pending** until the platform operator approves it (clinical features locked while
-  pending). Captcha or rate limits on sign-up; archive inactive organizations.
-- **Pricing (to decide):** a base fee per clinic + a fee per active doctor seat (staff seats free) + an AI allowance per
-  doctor with overage blocks; a 14–30 day free trial. Set the numbers after measuring real AI cost per visit from
-  `llm_inferences`.
-- **AI cost:** Loopwise-provided AI by default (one business API with a DPA and zero retention, billed through the
-  allowance), the clinic's own key (BYOK, today's setup) as an option.
-- **Payments:** a PH gateway (PayMongo or Xendit: cards, GCash, Maya, QR Ph, bank transfer); card auto-renewal, a
-  monthly pay link for e-wallets; monthly or annual cycles, invoiced on the 1st (seats and clinics counted that day,
-  last month's AI overage). Loopwise's own company issues BIR invoices to the clinics (VAT if registered; confirm
-  with an accountant).
-- **Dunning:** reminders at 0 / +7 / +14 days, **read-only** at +30 days (no new visits or invoices; records stay
-  viewable and exportable), then suspension with data kept per the retention policy. Never block or delete patient
-  records for non-payment.
-- **To build:** platform-level tables outside tenant RLS (plans, subscriptions with trial / active / past_due /
-  read_only / cancelled, usage per organization per month, subscription invoices and payments, gateway webhooks);
-  a platform admin console (organizations, approvals, subscriptions, revenue, past due, credits); Settings →
-  Subscription for the owner (plan, seats, AI used, invoices, payment method).
-- **Rollout:** a demo version first (sign-up with approval, trial, pricing page, simulated billing, admin console),
-  then the real gateway, BIR invoicing and dunning, then annual plans, promo codes and partner pricing.
 
 ## Later
 

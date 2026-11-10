@@ -1,7 +1,7 @@
 import z from 'zod/v3';
 
 /**
- * The visit invoice (BIR sales invoice, the reference's `Invoice`): the one set of rules for the API, the billing tab
+ * The visit invoice (BIR sales invoice, the base schema's `Invoice`): the one set of rules for the API, the billing tab
  * and the Wise cards. Prices are what the clinic charges, VAT included for VATABLE items (BIR: VAT-inclusive pricing).
  *
  * - VAT applies only when the organization is VAT-registered (`Organization.vatRegistration`); a non-VAT clinic

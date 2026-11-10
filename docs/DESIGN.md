@@ -81,8 +81,9 @@ The patient never learns bad news from a machine.
 
 ### 4.1 Deployment model
 
-- **One hub, multi-tenant.** Each clinic group (a company running one or more branches) is an **organization**
-  (tenant): it owns its patients (`patients.organization_id`, the MRN `patient_no` unique per organization) and its
+- **One install, one business, many clinic locations.** Each deployment is a single instance run by one business,
+  the **organization** (one row in `organizations`, created by the first-run setup wizard; there is no sign-up and no
+  way to create another). It owns its patients (`patients.organization_id`, the MRN `patient_no` unique per organization) and its
   catalogs (tests, services, inventory items, HMO providers). Each branch is a **clinic** inside the organization: it
   has its BIR branch code, DOH license and PhilHealth accreditation, its document numbering, its visits, invoices and
   stock, and it is also the staff's Wise workspace (chats, LLM settings, saved prompts, user groups). Staff hold
@@ -94,8 +95,8 @@ The patient never learns bad news from a machine.
   entered on the lab worklist. A send-out test is flagged (`diagnostic_tests.is_outsourced`,
   `diagnostic_orders.is_external`); a walk-in with an outside doctor's request is a `LAB_ONLY` encounter with
   `external_physician`. There is no HL7 interface and no cross-organization ordering.
-- From one codebase: **cloud SaaS** for independent clinics, or a **self-hosted** install for a chain that must keep
-  data on its own infrastructure.
+- **Self-hosted, single instance.** The business runs its own install (on premises or on its own cloud account) and
+  keeps the data on its own infrastructure. There is no hosted multi-tenant service and no subscription billing.
 - A single Docker image: the API also serves the built frontend (`docker-compose.prod.yml`).
 
 ### 4.2 Components
@@ -135,16 +136,16 @@ The patient never learns bad news from a machine.
 
 | Decision                                              | Why                                                | Trade-off                                   |
 | ----------------------------------------------------- | -------------------------------------------------- | ------------------------------------------- |
-| Shared DB + Postgres RLS (not DB per tenant)          | Simple; one schema for every clinic group          | Isolation depends on correct RLS; test hard |
+| One instance per business, Postgres RLS per clinic    | Simple to run; data stays with the business        | Isolation depends on correct RLS; test hard |
 | Modular monolith in NestJS, one module per domain     | Fast to build; modules talk through services       | One deployable                              |
-| The PH clinic reference schema, encounter-centric     | Patient and clinic of a record can never disagree  | RLS reaches child rows through a join       |
+| The PH clinic base schema, encounter-centric          | Patient and clinic of a record can never disagree  | RLS reaches child rows through a join       |
 | In-house lab only, no HL7                             | The clinics we serve run their own lab or send out | An outside LIS needs an integration later   |
 | Rules-first decisions; AI for language and assistance | Safe, explainable                                  | Less "AI magic"                             |
 | Built on an existing agent base                       | Agent, chat UI, auth, orgs and jobs already worked | Leftover base code to keep pruning          |
 
 ### 4.5 API structure
 
-**Module map.** One NestJS module per schema domain under `apps/api/src/clinical/` (the reference's file names):
+**Module map.** One NestJS module per schema domain under `apps/api/src/clinical/` (the base schema's file names):
 
 | Module                             | Covers                                                                                                                                                                                                                                                                                                                                        |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -190,11 +191,11 @@ AsyncLocalStorage request context with the ip and user agent, echoed in the resp
 
 ## 5. Data model
 
-The Prisma schema follows the PH clinic reference schema (`docs/schema-reference/clinic-prisma-schema/`, kept
-verbatim) and is split the same way in `apps/api/prisma/schema/*.prisma`. Conventions: plural snake_case tables,
+The Prisma schema is an encounter-centric model for Philippine practice, split by domain in
+`apps/api/prisma/schema/*.prisma`. Conventions: plural snake_case tables,
 UPPERCASE enum values, UUIDv7 ids (`@default(uuid(7)) @db.Uuid`, better-auth generates UUIDv7 too), instants as
-`timestamptz(3)`, calendar dates as `date`, clinic hours as `time`, money as `numeric(12,2)` in PHP. The reference's
-`Branch` is **`Clinic`** here (`clinics`, `clinic_id`, `UserClinicRole`, `PractitionerClinic`, `ClinicServicePrice`).
+`timestamptz(3)`, calendar dates as `date`, clinic hours as `time`, money as `numeric(12,2)` in PHP. A clinic
+branch is a **`Clinic`** (`clinics`, `clinic_id`, `UserClinicRole`, `PractitionerClinic`, `ClinicServicePrice`).
 `*_by_id` columns that point at a user are plain uuids, as in the reference; the audit log is the trail.
 
 Migrations: `0000_init` is generated by Prisma from the schema; `0001_rls_and_triggers` holds what Prisma cannot
@@ -698,11 +699,11 @@ kept), speech-to-text tuned for Taglish and Cebuano.
    (`libpg-query`) accepts one SELECT over the views with allowlisted functions. `pg_stat_activity` is revoked from
    PUBLIC. Viewer-only users get counts under 5 as "<5". Every query is audited (`analytics.query` / `.rejected` /
    `.failed`). Tests: `test/analytics-security.e2e-spec.ts`.
-4. **Tenant isolation.** Patients, catalogs and clinics belong to one organization; nothing is shared across
-   organizations.
+4. **One business per install.** Patients and catalogs belong to the organization and are shared by its clinic
+   locations; visits, invoices and stock belong to one clinic, and staff reach them through their clinic roles.
 5. **Break-glass** (API not built). The `BREAK_GLASS` care relationship reason exists: a reason, an expiry, an audit
    row.
-6. **Audit everything.** Every view and change goes through `AuditService` into `audit_logs` (the reference's action,
+6. **Audit everything.** Every view and change goes through `AuditService` into `audit_logs` (the base schema's action,
    entity and before/after changes, plus the specific `event`, the reason, the Wise `origin` and the request's
    correlation id). The log is append-only (a trigger rejects UPDATE and DELETE).
 7. **Consent.** A `DATA_PRIVACY` consent (RA 10173) is recorded at registration (`patient_consents`, with the version of
@@ -716,7 +717,7 @@ kept), speech-to-text tuned for Taglish and Cebuano.
 
 | Direction         | Standard                                                            | Notes                                                     |
 | ----------------- | ------------------------------------------------------------------- | --------------------------------------------------------- |
-| Internal model    | The PH clinic reference schema, FHIR-shaped                         | Ready for FHIR APIs later                                 |
+| Internal model    | The PH clinic base schema, FHIR-shaped                              | Ready for FHIR APIs later                                 |
 | Reference data    | PSGC (PSA), ICD-10 (WHO, as PhilHealth), PhilHealth RVS, case rates | Seeded samples; load the full publications before a pilot |
 | Patient messaging | SMS gateway (provider TBD), later Messenger                         | Planned ([PLAN.md](PLAN.md) §4.6)                         |
 | Claims            | PhilHealth eClaims / Konsulta                                       | Schema ready (`philhealth_claims`); planned               |
@@ -759,7 +760,7 @@ Module conventions are in [CLAUDE.md](../CLAUDE.md) and §4.5. Modules of the ba
   and PhilHealth publications before a pilot. A diagnosis code must exist in `icd10_codes`.
 - Duplicate checks run within an organization: the patient number or a PhilHealth ID is an exact match and is never
   registered twice; the same name, birth date and sex is a possible match the clinician confirms.
-- Tax rules (VAT treatment of medical services, EWT on professional fees) follow the reference's notes; check them
+- Tax rules (VAT treatment of medical services, EWT on professional fees) follow the base schema's notes; check them
   with an accountant.
 - Patient messaging is not live yet; real delivery depends on an SMS gateway and local regulation.
 - Wise does not make clinical decisions; every action is confirmed by a person.

@@ -121,7 +121,7 @@ export class ClinicProfileService {
 		if (actor.staffRoles.includes('SUPER_ADMIN')) {
 			return true;
 		}
-		const membership = await this.access.resolveOrganizationMembership(actor.userId, actor.clinicId, null);
+		const membership = await this.access.resolveOrganizationMembership(actor.userId, actor.clinicId);
 		return membership.role === 'ADMIN';
 	}
 }

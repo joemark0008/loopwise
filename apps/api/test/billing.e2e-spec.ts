@@ -44,7 +44,7 @@ const failure = (promise: Promise<unknown>) =>
 	);
 
 /**
- * The cashier desk on the reference's Invoice model: the doctor drafts the visit's invoice from the clinic's price
+ * The cashier desk on the base schema's Invoice model: the doctor drafts the visit's invoice from the clinic's price
  * list, the desk issues it (numbered), takes the PhilHealth package and the cash balance, and voids with a reason.
  * Row-level security, the `invoices_lock` trigger and the audit trail are checked against Postgres.
  */

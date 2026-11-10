@@ -99,7 +99,7 @@ export function renderChartSummary(chart: ChartSummaryInput, today: Date): strin
 }
 
 /**
- * The physical exam as text. Loopwise stores the free text as a JSON string value; the reference's structured form
+ * The physical exam as text. Loopwise stores the free text as a JSON string value; the base schema's structured form
  * (`{ "heent": "…", "chest": "…" }`) reads as `heent: …; chest: …`.
  */
 export function physicalExamText(value: Prisma.JsonValue | null): string | null {

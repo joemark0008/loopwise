@@ -1,20 +1,12 @@
 import { ApolloClient, ApolloLink, HttpLink, InMemoryCache } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
 
-import { getActiveOrganizationId } from './active-organization';
 import { getClinicRequestHeaders } from './active-clinic';
 
-/** Sends the selected clinic and organization, like the tRPC client, so `@ClinicAccess()` resolves them. */
-const selectionHeadersLink = new SetContextLink((prevContext) => {
-	const activeOrganizationId = getActiveOrganizationId();
-	return {
-		headers: {
-			...prevContext.headers,
-			...getClinicRequestHeaders(),
-			...(activeOrganizationId ? { 'x-loopwise-organization-id': activeOrganizationId } : {}),
-		},
-	};
-});
+/** Sends the selected clinic, so `@ClinicAccess()` resolves it. */
+const selectionHeadersLink = new SetContextLink((prevContext) => ({
+	headers: { ...prevContext.headers, ...getClinicRequestHeaders() },
+}));
 
 /** GraphQL client for apps/api (`/graphql`, proxied by Vite). The session cookie authenticates requests. */
 export const apolloClient = new ApolloClient({

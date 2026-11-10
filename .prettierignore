@@ -5,8 +5,6 @@ schema.gql
 apps/api/src/generated/
 apps/frontend/src/graphql/generated/
 .claude/
-# The clinic schema reference as supplied, kept verbatim.
-docs/schema-reference/
 # Knowledge graph output of graphify (generated).
 graphify-out/
 .hallmark/

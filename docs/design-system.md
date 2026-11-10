@@ -5,7 +5,7 @@ table density and the information architecture. Written for the UX redesign of 3
 from the ui-ux-pro-max rules (priority order: accessibility → touch → performance → style → layout → type and colour →
 animation → forms → navigation → charts) plus our own judgement for a clinical product.
 
-**Product and style.** Clinical SaaS used on clinic desktops and tablets, often by a doctor between patients:
+**Product and style.** A self-hosted clinic system used on clinic desktops and tablets, often by a doctor between patients:
 data-dense, trust-first, calm. Flat surfaces, one accent (care blue), semantic status colour that never stands alone,
 coral reserved for the assistant.
 
@@ -138,8 +138,9 @@ Visible labels (never placeholder-only), a required marker, errors under the fie
 - **Sidebar** (the kit's inset sidebar, `components/ui/sidebar.tsx`): brand, a "Desk" group with the role's links from
   `lib/navigation.ts` (`roleNavLinks`), the active row a grey pill with `aria-current`, the user row at the bottom
   opening Settings. It collapses to an icon rail (tooltips name the links; `[` or ⌘B, or the header button) and is a
-  sheet on a phone. The page sits beside it in a rounded, shadowed inset. The chat history and the clinic
-  switcher left the sidebar: chats live on **Wise chats** (`/chats`); the clinic switcher is admin-only in Settings.
+  sheet on a phone. The page sits beside it in a rounded, shadowed inset. The chat history left the sidebar
+  (chats live on **Wise chats**, `/chats`). The clinic switcher sits under the logo on every page, so staff always see
+  which clinic location they are in; only admins get **New clinic** in it (anyone, while no clinic exists yet).
 - **Phone (<768px):** a bottom bar with the role's first five links, each with icon and label.
 - **Top bar** (the kit's site header: sticky, blurred, 56px): sidebar toggle, breadcrumbs as a list with links
   (`Patients › Maria Santos › Encounter 22 Oct 2026`, names read from the pages' cached queries, never fetched again:

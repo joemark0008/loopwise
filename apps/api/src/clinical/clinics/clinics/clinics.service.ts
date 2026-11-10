@@ -54,7 +54,7 @@ export class ClinicsService {
 	 */
 	async createClinic(userId: string, selectedClinicId: string | null, name: string): Promise<ClinicSummary> {
 		const trimmed = name.trim();
-		const { organization, role } = await this.access.resolveOrganizationMembership(userId, selectedClinicId, null);
+		const { organization, role } = await this.access.resolveOrganizationMembership(userId, selectedClinicId);
 		if (role === 'VIEWER') {
 			throw new HandlerError('FORBIDDEN', 'Viewers cannot create clinics.');
 		}

@@ -38,8 +38,7 @@ export const ClinicAdmin = () => ClinicAccess({ roles: ['admin'] });
 export const ClinicNonViewer = () => ClinicAccess({ roles: ['admin', 'user', 'context_admin'] });
 
 /**
- * Resolves the user's organization (`x-loopwise-organization-id` header, else the selected clinic's, else the
- * oldest membership). Sets `request.organization` and `request.orgRole` (`@CurrentOrganization()`).
+ * Resolves the user's organization (the selected clinic's, else the oldest membership). Sets `request.organization` and `request.orgRole` (`@CurrentOrganization()`).
  */
 export const OrgMember = () =>
 	SetMetadata<string, AccessRequirement>(ACCESS_KEY, { kind: 'organization', adminOnly: false });

@@ -21,7 +21,7 @@ export interface AuditRequestMeta {
 
 /** One audit row (`audit_logs`, RA 10173 / NPC: who viewed or changed which patient data, when, from where). */
 export interface AuditEntry {
-	/** The reference's coarse verb: CREATE, UPDATE, VIEW, SIGN, VOID, PRINT, EXPORT … */
+	/** The base schema's coarse verb: CREATE, UPDATE, VIEW, SIGN, VOID, PRINT, EXPORT … */
 	action: AuditAction;
 	/**
 	 * Loopwise's specific event, `<entity>.<verb>` in snake_case: `patient.view`, `result.review`,

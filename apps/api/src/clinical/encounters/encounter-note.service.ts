@@ -34,7 +34,7 @@ const NOTE_FIELDS = [
 ] as const;
 
 /**
- * The SOAP note of an encounter (the reference's chief complaint, history of present illness, review of systems,
+ * The SOAP note of an encounter (the base schema's chief complaint, history of present illness, review of systems,
  * subjective, physical exam, objective, assessment, plan, follow-up date and disposition, plus Loopwise's notes and
  * patient instructions). The review of systems and the physical exam are stored as JSON string values. Changed as the
  * user, by staff of the visit's clinic, with optimistic locking on `version` for Wise cards.
@@ -77,7 +77,7 @@ export class EncounterNoteService {
 				{
 					chiefComplaint: note.reason,
 					historyOfPresentIllness: note.history ?? null,
-					// Free text as JSON string values (the reference's columns are structured JSON).
+					// Free text as JSON string values (the base schema's columns are structured JSON).
 					...(given('reviewOfSystems') && { reviewOfSystems: note.reviewOfSystems ?? Prisma.DbNull }),
 					...(given('subjective') && { subjective: note.subjective ?? null }),
 					physicalExam: note.physicalExam ?? Prisma.DbNull,

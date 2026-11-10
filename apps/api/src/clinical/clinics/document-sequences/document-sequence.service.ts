@@ -4,7 +4,7 @@ import type { ClinicalTx } from '../../rls/clinical-db.service.js';
 import { DocumentSequenceRepository } from './document-sequence.repository.js';
 
 /**
- * The human-readable numbers of a clinic's documents (the reference's DocumentSequence key). The clinic's code is in
+ * The human-readable numbers of a clinic's documents (the base schema's DocumentSequence key). The clinic's code is in
  * the prefix, so numbers are unique across the organization's clinics too.
  */
 export const DOCUMENT_SEQUENCE_KEYS = {

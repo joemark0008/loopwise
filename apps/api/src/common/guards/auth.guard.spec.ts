@@ -223,12 +223,6 @@ describe('@OrgMember()', () => {
 		expect(req.orgRole).toBe('MEMBER');
 	});
 
-	it('resolves the organization from the selected organization header first', async () => {
-		await run('orgMemberRoute', { 'x-loopwise-organization-id': ORG_ID, 'x-loopwise-clinic-id': CLINIC_ID });
-		expect(access.listOrganizationGrants).toHaveBeenCalledWith(USER.id, { organizationId: ORG_ID });
-		expect(access.listOrganizationGrants).toHaveBeenCalledTimes(1);
-	});
-
 	it('falls back to the selected clinic organization', async () => {
 		await run('orgMemberRoute', { 'x-loopwise-clinic-id': CLINIC_ID });
 		expect(access.listOrganizationGrants).toHaveBeenCalledWith(USER.id, { clinicId: CLINIC_ID });

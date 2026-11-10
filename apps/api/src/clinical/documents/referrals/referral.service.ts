@@ -16,7 +16,7 @@ import { ReferralRepository } from './referral.repository.js';
 import { transitionReferralStatus } from './referral-status.js';
 
 /**
- * Referrals from an encounter (the reference's model): from the user's practitioner to a practitioner of the
+ * Referrals from an encounter (the base schema's model): from the user's practitioner to a practitioner of the
  * organization (who then gets a care relationship with reason REFERRAL, so they can open the patient) or to an
  * outside doctor or facility. Checked as the user (row-level security, staff of the visit's clinic); the write that
  * also grants access is system work, in one transaction with its audit row.

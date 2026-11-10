@@ -32,6 +32,8 @@ type ClinicSwitcherProps = {
 	onChange: (clinicId: string) => void | Promise<boolean | void>;
 	variant?: 'sidebar' | 'inline';
 	className?: string;
+	/** Offer New clinic (admins, or anyone while no clinic exists). Default true. */
+	canCreate?: boolean;
 };
 
 export function ClinicSwitcher({
@@ -40,6 +42,7 @@ export function ClinicSwitcher({
 	onChange,
 	variant = 'sidebar',
 	className,
+	canCreate = true,
 }: ClinicSwitcherProps) {
 	const currentClinic =
 		clinics.find((clinic) => clinic.id === currentClinicId) ?? (clinics.length === 1 ? clinics[0] : null);
@@ -61,6 +64,7 @@ export function ClinicSwitcher({
 			currentClinic={currentClinic}
 			onChange={onChange}
 			className={className}
+			canCreate={canCreate}
 		/>
 	);
 }
@@ -96,6 +100,7 @@ function SidebarClinicSwitcher({
 	currentClinic,
 	onChange,
 	className,
+	canCreate = true,
 }: Omit<ClinicSwitcherProps, 'currentClinicId' | 'variant'> & {
 	currentClinic: ClinicOption | null;
 }) {
@@ -103,10 +108,11 @@ function SidebarClinicSwitcher({
 
 	if (!currentClinic) {
 		// loopwise: with no clinic left (e.g. all deleted), the switcher is the only way to create one.
-		return mode === 'static' ? null : <NewClinicButton className={className} />;
+		return mode === 'static' || !canCreate ? null : <NewClinicButton className={className} />;
 	}
 
-	if (mode === 'static') {
+	// Nothing to switch to and nothing to create: just name the clinic.
+	if (mode === 'static' || (!canCreate && clinics.length <= 1)) {
 		return (
 			<div className={cn(styles.sidebarClinicSwitcherDiv, className)}>
 				<div className={getTriggerClassName('sidebar')}>
@@ -124,6 +130,7 @@ function SidebarClinicSwitcher({
 			variant='sidebar'
 			className={className}
 			mode={mode}
+			canCreate={canCreate}
 		/>
 	);
 }
@@ -135,6 +142,7 @@ function ClinicDropdown({
 	variant,
 	className,
 	mode,
+	canCreate = true,
 }: Omit<ClinicSwitcherProps, 'currentClinicId' | 'variant'> & {
 	currentClinic: ClinicOption;
 	variant: 'sidebar' | 'inline';
@@ -200,20 +208,22 @@ function ClinicDropdown({
 											</CommandItem>
 										))}
 									</CommandGroup>
-									<CommandSeparator />
-									<CommandGroup>
-										<CommandItem
-											value='__new_clinic__'
-											keywords={['new', 'create', 'clinic']}
-											onSelect={() => {
-												setOpen(false);
-												setIsCreating(true);
-											}}
-										>
-											<Plus className={styles.clinicDropdownPlus} />
-											<span>New clinic</span>
-										</CommandItem>
-									</CommandGroup>
+									{canCreate && <CommandSeparator />}
+									{canCreate && (
+										<CommandGroup>
+											<CommandItem
+												value='__new_clinic__'
+												keywords={['new', 'create', 'clinic']}
+												onSelect={() => {
+													setOpen(false);
+													setIsCreating(true);
+												}}
+											>
+												<Plus className={styles.clinicDropdownPlus} />
+												<span>New clinic</span>
+											</CommandItem>
+										</CommandGroup>
+									)}
 								</>
 							)}
 						</CommandList>

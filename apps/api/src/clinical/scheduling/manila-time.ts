@@ -33,7 +33,7 @@ export function addDays(date: string, days: number): string {
 	return new Date(new Date(`${date}T00:00:00Z`).getTime() + days * DAY_MS).toISOString().slice(0, 10);
 }
 
-/** 0 = Sunday … 6 = Saturday (the reference's `day_of_week`). */
+/** 0 = Sunday … 6 = Saturday (the base schema's `day_of_week`). */
 export function weekday(date: string): number {
 	return new Date(`${date}T00:00:00Z`).getUTCDay();
 }

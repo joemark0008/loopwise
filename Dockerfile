@@ -24,9 +24,6 @@ COPY apps/api/prisma.config.ts apps/api/
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm ci --no-audit --no-fund
 
 COPY . .
-# Frontend links are build-time variables (VITE_LOOPWISE_*): pass them as build args to show those links.
-ARG VITE_LOOPWISE_DOCS_URL VITE_LOOPWISE_SUPPORT_EMAIL VITE_LOOPWISE_REPOSITORY_URL VITE_LOOPWISE_COMMUNITY_URL \
-	VITE_LOOPWISE_NEWSLETTER_SUBSCRIBE_URL VITE_LOOPWISE_PRIVACY_URL
 RUN npm run build -w @loopwise/frontend
 
 FROM base AS runtime

@@ -60,7 +60,7 @@ export function CreateClinicDialog({ open, onOpenChange }: CreateClinicDialogPro
 					<DialogHeader>
 						<DialogTitle>New clinic</DialogTitle>
 						<DialogDescription>
-							A clinic has its own warehouse connection, context and chats.
+							A clinic location has its own visits, invoices, stock, staff roles and AI settings.
 						</DialogDescription>
 					</DialogHeader>
 					<Input

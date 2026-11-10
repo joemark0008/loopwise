@@ -234,7 +234,7 @@ export const navLinks: NavLink[] = [
 	},
 	{
 		icon: Boxes,
-		label: 'Agent',
+		label: 'AI and models',
 		to: '/settings/clinic/agent',
 		section: 'clinic',
 		requiresClinic: true,

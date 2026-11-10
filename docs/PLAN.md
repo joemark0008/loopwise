@@ -44,7 +44,7 @@ one click, and every result reaches the doctor who ordered it.
 
 Built and on `main` (details in `docs/NEXT.md` → Done):
 
-- **Data model:** the PH clinic reference schema (DESIGN.md §5): organizations and clinics, practitioners, patients per
+- **Data model:** the PH clinic base schema (DESIGN.md §5): organizations and clinics, practitioners, patients per
   organization, encounter-centric records, diagnostics, prescriptions, documents, PhilHealth, HMO, billing, inventory,
   audit; RLS deny-by-default and append-only audit.
 - **Patients:** registration (MRN per organization, data-privacy consent, duplicate checks), chart, allergies, IDs.
@@ -154,7 +154,7 @@ Estimates assume the current pace (one coordinator + feature worktrees). They ar
 | **2. Pharmacy + follow-ups** | ~3 weeks | Item master, stock, dispense queue, alerts; follow-up list and reminders                                                  | An Rx is dispensed from stock; a follow-up date becomes a booked appointment    |
 | **3. Patients**              | ~2 weeks | Portal, SMS reminders, inbox with Wise reply drafts, approved result explanations                                         | A patient books, gets reminded and reads their visit summary on a phone         |
 | **4. Pilot readiness**       | ~3 weeks | Billing extensions, BIR invoices, HMO, owner dashboard, DPA compliance pack, backups, deploy, onboarding/import tools     | One real clinic runs a week on Loopwise with synthetic-to-real data migration   |
-| **5. SaaS**                  | ongoing  | Multi-branch, subscriptions, PhilHealth eClaims / Konsulta, Messenger, telemedicine, FHIR API                             | Second and third paying clinics                                                 |
+| **5. Growth**                | ongoing  | More clinic locations per install, PhilHealth eClaims / Konsulta, Messenger, telemedicine, FHIR API                       | A business runs two or more clinic locations on one install                     |
 
 ## 7. Cleanup carried over (Phase 0)
 
@@ -177,8 +177,6 @@ dashboard as a headline, MicroK8s/ArgoCD as a requirement for the first pilot.
 ## 8. Open questions
 
 - Product name: keep **Loopwise**, or rename for the clinic market?
-- Pricing: per doctor per month, per branch, or per visit? Proposed: a base fee per clinic + a fee per doctor seat + an
-  AI allowance with overage (see [NEXT.md](NEXT.md), "Last: SaaS — self sign-up and tenant billing").
 - SMS provider (Semaphore, Twilio, M360 …) and whether Messenger is in Phase 3 or 5.
 - LLM hosting for patient data: cloud provider with a DPA, or a local model option from day one?
 - Speech-to-text quality for Taglish / Cebuano — which provider, and do we need a local fallback?
