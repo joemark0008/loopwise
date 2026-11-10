@@ -75,8 +75,7 @@ npm test
 ```
 
 Plus `npm run format:check`. For frontend changes also run `npm run test:e2e -w @loopwise/frontend` with the local stack
-up (the chat flow makes one real LLM call). `test/usage.e2e-spec.ts` › "rejects a range above the chart bucket limit"
-is a known failure; leave it unless you are fixing it.
+up (the chat flow makes one real LLM call).
 
 ## Local setup
 

@@ -179,7 +179,9 @@ describe('usage (e2e)', () => {
 		const res = await graphql(
 			adminCookie,
 			'query ($filter: UsageFilterInput!) { usageMessages(filter: $filter) { date } }',
-			{ filter: { period: { value: 84, unit: 'day' }, granularity: 'hour' } },
+			// 90 days by the hour is at least 89 × 24 = 2,136 buckets, over the 2,000 limit at any time of day (84 days
+			// only went over after about 07:00 UTC).
+			{ filter: { period: { value: 90, unit: 'day' }, granularity: 'hour' } },
 		);
 
 		expect(res.body.errors?.[0]?.extensions?.code).toBe('BAD_REQUEST');

@@ -370,7 +370,9 @@ describe('billing (e2e)', () => {
 		expect(await failure(invoices.issue(doctor, { id: next.id }))).toMatchObject({
 			errorCode: 'INVOICE_SERIES_EXHAUSTED',
 		});
-		await prisma.invoiceSeries.update({ where: { id: series.id }, data: { isActive: false } });
+		// Leave the clinic a usable series for the tests after this one: a clinic whose series are all turned off can't
+		// issue at all (InvoiceSeriesInactiveError).
+		await prisma.invoiceSeries.update({ where: { id: series.id }, data: { endNo: 999_999 } });
 	});
 
 	it('saves, issues and pays from Wise cards, each confirmed once, about this patient only', async () => {

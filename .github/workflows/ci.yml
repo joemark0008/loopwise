@@ -29,6 +29,8 @@ jobs:
             DATABASE_URL: postgresql://loopwise:loopwise@localhost:5435/loopwise
             BETTER_AUTH_SECRET: ci-only-not-a-secret-ci-only-not-a-secret
             BETTER_AUTH_URL: http://localhost:3000
+            # The runner's Chrome can't start its sandbox on Ubuntu 24.04 (the PDF export tests print with it).
+            PUPPETEER_DISABLE_SANDBOX: '1'
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4
