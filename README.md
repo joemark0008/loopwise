@@ -350,6 +350,12 @@ Privacy Act of 2012 (RA 10173) and other regulations, and for securing your inst
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md), the [Code of Conduct](CODE_OF_CONDUCT.md), and
 [SECURITY.md](SECURITY.md) for reporting vulnerabilities privately.
 
+### Contributors
+
+<a href="https://github.com/joemark0008/loopwise/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=joemark0008/loopwise" alt="Contributors to Loopwise" />
+</a>
+
 ## Acknowledgements
 
 Loopwise includes code from other Apache-2.0 projects, among them [nao](https://github.com/getnao/nao) by nao Labs.
