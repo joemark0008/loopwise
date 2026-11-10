@@ -29,11 +29,22 @@ Loopwise is free to use, modify and self-host under the Apache-2.0 license.
 Each install is **self-hosted by one business** and serves any number of its **clinic locations**. Patients and
 catalogs are shared across locations; visits, invoices, stock and document numbering stay with each clinic.
 
+- [Demo](#demo)
 - [Features](#features)
 - [Stack](#stack)
 - [Development setup](#development-setup)
 - [Deployment](#deployment)
 - [Documentation](#documentation)
+
+## Demo
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=cf3tpKJriuA">
+    <img src="https://img.youtube.com/vi/cf3tpKJriuA/maxresdefault.jpg" alt="Watch the 3-minute Loopwise demo on YouTube" width="720">
+  </a>
+  <br>
+  <sub>▶ 3-minute demo: ID scan, voice, AI scribe and insights, live on synthetic patients</sub>
+</p>
 
 ## Features
 
